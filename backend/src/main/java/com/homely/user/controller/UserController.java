@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.common.enums.RoleType;
+import com.homely.user.dto.UserDto;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
 
@@ -25,18 +26,24 @@ public class UserController {
     private final UserService userService;
     
     @GetMapping("/role/{role}")
-    public List<User> byRole(@PathVariable RoleType role) {
-        return userService.getByRole(role);
+    public List<UserDto> byRole(@PathVariable RoleType role) {
+        return userService.getByRole(role).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping("/active/{isActive}")
-    public List<User> byActiveStatus(@PathVariable boolean isActive) {
-        return userService.getByActiveStatus(isActive);
+    public List<UserDto> byActiveStatus(@PathVariable boolean isActive) {
+        return userService.getByActiveStatus(isActive).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping
-    public List<User> all() {
-        return userService.getAll();
+    public List<UserDto> all() {
+        return userService.getAll().stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @DeleteMapping("/{id}")
@@ -47,5 +54,16 @@ public class UserController {
     @PutMapping("/{id}")
     public void activate(@PathVariable UUID id) {
         userService.activate(id);
+    }
+
+    private UserDto convertToDto(User user) {
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setName(user.getName());
+        dto.setPhone(user.getPhone());
+        dto.setRole(user.getRole());
+        dto.setActive(user.isActive());
+        return dto;
     }
 }

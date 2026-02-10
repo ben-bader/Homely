@@ -43,12 +43,11 @@ public class JwtFilter extends OncePerRequestFilter {
         if (email != null &&
             SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            User user = userService.findByEmail(email);
+            User user = userService.getByEmail(email);
 
-            if (user != null && jwtService.isTokenValid(token, user)) {
+            if (user != null && jwtService.isTokenValid(token, user) && user.isActive()){
 
-                var userDetails =
-                        org.springframework.security.core.userdetails.User
+                var userDetails = org.springframework.security.core.userdetails.User
                                 .withUsername(user.getEmail())
                                 .password(user.getPasswordHash())
                                 .authorities(user.getAuthorities())
@@ -61,16 +60,20 @@ public class JwtFilter extends OncePerRequestFilter {
                         userDetails.getAuthorities()
                 );
 
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authToken);
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
-
+        
         filterChain.doFilter(request, response);
     }
+
+        @Override
+        protected boolean shouldNotFilter(HttpServletRequest request) {
+            String path = request.getServletPath();
+            return path.startsWith("/ws");
+        }
+
+
 }

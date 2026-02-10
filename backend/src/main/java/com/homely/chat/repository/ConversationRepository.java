@@ -7,10 +7,12 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.homely.chat.entity.Conversation;
+import com.homely.property.entity.Property;
+import com.homely.user.entity.User;
 
 public interface ConversationRepository extends JpaRepository<Conversation, UUID> {
-    List<Conversation> findByUserAIdOrUserBId(UUID userA, UUID userB);
+    List<Conversation> findByClientIdOrSellerId(UUID ClientId, UUID SellerId);
 
-    Optional<Conversation> findByPropertyIdAndUserAId(UUID propertyId, UUID userId);
+    Optional<Conversation> findByPropertyAndClient(Property property,User client);
 
 }

@@ -21,11 +21,10 @@ public class UserService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
-
     public List<User> getAll() {
         return userRepository.findAll();
     }
-    public User findByEmail(String email) {
+    public User getByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElse(null);
     }

@@ -30,8 +30,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "testuser@example.com",
-  "password": "password"
+  "email": "benbader1231@gmail.com",
+  "password": "123456"
 }
 
 ###
@@ -45,15 +45,16 @@ GET {{baseUrl}}/test/whoami
 Authorization: Bearer  {{token}}
 
 ###
-POST {{baseUrl}}/profile
+PUT {{baseUrl}}/profiles/4a8d8ed8-b19f-49e7-afc2-06a6ed0716c9
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "bio": "Passionate traveler and real estate enthusiast looking for a cozy home.",
-  "address": "123 Main Street, Casablanca, Morocco",
+  "userId": "4a8d8ed8-b19f-49e7-afc2-06a6ed0716c9",
+  "bio": " looking for a cozy home.",
+  "address": " Casablanca, Morocco",
   "verified": false,
-  "idDocumentUrl": "https://storage.homely.com/docs/id-99.pdf"
+  "idDocumentUrl": "https://storage.homely.com/docs/id-999.pdf"
 }
 ###
 
@@ -96,53 +97,23 @@ Authorization: Bearer {{token}}
 ###
 
 # Create a conversation
-POST {{baseUrl}}/chat/conversation
+POST {{baseUrl}}/chat/conversations/d38223a9-7d13-4a20-a887-6c12cdc3390d
 Content-Type: application/json
 Authorization: Bearer {{token}}
-
-{
-  "userA":{
-    "id": "13f049ae-1e58-4a1c-bfe5-daa0a90137b2"
-    },
-  "userB": {
-    "id": "55bdf3e7-fecf-4ce0-a55d-1e123cd16982"
-    }
-}
 
 ###
 
 # Get user conversations (replace with actual userId)
-GET {{baseUrl}}/chat/conversations
-Authorization: Bearer {{token}}
+GET {{baseUrl}}/chat/conversations?userId=4a8d8ed8-b19f-49e7-afc2-06a6ed0716c9
 
 ###
-
+GET {{baseUrl}}/chat/messages?conversationId=b8883725-ff54-410a-830e-ff7d8fa0f318
+ 
 # Send a message
-POST {{baseUrl}}/chat/message
-Content-Type: application/json
-Authorization: Bearer {{token}}
 
-{
-  "conversation":{
-    "id" : "606a604d-7dff-4380-8657-f32009119d31"
-    },
-  "senderId": "55bdf3e7-fecf-4ce0-a55d-1e123cd16982",
-  "body": "Test message",
-  "attachments" : {
-    "type" : "IMAGE",
-    "url" : "https://storage.homely.com/messages/image-12345.png"
-  }
-}
 
 ###
 
-# Get conversation messages
-GET {{baseUrl}}/chat/messages/all
-Authorization: Bearer {{token}}
-
-###
-GET {{baseUrl}}/chat/conversations/all
-###
 GET {{baseUrl}}/users
 
 

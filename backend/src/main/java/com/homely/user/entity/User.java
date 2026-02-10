@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.homely.chat.entity.Message;
 import com.homely.common.base.BaseEntity;
 import com.homely.common.enums.RoleType;
 
@@ -16,6 +17,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -38,6 +40,9 @@ public class User extends BaseEntity implements UserDetails {
     private RoleType role;
 
     private boolean isActive = true;
+
+    @OneToMany(mappedBy="sender", cascade = CascadeType.ALL)
+    private List<Message> messages;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Profile profile;

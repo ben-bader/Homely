@@ -16,6 +16,7 @@ import com.homely.property.entity.Property;
 import com.homely.property.entity.Studio;
 import com.homely.property.entity.Villa;
 import com.homely.property.repository.PropertyRepository;
+import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,15 +28,13 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final UserService userService;
 
-    public Property create(Property property) {
-        // Get the authenticated user and set as seller
-        /* User seller = userService.findByEmail(userEmail);
-        if (seller == null) {
-            throw new RuntimeException("User not found: " + userEmail);
+    public Property create(Property property,String userEmail) {
+        User seller = userService.getByEmail(userEmail);
+        if(!seller.getRole().equals("SELLER")){
+            throw new RuntimeException("Only sellers can create properties");
         }
-        property.setSeller(seller); */
-        
-        // Handle property type-specific relationships
+        property.setSeller(seller);
+         
         PropertyType propertyType = property.getPropertyType();
         
         if (propertyType == null) {

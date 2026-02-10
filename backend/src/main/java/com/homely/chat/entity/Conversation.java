@@ -18,8 +18,8 @@ public class Conversation extends BaseEntity {
     private Property property;
 
     @ManyToOne
-    private User userA;
+    private User client;
 
     @ManyToOne
-    private User userB;
+    private User seller;
 }

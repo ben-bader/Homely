@@ -1,6 +1,7 @@
 package com.homely.config;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,8 @@ import com.homely.auth.security.JwtFilter;
 import com.homely.auth.service.JwtService;
 import com.homely.user.service.UserService;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -61,7 +64,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .sessionManagement(session ->
                 session.sessionCreationPolicy(
                         SessionCreationPolicy.STATELESS
@@ -70,7 +73,7 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/ws/**", "/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
 
@@ -78,18 +81,16 @@ public class SecurityConfig {
                 jwtFilter(),
                 UsernamePasswordAuthenticationFilter.class
             );
-
+            
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
-        config.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "http://localhost:4200"
+        config.setAllowedOriginPatterns(List.of(
+            "https://elegant-jasiah-speedfully.ngrok-free.dev",
+            "http://localhost:3000"
         ));
 
         config.setAllowedMethods(List.of(
@@ -107,4 +108,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }

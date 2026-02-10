@@ -2,17 +2,18 @@ package com.homely.chat.entity;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.homely.user.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,9 +28,12 @@ public class Message {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "conversation_id", nullable = false)
     private Conversation conversation;
 
-    private UUID senderId;
+    @ManyToOne
+    @JoinColumn(name = "sender_id")
+    private User sender;
 
     private String body;
 

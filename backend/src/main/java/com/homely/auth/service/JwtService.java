@@ -13,7 +13,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-
+import java.util.UUID;
 @Service
 public class JwtService {
 
@@ -23,6 +23,7 @@ public class JwtService {
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
+                .claim("userId", user.getId().toString())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
@@ -60,4 +61,14 @@ public class JwtService {
                 Decoders.BASE64.decode(SECRET_KEY)
         );
     }
+    public UUID extractUserId(String token) {
+    Claims claims = Jwts.parserBuilder()
+        .setSigningKey(getSigningKey())
+        .build()
+        .parseClaimsJws(token)
+        .getBody();
+
+    return UUID.fromString(claims.get("userId", String.class));
+}
+
 }

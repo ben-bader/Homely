@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.homely.property.entity.Property;
+import com.homely.propertyview.dto.PropertyViewCreateRequest;
+import com.homely.propertyview.dto.PropertyViewDto;
 import com.homely.propertyview.entity.PropertyView;
 import com.homely.propertyview.service.PropertyViewService;
 
@@ -24,28 +27,39 @@ public class PropertyViewController {
     private final PropertyViewService propertyViewService;
 
     @PostMapping
-    public PropertyView create(@RequestBody PropertyView propertyView) {
-        return propertyViewService.create(propertyView);
+    public PropertyViewDto create(@RequestBody PropertyViewCreateRequest request) {
+        PropertyView propertyView = new PropertyView();
+        Property property = new Property();
+        property.setId(request.getPropertyId());
+        propertyView.setProperty(property);
+        propertyView.setIpAddress(request.getIpAddress());
+        return convertToDto(propertyViewService.create(propertyView));
     }
 
     @GetMapping("/{id}")
-    public PropertyView get(@PathVariable UUID id) {
-        return propertyViewService.get(id);
+    public PropertyViewDto get(@PathVariable UUID id) {
+        return convertToDto(propertyViewService.get(id));
     }
 
     @GetMapping
-    public List<PropertyView> getAll() {
-        return propertyViewService.getAll();
+    public List<PropertyViewDto> getAll() {
+        return propertyViewService.getAll().stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping("/property/{propertyId}")
-    public List<PropertyView> getByProperty(@PathVariable UUID propertyId) {
-        return propertyViewService.getByProperty(propertyId);
+    public List<PropertyViewDto> getByProperty(@PathVariable UUID propertyId) {
+        return propertyViewService.getByProperty(propertyId).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping("/user/{userId}")
-    public List<PropertyView> getByUser(@PathVariable UUID userId) {
-        return propertyViewService.getByUser(userId);
+    public List<PropertyViewDto> getByUser(@PathVariable UUID userId) {
+        return propertyViewService.getByUser(userId).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping("/property/{propertyId}/count")
@@ -56,5 +70,14 @@ public class PropertyViewController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         propertyViewService.delete(id);
+    }
+
+    private PropertyViewDto convertToDto(PropertyView propertyView) {
+        PropertyViewDto dto = new PropertyViewDto();
+        dto.setId(propertyView.getId());
+        dto.setUserId(propertyView.getUser() != null ? propertyView.getUser().getId() : null);
+        dto.setPropertyId(propertyView.getProperty().getId());
+        dto.setIpAddress(propertyView.getIpAddress());
+        return dto;
     }
 }

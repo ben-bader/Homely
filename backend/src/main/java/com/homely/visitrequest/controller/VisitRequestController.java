@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.common.enums.VisitStatus;
+import com.homely.property.entity.Property;
+import com.homely.visitrequest.dto.VisitRequestCreateRequest;
+import com.homely.visitrequest.dto.VisitRequestDto;
 import com.homely.visitrequest.entity.VisitRequest;
 import com.homely.visitrequest.service.VisitRequestService;
 
@@ -27,42 +30,65 @@ public class VisitRequestController {
     private final VisitRequestService visitRequestService;
 
     @PostMapping
-    public VisitRequest create(@RequestBody VisitRequest visitRequest) {
-        return visitRequestService.create(visitRequest);
+    public VisitRequestDto create(@RequestBody VisitRequestCreateRequest request) {
+        VisitRequest visitRequest = new VisitRequest();
+        Property property = new Property();
+        property.setId(request.getPropertyId());
+        visitRequest.setProperty(property);
+        visitRequest.setRequestedDate(request.getRequestedDate());
+        return convertToDto(visitRequestService.create(visitRequest));
     }
 
     @GetMapping("/{id}")
-    public VisitRequest get(@PathVariable UUID id) {
-        return visitRequestService.get(id);
+    public VisitRequestDto get(@PathVariable UUID id) {
+        return convertToDto(visitRequestService.get(id));
     }
 
     @GetMapping
-    public List<VisitRequest> getAll() {
-        return visitRequestService.getAll();
+    public List<VisitRequestDto> getAll() {
+        return visitRequestService.getAll().stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping("/property/{propertyId}")
-    public List<VisitRequest> getByProperty(@PathVariable UUID propertyId) {
-        return visitRequestService.getByProperty(propertyId);
+    public List<VisitRequestDto> getByProperty(@PathVariable UUID propertyId) {
+        return visitRequestService.getByProperty(propertyId).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping("/user/{userId}")
-    public List<VisitRequest> getByUser(@PathVariable UUID userId) {
-        return visitRequestService.getByUser(userId);
+    public List<VisitRequestDto> getByUser(@PathVariable UUID userId) {
+        return visitRequestService.getByUser(userId).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping("/status")
-    public List<VisitRequest> getByStatus(@RequestParam VisitStatus status) {
-        return visitRequestService.getByStatus(status);
+    public List<VisitRequestDto> getByStatus(@RequestParam VisitStatus status) {
+        return visitRequestService.getByStatus(status).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @PutMapping("/{id}/status")
-    public VisitRequest updateStatus(@PathVariable UUID id, @RequestParam VisitStatus status) {
-        return visitRequestService.updateStatus(id, status);
+    public VisitRequestDto updateStatus(@PathVariable UUID id, @RequestParam VisitStatus status) {
+        return convertToDto(visitRequestService.updateStatus(id, status));
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         visitRequestService.delete(id);
+    }
+
+    private VisitRequestDto convertToDto(VisitRequest visitRequest) {
+        VisitRequestDto dto = new VisitRequestDto();
+        dto.setId(visitRequest.getId());
+        dto.setUserId(visitRequest.getUser().getId());
+        dto.setPropertyId(visitRequest.getProperty().getId());
+        dto.setRequestedDate(visitRequest.getRequestedDate());
+        dto.setStatus(visitRequest.getStatus());
+        return dto;
     }
 }

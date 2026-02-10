@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.homely.boost.dto.BoostPurchaseCreateRequest;
+import com.homely.boost.dto.BoostPurchaseDto;
 import com.homely.boost.entity.BoostPurchase;
 import com.homely.boost.service.BoostService;
 import com.homely.common.enums.PurchaseStatus;
@@ -26,25 +28,49 @@ public class BoostController {
     private final BoostService boostService;
 
     @PostMapping
-    public BoostPurchase boost(@RequestBody BoostPurchase boost) {
-        return boostService.create(boost);
+    public BoostPurchaseDto boost(@RequestBody BoostPurchaseCreateRequest request) {
+        BoostPurchase boost = new BoostPurchase();
+        boost.setAmount(request.getAmount());
+        boost.setCurrency(request.getCurrency());
+        boost.setDurationDays(request.getDurationDays());
+        boost.setPaymentProviderRef(request.getPaymentProviderRef());
+        return convertToDto(boostService.create(boost));
     }
     @GetMapping("/{id}")
-    public BoostPurchase getById(@PathVariable UUID id) {
-        return boostService.getById(id);
+    public BoostPurchaseDto getById(@PathVariable UUID id) {
+        return convertToDto(boostService.getById(id));
     }
     @GetMapping("/status")
-    public List<BoostPurchase> getByStatus(@RequestParam PurchaseStatus status) {
-        return boostService.getByStatus(status);
+    public List<BoostPurchaseDto> getByStatus(@RequestParam PurchaseStatus status) {
+        return boostService.getByStatus(status).stream()
+            .map(this::convertToDto)
+            .toList();
     }
 
     @GetMapping("/seller")
-    public List<BoostPurchase> getBySellerId(@RequestParam UUID sellerId) {
-        return boostService.getBySellerId(sellerId);
+    public List<BoostPurchaseDto> getBySellerId(@RequestParam UUID sellerId) {
+        return boostService.getBySellerId(sellerId).stream()
+            .map(this::convertToDto)
+            .toList();
     }
     @GetMapping("/all")
-    public List<BoostPurchase> getAll() {
-        return boostService.getAll();
+    public List<BoostPurchaseDto> getAll() {
+        return boostService.getAll().stream()
+            .map(this::convertToDto)
+            .toList();
+    }
+
+    private BoostPurchaseDto convertToDto(BoostPurchase boost) {
+        BoostPurchaseDto dto = new BoostPurchaseDto();
+        dto.setId(boost.getId());
+        dto.setSellerId(boost.getSeller().getId());
+        dto.setPropertyId(boost.getProperty().getId());
+        dto.setAmount(boost.getAmount());
+        dto.setCurrency(boost.getCurrency());
+        dto.setDurationDays(boost.getDurationDays());
+        dto.setStatus(boost.getStatus());
+        dto.setPaymentProviderRef(boost.getPaymentProviderRef());
+        return dto;
     }
     
     
