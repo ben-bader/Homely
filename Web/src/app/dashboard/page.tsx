@@ -60,19 +60,19 @@ export default function DashboardPage() {
         <h2 className="text-bg text-zinc-400 pt-10">Stats section</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg bg-black text-white">
+        <Card>
           <CardHeader>
             <CardTitle className="mx-auto">Total users Users</CardTitle>
           </CardHeader>
           <CardContent className="mx-auto">{users.length}</CardContent>
         </Card>
-        <Card className="bg bg-black text-white">
+        <Card>
           <CardHeader>
             <CardTitle className="mx-auto">Total Properties</CardTitle>
           </CardHeader>
           <CardContent className="mx-auto">{properties.length}</CardContent>
         </Card>
-        <Card className="bg bg-black text-white">
+        <Card>
           <CardHeader>
             <CardTitle className="mx-auto">Total Reports</CardTitle>
           </CardHeader>

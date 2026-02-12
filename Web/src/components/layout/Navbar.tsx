@@ -1,5 +1,3 @@
-import {BellIcon } from "lucide-react";
-
 export default function Navbar() {
   return (
     <header className="h-16 bg-white shadow flex items-center justify-end px-4 gap-4">

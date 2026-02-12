@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 // Change these paths to include /ui/
-import Navbar from "@/components/ui/navbar"; 
-import Sidebar from "@/components/ui/sidebar"; 
+import Navbar from "@/components/layout/Navbar"; 
+import Sidebar from "@/components/layout/Sidebar"; 
 
 interface DashboardLayoutProps {
   children: ReactNode;

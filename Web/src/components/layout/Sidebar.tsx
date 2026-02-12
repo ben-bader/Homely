@@ -32,7 +32,6 @@ export default function Sidebar() {
                 isActive ? "bg-gray-200 font-semibold" : ""
               )}
             >
-        
               {item.label}
             </Link>
           );
