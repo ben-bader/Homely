@@ -27,7 +27,7 @@ public class Feedback extends BaseEntity {
     private Property property;
 
     @Column(nullable = false)
-    private Integer rating; // e.g., 1-5
+    private Integer rating;
 
     @Column(length = 1000)
     private String comment;

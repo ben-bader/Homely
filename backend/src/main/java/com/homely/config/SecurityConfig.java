@@ -1,7 +1,6 @@
 package com.homely.config;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +22,6 @@ import com.homely.auth.security.JwtFilter;
 import com.homely.auth.service.JwtService;
 import com.homely.user.service.UserService;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 
 @Configuration

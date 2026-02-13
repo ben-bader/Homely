@@ -24,13 +24,26 @@ Content-Type: application/json
 }
 
 ###
+POST {{baseUrl}}/admin/reports
+Content-Type: application/json
+Accept: application/json
 
+{
+  "reporterId": "80a53c11-d7fb-4cf4-a858-683fb4d6e84d",
+  "reportedUserId": "0f4ae0a4-9a3a-4648-871a-d3042f6b2cf3",
+  "reportedPropertyId": "a6f45a0f-2328-47f1-be16-dfdf0e8698ed",
+  "reason": "listing",
+  "status": "OPEN",
+  "reviewedByAdminId": null
+}
+
+###
 # @name auth
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "benbader1231@gmail.com",
+  "email": "bennanibader2006@gmail.com",
   "password": "123456"
 }
 
