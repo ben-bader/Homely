@@ -53,12 +53,7 @@ public class BoostController {
             .map(this::convertToDto)
             .toList();
     }
-    @GetMapping("/all")
-    public List<BoostPurchaseDto> getAll() {
-        return boostService.getAll().stream()
-            .map(this::convertToDto)
-            .toList();
-    }
+    // `getAll` removed from this controller - admin-only listing moved to AdminController
 
     private BoostPurchaseDto convertToDto(BoostPurchase boost) {
         BoostPurchaseDto dto = new BoostPurchaseDto();

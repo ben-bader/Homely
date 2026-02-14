@@ -4,8 +4,6 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
-import com.homely.user.dto.UserDto;
-
 import lombok.Getter;
 import lombok.Setter;
 

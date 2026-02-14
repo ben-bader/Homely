@@ -1,9 +1,7 @@
 package com.homely.user.controller;
 
 import java.security.Principal;
-import java.util.List;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,14 +25,7 @@ public class ProfileController {
     private final ProfileService profileService;
     private final UserRepository userRepository;
 
-    @GetMapping("/all")
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<ProfileDto> getAll() {
-        return profileService.getAll()
-                .stream()
-                .map(this::convertToDto)
-                .toList();
-    }
+    // `getAll` removed from this controller - admin-only listing moved to AdminController
 
     @GetMapping("/me")
     public ProfileDto getMyProfile(Principal principal) {

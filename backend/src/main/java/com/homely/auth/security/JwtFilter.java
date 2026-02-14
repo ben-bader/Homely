@@ -8,6 +8,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.homely.auth.service.JwtService;
+import com.homely.auth.service.TokenBlacklist;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
 
@@ -22,6 +23,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserService userService;
+    private final TokenBlacklist tokenBlacklist;
 
     @Override
     protected void doFilterInternal(
@@ -38,6 +40,10 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
+        if (tokenBlacklist.isBlacklisted(token)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         String email = jwtService.extractUsername(token);
 
         if (email != null &&

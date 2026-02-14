@@ -42,12 +42,7 @@ public class FeedbackController {
         return convertToDto(feedbackService.get(id));
     }
 
-    @GetMapping
-    public List<FeedbackDto> getAll() {
-        return feedbackService.getAll().stream()
-            .map(this::convertToDto)
-            .toList();
-    }
+    // `getAll` removed from this controller - admin-only listing moved to AdminController
 
     @GetMapping("/property/{propertyId}")
     public List<FeedbackDto> getByProperty(@PathVariable UUID propertyId) {

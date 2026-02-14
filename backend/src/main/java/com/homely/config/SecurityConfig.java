@@ -20,6 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.homely.auth.security.JwtFilter;
 import com.homely.auth.service.JwtService;
+import com.homely.auth.service.TokenBlacklist;
 import com.homely.user.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -32,10 +33,11 @@ public class SecurityConfig {
 
     private final JwtService jwtService;
     private final UserService userService;
+    private final TokenBlacklist tokenBlacklist;
 
     @Bean
     public JwtFilter jwtFilter() {
-        return new JwtFilter(jwtService, userService);
+        return new JwtFilter(jwtService, userService, tokenBlacklist);
     }
     
     @Bean

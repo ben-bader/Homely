@@ -127,7 +127,7 @@ GET {{baseUrl}}/chat/messages?conversationId=b8883725-ff54-410a-830e-ff7d8fa0f31
 
 ###
 
-GET {{baseUrl}}/users
+GET {{baseUrl}}/admin/users
 
 
 
@@ -187,7 +187,7 @@ GET {{baseUrl}}/boost?sellerId=13f049ae-1e58-4a1c-bfe5-daa0a90137b2
 Authorization: Bearer {{token}}
 
 ###
-GET {{baseUrl}}/boost/all
+GET {{baseUrl}}/admin/boosts
 
 # Profiles 
 ###

@@ -18,6 +18,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final TokenBlacklist tokenBlacklist;
 
     public AuthResponse register(RegisterRequest request){
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -45,6 +46,17 @@ public class AuthService {
         if(!passwordEncoder.matches(request.getPassword(), user.getPasswordHash()))   {
             throw  new RuntimeException("Invalid credentials");
         }   
+        if (!user.isActive()) {
+            throw new RuntimeException("User account is deactivated");
+        }
+
         return new AuthResponse(jwtService.generateToken(user));
+    }
+
+    public void logout(String token) {
+        if (token == null) return;
+        if (token.startsWith("Bearer ")) token = token.substring(7);
+        java.util.Date expiry = jwtService.extractExpiration(token);
+        tokenBlacklist.blacklistToken(token, expiry);
     }
 }

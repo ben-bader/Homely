@@ -24,10 +24,10 @@ export function SectionCards() {
       try {
         const [usersRes, propertiesRes, reportsRes, boostsRes] =
           await Promise.all([
-            api.get("/users"),
-            api.get("/properties"),
+            api.get("/admin/users"),
+            api.get("/admin/properties"),
             api.get("/admin/reports"),
-            api.get("/boost/all"),
+            api.get("/admin/boosts"),
           ]);
 
         setUsers(usersRes.data.length);

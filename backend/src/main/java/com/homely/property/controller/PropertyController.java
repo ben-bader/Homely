@@ -54,12 +54,6 @@ public class PropertyController {
         return convertToDto(propertyService.get(id));
     }
 
-    @GetMapping
-    public List<PropertyDto> all() {
-        return propertyService.getAll().stream()
-            .map(this::convertToDto)
-            .toList();
-    }
     @GetMapping("/search")
     public List<PropertyDto> search(
             @RequestParam(required = false) ListingType type,

@@ -39,12 +39,7 @@
                 .toList();
         }
 
-        @GetMapping
-        public List<UserDto> all() {
-            return userService.getAll().stream()
-                .map(this::convertToDto)
-                .toList();
-        }
+        // `all` listing removed from this controller - admin-only listing moved to AdminController
 
         @DeleteMapping("/{id}")
         public void deactivate(@PathVariable UUID id) {

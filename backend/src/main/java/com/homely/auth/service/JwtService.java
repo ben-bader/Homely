@@ -2,6 +2,7 @@ package com.homely.auth.service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.springframework.stereotype.Service;
@@ -13,7 +14,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import java.util.UUID;
 @Service
 public class JwtService {
 
@@ -38,6 +38,10 @@ public class JwtService {
     public boolean isTokenValid(String token, User user) {
         return extractUsername(token).equals(user.getEmail())
                 && !isTokenExpired(token);
+    }
+
+    public java.util.Date extractExpiration(String token) {
+        return extractClaim(token, io.jsonwebtoken.Claims::getExpiration);
     }
 
     private boolean isTokenExpired(String token) {

@@ -31,9 +31,7 @@ const Reports = () => {
           <CardHeader>
             <CardTitle>{report.reason}</CardTitle>
             <CardDescription>
-              {report.createdAt
-                ? new Date(report.createdAt).toLocaleString()
-                : "No date"}
+              {report.createdAt}
             </CardDescription>
           </CardHeader>
 

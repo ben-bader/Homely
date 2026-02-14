@@ -44,12 +44,7 @@ public class VisitRequestController {
         return convertToDto(visitRequestService.get(id));
     }
 
-    @GetMapping
-    public List<VisitRequestDto> getAll() {
-        return visitRequestService.getAll().stream()
-            .map(this::convertToDto)
-            .toList();
-    }
+    // `getAll` removed from this controller - admin-only listing moved to AdminController
 
     @GetMapping("/property/{propertyId}")
     public List<VisitRequestDto> getByProperty(@PathVariable UUID propertyId) {
