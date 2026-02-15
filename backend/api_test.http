@@ -16,26 +16,14 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-    "email": "testuser3@example.com",
+    "email": "testuser1@example.com",
     "password": "Password123",
-    "name": "Test User",
+    "name": "Test User 1",
     "phone": "1234567890",
-    "role": "ADMIN"
+    "role": "CLIENT"
 }
 
 ###
-POST {{baseUrl}}/admin/reports
-Content-Type: application/json
-Accept: application/json
-
-{
-  "reporterId": "80a53c11-d7fb-4cf4-a858-683fb4d6e84d",
-  "reportedUserId": "0f4ae0a4-9a3a-4648-871a-d3042f6b2cf3",
-  "reportedPropertyId": "a6f45a0f-2328-47f1-be16-dfdf0e8698ed",
-  "reason": "listing",
-  "status": "OPEN",
-  "reviewedByAdminId": null
-}
 
 ###
 # @name auth
@@ -43,8 +31,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "bennanibader2006@gmail.com",
-  "password": "123456"
+  "email": "testuser1@example.com",
+  "password": "Password123"
 }
 
 ###
@@ -53,7 +41,19 @@ Content-Type: application/json
 @token = {{auth.response.body.token}}
 
 ###
+POST {{baseUrl}}/users/reports
+Content-Type: application/json
+Authorization: Bearer  {{token}}
 
+{
+  "reporterId": "abe9db94-61df-4385-82de-3713309b9d38",
+  "reportedUserId": "ae613454-7417-46f8-9c65-b5cc13a3f0ee",
+  "reportedPropertyId": "749c6390-82f5-474f-868f-ecb8b78ed3ad",
+  "reason": "Suspesious listing",
+  "status": "OPEN",
+  "reviewedByAdminId": null
+}
+###
 GET {{baseUrl}}/test/whoami
 Authorization: Bearer  {{token}}
 

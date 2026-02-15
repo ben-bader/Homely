@@ -4,14 +4,10 @@ import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,8 +23,8 @@ import com.homely.moderation.dto.AuditLogDto;
 import com.homely.moderation.dto.ReportDto;
 import com.homely.moderation.entity.Report;
 import com.homely.moderation.mapper.AuditLogMapper;
-import com.homely.moderation.mapper.ReportMapper;
 import com.homely.moderation.service.ModerationService;
+import com.homely.notification.ReportMapper;
 import com.homely.property.dto.PropertyDto;
 import com.homely.property.service.PropertyService;
 import com.homely.propertyview.dto.PropertyViewDto;
@@ -45,7 +41,6 @@ import com.homely.visitrequest.dto.VisitRequestDto;
 import com.homely.visitrequest.mapper.VisitRequestMapper;
 import com.homely.visitrequest.service.VisitRequestService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -112,23 +107,7 @@ public ReportDto updateReportStatus(
                 .toList();
     }
 
-    @PostMapping("/reports")
-    public ResponseEntity<ReportDto> createReport(@Valid @RequestBody ReportDto dto) {
-        Report report = new Report();
-        User reporter = userService.getById(dto.getReporterId());
-        User reportedUser = dto.getReportedUserId() != null ? userService.getById(dto.getReportedUserId()) : null;
-        var reportedProperty = dto.getReportedPropertyId() != null ? propertyService.getEntity(dto.getReportedPropertyId()) : null;
-
-        report.setReporter(reporter);
-        report.setReportedUser(reportedUser);
-        report.setReportedProperty(reportedProperty);
-        report.setReason(dto.getReason());
-        report.setStatus(dto.getStatus());
-        report.setReviewedByAdmin(dto.getReviewedByAdminId() != null ? userService.getById(dto.getReviewedByAdminId()) : null);
-
-        Report savedReport = moderationService.report(report);
-        return new ResponseEntity<>(reportMapper.toDto(savedReport), HttpStatus.CREATED);
-    }
+   
 
     @GetMapping("/users")
     public List<UserDto> getAllUsers() {
@@ -146,7 +125,7 @@ public void activateUser(@PathVariable UUID id, Principal principal) {
     moderationService.logAction(
         "ACTIVATE_USER",
             admin,
-            "Activated user account"
+            "Activated user account id: " + id
     );
 }
 
@@ -161,7 +140,7 @@ public void deactivateUser(@PathVariable UUID id, Principal principal) {
     moderationService.logAction(
             "DEACTIVATE_USER",
             admin,
-            "Deactivated user account"
+            "Deactivated user account id:" + id
     );
 }
 

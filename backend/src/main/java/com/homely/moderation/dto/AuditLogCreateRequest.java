@@ -1,5 +1,7 @@
 package com.homely.moderation.dto;
 
+import com.jayway.jsonpath.internal.filter.ValueNodes.JsonNode;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,5 +9,5 @@ import lombok.Setter;
 @Setter
 public class AuditLogCreateRequest {
     private String action;
-    private String details;
+    private JsonNode details;
 }
