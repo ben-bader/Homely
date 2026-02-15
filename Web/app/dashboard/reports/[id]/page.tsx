@@ -60,8 +60,7 @@ const ReportDetail = () => {
         </div>
         <div>
           <h4>
-            {report.createdAt?.slice(0, 10)} At{" "}
-            {report.createdAt?.slice(11, 19)}{" "}
+            {new Date(report.createdAt).toLocaleString()}
           </h4>
         </div>
         <div>
