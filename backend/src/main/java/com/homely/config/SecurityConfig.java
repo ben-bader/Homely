@@ -73,6 +73,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/ws/**", "/api/auth/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
 
@@ -87,10 +88,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-            "https://elegant-jasiah-speedfully.ngrok-free.dev",
-            "http://localhost:3000"
-        ));
+        config.setAllowedOrigins(List.of(
+                                    "http://localhost:3000",
+                                    "http://localhost:63861"
+                                ));
+
 
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT",

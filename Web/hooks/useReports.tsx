@@ -1,6 +1,8 @@
 "use client"
+
 import { api } from "@/lib/api"
-import { useState, useEffect } from "react"
+import type { Report } from "@/types/dashboard-types"
+import { useState, useEffect, useCallback } from "react"
 
 const getReports = async (): Promise<Report[]> => {
   const { data } = await api.get<Report[]>("/admin/reports")
@@ -12,21 +14,29 @@ const useReports = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchReports = async () => {
-      try {
-        setLoading(true)
-        const data = await getReports()
-        setReports(data)
-      } catch (err: any) {
-        setError(err.message || "Failed to load reports")
-      } finally {
-        setLoading(false)
-      }
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true)
+      const data = await getReports()
+      setReports(data)
+      setError(null)
+    } catch (err: any) {
+      setError(err.message || "Failed to load reports")
+    } finally {
+      setLoading(false)
     }
-
-    fetchReports()
   }, [])
+
+  useEffect(() => {
+    refetch()
+  }, [refetch])
+
+  const updateReportStatus = async (reportId: string, status: string) => {
+    await api.put(`/admin/reports/${reportId}/status`, null, {
+      params: { status },
+    })
+    await refetch()
+  }
 
   return {
     reports,
@@ -34,7 +44,9 @@ const useReports = () => {
     error,
     setReports,
     setLoading,
-    setError
+    setError,
+    refetch,
+    updateReportStatus,
   }
 }
 

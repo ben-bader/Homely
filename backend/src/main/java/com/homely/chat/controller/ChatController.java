@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.homely.chat.dto.ConversationDto;
 import com.homely.chat.dto.MessageDto;
 import com.homely.chat.entity.Conversation;
 import com.homely.chat.entity.Message;
+import com.homely.chat.mapper.ConversationMapper;
+import com.homely.chat.mapper.MessageMapper;
 import com.homely.chat.service.ChatService;
-import com.homely.user.dto.UserDto;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
 
@@ -32,41 +32,45 @@ public class ChatController {
     private final ChatService chatService;
     private final UserService userService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ConversationMapper conversationMapper;
+    private final MessageMapper messageMapper;
 
     @PostMapping("/conversations/{propertyId}")
-    public ConversationDto create(@PathVariable UUID propertyId, Principal principal) {
-        return convertConversationToDto(chatService.createConversation(propertyId, principal.getName()));
+    public com.homely.chat.dto.ConversationDto createConversation(
+            @PathVariable UUID propertyId,
+            Principal principal) {
+        Conversation conversation = chatService.createConversation(propertyId, principal.getName());
+        return conversationMapper.toDto(conversation);
     }
 
     @GetMapping("/messages")
     public List<MessageDto> getConversationMessages(@RequestParam UUID conversationId) {
         return chatService.getConversationMessages(conversationId).stream()
-                .map(this::convertMessageToDto)
+                .map(messageMapper::toDto)
                 .toList();
     }
 
     @MessageMapping("/chat.send")
     public void send(MessageDto mdto, Principal principal) {
-
         if (principal == null) throw new RuntimeException("Unauthorized");
 
         Conversation conversation = chatService.getConversationById(mdto.getConversationId());
         User sender = userService.getByEmail(principal.getName());
-        if (!sender.getId().equals(conversation.getClient().getId()) &&
-            !sender.getId().equals(conversation.getSeller().getId())) {
+        if (sender == null) throw new RuntimeException("User not found");
+        if (!sender.getId().equals(conversation.getClient().getId())
+                && !sender.getId().equals(conversation.getSeller().getId())) {
             throw new RuntimeException("User not part of the conversation");
         }
-
 
         Message message = new Message();
         message.setConversation(conversation);
         message.setSender(sender);
         message.setBody(mdto.getBody());
+        message.setAttachments(mdto.getAttachments());
         chatService.saveMessage(message);
 
-        MessageDto dto = convertMessageToDto(message);
+        MessageDto dto = messageMapper.toDto(message);
 
-        // Send to both users
         messagingTemplate.convertAndSendToUser(
                 conversation.getClient().getEmail(),
                 "/queue/conversations/" + conversation.getId(),
@@ -77,26 +81,5 @@ public class ChatController {
                 "/queue/conversations/" + conversation.getId(),
                 dto
         );
-
-    }
-
-    private ConversationDto convertConversationToDto(Conversation conversation) {
-        ConversationDto dto = new ConversationDto();
-        dto.setId(conversation.getId());
-        dto.setPropertyId(conversation.getProperty().getId());
-        dto.setClientId(conversation.getClient().getId());
-        dto.setSellerId(conversation.getSeller().getId());
-        return dto;
-    }
-
-    private MessageDto convertMessageToDto(Message message) {
-        MessageDto dto = new MessageDto();
-        dto.setId(message.getId());
-        dto.setConversationId(message.getConversation().getId());
-        dto.setSenderId(message.getSender().getId());
-        dto.setBody(message.getBody());
-        dto.setAttachments(message.getAttachments());
-        dto.setReadAt(message.getReadAt());
-        return dto;
     }
 }

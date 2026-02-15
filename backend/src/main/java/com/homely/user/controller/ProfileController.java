@@ -12,9 +12,11 @@ import com.homely.user.dto.ProfileDto;
 import com.homely.user.dto.ProfileUpdateRequest;
 import com.homely.user.entity.Profile;
 import com.homely.user.entity.User;
+import com.homely.user.mapper.ProfileMapper;
 import com.homely.user.repository.UserRepository;
 import com.homely.user.service.ProfileService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,40 +26,23 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final UserRepository userRepository;
-
-    // `getAll` removed from this controller - admin-only listing moved to AdminController
+    private final ProfileMapper profileMapper;
 
     @GetMapping("/me")
     public ProfileDto getMyProfile(Principal principal) {
         User user = userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return convertToDto(profileService.getById(user.getId()));
+        return profileMapper.toDto(profileService.getById(user.getId()));
     }
 
     @PutMapping("/me")
     public ProfileDto updateMyProfile(
             Principal principal,
-            @RequestBody ProfileUpdateRequest request) {
-
+            @Valid @RequestBody ProfileUpdateRequest request) {
         User user = userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         Profile profile = profileService.getById(user.getId());
-        profile.setBio(request.getBio());
-        profile.setAddress(request.getAddress());
-        profile.setIdDocumentUrl(request.getIdDocumentUrl());
-
-        return convertToDto(profileService.update(profile));
-    }
-
-    private ProfileDto convertToDto(Profile profile) {
-        ProfileDto dto = new ProfileDto();
-        dto.setUserId(profile.getUserId());
-        dto.setBio(profile.getBio());
-        dto.setAddress(profile.getAddress());
-        dto.setVerified(profile.isVerified());
-        dto.setIdDocumentUrl(profile.getIdDocumentUrl());
-        return dto;
+        profileMapper.updateFromRequest(request, profile);
+        return profileMapper.toDto(profileService.update(profile));
     }
 }

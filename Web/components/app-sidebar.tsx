@@ -21,6 +21,7 @@ import {
   IconSettings,
   IconUser,
   IconUsers,
+  IconHistory,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -37,6 +38,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Logo from "./logo/Logo";
+import { BetweenVerticalStartIcon, PlusSquareIcon } from "lucide-react";
 
 const data = {
   user: {
@@ -71,9 +73,14 @@ const data = {
       icon: IconRocket,
     },
     {
-      title: "Team",
+      title: "Visit Requests",
       url: "#",
-      icon: IconUser,
+      icon: PlusSquareIcon,
+    },
+    {
+      title: "Audit Logs",
+      url: "#",
+      icon: IconHistory,
     },
   ],
 };

@@ -164,7 +164,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               label: 'First Name',
                               child: _buildTextField(
                                 controller: _firstNameController,
-                                hintText: 'Mohamed',
+                                hintText: 'Jhon',
                                 validator: Validators.validateName,
                               ),
                             ),
@@ -175,7 +175,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               label: 'Last Name',
                               child: _buildTextField(
                                 controller: _lastNameController,
-                                hintText: 'El Am',
+                                hintText: 'Doe',
                                 validator: Validators.validateName,
                               ),
                             ),

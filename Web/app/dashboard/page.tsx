@@ -1,33 +1,29 @@
-  "use client"
-  import { AppSidebar,data } from "@/components/app-sidebar"
-  import { ChartAreaInteractive } from "@/components/chart-area-interactive"
+"use client"
+
+import { AppSidebar } from "@/components/app-sidebar"
 import Boosts from "@/components/dashboard-componenets/Boosts"
+import Dashboard from "@/components/dashboard-componenets/Dashboard"
 import Properties from "@/components/dashboard-componenets/Properties"
 import Reports from "@/components/dashboard-componenets/Reports"
-import Team from "@/components/dashboard-componenets/Team"
-  import { SiteHeader } from "@/components/site-header"
-  import {
-    SidebarInset,
-    SidebarProvider,
-  } from "@/components/ui/sidebar"
+import Team from "@/components/dashboard-componenets/VisitRequests"
+import AuditLogs from "@/components/dashboard-componenets/AuditLogs"
+import { SiteHeader } from "@/components/site-header"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import Users from "@/components/dashboard-componenets/Users"
-  import { api } from "@/lib/api"
-  import { useState, useEffect } from "react"
-import Dashboard from "@/components/dashboard-componenets/Dashboard"
+import { useState } from "react"
 
+export default function Page() {
+  const [activeSection, setActiveSection] = useState("dashboard")
 
-  export default function Page() {
-    
-
-     const [activeSection, setActiveSection] = useState("dashboard")
-const components: Record<string, React.ReactNode> = {
-  users: <Users />,
-  properties: <Properties />,
-  reports: <Reports />,
-  boosts: <Boosts />,
-  team: <Team />,
-  dashboard: <Dashboard/>
-}
+  const components: Record<string, React.ReactNode> = {
+    users: <Users />,
+    properties: <Properties />,
+    reports: <Reports />,
+    boosts: <Boosts />,
+    team: <Team />,
+    dashboard: <Dashboard />,
+    "audit logs": <AuditLogs />,
+  }
   
   
     return (

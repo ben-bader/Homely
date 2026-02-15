@@ -1,9 +1,10 @@
 // types.ts
 
 export enum ReportStatus {
-  PENDING = "PENDING",
-  IN_PROGRESS = "IN_PROGRESS",
+  OPEN = "OPEN",
+  REVIEWED = "REVIEWED",
   RESOLVED = "RESOLVED",
+  DISMISSED = "DISMISSED",
 }
 
 export enum RoleType {
@@ -54,19 +55,34 @@ export interface Property {
   longitude: number | null
 }
 
-// Report  with nested references
+// Report (backend returns names in DTO)
 export interface Report {
   id: string
   reporterId: string
+  reporterName?: string | null
+  reporterEmail?: string | null
   reportedUserId: string | null
+  reportedUserName?: string | null
+  reportedUserEmail?: string | null
   reportedPropertyId: string | null
+  reportedPropertyTitle?: string | null
   reason: string
   status: ReportStatus
   reviewedByAdminId: string | null
+  reviewedByAdminName?: string | null
+  reviewedByAdminEmail?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
 
-  // Nested objects fetched from backend
-  reporter?: User
-  reportedUser?: User
-  reportedProperty?: Property
-  reviewedByAdmin?: User
+// Audit log entry for admin actions
+export interface AuditLog {
+  id: string
+  adminId: string
+  adminEmail?: string | null
+  adminName?: string | null
+  action: string
+  details: string | null
+  createdAt?: string
+  updatedAt?: string
 }

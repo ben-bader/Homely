@@ -11,6 +11,8 @@ import lombok.Setter;
 @Setter
 public class AuditLogDto extends BaseEntity {
     private UUID adminId;
+    private String adminEmail;
+    private String adminName;
     private String action;
     private String details;
 }

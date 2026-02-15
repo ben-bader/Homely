@@ -7,9 +7,11 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col lg:p-16 h-screen items-center justify-center w-full">
     <div className="grid lg:grid-cols-2 w-full h-full rounded-lg border">
-      <div className="flex flex-col justify-center">
-        <Logo />
-        <div className="flex flex-1 items-center justify-center -mt-32">
+      <div className="flex flex-col justify-center w-full">
+        <div className="flex items-center my-auto">
+            <Logo />
+        </div>
+        <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
             <LoginForm />
           </div>

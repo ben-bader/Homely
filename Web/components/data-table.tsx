@@ -10,7 +10,6 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
-  type Row,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table"
@@ -23,7 +22,49 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Report, ReportStatus } from "@/types/dashboard-types"
 import { Button } from "./ui/button"
 
-function TableCellViewer({ report }: { report: Report }) {
+function reporterDisplay(report: Report) {
+  if (report.reporterName) return `${report.reporterName} (${report.reporterEmail ?? report.reporterId})`
+  return report.reporterEmail ?? report.reporterId
+}
+
+function reportedUserDisplay(report: Report) {
+  if (!report.reportedUserId) return "—"
+  if (report.reportedUserName) return `${report.reportedUserName} (${report.reportedUserEmail ?? report.reportedUserId})`
+  return report.reportedUserEmail ?? report.reportedUserId
+}
+
+function reportedPropertyDisplay(report: Report) {
+  if (!report.reportedPropertyId) return "—"
+  return report.reportedPropertyTitle ?? report.reportedPropertyId
+}
+
+function reviewedByDisplay(report: Report) {
+  if (!report.reviewedByAdminId) return "—"
+  if (report.reviewedByAdminName) return `${report.reviewedByAdminName} (${report.reviewedByAdminEmail ?? report.reviewedByAdminId})`
+  return report.reviewedByAdminEmail ?? report.reviewedByAdminId
+}
+
+function TableCellViewer({
+  report,
+  onStatusChange,
+}: {
+  report: Report
+  onStatusChange: (reportId: string, status: ReportStatus) => Promise<void>
+}) {
+  const [status, setStatus] = React.useState(report.status)
+  const [saving, setSaving] = React.useState(false)
+
+  const handleStatusChange = async (value: string) => {
+    const newStatus = value as ReportStatus
+    setSaving(true)
+    try {
+      await onStatusChange(report.id, newStatus)
+      setStatus(newStatus)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <Drawer direction="right">
       <DrawerTrigger asChild>
@@ -34,45 +75,53 @@ function TableCellViewer({ report }: { report: Report }) {
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>Report Details</DrawerTitle>
-          <DrawerDescription>Detailed report information</DrawerDescription>
+          <DrawerDescription>View full report and update status. Changes are logged in Audit Log.</DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 p-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label>Reporter</Label>
-              <Input value={report.reporter?.email || report.reporterId} readOnly />
+              <Input value={reporterDisplay(report)} readOnly />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Reported User</Label>
-              <Input value={report.reportedUser?.email || report.reportedUserId || "-"} readOnly />
+              <Input value={reportedUserDisplay(report)} readOnly />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label>Reported Property</Label>
-              <Input value={report.reportedProperty?.title || report.reportedPropertyId || "-"} readOnly />
+              <Input value={reportedPropertyDisplay(report)} readOnly />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Reviewed By</Label>
-              <Input value={report.reviewedByAdmin?.email || report.reviewedByAdminId || "-"} readOnly />
+              <Input value={reviewedByDisplay(report)} readOnly />
             </div>
           </div>
           <div className="flex flex-col gap-2">
             <Label>Reason</Label>
-            <Input value={report.reason} readOnly />
+            <Input value={report.reason} readOnly className="min-h-[80px]" />
           </div>
+          {report.createdAt && (
+            <div className="flex flex-col gap-2">
+              <Label>Reported at</Label>
+              <Input value={new Date(report.createdAt).toLocaleString()} readOnly />
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             <Label>Status</Label>
-            <Select defaultValue={report.status}>
+            <Select value={status} onValueChange={handleStatusChange} disabled={saving}>
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ReportStatus.PENDING}>Pending</SelectItem>
-                <SelectItem value={ReportStatus.IN_PROGRESS}>In Progress</SelectItem>
+                <SelectItem value={ReportStatus.OPEN}>Open</SelectItem>
+                <SelectItem value={ReportStatus.REVIEWED}>Reviewed</SelectItem>
                 <SelectItem value={ReportStatus.RESOLVED}>Resolved</SelectItem>
+                <SelectItem value={ReportStatus.DISMISSED}>Dismissed</SelectItem>
               </SelectContent>
             </Select>
+            {saving && <p className="text-xs text-muted-foreground">Saving…</p>}
           </div>
         </div>
         <DrawerFooter>
@@ -85,40 +134,52 @@ function TableCellViewer({ report }: { report: Report }) {
   )
 }
 
-const columns: ColumnDef<Report>[] = [
-  {
-    accessorKey: "reason",
-    header: "Reason",
-    cell: ({ row }) => <TableCellViewer report={row.original} />,
-  },
-  {
-    id: "reporter",
-    header: "Reporter",
-    cell: ({ row }) => row.original.reporter?.email || row.original.reporterId,
-  },
-  {
-    id: "reportedUser",
-    header: "Reported User",
-    cell: ({ row }) => row.original.reportedUser?.email || row.original.reportedUserId || "-",
-  },
-  {
-    id: "reportedProperty",
-    header: "Reported Property",
-    cell: ({ row }) => row.original.reportedProperty?.title || row.original.reportedPropertyId || "-",
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => <Badge variant="outline">{row.original.status}</Badge>,
-  },
-  {
-    id: "reviewedBy",
-    header: "Reviewed By",
-    cell: ({ row }) => row.original.reviewedByAdmin?.email || row.original.reviewedByAdminId || "-",
-  },
-]
+function buildColumns(onStatusChange: (reportId: string, status: ReportStatus) => Promise<void>): ColumnDef<Report>[] {
+  return [
+    {
+      accessorKey: "reason",
+      header: "Reason",
+      cell: ({ row }) => <TableCellViewer report={row.original} onStatusChange={onStatusChange} />,
+    },
+    {
+      id: "reporter",
+      header: "Reporter",
+      cell: ({ row }) => reporterDisplay(row.original),
+    },
+    {
+      id: "reportedUser",
+      header: "Reported User",
+      cell: ({ row }) => reportedUserDisplay(row.original),
+    },
+    {
+      id: "reportedProperty",
+      header: "Reported Property",
+      cell: ({ row }) => reportedPropertyDisplay(row.original),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <Badge variant="outline">{row.original.status}</Badge>,
+    },
+    {
+      id: "reviewedBy",
+      header: "Reviewed By",
+      cell: ({ row }) => reviewedByDisplay(row.original),
+    },
+  ]
+}
 
-export function DataTable({ data }: { data: Report[] }) {
+export function DataTable({
+  data,
+  onStatusChange,
+}: {
+  data: Report[]
+  onStatusChange?: (reportId: string, status: ReportStatus) => Promise<void>
+}) {
+  const columns = React.useMemo(
+    () => buildColumns(onStatusChange ?? (async () => {})),
+    [onStatusChange]
+  )
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -127,7 +188,7 @@ export function DataTable({ data }: { data: Report[] }) {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: columns as ColumnDef<Report>[],
     state: { rowSelection, columnVisibility, columnFilters, sorting, pagination },
     getRowId: (row) => row.id,
     enableRowSelection: true,
