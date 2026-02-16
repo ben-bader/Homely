@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F3),
+      backgroundColor: const Color(0xEAEBEE),
       body: SafeArea(
         child: Column(
           children: [
