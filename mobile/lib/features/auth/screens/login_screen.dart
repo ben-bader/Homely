@@ -8,6 +8,9 @@ import 'signup_screen.dart';
 
 const _kAccent = Color(0xFF252525);
 
+// oklch(97% 0 0) → approx #F7F7F7 (near-white neutral)
+const _kBackground = Color(0xFFF7F7F7);
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -77,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F3),
+      backgroundColor: _kBackground, // ← updated background color
       body: SafeArea(
         child: Column(
           children: [
@@ -88,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Image.asset(
                     'assets/logo.png',
-                    height: 42,
+                    height: 56, // ← bigger logo
                     fit: BoxFit.contain,
                   ),
                 ],
@@ -225,10 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLabeledField({
-    required String label,
-    required Widget child,
-  }) {
+  Widget _buildLabeledField({required String label, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -294,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
           borderSide: BorderSide(color: AppColors.error, width: 2.2),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _kBackground, // same as page background
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 18,
