@@ -11,10 +11,11 @@ import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import Users from "@/components/dashboard-componenets/Users"
 import { useState } from "react"
+import AdminDashboardWrapper from "@/components/dashboard-componenets/AdminDashboardWrapper"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")
-
+ 
   const components: Record<string, React.ReactNode> = {
     users: <Users />,
     properties: <Properties />,
@@ -27,6 +28,7 @@ export default function Page() {
   
   
     return (
+      <AdminDashboardWrapper>
 
       <SidebarProvider
         style={
@@ -35,7 +37,7 @@ export default function Page() {
             "--header-height": "calc(var(--spacing) * 12)",
           } as React.CSSProperties
         }
-      >
+        >
         <AppSidebar variant="inset" setActiveSection={setActiveSection} activeSection={activeSection}/>
         <SidebarInset>
           <SiteHeader />
@@ -49,5 +51,6 @@ export default function Page() {
           </div>
         </SidebarInset>
       </SidebarProvider>
+        </AdminDashboardWrapper>
     )
   }
