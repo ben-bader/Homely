@@ -1,14 +1,9 @@
 package com.homely.media.controller;
 
-import java.util.Map;
-import java.util.UUID;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.homely.common.enums.MediaType;
@@ -44,14 +38,7 @@ public class MediaController {
         private final PropertyRepository propertyRepository;
         private final PropertyMediaRepository mediaRepository;
 
-        @Value("${supabase.url}")
-        private String supabaseUrl;
 
-        @Value("${supabase.service-role-key}")
-        private String serviceRoleKey;
-
-        @Value("${supabase.bucket}")
-        private String bucket;
 
         @GetMapping("/{propertyId}/media")
         public List<PropertyMedia> getMedia(@PathVariable UUID propertyId) {

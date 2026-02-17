@@ -3,28 +3,31 @@ package com.homely.media.service;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.http.HttpHeaders;
-import org.springframework.beans.factory.annotation.Value;
 
-import org.springframework.http.MediaType;
-
+import io.github.cdimascio.dotenv.Dotenv;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+
 public class SupabaseStorageService {
 
 
-     @Value("${supabase.url}")
-    private String supabaseUrl;
-
-    @Value("${supabase.service.key}")
-    private String serviceKey;
+     private final String supabaseUrl;
+    private final String serviceKey;
+    @Autowired
+    public SupabaseStorageService(Dotenv dotenv) {
+        this.supabaseUrl = dotenv.get("SUPABASE_URL");
+        this.serviceKey = dotenv.get("SUPABASE_SERVICE_KEY");
+    }
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String uploadVideo(MultipartFile file, UUID propertyId) throws IOException {
