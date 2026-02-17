@@ -12,6 +12,14 @@ type User = {
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const filteredUsers = users.filter((u) =>
+    [u.name, u.email, u.role]
+      .join(" ")
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
 
   const fetchUsers = async () => {
     try {
@@ -47,6 +55,13 @@ const Users = () => {
   return (
     <div className="px-8">
       <h2 className="text-xl font-semibold mb-2">Users</h2>
+      <input
+        type="text"
+        placeholder="Search users…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-900 backdrop-blur transition focus:bg-white focus:border-neutral-900 focus:outline-none"
+      />
       <table className="w-full table-auto border-collapse">
         <thead>
           <tr>
@@ -58,7 +73,7 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => (
+          {filteredUsers.map((u) => (
             <tr key={u.id} className="border-t">
               <td className="p-2">{u.name}</td>
               <td className="p-2">{u.email}</td>
