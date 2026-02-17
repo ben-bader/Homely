@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { LucideIcon } from "lucide-react"
 
 export const NavMain = ({
   items,
@@ -17,7 +18,7 @@ export const NavMain = ({
   items: {
     title: string
     url: string
-    icon?: Icon
+    icon ?: LucideIcon
   }[]
   activeSection: string
   setActiveSection: (section: string) => void

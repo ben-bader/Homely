@@ -139,7 +139,7 @@ export default function Users() {
         placeholder="Search users…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none focus:bg-white"
+        className="mb-4 w-full "
       />
 
       {/* --- Users Table --- */}

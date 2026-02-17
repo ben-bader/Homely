@@ -3,6 +3,7 @@ package com.homely.property.dto;
 import java.math.BigDecimal;
 
 import com.homely.common.enums.ListingType;
+import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 
 import jakarta.validation.Valid;
@@ -25,7 +26,7 @@ public class PropertyCreateRequest {
     private ListingType listingType;
     @NotNull
     private PropertyType propertyType;
-    private String status;
+    private PropertyStatus status;
     private String address;
     private Double latitude;
     private Double longitude;

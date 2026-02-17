@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.homely.common.enums.ListingType;
+import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 import com.homely.property.dto.PropertyCreateRequest;
 import com.homely.property.dto.PropertyDto;
@@ -148,4 +149,11 @@ public class PropertyService {
     public void delete(UUID id) {
         propertyRepository.deleteById(id);
     }
+    public Property updateStatus(UUID propertyId, PropertyStatus status) {
+    Property property = propertyRepository.findById(propertyId)
+            .orElseThrow(() -> new RuntimeException("Property not found"));
+    property.setStatus(status);
+    return propertyRepository.save(property);
+}
+
 }

@@ -28,7 +28,11 @@ export enum PurchaseStatus {
   COMPLETED = "COMPLETED",
   CANCELLED = "CANCELLED",
 }
-
+export enum PropertyStatus {
+  AVAILABLE = "AVAILABLE",
+    SUSPENDED = "SUSPENDED",
+    DRAFT = "DRAFT"
+}
 // User DTO
 export interface User {
   id: string
@@ -49,7 +53,7 @@ export interface Property {
   currency: string
   listingType: ListingType
   propertyType: PropertyType
-  status: string
+  status:PropertyStatus
   address: string
   latitude: number | null
   longitude: number | null
@@ -86,3 +90,20 @@ export interface AuditLog {
   createdAt?: string
   updatedAt?: string
 }
+export enum VisitStatus {
+  PENDING = "PENDING",
+  CONFIRMED = "CONFIRMED",
+  CANCELLED = "CANCELLED",
+  COMPLETED = "COMPLETED",
+}
+
+export type VisitRequest = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  propertyId: string;
+  propertyTitle: string;
+  requestedDate: string; // ISO string
+  status: VisitStatus;
+};

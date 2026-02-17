@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.homely.boost.dto.BoostPurchaseDto;
 import com.homely.boost.mapper.BoostPurchaseMapper;
 import com.homely.boost.service.BoostService;
+import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.ReportStatus;
 import com.homely.feedback.dto.FeedbackDto;
 import com.homely.feedback.mapper.FeedbackMapper;
@@ -26,6 +27,8 @@ import com.homely.moderation.mapper.AuditLogMapper;
 import com.homely.moderation.service.ModerationService;
 import com.homely.notification.ReportMapper;
 import com.homely.property.dto.PropertyDto;
+import com.homely.property.entity.Property;
+import com.homely.property.mapper.PropertyMapper;
 import com.homely.property.service.PropertyService;
 import com.homely.propertyview.dto.PropertyViewDto;
 import com.homely.propertyview.mapper.PropertyViewMapper;
@@ -62,6 +65,7 @@ public class AdminController {
     private final AuditLogMapper auditLogMapper;
     private final UserMapper userMapper;
     private final ProfileMapper profileMapper;
+    private final PropertyMapper propertyMapper;
     private final BoostPurchaseMapper boostPurchaseMapper;
     private final PropertyViewMapper propertyViewMapper;
     private final FeedbackMapper feedbackMapper;
@@ -174,4 +178,29 @@ public void deactivateUser(@PathVariable UUID id, Principal principal) {
     public List<VisitRequestDto> getAllVisitRequests() {
         return visitRequestService.getAll().stream().map(visitRequestMapper::toDto).toList();
     }
+
+@PutMapping("/properties/{id}/status")
+public PropertyDto updatePropertyStatus(
+        @PathVariable UUID id,
+        @RequestParam PropertyStatus status,
+        Principal principal) {
+
+    // Get the admin performing the action
+    User admin = userService.getByEmail(principal.getName());
+    if (admin == null) throw new RuntimeException("Admin not found");
+
+    // Update the property status in the service
+    Property updated = propertyService.updateStatus(id, status);
+
+    // Log this action
+    moderationService.logAction(
+            "UPDATE_PROPERTY_STATUS",
+            admin,
+            "Changed property id " + id + " status to " + status
+    );
+
+    // Convert to DTO and return
+    return propertyMapper.toDto(updated);
+}
+
 }

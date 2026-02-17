@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.homely.common.enums.ListingType;
+import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 
 import lombok.Getter;
@@ -24,7 +25,7 @@ public class PropertyDto {
     private String currency;
     private ListingType listingType;
     private PropertyType propertyType;
-    private String status;
+    private PropertyStatus status;
     private String address;
     private Double latitude;
     private Double longitude;

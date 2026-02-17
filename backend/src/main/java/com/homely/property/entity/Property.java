@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 
 import com.homely.common.base.BaseEntity;
 import com.homely.common.enums.ListingType;
+import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 import com.homely.user.entity.User;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -37,7 +39,9 @@ public class Property extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private PropertyType propertyType;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PropertyStatus status;
     private String address;
     private Double latitude;
     private Double longitude;

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -12,72 +12,126 @@ import {
   type ColumnFiltersState,
   type SortingState,
   type VisibilityState,
-} from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { api } from "@/lib/api"
+} from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { api } from "@/lib/api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PropertyStatus } from "@/types/dashboard-types";
 
 type Property = {
-  id: string
-  title: string
-  address?: string
-  price?: number
-  status?: string
-}
+  id: string;
+  title: string;
+  address?: string;
+  price?: number;
+  status?: string;
+};
 
 export default function Properties() {
-  const [properties, setProperties] = React.useState<Property[]>([])
-  const [loading, setLoading] = React.useState(true)
-  const [search, setSearch] = React.useState("")
+  const [properties, setProperties] = React.useState<Property[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [search, setSearch] = React.useState("");
 
   // Fetch properties from API
   const fetchProperties = async () => {
     try {
-      const res = await api.get<Property[]>("/admin/properties")
-      setProperties(res.data || [])
+      const res = await api.get<Property[]>("/admin/properties");
+      setProperties(res.data || []);
     } catch (err) {
-      console.error("Failed to load properties", err)
+      console.error("Failed to load properties", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   React.useEffect(() => {
-    fetchProperties()
-  }, [])
+    fetchProperties();
+  }, []);
 
   // --- Metrics cards ---
-  const totalProperties = properties.length
-  const availableProperties = properties.filter((p) => p.status?.toLowerCase() === "available").length
+  const totalProperties = properties.length;
+  const availableProperties = properties.filter(
+    (p) => p.status === "AVAILABLE",
+  ).length;
   const rentedOrSoldProperties = properties.filter(
-    (p) => p.status?.toLowerCase() === "rented" || p.status?.toLowerCase() === "sold"
-  ).length
+    (p) =>
+      p.status?.toLowerCase() === "rented" ||
+      p.status?.toLowerCase() === "sold",
+  ).length;
 
-  // Columns definition
   const columns = React.useMemo<ColumnDef<Property>[]>(
     () => [
       { accessorKey: "title", header: "Title" },
       { accessorKey: "address", header: "Address" },
-      { accessorKey: "price", header: "Price", cell: ({ row }) => row.original.price ?? "-" },
-      { accessorKey: "status", header: "Status", cell: ({ row }) => row.original.status ?? "-" },
       {
-        id: "actions",
-        header: "Actions",
+        accessorKey: "price",
+        header: "Price",
+        cell: ({ row }) => row.original.price ?? "-",
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
         cell: ({ row }) => (
-          <Button size="sm" onClick={() => alert(`Edit ${row.original.title}`)}>
-            Edit
-          </Button>
+          <Select
+            value={row.original.status || "DRAFT"}
+            onValueChange={(newStatus: PropertyStatus) =>
+              handleStatusChange(row.original.id, newStatus)
+            }
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="AVAILABLE">AVAILABLE</SelectItem>
+              <SelectItem value="SUSPENDED">SUSPENDED</SelectItem>
+              <SelectItem value="DRAFT">DRAFT</SelectItem>
+            </SelectContent>
+          </Select>
         ),
       },
     ],
-    []
-  )
+    [],
+  );
+  const handleStatusChange = async (propertyId: string, newStatus: string) => {
+    try {
+      await api.patch(`/admin/properties/${propertyId}/status`, {
+        status: newStatus,
+      });
+      // Update state locally
+      setProperties((prev) =>
+        prev.map((p) =>
+          p.id === propertyId ? { ...p, status: newStatus } : p,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to update status", err);
+    }
+  };
 
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 })
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   // React Table instance
   const table = useReactTable({
@@ -86,7 +140,7 @@ export default function Properties() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-        .includes(search.toLowerCase())
+        .includes(search.toLowerCase()),
     ),
     columns,
     state: { columnFilters, sorting, columnVisibility, pagination },
@@ -98,9 +152,9 @@ export default function Properties() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-  })
+  });
 
-  if (loading) return <div>Loading properties…</div>
+  if (loading) return <div>Loading properties…</div>;
 
   return (
     <div className="px-8 space-y-6">
@@ -113,7 +167,9 @@ export default function Properties() {
           <p className="text-2xl font-bold">{availableProperties}</p>
         </div>
         <div className="p-4 bg-white rounded-xl shadow text-center">
-          <p className="text-sm text-muted-foreground">Rented/Sold Properties</p>
+          <p className="text-sm text-muted-foreground">
+            Rented/Sold Properties
+          </p>
           <p className="text-2xl font-bold">{rentedOrSoldProperties}</p>
         </div>
         <div className="p-4 bg-white rounded-xl shadow text-center">
@@ -128,7 +184,7 @@ export default function Properties() {
         placeholder="Search properties…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none focus:bg-white"
+        className="mb-4 w-full "
       />
 
       {/* --- Properties Table --- */}
@@ -141,7 +197,10 @@ export default function Properties() {
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -153,14 +212,20 @@ export default function Properties() {
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center h-24">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center h-24"
+                >
                   No properties.
                 </TableCell>
               </TableRow>
@@ -169,5 +234,5 @@ export default function Properties() {
         </Table>
       </div>
     </div>
-  )
+  );
 }

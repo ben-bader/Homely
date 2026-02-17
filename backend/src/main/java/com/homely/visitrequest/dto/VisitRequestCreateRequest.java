@@ -15,4 +15,9 @@ public class VisitRequestCreateRequest {
     private UUID propertyId;
     @NotNull
     private LocalDateTime requestedDate;
+    private String userName;     
+    private String userEmail;          // Added
+     // Added
+    private String propertyTitle;     // Added
+
 }
