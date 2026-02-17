@@ -7,6 +7,9 @@ import '../widgets/auth_text_field.dart';
 
 const _kAccent = Color(0xFF252525);
 
+// oklch(97% 0 0) → approx #F7F7F7 (near-white neutral)
+const _kBackground = Color(0xFFF7F7F7);
+
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -107,7 +110,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F6F3),
+      backgroundColor: _kBackground, // ← updated background color
       body: SafeArea(
         child: Column(
           children: [
@@ -118,7 +121,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 children: [
                   Image.asset(
                     'assets/logo.png',
-                    height: 42,
+                    height: 56, // ← bigger logo
                     fit: BoxFit.contain,
                   ),
                 ],
@@ -164,7 +167,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               label: 'First Name',
                               child: _buildTextField(
                                 controller: _firstNameController,
-                                hintText: 'Jhon',
+                                hintText: 'Mohamed',
                                 validator: Validators.validateName,
                               ),
                             ),
@@ -175,7 +178,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               label: 'Last Name',
                               child: _buildTextField(
                                 controller: _lastNameController,
-                                hintText: 'Doe',
+                                hintText: 'El Am',
                                 validator: Validators.validateName,
                               ),
                             ),
@@ -395,7 +398,7 @@ class _SignupScreenState extends State<SignupScreen> {
           borderSide: BorderSide(color: AppColors.error, width: 2.2),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _kBackground, // same as page background
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 18,

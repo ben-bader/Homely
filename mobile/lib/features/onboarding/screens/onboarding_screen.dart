@@ -18,18 +18,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingItem> items = const [
     OnboardingItem(
-      title: 'Discover Properties',
-      subtitle: 'Homes, villas & studios near you',
+      title: 'Discover\nProperties',
+      subtitle:
+          'Browse thousands of homes, villas & studios near you — curated just for your lifestyle and budget.',
       image: 'assets/onboarding1.jpg',
     ),
     OnboardingItem(
-      title: 'Chat With \nSellers',
-      subtitle: 'Secure and instant conversations',
+      title: 'Chat With\nSellers',
+      subtitle:
+          'Connect directly with property owners through secure, real-time conversations. No middlemen, no delays.',
       image: 'assets/onboarding2.jpg',
     ),
     OnboardingItem(
-      title: 'Sell Smarter',
-      subtitle: 'Boost your listings and reach more buyers',
+      title: 'Sell\nSmarter',
+      subtitle:
+          'Boost your listings, reach thousands of serious buyers, and close deals faster than ever before.',
       image: 'assets/onboarding3.jpg',
     ),
   ];
@@ -97,14 +100,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Colors.black.withOpacity(0.30),
                       Colors.transparent,
                       Colors.transparent,
-                      Colors.black.withOpacity(0.85),
+                      Colors.black.withOpacity(0.90),
                     ],
-                    stops: const [0, 0.3, 0.55, 1],
+                    stops: const [0, 0.3, 0.50, 1],
                   ),
                 ),
               ),
             ),
           ),
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -113,7 +117,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   Image.asset(
                     'assets/logo.png',
-                    height: 40,
+                    height: 56, 
                     fit: BoxFit.contain,
                     color: Colors.white,
                     colorBlendMode: BlendMode.srcIn,
@@ -148,29 +152,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
           ),
+
           Positioned(
             left: 28,
             right: 28,
-            top: MediaQuery.of(context).size.height * 0.15,
+            top: MediaQuery.of(context).size.height * 0.14,
             child: Text(
               items[index].title,
               textAlign: TextAlign.left,
               style: const TextStyle(
-                fontSize: 52,
+                fontSize: 64, // bigger title
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                height: 1.1,
-                letterSpacing: -1.5,
+                height: 1.05,
+                letterSpacing: -2.0,
                 shadows: [
                   Shadow(
                     color: Colors.black54,
                     offset: Offset(0, 2),
-                    blurRadius: 12,
+                    blurRadius: 16,
                   ),
                 ],
               ),
             ),
           ),
+
           Positioned(
             left: 0,
             right: 0,
@@ -187,15 +193,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         items[index].subtitle,
                         textAlign: TextAlign.left,
                         style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
                           color: Colors.white,
-                          height: 1.5,
-                          letterSpacing: 0.3,
+                          height: 1.6,
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
+
+                    // dots
                     IgnorePointer(
                       child: Row(
                         children: List.generate(
@@ -206,8 +214,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             height: 8,
                             width: index == dot ? 32 : 8,
                             decoration: BoxDecoration(
-                              color:
-                                  index == dot ? Colors.white : Colors.white38,
+                              color: index == dot
+                                  ? Colors.white
+                                  : Colors.white38,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -215,6 +224,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                     const SizedBox(height: 28),
+
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
                       onEnter: (_) => setState(() => isHovering = true),
