@@ -39,13 +39,11 @@ public class SecurityConfig {
     public JwtFilter jwtFilter() {
         return new JwtFilter(jwtService, userService, tokenBlacklist);
     }
-    
+
     @Bean
     public FilterRegistrationBean<JwtFilter> jwtFilterRegistration(
-            JwtFilter jwtFilter
-    ) {
-        FilterRegistrationBean<JwtFilter> registration =
-                new FilterRegistrationBean<>(jwtFilter);
+            JwtFilter jwtFilter) {
+        FilterRegistrationBean<JwtFilter> registration = new FilterRegistrationBean<>(jwtFilter);
         registration.setEnabled(false);
         return registration;
     }
@@ -57,56 +55,44 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
+            HttpSecurity http) throws Exception {
 
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(
-                        SessionCreationPolicy.STATELESS
-                )
-            )
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
+                .sessionManagement(session -> session.sessionCreationPolicy(
+                        SessionCreationPolicy.STATELESS))
 
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/ws/**", "/api/auth/**").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/ws/**", "/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
 
-            .addFilterBefore(
-                jwtFilter(),
-                UsernamePasswordAuthenticationFilter.class
-            );
-            
+                .addFilterBefore(
+                        jwtFilter(),
+                        UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                                    "http://localhost:3000",
-                                    "http://localhost:63861",
-                                    "http://localhost:65017",
-                                    "https://zcvxc076-3000.uks1.devtunnels.ms"
-                                ));
-
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "https://*.devtunnels.ms"));
 
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT",
-                "DELETE", "PATCH", "OPTIONS"
-        ));
+                "DELETE", "PATCH", "OPTIONS"));
 
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", config);
         return source;
