@@ -43,6 +43,14 @@ public class ChatController {
         return conversationMapper.toDto(conversation);
     }
 
+    @GetMapping("/conversations")
+    public List<com.homely.chat.dto.ConversationDto> getUserConversations(Principal principal) {
+        User user = userService.getByEmail(principal.getName());
+        return chatService.getUserConversations(user.getId()).stream()
+                .map(conversationMapper::toDto)
+                .toList();
+    }
+
     @GetMapping("/messages")
     public List<MessageDto> getConversationMessages(@RequestParam UUID conversationId) {
         return chatService.getConversationMessages(conversationId).stream()

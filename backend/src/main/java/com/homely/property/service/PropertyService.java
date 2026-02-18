@@ -109,10 +109,16 @@ public class PropertyService {
 
     // ================= GET ONE =================
     public PropertyDto get(UUID id) {
-        return propertyMapper.toDto(
-                propertyRepository.findById(id)
-                        .orElseThrow(() -> new RuntimeException("Property not found"))
-        );
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
+        // Force fetch of lazy-loaded subtypes
+        if (property.getApartment() != null) property.getApartment().getPropertyId();
+        if (property.getHouse() != null) property.getHouse().getPropertyId();
+        if (property.getVilla() != null) property.getVilla().getPropertyId();
+        if (property.getStudio() != null) property.getStudio().getPropertyId();
+        if (property.getCommercial() != null) property.getCommercial().getPropertyId();
+        if (property.getLand() != null) property.getLand().getPropertyId();
+        return propertyMapper.toDto(property);
     }
 
     // ================= HOMEPAGE =================

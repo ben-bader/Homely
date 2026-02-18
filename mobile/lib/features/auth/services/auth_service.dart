@@ -1,24 +1,32 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/core/network/api_client.dart';
 
 
+// ─────────────────────────────────────────────────────────────
+// Models
+// ─────────────────────────────────────────────────────────────
 
 class LoginRequest {
   final String email;
   final String password;
 
-  LoginRequest({required this.email, required this.password});
+  LoginRequest({
+    required this.email,
+    required this.password,
+  });
 
-  Map<String, dynamic> toJson() => {'email': email, 'password': password};
+  Map<String, dynamic> toJson() => {
+        'email': email,
+        'password': password,
+      };
 }
 
 class RegisterRequest {
-  final String name; // Full name
+  final String name;
   final String email;
   final String password;
   final String phone;
-  final String role; // 'CLIENT' | 'SELLER'
+  final String role; // CLIENT | SELLER
 
   RegisterRequest({
     required this.name,
@@ -29,12 +37,12 @@ class RegisterRequest {
   });
 
   Map<String, dynamic> toJson() => {
-    'name': name,
-    'email': email,
-    'password': password,
-    'phone': phone,
-    'role': role,
-  };
+        'name': name,
+        'email': email,
+        'password': password,
+        'phone': phone,
+        'role': role,
+      };
 }
 
 class AuthResponse {
@@ -61,8 +69,7 @@ class AuthResponse {
     return AuthResponse(
       token: json['token'] ?? json['accessToken'] ?? '',
       userId: (json['id'] ?? json['userId'] ?? '').toString(),
-      name:
-          json['name'] ??
+      name: json['name'] ??
           '${json['firstName'] ?? ''} ${json['lastName'] ?? ''}'.trim(),
       email: json['email'] ?? '',
       role: json['role'] ?? 'CLIENT',
@@ -70,55 +77,62 @@ class AuthResponse {
   }
 }
 
-// ── Service ───────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────
+// Service
+// ─────────────────────────────────────────────────────────────
 
 class AuthService {
-  static const String baseUrl = 'https://zcvxc076-8082.uks1.devtunnels.ms/api/auth';
+  final SecureStorage _storage = SecureStorage();
 
-  final _secureStorageHelper = SecureStorage(); 
-  final _storage = const FlutterSecureStorage(); 
-
+  /// LOGIN
   Future<AuthResponse> login(LoginRequest request) async {
     final data = await ApiClient.post(
-      '/auth/login',
+      '/api/auth/login', // ✅ Correct endpoint
       body: request.toJson(),
       auth: false,
     );
 
     final response = AuthResponse.fromJson(data);
+
     await _saveSession(response);
 
     return response;
   }
 
+  /// REGISTER
   Future<AuthResponse> register(RegisterRequest request) async {
     final data = await ApiClient.post(
-      '/auth/register',
+      '/api/auth/register', // ✅ Correct endpoint
       body: request.toJson(),
       auth: false,
     );
 
     final response = AuthResponse.fromJson(data);
+
     await _saveSession(response);
 
     return response;
   }
 
+  /// LOGOUT
   Future<void> logout() async {
-    // ✅ Correct method name
-    await _storage.deleteAll();
+    await _storage.clearAll();
   }
 
+  /// CHECK IF USER IS LOGGED IN
   Future<bool> isLoggedIn() async {
-    return await _secureStorageHelper.hasToken();
+    return await _storage.hasToken();
   }
 
+  /// GET USER ROLE
   Future<String?> getUserRole() async {
-    return await _secureStorageHelper.getUserRole();
+    return await _storage.getUserRole();
   }
 
+  /// SAVE SESSION
   Future<void> _saveSession(AuthResponse r) async {
-    await _secureStorageHelper.saveUserData(
+    await _storage.saveUserData(
       token: r.token,
       userId: r.userId,
       email: r.email,

@@ -132,18 +132,18 @@ class _ConvTile extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(conv.sellerName,
+                      Text(conv.sellerName ?? 'Seller',
                           style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
                               color: _kAccent)),
-                      Text(_fmtTime(conv.lastAt),
+                      Text(_fmtTime(conv.lastAt ?? DateTime.now()),
                           style: const TextStyle(
                               fontSize: 11, color: Color(0xFF999999))),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(conv.propertyTitle,
+                  Text(conv.propertyTitle ?? 'Property',
                       style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFFAAAAAA),
@@ -154,7 +154,7 @@ class _ConvTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          conv.lastMessage,
+                          conv.lastMessage ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

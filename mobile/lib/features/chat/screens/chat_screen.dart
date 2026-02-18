@@ -91,7 +91,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    conv.sellerName,
+                    conv.sellerName ?? 'Seller',
                     style: const TextStyle(
                       color: _kAccent,
                       fontWeight: FontWeight.w700,
@@ -99,7 +99,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ),
                   ),
                   Text(
-                    conv.propertyTitle,
+                    conv.propertyTitle ?? 'Property',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -159,7 +159,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Posez une question sur ${conv.propertyTitle}',
+                          'Posez une question sur ${conv.propertyTitle ?? "cette propriété"}',
                           style: const TextStyle(
                             color: Color(0xFFAAAAAA),
                             fontSize: 13,
@@ -313,7 +313,7 @@ class _Bubble extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    message.content,
+                    message.body,
                     style: TextStyle(
                       color: isMe ? Colors.white : _kAccent,
                       fontSize: 14,

@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.homely.chat.entity.Message;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
-    List<Message> findByConversationIdOrderByIdAsc(UUID conversationId);
+    List<Message> findByConversationIdOrderByCreatedAtAsc(UUID conversationId);
     Message findBySenderUsername(String Username);
 }

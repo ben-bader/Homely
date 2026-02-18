@@ -3,6 +3,7 @@ package com.homely.chat.entity;
 import java.time.Instant;
 import java.util.Map;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -42,4 +43,8 @@ public class Message {
     private Map<String, Object> attachments;
 
     private Instant readAt;
+    
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
 }

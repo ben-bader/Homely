@@ -8,46 +8,29 @@ class ChatRepository {
 
   Future<String> _myId() async => (await _storage.getUserId()) ?? '';
 
-  // GET /chat/conversations
-  Future<List<Conversation>> fetchConversations() async {
-    final data = await ApiClient.get('/chat/conversations');
-    final list = data is List
-        ? data
-        : (data['content'] ?? data['data'] ?? []) as List;
-    return list.map((e) => Conversation.fromJson(e)).toList();
-  }
-
-  // GET /chat/conversation/{id}/messages
-  Future<List<ChatMessage>> fetchMessages(String conversationId) async {
-    final myId = await _myId();
-    final data = await ApiClient.get(
-      '/chat/conversation/$conversationId/messages',
-    );
-    final list = data is List ? data : (data['content'] ?? []) as List;
-    return list.map((e) => ChatMessage.fromJson(e, myId)).toList();
-  }
-
-  // POST /chat/conversation
-  // Body: ConversationCreateRequest { sellerId, propertyId }
-  Future<Conversation> startConversation(
-    String sellerId,
-    String propertyId,
-  ) async {
-    final data = await ApiClient.post(
-      '/chat/conversation',
-      body: {'sellerId': sellerId, 'propertyId': propertyId},
-    );
+  // POST /api/chat/conversations/{propertyId}
+  // Creates or gets existing conversation for a property
+  Future<Conversation> createConversation(String propertyId) async {
+    final data = await ApiClient.post('/api/chat/conversations/$propertyId');
     return Conversation.fromJson(data);
   }
 
-  // POST /chat/message
-  // Body: MessageCreateRequest { conversationId, content }
-  Future<ChatMessage> sendMessage(String conversationId, String content) async {
+  // GET /api/chat/conversations
+  // Fetches all conversations for the current user
+  Future<List<Conversation>> fetchConversations() async {
+    final data = await ApiClient.get('/api/chat/conversations');
+    final list = data is List ? data : [];
+    return list.map((e) => Conversation.fromJson(e)).toList();
+  }
+
+  // GET /api/chat/messages?conversationId={conversationId}
+  Future<List<ChatMessage>> fetchMessages(String conversationId) async {
     final myId = await _myId();
-    final data = await ApiClient.post(
-      '/chat/message',
-      body: {'conversationId': conversationId, 'content': content},
+    final data = await ApiClient.get(
+      '/api/chat/messages',
+      queryParams: {'conversationId': conversationId},
     );
-    return ChatMessage.fromJson(data, myId);
+    final list = data is List ? data : [];
+    return list.map((e) => ChatMessage.fromJson(e, myId)).toList();
   }
 }
