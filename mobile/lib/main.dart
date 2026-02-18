@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
-import 'features/auth/screens/login_screen.dart';
+import 'features/property/screens/home_screen.dart';
 import 'features/auth/services/auth_service.dart';
 
 void main() async {
@@ -13,7 +13,11 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(const HomelyApp());
+  runApp(
+    const ProviderScope(  
+      child: HomelyApp(),
+    ),
+  );
 }
 
 class HomelyApp extends StatelessWidget {
@@ -26,14 +30,14 @@ class HomelyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.grey,
-        scaffoldBackgroundColor: Colors.black,
+        scaffoldBackgroundColor: const Color(0xFFF7F7F7),
         useMaterial3: true,
+        fontFamily: 'Inter', // ou ta font préférée
       ),
       home: const SplashScreen(),
     );
   }
 }
-
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -66,7 +70,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuthStatus() async {
-
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
@@ -74,15 +77,13 @@ class _SplashScreenState extends State<SplashScreen>
     final isLoggedIn = await _authService.isLoggedIn();
 
     if (isLoggedIn) {
-      final role = await _authService.getUserRole();
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => TestHomeScreen(role: role ?? 'UNKNOWN'),
-        ),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } else {
+      // Redirige vers l'onboarding
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const OnboardingScreen()),
@@ -168,7 +169,7 @@ class TestHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = AuthService();
+    final _authService = AuthService();
     final isClient = role == 'CLIENT';
 
     return Scaffold(
@@ -215,7 +216,7 @@ class TestHomeScreen extends StatelessWidget {
               );
 
               if (confirm == true && context.mounted) {
-                await authService.logout();
+                await _authService.logout();
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => const LoginScreen()),

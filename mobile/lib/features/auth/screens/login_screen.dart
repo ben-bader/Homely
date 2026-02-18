@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/validators.dart';
-import '../models/login_request.dart';
 import '../services/auth_service.dart';
-import '../widgets/auth_text_field.dart';
 import 'signup_screen.dart';
 
 const _kAccent = Color(0xFF252525);
-
-// oklch(97% 0 0) → approx #F7F7F7 (near-white neutral)
 const _kBackground = Color(0xFFF7F7F7);
 
 class LoginScreen extends StatefulWidget {
@@ -40,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final response = await _authService.login(request);
 
-      if (mounted && response != null) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Welcome back, ${response.firstName}!'),
