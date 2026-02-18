@@ -1,9 +1,11 @@
 package com.homely.property.service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.homely.common.enums.ListingType;
@@ -11,20 +13,8 @@ import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 import com.homely.property.dto.PropertyCreateRequest;
 import com.homely.property.dto.PropertyDto;
-import com.homely.property.entity.Apartment;
-import com.homely.property.entity.Commercial;
-import com.homely.property.entity.House;
-import com.homely.property.entity.Land;
-import com.homely.property.entity.Property;
-import com.homely.property.entity.Studio;
-import com.homely.property.entity.Villa;
-import com.homely.property.mapper.ApartmentMapper;
-import com.homely.property.mapper.CommercialMapper;
-import com.homely.property.mapper.HouseMapper;
-import com.homely.property.mapper.LandMapper;
-import com.homely.property.mapper.PropertyMapper;
-import com.homely.property.mapper.StudioMapper;
-import com.homely.property.mapper.VillaMapper;
+import com.homely.property.entity.*;
+import com.homely.property.mapper.*;
 import com.homely.property.repository.PropertyRepository;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
@@ -45,24 +35,33 @@ public class PropertyService {
     private final CommercialMapper commercialMapper;
     private final LandMapper landMapper;
 
+    // ================= CREATE =================
     public PropertyDto create(PropertyCreateRequest request, String userEmail) {
+
         User seller = userService.getByEmail(userEmail);
-        if (seller == null) {
-            throw new RuntimeException("User not found: " + userEmail);
-        }
-        if (!"SELLER".equals(seller.getRole().name())) {
+
+        if (!seller.getRole().name().equals("SELLER")) {
             throw new RuntimeException("Only sellers can create properties");
         }
 
         Property property = propertyMapper.toEntity(request);
         property.setSeller(seller);
+        property.setStatus(PropertyStatus.DRAFT);
 
-        PropertyType propertyType = property.getPropertyType();
-        if (propertyType == null) {
+        attachSubtype(property, request);
+
+        return propertyMapper.toDto(propertyRepository.save(property));
+    }
+
+    private void attachSubtype(Property property, PropertyCreateRequest request) {
+
+        PropertyType type = property.getPropertyType();
+
+        if (type == null) {
             throw new RuntimeException("Property type is required");
         }
 
-        switch (propertyType) {
+        switch (type) {
             case APARTMENT -> {
                 if (request.getApartment() != null) {
                     Apartment a = apartmentMapper.toEntity(request.getApartment());
@@ -105,55 +104,115 @@ public class PropertyService {
                     property.setLand(l);
                 }
             }
-            default -> throw new RuntimeException("Unsupported property type: " + propertyType);
         }
-
-        Property saved = propertyRepository.save(property);
-        return propertyMapper.toDto(saved);
     }
 
-    /** Returns DTO for API responses. */
+    // ================= GET ONE =================
     public PropertyDto get(UUID id) {
-        return propertyMapper.toDto(getEntity(id));
+        return propertyMapper.toDto(
+                propertyRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("Property not found"))
+        );
     }
 
-    /** Returns entity for internal use (e.g. admin, relations). */
-    public Property getEntity(UUID id) {
-        return propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
-    }
-
+    // ================= HOMEPAGE =================
     public List<PropertyDto> getAll() {
-        return propertyRepository.findAll().stream()
+        return propertyRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
                 .map(propertyMapper::toDto)
                 .toList();
     }
 
-    public List<PropertyDto> findByPropertyType(PropertyType propertyType) {
-        return propertyRepository.findByPropertyType(propertyType).stream()
+    // ================= FILTER =================
+    public List<PropertyDto> filter(
+        ListingType type,
+        PropertyType propertyType,
+        BigDecimal minPrice,
+        BigDecimal maxPrice,
+        String city,
+        Instant fromDate,
+        Instant toDate
+) {
+
+Specification<Property> spec = (root, query, cb) -> null;
+
+    if (type != null) {
+        spec = spec.and((root, query, cb) ->
+                cb.equal(root.get("listingType"), type));
+    }
+
+    if (propertyType != null) {
+        spec = spec.and((root, query, cb) ->
+                cb.equal(root.get("propertyType"), propertyType));
+    }
+
+    if (city != null) {
+        spec = spec.and((root, query, cb) ->
+                cb.like(cb.lower(root.get("address")),
+                        "%" + city.toLowerCase() + "%"));
+    }
+
+    if (minPrice != null) {
+        spec = spec.and((root, query, cb) ->
+                cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+    }
+
+    if (maxPrice != null) {
+        spec = spec.and((root, query, cb) ->
+                cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+    }
+
+    if (fromDate != null) {
+        spec = spec.and((root, query, cb) ->
+                cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
+    }
+
+    if (toDate != null) {
+        spec = spec.and((root, query, cb) ->
+                cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
+    }
+
+    return propertyRepository.findAll(spec)
+            .stream()
+            .map(propertyMapper::toDto)
+            .toList();
+}
+
+
+    // ================= GLOBAL SEARCH =================
+    public List<PropertyDto> search(String keyword) {
+        return propertyRepository.globalSearch(keyword)
+                .stream()
                 .map(propertyMapper::toDto)
                 .toList();
     }
 
-    public List<PropertyDto> search(
-            ListingType type,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            String city
-    ) {
-        return propertyRepository.search(type, city, minPrice, maxPrice).stream()
+    // ================= SELLER PROPERTIES =================
+    public List<PropertyDto> getBySellerEmail(String email) {
+        return propertyRepository.findBySeller_Email(email)
+                .stream()
                 .map(propertyMapper::toDto)
                 .toList();
     }
 
+    // ================= UPDATE STATUS =================
+    public PropertyDto updateStatus(UUID propertyId, PropertyStatus status) {
+
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
+
+        property.setStatus(status);
+
+        return propertyMapper.toDto(propertyRepository.save(property));
+    }
+
+    // ================= DELETE =================
     public void delete(UUID id) {
         propertyRepository.deleteById(id);
     }
-    public Property updateStatus(UUID propertyId, PropertyStatus status) {
-    Property property = propertyRepository.findById(propertyId)
+    public Property getEntityById(UUID id) {
+    return propertyRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Property not found"));
-    property.setStatus(status);
-    return propertyRepository.save(property);
 }
 
 }

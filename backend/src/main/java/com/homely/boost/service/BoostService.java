@@ -27,12 +27,17 @@ public class BoostService {
 
     public BoostPurchaseDto create(BoostPurchaseCreateRequest request, String sellerEmail) {
         var seller = userService.getByEmail(sellerEmail);
-        if (seller == null) throw new RuntimeException("User not found: " + sellerEmail);
-        var property = propertyService.getEntity(request.getPropertyId());
+        if (seller == null) {
+            throw new RuntimeException("User not found: " + sellerEmail);
+        }
+
+        var property = propertyService.getEntityById(request.getPropertyId());
+
         BoostPurchase entity = boostPurchaseMapper.toEntity(request);
         entity.setSeller(seller);
         entity.setProperty(property);
         entity.setStatus(PurchaseStatus.PENDING);
+
         BoostPurchase saved = boostPurchaseRepository.save(entity);
         return boostPurchaseMapper.toDto(saved);
     }
@@ -46,11 +51,26 @@ public class BoostService {
         return boostPurchaseRepository.findByStatus(status);
     }
 
-    public List<BoostPurchase> getBySellerId(UUID sellerId) {
-        return boostPurchaseRepository.findBySellerId(sellerId);
+    public List<BoostPurchase> getMyBoosts(String sellerEmail) {
+        var seller = userService.getByEmail(sellerEmail);
+        if (seller == null) {
+            throw new RuntimeException("User not found: " + sellerEmail);
+        }
+        return boostPurchaseRepository.findBySellerId(seller.getId());
     }
-
-    public List<BoostPurchase> getAll() {
+    public List<BoostPurchase> getAll(){
         return boostPurchaseRepository.findAll();
     }
+    public BoostPurchaseDto updateStatus(UUID boostId, PurchaseStatus newStatus) {
+
+    BoostPurchase boost = boostPurchaseRepository.findById(boostId)
+            .orElseThrow(() -> new RuntimeException("Boost not found"));
+
+    boost.setStatus(newStatus);
+
+    BoostPurchase saved = boostPurchaseRepository.save(boost);
+
+    return boostPurchaseMapper.toDto(saved);
+}
+
 }

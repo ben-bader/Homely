@@ -107,3 +107,17 @@ export type VisitRequest = {
   requestedDate: string; // ISO string
   status: VisitStatus;
 };
+export type BoostStatus = "PENDING" | "COMPLETED" | "FAILED"
+
+export type Boost = {
+  id: string
+  sellerId: string
+  propertyId: string
+  propertyTitle: string
+  userName: string
+  userEmail: string
+  amount: number
+  currency?: string
+  durationDays: number
+  status: BoostStatus
+}

@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.boost.dto.BoostPurchaseDto;
+import com.homely.boost.entity.BoostPurchase;
 import com.homely.boost.mapper.BoostPurchaseMapper;
+import com.homely.boost.mapper.BoostPurchaseMapperImpl;
 import com.homely.boost.service.BoostService;
 import com.homely.common.enums.PropertyStatus;
+import com.homely.common.enums.PurchaseStatus;
 import com.homely.common.enums.ReportStatus;
 import com.homely.feedback.dto.FeedbackDto;
 import com.homely.feedback.mapper.FeedbackMapper;
@@ -27,7 +30,6 @@ import com.homely.moderation.mapper.AuditLogMapper;
 import com.homely.moderation.service.ModerationService;
 import com.homely.notification.ReportMapper;
 import com.homely.property.dto.PropertyDto;
-import com.homely.property.entity.Property;
 import com.homely.property.mapper.PropertyMapper;
 import com.homely.property.service.PropertyService;
 import com.homely.propertyview.dto.PropertyViewDto;
@@ -51,6 +53,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
+
+    private final BoostPurchaseMapperImpl boostPurchaseMapperImpl;
 
     private final ModerationService moderationService;
     private final UserService userService;
@@ -84,25 +88,24 @@ public class AdminController {
     }
 
     @PutMapping("/reports/{id}/status")
-public ReportDto updateReportStatus(
-        @PathVariable UUID id,
-        @RequestParam ReportStatus status,
-        Principal principal) {
+    public ReportDto updateReportStatus(
+            @PathVariable UUID id,
+            @RequestParam ReportStatus status,
+            Principal principal) {
 
-    User admin = userService.getByEmail(principal.getName());
-    if (admin == null) throw new RuntimeException("Admin not found");
+        User admin = userService.getByEmail(principal.getName());
+        if (admin == null)
+            throw new RuntimeException("Admin not found");
 
-    Report updated = moderationService.updateReportStatus(id, status, admin);
+        Report updated = moderationService.updateReportStatus(id, status, admin);
 
-    moderationService.logAction(
-            "UPDATE_REPORT_STATUS",
-            admin,
-            "Changed report status to " + status
-    );
+        moderationService.logAction(
+                "UPDATE_REPORT_STATUS",
+                admin,
+                "Changed report status to " + status);
 
-    return reportMapper.toDto(updated);
-}
-
+        return reportMapper.toDto(updated);
+    }
 
     @GetMapping("/audit-logs")
     public List<AuditLogDto> getAuditLogs() {
@@ -111,43 +114,40 @@ public ReportDto updateReportStatus(
                 .toList();
     }
 
-   
-
     @GetMapping("/users")
     public List<UserDto> getAllUsers() {
         return userService.getAll().stream().map(userMapper::toDto).toList();
     }
 
     @PutMapping("/users/{id}/activate")
-public void activateUser(@PathVariable UUID id, Principal principal) {
+    public void activateUser(@PathVariable UUID id, Principal principal) {
 
-    User admin = userService.getByEmail(principal.getName());
-    if (admin == null) throw new RuntimeException("Admin not found");
+        User admin = userService.getByEmail(principal.getName());
+        if (admin == null)
+            throw new RuntimeException("Admin not found");
 
-    userService.activate(id);
+        userService.activate(id);
 
-    moderationService.logAction(
-        "ACTIVATE_USER",
-            admin,
-            "Activated user account id: " + id
-    );
-}
+        moderationService.logAction(
+                "ACTIVATE_USER",
+                admin,
+                "Activated user account id: " + id);
+    }
 
     @PutMapping("/users/{id}/deactivate")
-public void deactivateUser(@PathVariable UUID id, Principal principal) {
+    public void deactivateUser(@PathVariable UUID id, Principal principal) {
 
-    User admin = userService.getByEmail(principal.getName());
-    if (admin == null) throw new RuntimeException("Admin not found");
+        User admin = userService.getByEmail(principal.getName());
+        if (admin == null)
+            throw new RuntimeException("Admin not found");
 
-    userService.deactivate(id);
+        userService.deactivate(id);
 
-    moderationService.logAction(
-            "DEACTIVATE_USER",
-            admin,
-            "Deactivated user account id:" + id
-    );
-}
-
+        moderationService.logAction(
+                "DEACTIVATE_USER",
+                admin,
+                "Deactivated user account id:" + id);
+    }
 
     @GetMapping("/profiles")
     public List<ProfileDto> getAllProfiles() {
@@ -179,28 +179,50 @@ public void deactivateUser(@PathVariable UUID id, Principal principal) {
         return visitRequestService.getAll().stream().map(visitRequestMapper::toDto).toList();
     }
 
-@PutMapping("/properties/{id}/status")
-public PropertyDto updatePropertyStatus(
-        @PathVariable UUID id,
-        @RequestParam PropertyStatus status,
-        Principal principal) {
+    @PutMapping("/properties/{id}/status")
+    public PropertyDto updatePropertyStatus(
+            @PathVariable UUID id,
+            @RequestParam PropertyStatus status,
+            Principal principal) {
 
-    // Get the admin performing the action
-    User admin = userService.getByEmail(principal.getName());
-    if (admin == null) throw new RuntimeException("Admin not found");
+        User admin = userService.getByEmail(principal.getName());
+        if (admin == null)
+            throw new RuntimeException("Admin not found");
 
-    // Update the property status in the service
-    Property updated = propertyService.updateStatus(id, status);
+        PropertyDto updated = propertyService.updateStatus(id, status);
 
-    // Log this action
-    moderationService.logAction(
-            "UPDATE_PROPERTY_STATUS",
-            admin,
-            "Changed property id " + id + " status to " + status
-    );
+        moderationService.logAction(
+                "UPDATE_PROPERTY_STATUS",
+                admin,
+                "Changed property id " + id + " status to " + status);
 
-    // Convert to DTO and return
-    return propertyMapper.toDto(updated);
-}
+        return updated;
+    }
 
+    @PutMapping("boosts/{id}/status")
+    public BoostPurchaseDto updateBoostStatus(
+            @PathVariable UUID id,
+            @RequestParam PurchaseStatus status,
+            Principal principal) {
+
+        // Get admin user
+        User admin = userService.getByEmail(principal.getName());
+        if (admin == null)
+            throw new RuntimeException("Admin not found");
+
+        // Update the boost purchase status
+        BoostPurchase boost = boostService.getById(id);
+        boost.setStatus(status);
+        BoostPurchaseDto updated = boostService.updateStatus(boost.getId(), status); // make sure save method exists in
+                                                                                     // your service
+
+        // Log audit
+        moderationService.logAction(
+                "UPDATE_BOOST_STATUS",
+                admin,
+                "Changed boost id " + id + " status to " + status);
+
+        // Convert to DTO if needed
+        return updated; // or use a mapper
+    }
 }

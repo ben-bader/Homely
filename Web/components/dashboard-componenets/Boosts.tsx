@@ -13,24 +13,18 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { api } from "@/lib/api"
-
-type Boost = {
-  id: string
-  status?: string
-  amount?: number
-  property?: { id: string; title?: string }
-}
+import type { Boost, BoostStatus } from "@/types/dashboard-types"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function Boosts() {
   const [boosts, setBoosts] = React.useState<Boost[]>([])
   const [loading, setLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
 
-  // Fetch boosts from API
+  // Fetch boosts
   const fetchBoosts = async () => {
     try {
       const res = await api.get<Boost[]>("/admin/boosts")
@@ -46,33 +40,50 @@ export default function Boosts() {
     fetchBoosts()
   }, [])
 
-  // Columns definition
+  // Update boost status
+  const updateStatus = async (id: string, newStatus: BoostStatus) => {
+    try {
+      await api.put(`/admin/boosts/${id}/status`, null, {
+        params: { status: newStatus },
+      })
+      setBoosts((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
+      )
+    } catch (err) {
+      console.error("Failed to update boost status", err)
+    }
+  }
+
+  // Columns
   const columns = React.useMemo<ColumnDef<Boost>[]>(
     () => [
-      {
-        accessorKey: "property",
-        header: "Property / ID",
-        cell: ({ row }) => row.original.property?.title ?? row.original.id,
-      },
-      {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => row.original.status ?? "-",
-      },
-      {
-        accessorKey: "amount",
-        header: "Amount",
-        cell: ({ row }) => row.original.amount ?? "-",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <Button size="sm" onClick={() => alert(`Edit boost ${row.original.id}`)}>
-            Edit
-          </Button>
-        ),
-      },
+      { accessorKey: "propertyTitle", header: "Property Title" },
+      { accessorKey: "userName", header: "Seller Name" },
+      { accessorKey: "userEmail", header: "Seller Email" },
+      { accessorKey: "amount", header: "Amount" },
+     {
+  id: "status",
+  header: "Status",
+  cell: ({ row }) => {
+    const currentStatus = row.original.status
+    return (
+      <Select
+        value={currentStatus}
+        onValueChange={(value: string) => updateStatus(row.original.id, value as BoostStatus)}
+      >
+        <SelectTrigger className="w-32">
+          <SelectValue placeholder="Select status" />
+        </SelectTrigger>
+        <SelectContent>
+
+          <SelectItem value="PENDING">PENDING</SelectItem>
+          <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+          <SelectItem value="FAILED">FAILED</SelectItem>
+        </SelectContent>
+      </Select>
+    )
+  },
+},
     ],
     []
   )
@@ -86,7 +97,7 @@ export default function Boosts() {
   const filteredBoosts = React.useMemo(
     () =>
       boosts.filter((b) =>
-        [b.property?.title, b.id, b.status, b.amount?.toString()]
+        [b.propertyTitle, b.userName, b.userEmail, b.id, b.amount?.toString()]
           .filter(Boolean)
           .join(" ")
           .toLowerCase()
