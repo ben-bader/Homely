@@ -62,6 +62,7 @@ dependencies:
   
   # Chat & Real-time
   socket_io_client: ^2.0.3
+  stomp_dart_client: ^1.0.0
   
   # Maps (if needed for property location)
   # google_maps_flutter: ^2.5.3

@@ -1,383 +1,295 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile/features/chat/models/conversation.dart';
-import 'package:mobile/features/chat/models/message.dart';
-import 'package:mobile/features/chat/providers/chat_providers.dart';
+import '../providers/chat_providers.dart';
 
-const _kBg = Color(0xFFF7F7F7);
-const _kAccent = Color(0xFF1A1A1A);
+const _kBg = Color(0xFFF5F5F5);
+const _kMyBubble = Color(0xFF1A1A1A);
+const _kOtherBubble = Colors.white;
 
 class ChatScreen extends ConsumerStatefulWidget {
-  final Conversation conversation;
-  const ChatScreen({super.key, required this.conversation});
+  final String conversationId;
+  final String currentUserId;
+
+  const ChatScreen({
+    super.key,
+    required this.conversationId,
+    required this.currentUserId,
+  });
 
   @override
-  ConsumerState<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() =>
+      _ChatScreenState();
 }
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
-  final _msgCtrl = TextEditingController();
-  final _scrollCtrl = ScrollController();
-
-  @override
-  void dispose() {
-    _msgCtrl.dispose();
-    _scrollCtrl.dispose();
-    super.dispose();
-  }
-
-  void _send() {
-    final text = _msgCtrl.text.trim();
-    if (text.isEmpty) return;
-    _msgCtrl.clear();
-    ref.read(chatNotifierProvider(widget.conversation.id).notifier).send(text);
-    _scrollToBottom();
-  }
+  final TextEditingController _controller =
+      TextEditingController();
+  final ScrollController _scrollController =
+      ScrollController();
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
       }
     });
   }
 
+  String _formatTime(DateTime? dt) {
+    if (dt == null) return '';
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute =
+        dt.minute.toString().padLeft(2, '0');
+    return "$hour:$minute";
+  }
+
   @override
   Widget build(BuildContext context) {
-    final msgsAsync = ref.watch(chatNotifierProvider(widget.conversation.id));
-    final conv = widget.conversation;
+    final messages =
+        ref.watch(chatProvider(widget.conversationId));
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
 
     return Scaffold(
       backgroundColor: _kBg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
-        leadingWidth: 52,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: _kBg,
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE8E8E8)),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 16,
-              color: _kAccent,
-            ),
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: const Text(
+          "Chat",
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: const Color(0xFFEEEEEE),
-              backgroundImage: conv.sellerAvatar != null
-                  ? NetworkImage(conv.sellerAvatar!)
-                  : null,
-              child: conv.sellerAvatar == null
-                  ? const Icon(Icons.person, size: 18, color: Color(0xFF888888))
-                  : null,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    conv.sellerName,
-                    style: const TextStyle(
-                      color: _kAccent,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
-                  Text(
-                    conv.propertyTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF999999),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFFEEEEEE)),
-        ),
+        iconTheme:
+            const IconThemeData(color: Colors.black),
       ),
       body: Column(
         children: [
-          // ── Messages ──────────────────────────────────────────────
+
+          /// ================= MESSAGES =================
           Expanded(
-            child: msgsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: _kAccent,
-                ),
-              ),
-              error: (e, _) => Center(child: Text('$e')),
-              data: (msgs) {
-                if (msgs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFEEEEEE)),
-                          ),
-                          child: const Icon(
-                            Icons.chat_bubble_outline_rounded,
-                            size: 32,
-                            color: Color(0xFFCCCCCC),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Démarrez la conversation!',
-                          style: TextStyle(
-                            color: Color(0xFF888888),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Posez une question sur ${conv.propertyTitle}',
-                          style: const TextStyle(
-                            color: Color(0xFFAAAAAA),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final message = messages[index];
+
+                final isMine =
+                    message.senderId ==
+                        widget.currentUserId;
+
+                return Align(
+                  alignment: isMine
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth:
+                          MediaQuery.of(context)
+                                  .size
+                                  .width *
+                              0.75,
                     ),
-                  );
-                }
+                    child: Container(
+                      margin:
+                          const EdgeInsets.only(
+                              bottom: 10),
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                                  horizontal:
+                                      14,
+                                  vertical:
+                                      10),
+                      decoration:
+                          BoxDecoration(
+                        color: isMine
+                            ? _kMyBubble
+                            : _kOtherBubble,
+                        borderRadius:
+                            BorderRadius
+                                .circular(
+                                    18),
+                        boxShadow: isMine
+                            ? []
+                            : const [
+                                BoxShadow(
+                                  color:
+                                      Color.fromRGBO(
+                                          0,
+                                          0,
+                                          0,
+                                          0.06),
+                                  blurRadius:
+                                      6,
+                                  offset:
+                                      Offset(
+                                          0,
+                                          2),
+                                ),
+                              ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment
+                                .end,
+                        children: [
 
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_scrollCtrl.hasClients) {
-                    _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
-                  }
-                });
+                          /// MESSAGE TEXT
+                          Align(
+                            alignment:
+                                Alignment
+                                    .centerLeft,
+                            child: Text(
+                              message.body,
+                              style:
+                                  TextStyle(
+                                fontSize:
+                                    14,
+                                height:
+                                    1.4,
+                                color: isMine
+                                    ? Colors
+                                        .white
+                                    : Colors
+                                        .black87,
+                              ),
+                            ),
+                          ),
 
-                return ListView.builder(
-                  controller: _scrollCtrl,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  itemCount: msgs.length,
-                  itemBuilder: (_, i) {
-                    final showDate =
-                        i == 0 || !_sameDay(msgs[i - 1].sentAt, msgs[i].sentAt);
-                    return Column(
-                      children: [
-                        if (showDate) _DateDivider(date: msgs[i].sentAt),
-                        _Bubble(message: msgs[i]),
-                      ],
-                    );
-                  },
+                          const SizedBox(
+                              height: 4),
+
+                          /// TIME
+                          Text(
+                            _formatTime(
+                                message
+                                    .sentAt),
+                            style:
+                                TextStyle(
+                              fontSize:
+                                  10,
+                              color: isMine
+                                  ? Colors
+                                      .white70
+                                  : Colors
+                                      .grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
           ),
 
-          // ── Input ─────────────────────────────────────────────────
+          /// ================= INPUT FIELD =================
           Container(
-            color: Colors.white,
-            padding: EdgeInsets.fromLTRB(
-              16,
-              12,
-              16,
-              12 + MediaQuery.of(context).viewInsets.bottom,
+            padding:
+                const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10),
+            decoration:
+                const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      Color.fromRGBO(
+                          0, 0, 0, 0.05),
+                  blurRadius: 8,
+                  offset:
+                      Offset(0, -2),
+                )
+              ],
             ),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: _kBg,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                    padding:
+                        const EdgeInsets
+                            .symmetric(
+                                horizontal:
+                                    16),
+                    decoration:
+                        BoxDecoration(
+                      color:
+                          const Color(
+                              0xFFF0F0F0),
+                      borderRadius:
+                          BorderRadius
+                              .circular(
+                                  30),
                     ),
                     child: TextField(
-                      controller: _msgCtrl,
-                      onSubmitted: (_) => _send(),
-                      textInputAction: TextInputAction.send,
-                      style: const TextStyle(fontSize: 15, color: _kAccent),
-                      maxLines: 4,
-                      minLines: 1,
-                      decoration: const InputDecoration(
-                        hintText: 'Écrire un message...',
-                        hintStyle: TextStyle(
-                          color: Color(0xFFBBBBBB),
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                      controller:
+                          _controller,
+                      decoration:
+                          const InputDecoration(
+                        hintText:
+                            "Type a message...",
+                        border:
+                            InputBorder
+                                .none,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(
+                    width: 8),
                 GestureDetector(
-                  onTap: _send,
+                  onTap: () {
+                    final text =
+                        _controller.text
+                            .trim();
+                    if (text.isEmpty)
+                      return;
+
+                    ref
+                        .read(chatProvider(
+                                widget
+                                    .conversationId)
+                            .notifier)
+                        .send(text);
+
+                    _controller.clear();
+                  },
                   child: Container(
-                    width: 46,
-                    height: 46,
-                    decoration: const BoxDecoration(
-                      color: _kAccent,
-                      shape: BoxShape.circle,
+                    padding:
+                        const EdgeInsets
+                            .all(12),
+                    decoration:
+                        const BoxDecoration(
+                      color:
+                          _kMyBubble,
+                      shape:
+                          BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.send_rounded,
-                      color: Colors.white,
-                      size: 20,
+                    child:
+                        const Icon(
+                      Icons.send,
+                      size: 18,
+                      color:
+                          Colors.white,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  bool _sameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-}
-
-class _Bubble extends StatelessWidget {
-  final ChatMessage message;
-  const _Bubble({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final isMe = message.isMe;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: isMe
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isMe) ...[
-            const CircleAvatar(
-              radius: 14,
-              backgroundColor: Color(0xFFEEEEEE),
-              child: Icon(Icons.person, size: 14, color: Color(0xFF888888)),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.68,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: isMe ? _kAccent : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: isMe ? const Radius.circular(18) : Radius.zero,
-                  bottomRight: isMe ? Radius.zero : const Radius.circular(18),
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.05),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    message.content,
-                    style: TextStyle(
-                      color: isMe ? Colors.white : _kAccent,
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _fmtTime(message.sentAt),
-                    style: TextStyle(
-                      color: isMe ? Colors.white54 : const Color(0xFFBBBBBB),
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (isMe) const SizedBox(width: 8),
-        ],
-      ),
-    );
-  }
-
-  String _fmtTime(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-}
-
-class _DateDivider extends StatelessWidget {
-  final DateTime date;
-  const _DateDivider({required this.date});
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    String label;
-    if (date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day) {
-      label = "Aujourd'hui";
-    } else if (date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day - 1) {
-      label = 'Hier';
-    } else {
-      label = '${date.day}/${date.month}/${date.year}';
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          const Expanded(child: Divider(color: Color(0xFFE8E8E8))),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Color(0xFFAAAAAA),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          const Expanded(child: Divider(color: Color(0xFFE8E8E8))),
         ],
       ),
     );

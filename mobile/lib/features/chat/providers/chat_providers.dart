@@ -2,37 +2,62 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/conversation.dart';
 import '../models/message.dart';
 import '../repositories/chat_repository.dart';
+import '../services/websocket_service.dart';
 
-// ── Repository ────────────────────────────────────────────────────────────────
-final chatRepositoryProvider = Provider<ChatRepository>(
-  (_) => ChatRepository(),
-);
+/// Repository
+final chatRepositoryProvider =
+    Provider((ref) => ChatRepository());
 
-// ── Liste des conversations ───────────────────────────────────────────────────
+/// Websocket
+final websocketServiceProvider =
+    Provider((ref) => WebSocketService());
+
+/// 🔹 Conversations Provider (THIS FIXES YOUR ERROR)
 final conversationsProvider =
-    FutureProvider.autoDispose<List<Conversation>>((ref) {
-  return ref.read(chatRepositoryProvider).fetchConversations();
+    FutureProvider<List<Conversation>>((ref) async {
+  final repo = ref.read(chatRepositoryProvider);
+  return repo.fetchConversations();
 });
 
-// ── Messages d'une conversation ───────────────────────────────────────────────
-class ChatNotifier
-    extends AutoDisposeFamilyAsyncNotifier<List<ChatMessage>, String> {
-  @override
-  Future<List<ChatMessage>> build(String conversationId) {
-    return ref.read(chatRepositoryProvider).fetchMessages(conversationId);
+/// 🔹 Chat Messages Provider
+final chatProvider = StateNotifierProvider.family<
+    ChatNotifier, List<ChatMessage>, String>(
+  (ref, conversationId) =>
+      ChatNotifier(ref, conversationId),
+);
+
+class ChatNotifier extends StateNotifier<List<ChatMessage>> {
+  final Ref ref;
+  final String conversationId;
+
+  ChatNotifier(this.ref, this.conversationId)
+      : super([]) {
+    _init();
   }
 
-  Future<void> send(String content) async {
+  Future<void> _init() async {
     final repo = ref.read(chatRepositoryProvider);
-    final current = state.valueOrNull ?? [];
-    try {
-      final msg = await repo.sendMessage(arg, content);
-      state = AsyncData([...current, msg]);
-    } catch (_) {
-      // optionnellement afficher une erreur
+    final ws = ref.read(websocketServiceProvider);
+
+    if (!ws.isConnected) {
+      await ws.connect();
     }
+
+    final messages =
+        await repo.fetchMessages(conversationId);
+    state = messages;
+
+    await ws.subscribe(conversationId, (message) {
+      if (!state.any((m) => m.id == message.id)) {
+        state = [...state, message];
+      }
+    });
+  }
+
+  void send(String body) {
+    if (body.trim().isEmpty) return;
+
+    final ws = ref.read(websocketServiceProvider);
+    ws.sendMessage(conversationId, body);
   }
 }
-
-final chatNotifierProvider = AsyncNotifierProvider.autoDispose
-    .family<ChatNotifier, List<ChatMessage>, String>(ChatNotifier.new);

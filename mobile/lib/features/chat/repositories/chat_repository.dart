@@ -1,53 +1,127 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:mobile/core/storage/secure_storage.dart';
-import 'package:mobile/core/network/api_client.dart';
-import '../models/conversation.dart';
 import '../models/message.dart';
+import '../models/conversation.dart';
 
 class ChatRepository {
-  final _storage = SecureStorage();
+  final String baseUrl =
+      "https://zcvxc076-8082.uks1.devtunnels.ms";
 
-  Future<String> _myId() async => (await _storage.getUserId()) ?? '';
+  final SecureStorage _storage = SecureStorage();
 
-  // GET /chat/conversations
-  Future<List<Conversation>> fetchConversations() async {
-    final data = await ApiClient.get('/chat/conversations');
-    final list = data is List
-        ? data
-        : (data['content'] ?? data['data'] ?? []) as List;
-    return list.map((e) => Conversation.fromJson(e)).toList();
+  Future<Map<String, String>> _headers() async {
+    final token = await _storage.getToken();
+
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
   }
 
-  // GET /chat/conversation/{id}/messages
-  Future<List<ChatMessage>> fetchMessages(String conversationId) async {
-    final myId = await _myId();
-    final data = await ApiClient.get(
-      '/chat/conversation/$conversationId/messages',
+  // ✅ FETCH MESSAGES
+  Future<List<ChatMessage>> fetchMessages(
+      String conversationId) async {
+    final response = await http.get(
+      Uri.parse(
+          "$baseUrl/api/chat/messages?conversationId=$conversationId"),
+      headers: await _headers(),
     );
-    final list = data is List ? data : (data['content'] ?? []) as List;
-    return list.map((e) => ChatMessage.fromJson(e, myId)).toList();
+
+    if (response.statusCode != 200) {
+      throw Exception(
+          "Failed to load messages: ${response.statusCode}");
+    }
+
+    final decoded = jsonDecode(response.body);
+
+    // If backend returns List
+    if (decoded is List) {
+      return decoded
+          .map((e) =>
+              ChatMessage.fromJson(
+                  e as Map<String, dynamic>))
+          .toList();
+    }
+
+    // If backend returns { content: [...] }
+    if (decoded is Map &&
+        decoded['content'] is List) {
+      return (decoded['content'] as List)
+          .map((e) =>
+              ChatMessage.fromJson(
+                  e as Map<String, dynamic>))
+          .toList();
+    }
+
+    return [];
   }
 
-  // POST /chat/conversation
-  // Body: ConversationCreateRequest { sellerId, propertyId }
-  Future<Conversation> startConversation(
-    String sellerId,
-    String propertyId,
-  ) async {
-    final data = await ApiClient.post(
-      '/chat/conversation',
-      body: {'sellerId': sellerId, 'propertyId': propertyId},
+  // ✅ CREATE CONVERSATION
+  Future<Conversation> createConversation(
+      String propertyId) async {
+    final response = await http.post(
+      Uri.parse(
+          "$baseUrl/api/chat/conversations/$propertyId"),
+      headers: await _headers(),
     );
-    return Conversation.fromJson(data);
+
+    if (response.statusCode != 200 &&
+        response.statusCode != 201) {
+      throw Exception(
+          "Failed to create conversation");
+    }
+
+    final decoded =
+        jsonDecode(response.body);
+
+    return Conversation.fromJson(
+        decoded as Map<String, dynamic>);
   }
 
-  // POST /chat/message
-  // Body: MessageCreateRequest { conversationId, content }
-  Future<ChatMessage> sendMessage(String conversationId, String content) async {
-    final myId = await _myId();
-    final data = await ApiClient.post(
-      '/chat/message',
-      body: {'conversationId': conversationId, 'content': content},
+  // ✅ FETCH CONVERSATIONS
+  Future<List<Conversation>>
+      fetchConversations() async {
+    final response = await http.get(
+      Uri.parse(
+          "$baseUrl/api/chat/conversations"),
+      headers: await _headers(),
     );
-    return ChatMessage.fromJson(data, myId);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+          "Failed to load conversations: ${response.statusCode}");
+    }
+
+    final decoded =
+        jsonDecode(response.body);
+
+    if (decoded is List) {
+      return decoded
+          .map((e) =>
+              Conversation.fromJson(
+                  e as Map<String, dynamic>))
+          .toList();
+    }
+
+    if (decoded is Map &&
+        decoded['content'] is List) {
+      return (decoded['content'] as List)
+          .map((e) =>
+              Conversation.fromJson(
+                  e as Map<String, dynamic>))
+          .toList();
+    }
+
+    if (decoded is Map &&
+        decoded['data'] is List) {
+      return (decoded['data'] as List)
+          .map((e) =>
+              Conversation.fromJson(
+                  e as Map<String, dynamic>))
+          .toList();
+    }
+
+    return [];
   }
 }

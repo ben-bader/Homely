@@ -16,27 +16,27 @@ class PropertyRepository {
       'page': '$page',
       'size': '$size',
     };
-    final data = await ApiClient.get('/properties', queryParams: params);
+    final data = await ApiClient.get('/api/properties', queryParams: params);
     final list = data is List ? data : (data['content'] ?? data['data'] ?? []);
     return (list as List).map((e) => Property.fromJson(e)).toList();
   }
 
   Future<Property> fetchProperty(String id) async {
-    final data = await ApiClient.get('/properties/$id');
+    final data = await ApiClient.get('/api/properties/$id');
     return Property.fromJson(data);
   }
 
   
   Future<void> toggleFavorite(String propertyId, {required bool add}) async {
     if (add) {
-      await ApiClient.post('/favorites/$propertyId');
+      await ApiClient.post('/api/favorites/$propertyId');
     } else {
-      await ApiClient.delete('/favorites/$propertyId');
+      await ApiClient.delete('/api/favorites/$propertyId');
     }
   }
 
   Future<List<Property>> fetchFavorites() async {
-    final data = await ApiClient.get('/favorites');
+    final data = await ApiClient.get('/api/favorites');
     final list = data is List ? data : (data['content'] ?? data['data'] ?? []);
     return (list as List).map((e) => Property.fromJson(e)).toList();
   }

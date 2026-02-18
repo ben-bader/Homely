@@ -5,6 +5,7 @@ import 'package:mobile/features/property/providers/property_providers.dart';
 import 'package:mobile/features/chat/repositories/chat_repository.dart';
 import 'package:mobile/features/chat/providers/chat_providers.dart';
 import 'package:mobile/features/chat/screens/chat_screen.dart';
+import 'package:mobile/features/chat/models/conversation.dart';
 
 const _kBg = Color(0xFFF7F7F7);
 const _kAccent = Color(0xFF1A1A1A);
@@ -65,145 +66,175 @@ class _BodyState extends ConsumerState<_Body> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Image carousel ────────────────────────────────────
-                SizedBox(
-                  height: h * 0.42,
-                  child: Stack(
-                    children: [
-                      PageView.builder(
-                        controller: _pageCtrl,
-                        itemCount: p.images.isNotEmpty ? p.images.length : 1,
-                        onPageChanged: (i) => setState(() => _imgIdx = i),
-                        itemBuilder: (_, i) => p.images.isNotEmpty
-                            ? Image.network(
-                                p.images[i],
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                errorBuilder: (_, __, ___) =>
-                                    _imgPlaceholder(h),
-                              )
-                            : _imgPlaceholder(h),
-                      ),
-                      if (p.images.length > 1)
-                        Positioned(
-                          bottom: 16,
-                          left: 0,
-                          right: 0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              p.images.length,
-                              (i) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 3,
-                                ),
-                                width: _imgIdx == i ? 20 : 7,
-                                height: 7,
-                                decoration: BoxDecoration(
-                                  color: _imgIdx == i
-                                      ? Colors.white
-                                      : Colors.white54,
-                                  borderRadius: BorderRadius.circular(4),
+                // ── Property image ────────────────────────────────────
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                  child: SizedBox(
+                    height: h * 0.42,
+                    width: double.infinity,
+                    child: p.images.isNotEmpty
+                        ? Stack(
+                            children: [
+                              PageView.builder(
+                                controller: _pageCtrl,
+                                itemCount: p.images.length,
+                                onPageChanged: (i) =>
+                                    setState(() => _imgIdx = i),
+                                itemBuilder: (_, i) => Image.network(
+                                  p.images[i],
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (_, __, ___) =>
+                                      _imgPlaceholder(h),
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-                    ],
+                              if (p.images.length > 1)
+                                Positioned(
+                                  bottom: 16,
+                                  left: 0,
+                                  right: 0,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      p.images.length,
+                                      (i) => AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 3,
+                                        ),
+                                        width: _imgIdx == i ? 20 : 7,
+                                        height: 7,
+                                        decoration: BoxDecoration(
+                                          color: _imgIdx == i
+                                              ? Colors.white
+                                              : Colors.white54,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          )
+                        : _imgPlaceholder(h),
                   ),
                 ),
 
-                // ── Contenu ───────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Titre + Prix
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              p.title,
+                // ── Property info card ───────────────────────────────────────────
+                Transform.translate(
+                  offset: const Offset(0, -24),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title + Price
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                p.title,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: _kAccent,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'A\$${_fmt(p.price)}',
                               style: const TextStyle(
-                                fontSize: 24,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w800,
                                 color: _kAccent,
                                 letterSpacing: -0.5,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'A\$${_fmt(p.price)}',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: _kAccent,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 15,
-                            color: Color(0xFF888888),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            p.location,
-                            style: const TextStyle(
-                              fontSize: 13,
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 15,
                               color: Color(0xFF888888),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                p.location,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF888888),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // ── Specs grid ────────────────────────────
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _SpecBox(
+                                icon: Icons.bed_outlined,
+                                label: '${p.beds}\nBeds',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _SpecBox(
+                                icon: Icons.bathtub_outlined,
+                                label: '${p.baths}\nBaths',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _SpecBox(
+                                icon: Icons.garage_outlined,
+                                label: '${p.garages}\nGarage',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _SpecBox(
+                                icon: Icons.square_foot_outlined,
+                                label: '${p.sqm.toInt()}\nsqm',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-                      const SizedBox(height: 24),
-
-                      // ── Grille de specs ────────────────────────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _SpecBox(
-                              icon: Icons.bed_outlined,
-                              label: '${p.beds}\nBeds',
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _SpecBox(
-                              icon: Icons.bathtub_outlined,
-                              label: '${p.baths}\nBaths',
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _SpecBox(
-                              icon: Icons.garage_outlined,
-                              label: '${p.garages}\nGarage',
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _SpecBox(
-                              icon: Icons.square_foot_outlined,
-                              label: '${p.sqm.toInt()}\nsqm',
-                            ),
-                          ),
-                        ],
-                      ),
-
+                // ── Rest of content ───────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       const SizedBox(height: 28),
 
-                      // ── Agent ──────────────────────────────────────
+                      // ── Listing Agent ──────────────────────────────────────
                       const Text(
                         'Listing Agent',
                         style: TextStyle(
@@ -266,7 +297,7 @@ class _BodyState extends ConsumerState<_Body> {
 
                       const SizedBox(height: 28),
 
-                      // ── Location map ───────────────────────────────
+                      // ── Location Address ───────────────────────────────
                       const Text(
                         'Location Address',
                         style: TextStyle(
@@ -359,7 +390,7 @@ class _BodyState extends ConsumerState<_Body> {
   }
 }
 
-// ── "Contact Now" → démarre une conversation ──────────────────────────────────
+// ── "Chat with Seller" → creates conversation and opens chat screen ──────────────────────────────────
 class _ContactBtn extends ConsumerWidget {
   final Property property;
   const _ContactBtn({required this.property});
@@ -370,14 +401,18 @@ class _ContactBtn extends ConsumerWidget {
       onTap: () async {
         try {
           final repo = ref.read(chatRepositoryProvider);
-          final conv = await repo.startConversation(
-            property.sellerId,
-            property.id,
-          );
+          // Create conversation using propertyId only (sellerId is determined by backend)
+          final conv = await repo.createConversation(property.id);
           if (context.mounted) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => ChatScreen(conversation: conv)),
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(
+  conversationId: conv.id,
+  currentUserId: conv.clientId,
+),
+
+              ),
             );
           }
         } catch (e) {
@@ -399,10 +434,10 @@ class _ContactBtn extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
           color: _kAccent,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: const Text(
-          'Contact Now',
+          'Chat with Seller',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,

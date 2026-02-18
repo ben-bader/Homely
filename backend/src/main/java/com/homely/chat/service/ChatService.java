@@ -31,11 +31,23 @@ public class ChatService {
         return conversationRepository.findById(conversationId).orElseThrow();
     }
     public List<Conversation> getUserConversations(UUID userId) {
-        return conversationRepository.findByClientIdOrSellerId(userId, userId);
+        List<Conversation> conversations = conversationRepository.findByClientIdOrSellerId(userId, userId);
+        // Force fetch of lazy-loaded relationships
+        conversations.forEach(conv -> {
+            if (conv.getProperty() != null) conv.getProperty().getTitle();
+            if (conv.getSeller() != null) {
+                conv.getSeller().getName();
+                // Profile doesn't have profilePicture field, skip it
+            }
+            if (conv.getMessages() != null && !conv.getMessages().isEmpty()) {
+                conv.getMessages().size(); // Force fetch messages
+            }
+        });
+        return conversations;
     }
 
     public List<Message> getConversationMessages(UUID conversationId) {
-        return messageRepository.findByConversationIdOrderByIdAsc(conversationId);
+        return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
     }
     public Conversation createConversation(UUID propertyId,String clientEmail) {
         Property property =  propertyRepository.findById(propertyId).orElseThrow();

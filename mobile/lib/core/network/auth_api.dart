@@ -4,22 +4,18 @@ import 'endpoints.dart';
 /// 🔐 Authentication API Service
 /// Handles all authentication-related API calls
 class AuthApi {
-  final ApiClient _apiClient;
-
-  AuthApi({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
-
   // ==================== LOGIN ====================
 
   /// Login user
   /// POST /api/auth/login
-  Future<ApiResponse<Map<String, dynamic>>> login({
+  Future<dynamic> login({
     required String email,
     required String password,
   }) async {
-    return await _apiClient.post(
+    return await ApiClient.post(
       Endpoints.login,
       body: {'email': email, 'password': password},
-      includeAuth: false,
+      auth: false,
     );
   }
 
@@ -27,7 +23,7 @@ class AuthApi {
 
   /// Register new user
   /// POST /api/auth/register
-  Future<ApiResponse<Map<String, dynamic>>> register({
+  Future<dynamic> register({
     required String firstName,
     required String lastName,
     required String email,
@@ -35,7 +31,7 @@ class AuthApi {
     required String phone,
     required String role, // CLIENT or SELLER
   }) async {
-    return await _apiClient.post(
+    return await ApiClient.post(
       Endpoints.register,
       body: {
         'firstName': firstName,
@@ -45,7 +41,7 @@ class AuthApi {
         'phone': phone,
         'role': role,
       },
-      includeAuth: false,
+      auth: false,
     );
   }
 
@@ -53,21 +49,21 @@ class AuthApi {
 
   /// Logout user
   /// POST /api/auth/logout
-  Future<ApiResponse<void>> logout() async {
-    return await _apiClient.post(Endpoints.logout, includeAuth: true);
+  Future<dynamic> logout() async {
+    return await ApiClient.post(Endpoints.logout, auth: true);
   }
 
   // ==================== REFRESH TOKEN ====================
 
   /// Refresh authentication token
   /// POST /api/auth/refresh
-  Future<ApiResponse<Map<String, dynamic>>> refreshToken({
+  Future<dynamic> refreshToken({
     required String refreshToken,
   }) async {
-    return await _apiClient.post(
+    return await ApiClient.post(
       Endpoints.refreshToken,
       body: {'refreshToken': refreshToken},
-      includeAuth: false,
+      auth: false,
     );
   }
 
@@ -75,13 +71,13 @@ class AuthApi {
 
   /// Request password reset
   /// POST /api/auth/forgot-password
-  Future<ApiResponse<Map<String, dynamic>>> forgotPassword({
+  Future<dynamic> forgotPassword({
     required String email,
   }) async {
-    return await _apiClient.post(
+    return await ApiClient.post(
       Endpoints.forgotPassword,
       body: {'email': email},
-      includeAuth: false,
+      auth: false,
     );
   }
 
@@ -89,14 +85,14 @@ class AuthApi {
 
   /// Reset password with token
   /// POST /api/auth/reset-password
-  Future<ApiResponse<Map<String, dynamic>>> resetPassword({
+  Future<dynamic> resetPassword({
     required String token,
     required String newPassword,
   }) async {
-    return await _apiClient.post(
+    return await ApiClient.post(
       Endpoints.resetPassword,
       body: {'token': token, 'newPassword': newPassword},
-      includeAuth: false,
+      auth: false,
     );
   }
 
@@ -104,13 +100,13 @@ class AuthApi {
 
   /// Verify email with token
   /// GET /api/auth/verify-email
-  Future<ApiResponse<Map<String, dynamic>>> verifyEmail({
+  Future<dynamic> verifyEmail({
     required String token,
   }) async {
-    return await _apiClient.get(
+    return await ApiClient.get(
       Endpoints.verifyEmail,
-      queryParameters: {'token': token},
-      includeAuth: false,
+      queryParams: {'token': token},
+      auth: false,
     );
   }
 
@@ -118,13 +114,13 @@ class AuthApi {
 
   /// Resend email verification
   /// POST /api/auth/resend-verification
-  Future<ApiResponse<Map<String, dynamic>>> resendVerification({
+  Future<dynamic> resendVerification({
     required String email,
   }) async {
-    return await _apiClient.post(
+    return await ApiClient.post(
       Endpoints.resendVerification,
       body: {'email': email},
-      includeAuth: false,
+      auth: false,
     );
   }
 }

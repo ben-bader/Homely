@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/chat/screens/conversation_screen.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
+import 'package:mobile/core/navigation/bottom_nav_provider.dart';
 import 'property_detail_screen.dart';
 
 const _kBg = Color(0xFFF7F7F7);
@@ -58,25 +59,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   const Spacer(),
-                  _IconBtn(icon: Icons.notifications_outlined, onTap: () {}),
-                  const SizedBox(width: 10),
-                  _IconBtn(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    badge: true,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ConversationsScreen(),
+                  // Notification bell icon
+                  GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE8E8E8)),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: _kAccent,
+                        size: 20,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
+                  // Profile picture
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: _kAccent,
+                    backgroundColor: const Color(0xFFEEEEEE),
+                    backgroundImage: null, // Can be set from user profile
                     child: const Icon(
                       Icons.person,
-                      color: Colors.white,
+                      color: Color(0xFF888888),
                       size: 20,
                     ),
                   ),
@@ -86,69 +95,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
             const SizedBox(height: 16),
 
-            // ── Barre de recherche ────────────────────────────────────────
+            // ── Search bar ────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE0E0E0)),
-                      ),
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 16),
+                    const Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFF999999),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
                       child: TextField(
                         controller: _searchController,
                         onSubmitted: (v) => ref
                             .read(propertyFilterProvider.notifier)
                             .update((s) => s.copyWith(search: v)),
                         style: const TextStyle(fontSize: 15, color: _kAccent),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Search your home...',
                           hintStyle: TextStyle(
-                            color: Colors.grey.shade400,
+                            color: Color(0xFF999999),
                             fontSize: 14,
                           ),
-                          prefixIcon: Icon(
-                            Icons.search_rounded,
-                            color: Colors.grey.shade400,
-                            size: 20,
-                          ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    height: 50,
-                    width: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE0E0E0)),
-                    ),
-                    child: IconButton(
-                      onPressed: () => _showFilterSheet(context),
-                      icon: const Icon(
-                        Icons.tune_rounded,
-                        color: _kAccent,
-                        size: 20,
+                    GestureDetector(
+                      onTap: () => _showFilterSheet(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        child: const Icon(
+                          Icons.tune_rounded,
+                          color: Color(0xFF999999),
+                          size: 20,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                  ],
+                ),
               ),
             ),
 
             const SizedBox(height: 14),
 
-            // ── Chips de filtre ───────────────────────────────────────────
+            // ── Filter chips ───────────────────────────────────────────
             SizedBox(
               height: 38,
               child: ListView.separated(
@@ -165,7 +168,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         .update((s) => s.copyWith(type: t)),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                       decoration: BoxDecoration(
                         color: selected ? _kAccent : Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -424,12 +427,22 @@ class PropertyCard extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              'Location: ${property.location}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF888888),
-                              ),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 12,
+                                  color: Color(0xFF888888),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  property.location,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF888888),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -517,79 +530,55 @@ class _Chip extends StatelessWidget {
   );
 }
 
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool badge;
-  const _IconBtn({required this.icon, required this.onTap, this.badge = false});
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE8E8E8)),
-          ),
-          child: Icon(icon, color: _kAccent, size: 20),
-        ),
-        if (badge)
-          Positioned(
-            top: -2,
-            right: -2,
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
-}
 
-class _BottomNav extends StatelessWidget {
+class _BottomNav extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) => Container(
-    height: 80,
-    decoration: const BoxDecoration(
-      color: Color(0xFF1A1A1A),
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _NavItem(icon: Icons.home_rounded, active: true, onTap: () {}),
-        _NavItem(icon: Icons.location_on_outlined, active: false, onTap: () {}),
-        _NavItem(
-          icon: Icons.favorite_border_rounded,
-          active: false,
-          onTap: () {},
-        ),
-        _NavItem(
-          icon: Icons.chat_bubble_outline_rounded,
-          active: false,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ConversationsScreen()),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTab = ref.watch(bottomNavTabProvider);
+    
+    return Container(
+      height: 70,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _NavItem(
+            icon: Icons.home_rounded,
+            active: currentTab == BottomNavTab.home,
+            onTap: () => ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.home,
           ),
-        ),
-        _NavItem(
-          icon: Icons.person_outline_rounded,
-          active: false,
-          onTap: () {},
-        ),
-      ],
-    ),
-  );
+          _NavItem(
+            icon: Icons.location_on_outlined,
+            active: currentTab == BottomNavTab.explore,
+            onTap: () => ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.explore,
+          ),
+          _NavItem(
+            icon: Icons.favorite_border_rounded,
+            active: currentTab == BottomNavTab.favorites,
+            onTap: () => ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.favorites,
+          ),
+          _NavItem(
+            icon: Icons.chat_bubble_outline_rounded,
+            active: currentTab == BottomNavTab.chat,
+            onTap: () {
+              ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.chat;
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ConversationsScreen()),
+              );
+            },
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            active: currentTab == BottomNavTab.profile,
+            onTap: () => ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.profile,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _NavItem extends StatelessWidget {
@@ -606,14 +595,22 @@ class _NavItem extends StatelessWidget {
     onTap: onTap,
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(10),
+      width: 50,
+      height: 50,
       decoration: BoxDecoration(
-        color: active ? Colors.white.withOpacity(0.15) : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        color: active ? _kAccent : Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: active ? [
+          BoxShadow(
+            color: _kAccent.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ] : null,
       ),
       child: Icon(
         icon,
-        color: active ? Colors.white : Colors.white54,
+        color: active ? Colors.white : const Color(0xFF999999),
         size: 24,
       ),
     ),
