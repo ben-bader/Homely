@@ -12,6 +12,7 @@ import {
   Avatar,
   AvatarFallback,
 } from "@/components/ui/avatar"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -28,16 +30,17 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-import { getUserFromToken } from "@/lib/auth"
+import { getUserFromToken, JwtPayload } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const router = useRouter()
-  const [user, setUser] = React.useState<any>(null)
+  const [user, setUser] = React.useState<JwtPayload | null>(null)
 
   React.useEffect(() => {
-    setUser(getUserFromToken())
+    const decoded = getUserFromToken()
+    setUser(decoded)
   }, [])
 
   if (!user) return null
@@ -55,12 +58,12 @@ export function NavUser() {
             <SidebarMenuButton size="lg">
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarFallback>
-                  {user.sub.charAt(0).toUpperCase()}
+                  {user.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm">
-                <span className="font-medium">Admin</span>
+                <span className="font-medium">{user.name}</span>
                 <span className="text-xs text-muted-foreground">
                   {user.sub}
                 </span>

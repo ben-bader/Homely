@@ -1,9 +1,8 @@
-// utils/auth.ts
 import { jwtDecode } from "jwt-decode"
 
 export interface JwtPayload {
-  sub: string                 // email (Spring Security default)
-  name: string                // full name / username
+  sub: string        // email
+  name: string       // full name
   role: string
   exp: number
 }
@@ -17,15 +16,13 @@ export function getUserFromToken(): JwtPayload | null {
   try {
     const decoded = jwtDecode<JwtPayload>(jwt)
 
-    // expiration check
     if (decoded.exp * 1000 < Date.now()) {
       localStorage.removeItem("jwt")
       return null
     }
 
     return decoded
-  } catch (err) {
-    console.error("Invalid JWT", err)
+  } catch {
     localStorage.removeItem("jwt")
     return null
   }
