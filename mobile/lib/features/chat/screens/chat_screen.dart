@@ -42,8 +42,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   String _formatTime(DateTime? dt) {
     if (dt == null) return '';
     final hour = dt.hour.toString().padLeft(2, '0');
-    final minute =
-        dt.minute.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
     return "$hour:$minute";
   }
 
@@ -98,28 +97,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           MediaQuery.of(context)
                                   .size
                                   .width *
-                              0.75,
+                              0.60, // 🔥 reduced width
                     ),
                     child: Container(
                       margin:
                           const EdgeInsets.only(
                               bottom: 10),
                       padding:
-                          const EdgeInsets
-                              .symmetric(
-                                  horizontal:
-                                      14,
-                                  vertical:
-                                      10),
+                          const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10),
                       decoration:
                           BoxDecoration(
                         color: isMine
                             ? _kMyBubble
                             : _kOtherBubble,
                         borderRadius:
-                            BorderRadius
-                                .circular(
-                                    18),
+                            BorderRadius.circular(18),
                         boxShadow: isMine
                             ? []
                             : const [
@@ -130,60 +124,46 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                           0,
                                           0,
                                           0.06),
-                                  blurRadius:
-                                      6,
+                                  blurRadius: 6,
                                   offset:
-                                      Offset(
-                                          0,
-                                          2),
+                                      Offset(0, 2),
                                 ),
                               ],
                       ),
                       child: Column(
                         crossAxisAlignment:
-                            CrossAxisAlignment
-                                .end,
+                            CrossAxisAlignment.end,
                         children: [
 
                           /// MESSAGE TEXT
                           Align(
                             alignment:
-                                Alignment
-                                    .centerLeft,
+                                Alignment.centerLeft,
                             child: Text(
                               message.body,
                               style:
                                   TextStyle(
-                                fontSize:
-                                    14,
-                                height:
-                                    1.4,
+                                fontSize: 14,
+                                height: 1.4,
                                 color: isMine
-                                    ? Colors
-                                        .white
-                                    : Colors
-                                        .black87,
+                                    ? Colors.white
+                                    : Colors.black87,
                               ),
                             ),
                           ),
 
-                          const SizedBox(
-                              height: 4),
+                          const SizedBox(height: 4),
 
                           /// TIME
                           Text(
                             _formatTime(
-                                message
-                                    .sentAt),
+                                message.sentAt),
                             style:
                                 TextStyle(
-                              fontSize:
-                                  10,
+                              fontSize: 10,
                               color: isMine
-                                  ? Colors
-                                      .white70
-                                  : Colors
-                                      .grey,
+                                  ? Colors.white70
+                                  : Colors.grey,
                             ),
                           ),
                         ],
@@ -220,48 +200,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Expanded(
                   child: Container(
                     padding:
-                        const EdgeInsets
-                            .symmetric(
-                                horizontal:
-                                    16),
+                        const EdgeInsets.symmetric(
+                            horizontal: 16),
                     decoration:
                         BoxDecoration(
                       color:
-                          const Color(
-                              0xFFF0F0F0),
+                          const Color(0xFFF0F0F0),
                       borderRadius:
-                          BorderRadius
-                              .circular(
-                                  30),
+                          BorderRadius.circular(30),
                     ),
                     child: TextField(
-                      controller:
-                          _controller,
+                      controller: _controller,
                       decoration:
                           const InputDecoration(
                         hintText:
                             "Type a message...",
                         border:
-                            InputBorder
-                                .none,
+                            InputBorder.none,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(
-                    width: 8),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
                     final text =
-                        _controller.text
-                            .trim();
+                        _controller.text.trim();
                     if (text.isEmpty)
                       return;
 
                     ref
                         .read(chatProvider(
-                                widget
-                                    .conversationId)
+                                widget.conversationId)
                             .notifier)
                         .send(text);
 
@@ -269,21 +239,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   },
                   child: Container(
                     padding:
-                        const EdgeInsets
-                            .all(12),
+                        const EdgeInsets.all(12),
                     decoration:
                         const BoxDecoration(
-                      color:
-                          _kMyBubble,
-                      shape:
-                          BoxShape.circle,
+                      color: _kMyBubble,
+                      shape: BoxShape.circle,
                     ),
-                    child:
-                        const Icon(
+                    child: const Icon(
                       Icons.send,
                       size: 18,
-                      color:
-                          Colors.white,
+                      color: Colors.white,
                     ),
                   ),
                 ),
