@@ -75,7 +75,7 @@ export default function VisitRequests() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Comopleted</CardTitle>
+            <CardTitle>Completed</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-bold">{completedCount}</CardContent>
         </Card>
