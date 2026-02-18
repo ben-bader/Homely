@@ -38,6 +38,6 @@ export default function AdminDashboardWrapper({ children }: { children: React.Re
 
   if (loading) return <p>Checking permissions...</p>;
   if (!isAdminUser) return null;
-
+  
   return <>{children}</>; // render dashboard content
 }

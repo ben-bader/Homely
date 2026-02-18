@@ -36,7 +36,7 @@ export function SectionCards() {
 
         // Only count ACTIVE boosts
         const activeBoosts = boostsRes.data.filter(
-          (b: any) => b.status === "ACTIVE"
+          (b: any) => b.status === "COMPLETED"
         );
         setBoosts(activeBoosts.length);
       } catch (error) {

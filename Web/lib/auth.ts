@@ -9,7 +9,7 @@ interface JwtPayload {
 
 export function getUserFromToken() {
   if (typeof window === "undefined") return null;
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("jwt");
   if (!token) return null;
 
   try {
@@ -17,14 +17,14 @@ export function getUserFromToken() {
 
     // check expiration
     if (decoded.exp * 1000 < Date.now()) {
-      localStorage.removeItem("token");
+      localStorage.removeItem("jwt");
       return null;
     }
 
     return decoded;
   } catch (err) {
     console.error("Invalid token", err);
-    localStorage.removeItem("token");
+    localStorage.removeItem("jwt");
     return null;
   }
 }

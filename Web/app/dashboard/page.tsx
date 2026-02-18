@@ -15,7 +15,7 @@ import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")
-
+  
   const components: Record<string, React.ReactNode> = {
     users: <Users />,
     properties: <Properties />,
