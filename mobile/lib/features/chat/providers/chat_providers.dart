@@ -4,91 +4,60 @@ import '../models/message.dart';
 import '../repositories/chat_repository.dart';
 import '../services/websocket_service.dart';
 
-// ── Repository ────────────────────────────────────────────────────────────────
-final chatRepositoryProvider = Provider<ChatRepository>(
-  (_) => ChatRepository(),
-);
+/// Repository
+final chatRepositoryProvider =
+    Provider((ref) => ChatRepository());
 
-// ── WebSocket Service ─────────────────────────────────────────────────────────
-final websocketServiceProvider = Provider<WebSocketService>(
-  (_) => WebSocketService(),
-);
+/// Websocket
+final websocketServiceProvider =
+    Provider((ref) => WebSocketService());
 
-// ── Liste des conversations ───────────────────────────────────────────────────
+/// 🔹 Conversations Provider (THIS FIXES YOUR ERROR)
 final conversationsProvider =
-    FutureProvider.autoDispose<List<Conversation>>((ref) {
-  return ref.read(chatRepositoryProvider).fetchConversations();
+    FutureProvider<List<Conversation>>((ref) async {
+  final repo = ref.read(chatRepositoryProvider);
+  return repo.fetchConversations();
 });
 
-// ── Messages d'une conversation with WebSocket support ────────────────────────
-class ChatNotifier
-    extends AutoDisposeFamilyAsyncNotifier<List<ChatMessage>, String> {
-  WebSocketService? _wsService;
-  String? _conversationId;
+/// 🔹 Chat Messages Provider
+final chatProvider = StateNotifierProvider.family<
+    ChatNotifier, List<ChatMessage>, String>(
+  (ref, conversationId) =>
+      ChatNotifier(ref, conversationId),
+);
 
-  @override
-  Future<List<ChatMessage>> build(String conversationId) async {
-    _conversationId = conversationId;
-    _wsService = ref.read(websocketServiceProvider);
-    
-    // Setup cleanup on dispose
-    ref.onDispose(() {
-      if (_conversationId != null && _wsService != null) {
-        _wsService!.unsubscribeFromConversation(_conversationId!);
-      }
-    });
-    
-    // Connect WebSocket if not connected
-    if (!_wsService!.isConnected) {
-      try {
-        await _wsService!.connect();
-      } catch (e) {
-        print('Failed to connect WebSocket: $e');
-      }
-    }
+class ChatNotifier extends StateNotifier<List<ChatMessage>> {
+  final Ref ref;
+  final String conversationId;
 
-    // Subscribe to real-time messages
-    _wsService!.subscribeToConversation(conversationId, (message) {
-      final current = state.valueOrNull ?? [];
-      if (!current.any((m) => m.id == message.id)) {
-        state = AsyncData([...current, message]);
-      }
-    });
+  ChatNotifier(this.ref, this.conversationId)
+      : super([]) {
+    _init();
+  }
 
-    // Load existing messages
+  Future<void> _init() async {
     final repo = ref.read(chatRepositoryProvider);
-    return repo.fetchMessages(conversationId);
-  }
+    final ws = ref.read(websocketServiceProvider);
 
-  Future<void> send(String body) async {
-    if (_conversationId == null || _wsService == null) return;
-    
-    try {
-      // Optimistically add message to UI
-      final current = state.valueOrNull ?? [];
-      final now = DateTime.now();
-      final tempMessage = ChatMessage(
-        id: 'temp-${now.millisecondsSinceEpoch}',
-        conversationId: _conversationId!,
-        senderId: '', // Will be set by backend
-        body: body,
-        sentAt: now,
-        isMe: true,
-      );
-      state = AsyncData([...current, tempMessage]);
-
-      // Send via WebSocket
-      _wsService!.sendMessage(_conversationId!, body);
-    } catch (e) {
-      // Revert optimistic update on error
-      final repo = ref.read(chatRepositoryProvider);
-      final messages = await repo.fetchMessages(_conversationId!);
-      state = AsyncData(messages);
-      rethrow;
+    if (!ws.isConnected) {
+      await ws.connect();
     }
+
+    final messages =
+        await repo.fetchMessages(conversationId);
+    state = messages;
+
+    await ws.subscribe(conversationId, (message) {
+      if (!state.any((m) => m.id == message.id)) {
+        state = [...state, message];
+      }
+    });
   }
 
-}
+  void send(String body) {
+    if (body.trim().isEmpty) return;
 
-final chatNotifierProvider = AsyncNotifierProvider.autoDispose
-    .family<ChatNotifier, List<ChatMessage>, String>(ChatNotifier.new);
+    final ws = ref.read(websocketServiceProvider);
+    ws.sendMessage(conversationId, body);
+  }
+}

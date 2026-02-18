@@ -122,7 +122,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             .update((s) => s.copyWith(search: v)),
                         style: const TextStyle(fontSize: 15, color: _kAccent),
                         decoration: const InputDecoration(
-                          hintText: 'Q Search your home...',
+                          hintText: 'Search your home...',
                           hintStyle: TextStyle(
                             color: Color(0xFF999999),
                             fontSize: 14,

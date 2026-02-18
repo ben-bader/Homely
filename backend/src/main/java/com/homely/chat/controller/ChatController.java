@@ -59,35 +59,37 @@ public class ChatController {
     }
 
     @MessageMapping("/chat.send")
-    public void send(MessageDto mdto, Principal principal) {
-        if (principal == null) throw new RuntimeException("Unauthorized");
+public void send(MessageDto mdto, Principal principal) {
+    if (principal == null) throw new RuntimeException("Unauthorized");
 
-        Conversation conversation = chatService.getConversationById(mdto.getConversationId());
-        User sender = userService.getByEmail(principal.getName());
-        if (sender == null) throw new RuntimeException("User not found");
-        if (!sender.getId().equals(conversation.getClient().getId())
-                && !sender.getId().equals(conversation.getSeller().getId())) {
-            throw new RuntimeException("User not part of the conversation");
-        }
+    Conversation conversation = chatService.getConversationById(mdto.getConversationId());
+    User sender = userService.getByEmail(principal.getName());
 
-        Message message = new Message();
-        message.setConversation(conversation);
-        message.setSender(sender);
-        message.setBody(mdto.getBody());
-        message.setAttachments(mdto.getAttachments());
-        chatService.saveMessage(message);
-
-        MessageDto dto = messageMapper.toDto(message);
-
-        messagingTemplate.convertAndSendToUser(
-                conversation.getClient().getEmail(),
-                "/queue/conversations/" + conversation.getId(),
-                dto
-        );
-        messagingTemplate.convertAndSendToUser(
-                conversation.getSeller().getEmail(),
-                "/queue/conversations/" + conversation.getId(),
-                dto
-        );
+    if (!sender.getId().equals(conversation.getClient().getId())
+            && !sender.getId().equals(conversation.getSeller().getId())) {
+        throw new RuntimeException("User not part of the conversation");
     }
+
+    Message message = new Message();
+    message.setConversation(conversation);
+    message.setSender(sender);
+    message.setBody(mdto.getBody());
+    message.setAttachments(mdto.getAttachments());
+
+    chatService.saveMessage(message);
+
+    MessageDto dto = messageMapper.toDto(message);
+
+    // 🔥 Send ONLY to the other participant
+    User receiver = sender.getId().equals(conversation.getClient().getId())
+            ? conversation.getSeller()
+            : conversation.getClient();
+
+    messagingTemplate.convertAndSendToUser(
+            receiver.getEmail(),
+            "/queue/conversations/" + conversation.getId(),
+            dto
+    );
+}
+
 }

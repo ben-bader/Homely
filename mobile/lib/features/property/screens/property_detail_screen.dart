@@ -81,7 +81,8 @@ class _BodyState extends ConsumerState<_Body> {
                               PageView.builder(
                                 controller: _pageCtrl,
                                 itemCount: p.images.length,
-                                onPageChanged: (i) => setState(() => _imgIdx = i),
+                                onPageChanged: (i) =>
+                                    setState(() => _imgIdx = i),
                                 itemBuilder: (_, i) => Image.network(
                                   p.images[i],
                                   fit: BoxFit.cover,
@@ -100,7 +101,9 @@ class _BodyState extends ConsumerState<_Body> {
                                     children: List.generate(
                                       p.images.length,
                                       (i) => AnimatedContainer(
-                                        duration: const Duration(milliseconds: 250),
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
                                         margin: const EdgeInsets.symmetric(
                                           horizontal: 3,
                                         ),
@@ -110,7 +113,9 @@ class _BodyState extends ConsumerState<_Body> {
                                           color: _imgIdx == i
                                               ? Colors.white
                                               : Colors.white54,
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -128,7 +133,9 @@ class _BodyState extends ConsumerState<_Body> {
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
                     ),
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                     child: Column(
@@ -218,14 +225,13 @@ class _BodyState extends ConsumerState<_Body> {
                     ),
                   ),
                 ),
-                
+
                 // ── Rest of content ───────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       const SizedBox(height: 28),
 
                       // ── Listing Agent ──────────────────────────────────────
@@ -402,16 +408,10 @@ class _ContactBtn extends ConsumerWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => ChatScreen(
-                  conversation: Conversation(
-                    id: conv.id,
-                    propertyId: conv.propertyId,
-                    clientId: conv.clientId,
-                    sellerId: conv.sellerId,
-                    sellerName: property.sellerName,
-                    sellerAvatar: property.sellerAvatar,
-                    propertyTitle: property.title,
-                  ),
-                ),
+  conversationId: conv.id,
+  currentUserId: conv.clientId,
+),
+
               ),
             );
           }

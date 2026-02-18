@@ -47,7 +47,7 @@ public class ChatService {
     }
 
     public List<Message> getConversationMessages(UUID conversationId) {
-        return messageRepository.findByConversationIdOrderByIdAsc(conversationId);
+        return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
     }
     public Conversation createConversation(UUID propertyId,String clientEmail) {
         Property property =  propertyRepository.findById(propertyId).orElseThrow();
