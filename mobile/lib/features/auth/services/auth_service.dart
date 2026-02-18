@@ -2,9 +2,6 @@ import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/core/network/api_client.dart';
 
 
-// ─────────────────────────────────────────────────────────────
-// Models
-// ─────────────────────────────────────────────────────────────
 
 class LoginRequest {
   final String email;
@@ -83,9 +80,11 @@ class AuthResponse {
 // ─────────────────────────────────────────────────────────────
 
 class AuthService {
-  final SecureStorage _storage = SecureStorage();
+  static const String baseUrl = 'http://localhost:8082/api/auth';
 
-  /// LOGIN
+  final _secureStorageHelper = SecureStorage(); 
+  final _storage = const FlutterSecureStorage(); 
+
   Future<AuthResponse> login(LoginRequest request) async {
     final data = await ApiClient.post(
       '/api/auth/login', // ✅ Correct endpoint
