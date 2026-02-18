@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/validators.dart';
-import '../models/register_request.dart';
 import '../services/auth_service.dart';
-import '../widgets/auth_text_field.dart';
 
 const _kAccent = Color(0xFF252525);
-
-// oklch(97% 0 0) → approx #F7F7F7 (near-white neutral)
 const _kBackground = Color(0xFFF7F7F7);
 
 class SignupScreen extends StatefulWidget {
@@ -19,8 +15,8 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _nameController =
+      TextEditingController(); // ← Un seul champ pour le nom complet
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -53,8 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final request = RegisterRequest(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
+        name: _nameController.text.trim(), // ← Full name
         email: _emailController.text.trim(),
         password: _passwordController.text,
         phone: _phoneController.text.trim(),
@@ -63,7 +58,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
       final response = await _authService.register(request);
 
-      if (mounted && response != null) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -98,8 +93,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -160,30 +154,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 36),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildLabeledField(
-                              label: 'First Name',
-                              child: _buildTextField(
-                                controller: _firstNameController,
-                                hintText: 'Mohamed',
-                                validator: Validators.validateName,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildLabeledField(
-                              label: 'Last Name',
-                              child: _buildTextField(
-                                controller: _lastNameController,
-                                hintText: 'El Am',
-                                validator: Validators.validateName,
-                              ),
-                            ),
-                          ),
-                        ],
+                      _buildLabeledField(
+                        label: 'Full Name',
+                        child: _buildTextField(
+                          controller: _nameController,
+                          hintText: 'Mohamed El Amraoui',
+                          validator: Validators.validateName,
+                        ),
                       ),
                       const SizedBox(height: 20),
 
@@ -329,10 +306,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildLabeledField({
-    required String label,
-    required Widget child,
-  }) {
+  Widget _buildLabeledField({required String label, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
