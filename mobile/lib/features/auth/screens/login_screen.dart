@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
 
   bool _isLoading = false;
-  final bool _obscurePassword = true;
+  bool _obscurePassword = true;
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
@@ -80,11 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
-      backgroundColor: const Color(0x00eaebee),
-=======
+
       backgroundColor: _kBackground, // ← updated background color
->>>>>>> 04da17feb9bdf7a36759042bcf8c07aa0f01dc2d
       body: SafeArea(
         child: Column(
           children: [
@@ -160,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             onPressed: () {
                               setState(
-                                () => _obscurePassword = !_obscurePassword,
+                                () => _obscurePassword =! _obscurePassword,
                               );
                             },
                           ),
