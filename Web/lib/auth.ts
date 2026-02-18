@@ -1,35 +1,34 @@
-// utils/auth.ts
-import {jwtDecode }from "jwt-decode";
+import { jwtDecode } from "jwt-decode"
 
-interface JwtPayload {
-  sub: string; // usually user id or email
-  roles: string[]; // must match what Spring Boot sends
-  exp: number;
+export interface JwtPayload {
+  sub: string        // email
+  name: string       // full name
+  role: string
+  exp: number
 }
 
-export function getUserFromToken() {
-  if (typeof window === "undefined") return null;
-  const token = localStorage.getItem("jwt");
-  if (!token) return null;
+export function getUserFromToken(): JwtPayload | null {
+  if (typeof window === "undefined") return null
+
+  const jwt = localStorage.getItem("jwt")
+  if (!jwt) return null
 
   try {
-    const decoded = jwtDecode<JwtPayload>(token);
+    const decoded = jwtDecode<JwtPayload>(jwt)
 
-    // check expiration
     if (decoded.exp * 1000 < Date.now()) {
-      localStorage.removeItem("jwt");
-      return null;
+      localStorage.removeItem("jwt")
+      return null
     }
 
-    return decoded;
-  } catch (err) {
-    console.error("Invalid token", err);
-    localStorage.removeItem("jwt");
-    return null;
+    return decoded
+  } catch {
+    localStorage.removeItem("jwt")
+    return null
   }
 }
 
-export function isAdmin() {
-  const user = getUserFromToken();
-  return user?.roles?.includes("ADMIN"); // adjust according to your Spring Boot role
+export function isAdmin(): boolean {
+  const user = getUserFromToken()
+  return user?.role === "ADMIN"
 }

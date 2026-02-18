@@ -73,8 +73,7 @@ class AuthResponse {
 // ── Service ───────────────────────────────────────────────────────────────────
 
 class AuthService {
-  static const String baseUrl =
-      'https://zcvxc076-8082.uks1.devtunnels.ms/api/auth';
+  static const String baseUrl = 'http://localhost:8082/api/auth';
 
   final _secureStorageHelper = SecureStorage(); 
   final _storage = const FlutterSecureStorage(); 
