@@ -6,8 +6,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.homely.common.enums.VisitStatus;
+import com.homely.property.entity.Property;
 import com.homely.property.repository.PropertyRepository;
 import com.homely.user.entity.User;
+import com.homely.user.repository.UserRepository;
 import com.homely.user.service.UserService;
 import com.homely.visitrequest.dto.VisitRequestCreateRequest;
 import com.homely.visitrequest.dto.VisitRequestDto;
@@ -25,6 +27,8 @@ public class VisitRequestService {
     private final VisitRequestMapper visitRequestMapper;
     private final UserService userService;
     private final PropertyRepository propertyRepository;
+    private final UserRepository userRepository;
+
 
     public VisitRequestDto create(VisitRequestCreateRequest request, String userEmail) {
         User user = userService.getByEmail(userEmail);
@@ -52,8 +56,8 @@ public class VisitRequestService {
         return visitRequestRepository.findByPropertyId(propertyId);
     }
 
-    public List<VisitRequest> getByUser(UUID userId) {
-        return visitRequestRepository.findByUserId(userId);
+    public List<VisitRequest> getByUser(User user) {
+        return visitRequestRepository.findByUser(user);
     }
 
     public List<VisitRequest> getByStatus(VisitStatus status) {
@@ -65,6 +69,23 @@ public class VisitRequestService {
         request.setStatus(status);
         VisitRequest saved = visitRequestRepository.save(request);
         return visitRequestMapper.toDto(saved);
+    }
+        public List<VisitRequest> getByUserEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return visitRequestRepository.findByUser(user);
+    }
+
+    // --- New method: find requests for a property if current user is the seller ---
+    public List<VisitRequest> getByPropertyForSeller(UUID propertyId, String sellerEmail) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
+
+        if (!property.getSeller().getEmail().equals(sellerEmail)) {
+            throw new RuntimeException("Unauthorized: You are not the seller of this property");
+        }
+
+        return getByProperty(property.getId());
     }
 
     public void delete(UUID id) {

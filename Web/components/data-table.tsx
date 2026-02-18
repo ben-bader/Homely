@@ -237,6 +237,31 @@ export function DataTable({
           )}
         </TableBody>
       </Table>
+      {/* Pagination controls */}
+      <div className="flex items-center justify-between px-4 py-2 border-t text-sm text-muted-foreground">
+        <span>
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount() || 1}
+        </span>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

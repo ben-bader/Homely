@@ -90,7 +90,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                                     "http://localhost:3000",
-                                    "http://localhost:63861"
+                                    "http://localhost:63861",
+                                    "http://localhost:65017",
+                                    "https://zcvxc076-3000.uks1.devtunnels.ms"
                                 ));
 
 

@@ -69,7 +69,9 @@ class AuthResponse {
 // ── Service ───────────────────────────────────────────────────────────────────
 
 class AuthService {
-  final _storage = SecureStorage();
+  static const String baseUrl = 'http://localhost:8082/api/auth';
+
+  final _storage = const FlutterSecureStorage();
 
   Future<AuthResponse> login(LoginRequest request) async {
     final data = await ApiClient.post(

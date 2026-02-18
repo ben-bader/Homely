@@ -76,6 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       backgroundColor: _kBackground, // ← updated background color
       body: SafeArea(
         child: Column(
@@ -152,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             onPressed: () {
                               setState(
-                                () => _obscurePassword = !_obscurePassword,
+                                () => _obscurePassword =! _obscurePassword,
                               );
                             },
                           ),
@@ -283,11 +284,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.error, width: 1.8),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.8),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.error, width: 2.2),
+          borderSide: const BorderSide(color: AppColors.error, width: 2.2),
         ),
         filled: true,
         fillColor: _kBackground, // same as page background

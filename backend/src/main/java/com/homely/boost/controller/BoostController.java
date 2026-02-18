@@ -48,9 +48,9 @@ public class BoostController {
                 .toList();
     }
 
-    @GetMapping("/seller")
-    public List<BoostPurchaseDto> getBySellerId(@RequestParam UUID sellerId) {
-        return boostService.getBySellerId(sellerId).stream()
+    @GetMapping("/my-boosts")
+    public List<BoostPurchaseDto> getMyBoosts(Principal principal) {
+        return boostService.getMyBoosts(principal.getName()).stream()
                 .map(boostPurchaseMapper::toDto)
                 .toList();
     }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.common.enums.VisitStatus;
+import com.homely.user.repository.UserRepository;
 import com.homely.visitrequest.dto.VisitRequestCreateRequest;
 import com.homely.visitrequest.dto.VisitRequestDto;
 import com.homely.visitrequest.mapper.VisitRequestMapper;
@@ -38,32 +39,7 @@ public class VisitRequestController {
         return visitRequestService.create(request, principal.getName());
     }
 
-    @GetMapping("/{id}")
-    public VisitRequestDto get(@PathVariable UUID id) {
-        return visitRequestMapper.toDto(visitRequestService.get(id));
-    }
-
-    @GetMapping("/property/{propertyId}")
-    public List<VisitRequestDto> getByProperty(@PathVariable UUID propertyId) {
-        return visitRequestService.getByProperty(propertyId).stream()
-                .map(visitRequestMapper::toDto)
-                .toList();
-    }
-
-    @GetMapping("/user/{userId}")
-    public List<VisitRequestDto> getByUser(@PathVariable UUID userId) {
-        return visitRequestService.getByUser(userId).stream()
-                .map(visitRequestMapper::toDto)
-                .toList();
-    }
-
-    @GetMapping("/status")
-    public List<VisitRequestDto> getByStatus(@RequestParam VisitStatus status) {
-        return visitRequestService.getByStatus(status).stream()
-                .map(visitRequestMapper::toDto)
-                .toList();
-    }
-
+   
     @PutMapping("/{id}/status")
     public VisitRequestDto updateStatus(@PathVariable UUID id, @RequestParam VisitStatus status) {
         return visitRequestService.updateStatus(id, status);
@@ -72,5 +48,25 @@ public class VisitRequestController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         visitRequestService.delete(id);
+    }
+
+    // --- New endpoint for authenticated user to get their own requests ---
+    @GetMapping("/my-requests")
+    public List<VisitRequestDto> getMyRequests(Principal principal) {
+        String email = principal.getName();
+        return visitRequestService.getByUserEmail(email).stream()
+                .map(visitRequestMapper::toDto)
+                .toList();
+    }
+
+    // --- New endpoint for property seller to get all visit requests for their property ---
+    @GetMapping("/property/{propertyId}/seller")
+    public List<VisitRequestDto> getRequestsForPropertyAsSeller(
+            @PathVariable UUID propertyId,
+            Principal principal) {
+        String sellerEmail = principal.getName();
+        return visitRequestService.getByPropertyForSeller(propertyId, sellerEmail).stream()
+                .map(visitRequestMapper::toDto)
+                .toList();
     }
 }

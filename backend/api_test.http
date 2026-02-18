@@ -31,7 +31,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "testuser1@example.com",
+  "email": "testuser3@example.com",
   "password": "Password123"
 }
 
@@ -98,7 +98,7 @@ Authorization: Bearer {{token}}
 ###
 
 # Get all properties
-GET {{baseUrl}}/properties
+GET {{baseUrl}}/admin/properties/a6f45a0f-2328-47f1-be16-dfdf0e8698ed
 Authorization: Bearer {{token}}
 
 ###
@@ -146,12 +146,8 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "seller": {
-    "id": "13f049ae-1e58-4a1c-bfe5-daa0a90137b2"
-  },
-  "property": {
-    "id": "6f1ed7d2-424a-4cd8-b095-485a0ffdab5d"
-  },
+  "sellerId": "13f049ae-1e58-4a1c-bfe5-daa0a90137b2",
+  "propertyId": "a6f45a0f-2328-47f1-be16-dfdf0e8698ed",
   "amount": 29.99,
   "currency": "USD",
   "durationDays": 7,
@@ -192,3 +188,82 @@ GET {{baseUrl}}/admin/boosts
 # Profiles 
 ###
 GET {{baseUrl}}/profiles/55bdf3e7-fecf-4ce0-a55d-1e123cd16982
+
+### Create Visit Request 1
+POST {{baseUrl}}/visit-requests
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "f2988d84-60c7-4d13-9d5a-d4480d2851df",
+  "propertyId": "a6f45a0f-2328-47f1-be16-dfdf0e8698ed",
+  "requestedDate": "2026-02-20T14:00:00"
+}
+
+### Create Visit Request 2
+POST {{baseUrl}}/visit-requests
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "c4a1394b-e9a6-40d4-b944-ed6c857aa612",
+  "propertyId": "9eb6ff3c-74c5-49aa-83ba-bcc688603f15",
+  "requestedDate": "2026-02-21T10:30:00"
+}
+
+### Create Visit Request 3
+POST {{baseUrl}}/visit-requests
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "0f4ae0a4-9a3a-4648-871a-d3042f6b2cf3",
+  "propertyId": "a6f45a0f-2328-47f1-be16-dfdf0e8698ed",
+  "requestedDate": "2026-02-22T16:45:00"
+}
+###
+GET {{baseUrl}}/properties/filter?propertyType=APARTMENT&city=paris&fromDate=2026-02-10T00:00:00Z&toDate=2026-02-18T23:59:59Z
+Authorization: Bearer {{token}}
+###
+GET {{baseUrl}}/properties/filter?propertyType=APARTMENT&type=RENT&city=casablanca&minPrice=100000&maxPrice=200000&fromDate=2026-01-01T00:00:00Z&toDate=2026-02-01T23:59:59Z
+Authorization: Bearer {{token}}
+###
+GET {{baseUrl}}/properties/filter?propertyType=APARTMENT&city=casablanca
+Authorization: Bearer {{token}}
+###
+GET {{baseUrl}}/properties/search?keyword=Casablanca
+Authorization: Bearer {{token}}
+####
+GET {{baseUrl}}/properties/search?keyword=150000
+Authorization: Bearer {{token}}
+###
+POST {{baseUrl}}/boosts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sellerId" :"bd90e13e-c632-42cf-9f08-ea3b04d938bb",
+  "propertyId": "9eb6ff3c-74c5-49aa-83ba-bcc688603f15",
+  "amount": 49.99,
+  "currency": "USD",
+  "durationDays": 7,
+  "status": "PENDING",
+  "paymentProviderRef": "txn_12345"
+}
+###
+POST {{baseUrl}}/boost
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "sellerId": "13f049ae-1e58-4a1c-bfe5-daa0a90137b2",
+  "propertyId": "a6f45a0f-2328-47f1-be16-dfdf0e8698ed",
+  "amount": 29.99,
+  "currency": "USD",
+  "durationDays": 7,
+  "status": "PENDING",
+  "paymentProviderRef": "txn_12345"
+}
+####
+GET {{baseUrl}}/boost/my-boosts
+Authorization: Bearer {{token}}

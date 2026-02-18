@@ -35,7 +35,7 @@ export function LoginForm({
       const { token } = res.data;
 
       localStorage.setItem("jwt", token);
-
+      
       router.push("/dashboard");
     } catch (err) {
       console.log(err);

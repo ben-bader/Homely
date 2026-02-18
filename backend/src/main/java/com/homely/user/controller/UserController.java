@@ -56,7 +56,7 @@ public class UserController {
         Report report = new Report();
         User reporter = userService.getById(dto.getReporterId());
         User reportedUser = dto.getReportedUserId() != null ? userService.getById(dto.getReportedUserId()) : null;
-        var reportedProperty = dto.getReportedPropertyId() != null ? propertyService.getEntity(dto.getReportedPropertyId()) : null;
+        var reportedProperty = dto.getReportedPropertyId() != null ? propertyService.getEntityById(dto.getReportedPropertyId()) : null;
 
         report.setReporter(reporter);
         report.setReportedUser(reportedUser);

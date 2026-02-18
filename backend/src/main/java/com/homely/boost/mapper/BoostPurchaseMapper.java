@@ -12,6 +12,9 @@ public interface BoostPurchaseMapper {
 
     @Mapping(target = "sellerId", source = "seller.id")
     @Mapping(target = "propertyId", source = "property.id")
+    @Mapping(target = "propertyTitle", source = "property.title")
+    @Mapping(target = "userName", source = "seller.name")
+    @Mapping(target = "userEmail", source = "seller.email")
     BoostPurchaseDto toDto(BoostPurchase entity);
 
     @Mapping(target = "id", ignore = true)
