@@ -150,7 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
+                      const Text(
                         'Join Homely and find your perfect home',
                         style: TextStyle(
                           color: AppColors.textSecondary,
@@ -296,7 +296,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
+                          const Text(
                             'Already have an account? ',
                             style: TextStyle(
                               color: AppColors.textSecondary,
@@ -391,11 +391,11 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.error, width: 1.8),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.8),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.error, width: 2.2),
+          borderSide: const BorderSide(color: AppColors.error, width: 2.2),
         ),
         filled: true,
         fillColor: _kBackground, // same as page background

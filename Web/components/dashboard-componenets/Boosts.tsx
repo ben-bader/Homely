@@ -18,13 +18,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api } from "@/lib/api"
 import type { Boost, BoostStatus } from "@/types/dashboard-types"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "../ui/button"
 
 export default function Boosts() {
   const [boosts, setBoosts] = React.useState<Boost[]>([])
   const [loading, setLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
 
-  // Fetch boosts
+  // Fetch boosts 
   const fetchBoosts = async () => {
     try {
       const res = await api.get<Boost[]>("/admin/boosts")
@@ -168,6 +169,31 @@ export default function Boosts() {
             )}
           </TableBody>
         </Table>
+        {/* Pagination controls */}
+        <div className="flex items-center justify-between px-4 py-2 border-t text-sm text-muted-foreground">
+          <span>
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount() || 1}
+          </span>
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -13,6 +13,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
@@ -24,7 +25,7 @@ import lombok.Setter;
 @Setter
 public class Property extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id")
     private User seller;
 
@@ -46,21 +47,22 @@ public class Property extends BaseEntity {
     private Double latitude;
     private Double longitude;
 
-    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
     private Apartment apartment;
 
-    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
     private House house;
 
-    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL)
-    private Land land;
-
-    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL)
-    private Commercial commercial;
-
-    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
     private Villa villa;
 
-    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
     private Studio studio;
+
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
+    private Commercial commercial;
+
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
+    private Land land;
+
 }

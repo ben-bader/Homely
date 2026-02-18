@@ -98,7 +98,7 @@ Authorization: Bearer {{token}}
 ###
 
 # Get all properties
-GET {{baseUrl}}/properties
+GET {{baseUrl}}/admin/properties/a6f45a0f-2328-47f1-be16-dfdf0e8698ed
 Authorization: Bearer {{token}}
 
 ###

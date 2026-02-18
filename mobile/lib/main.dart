@@ -168,7 +168,7 @@ class TestHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _authService = AuthService();
+    final authService = AuthService();
     final isClient = role == 'CLIENT';
 
     return Scaffold(
@@ -215,7 +215,7 @@ class TestHomeScreen extends StatelessWidget {
               );
 
               if (confirm == true && context.mounted) {
-                await _authService.logout();
+                await authService.logout();
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => const LoginScreen()),

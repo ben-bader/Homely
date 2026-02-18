@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,7 @@ import com.homely.moderation.service.ModerationService;
 import com.homely.notification.ReportMapper;
 import com.homely.property.dto.PropertyDto;
 import com.homely.property.mapper.PropertyMapper;
+import com.homely.property.repository.PropertyRepository;
 import com.homely.property.service.PropertyService;
 import com.homely.propertyview.dto.PropertyViewDto;
 import com.homely.propertyview.mapper.PropertyViewMapper;
@@ -64,6 +66,7 @@ public class AdminController {
     private final PropertyViewService propertyViewService;
     private final FeedbackService feedbackService;
     private final VisitRequestService visitRequestService;
+     private final PropertyRepository propertyRepository;
 
     private final ReportMapper reportMapper;
     private final AuditLogMapper auditLogMapper;
@@ -162,6 +165,13 @@ public class AdminController {
     @GetMapping("/properties")
     public List<PropertyDto> getAllProperties() {
         return propertyService.getAll();
+    }
+    @GetMapping("/properties/{id}")
+    public ResponseEntity<PropertyDto> getProperty(@PathVariable UUID id) {
+        return propertyRepository.findById(id)
+            .map(propertyMapper::toDto)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/property-views")

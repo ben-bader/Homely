@@ -122,6 +122,11 @@ public class PropertyService {
                 .map(propertyMapper::toDto)
                 .toList();
     }
+    public PropertyDto getById(UUID id) {
+    Property property = propertyRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Property not found"));
+    return propertyMapper.toDto(property);
+}
 
     // ================= FILTER =================
     public List<PropertyDto> filter(
@@ -189,7 +194,7 @@ Specification<Property> spec = (root, query, cb) -> null;
 
     // ================= SELLER PROPERTIES =================
     public List<PropertyDto> getBySellerEmail(String email) {
-        return propertyRepository.findBySeller_Email(email)
+        return propertyRepository.findBySellerEmail(email)
                 .stream()
                 .map(propertyMapper::toDto)
                 .toList();

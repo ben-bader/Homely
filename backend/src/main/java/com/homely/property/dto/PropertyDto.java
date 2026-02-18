@@ -9,11 +9,15 @@ import com.homely.common.enums.ListingType;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@RequiredArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PropertyDto {
 
@@ -38,4 +42,17 @@ public class PropertyDto {
     private StudioDto studio;
     private CommercialDto commercial;
     private LandDto land;
+
+    /**
+     * Projection constructor used by {@link com.homely.property.repository.PropertyRepository#findPropertyDtoById}.
+     * Matches the JPQL constructor expression:
+     *   new com.homely.property.dto.PropertyDto(p.id, p.address, p.price, p.listingType, s.id)
+     */
+    public PropertyDto(UUID id, String address, BigDecimal price, ListingType listingType, UUID sellerId) {
+        this.id = id;
+        this.address = address;
+        this.price = price;
+        this.listingType = listingType;
+        this.sellerId = sellerId;
+    }
 }

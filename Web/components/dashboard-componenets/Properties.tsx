@@ -1,20 +1,19 @@
 "use client";
 
-import * as React from "react";
+import React, { useMemo, useState } from "react";
+
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
   getFilteredRowModel,
+  getSortedRowModel,
   getPaginationRowModel,
   flexRender,
   type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
-  type VisibilityState,
 } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -23,130 +22,257 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api } from "@/lib/api";
+
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectItem,
 } from "@/components/ui/select";
-import { PropertyStatus } from "@/types/dashboard-types";
+import { Button } from "@/components/ui/button";
 
-type Property = {
-  id: string;
-  title: string;
-  address?: string;
-  price?: number;
-  status?: string;
-};
+import { useProperties } from "@/hooks/useProperties";
+import { Property, PropertyStatus } from "@/types/dashboard-types";
+
+/* ------------------------------------------------ */
+/* Property Drawer */
+/* ------------------------------------------------ */
+
+function PropertyDrawer({
+  property,
+  onStatusChange,
+  fetchDetail,
+  selectedProperty,
+  loadingDetail,
+}: {
+  property: Property;
+  onStatusChange: (propertyId: string, status: PropertyStatus) => Promise<void>;
+  fetchDetail: (id: string) => void;
+  selectedProperty: Property | null;
+  loadingDetail: boolean;
+}) {
+  const [status, setStatus] = useState(property.status);
+  const [saving, setSaving] = useState(false);
+
+  const handleStatusChange = async (value: string) => {
+    const newStatus = value as PropertyStatus;
+    setSaving(true);
+    try {
+      await onStatusChange(property.id, newStatus);
+      setStatus(newStatus);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Drawer
+      direction="right"
+      onOpenChange={(open) => {
+        if (open) fetchDetail(property.id);
+      }}
+    >
+      <DrawerTrigger asChild>
+        <Button
+          variant="link"
+          className="text-foreground w-fit px-0 text-left truncate"
+        >
+          {property.title}
+        </Button>
+      </DrawerTrigger>
+
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>Property Details</DrawerTitle>
+          <DrawerDescription>
+            View full property info and update status.
+          </DrawerDescription>
+        </DrawerHeader>
+
+        <div className="flex flex-col gap-4 p-4">
+          {loadingDetail ? (
+            <p>Loading property details…</p>
+          ) : selectedProperty ? (
+            <>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Title</Label>
+                  <Input value={selectedProperty.title} readOnly />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label>Address</Label>
+                  <Input value={selectedProperty.address ?? "—"} readOnly />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Price</Label>
+                  <Input
+                    value={
+                      selectedProperty.price
+                        ? `$${selectedProperty.price.toLocaleString()}`
+                        : "—"
+                    }
+                    readOnly
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={status}
+                    onValueChange={handleStatusChange}
+                    disabled={saving}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AVAILABLE">
+                        Available
+                      </SelectItem>
+                      <SelectItem value="SUSPENDED">
+                        Suspended
+                      </SelectItem>
+                      <SelectItem value="DRAFT">Draft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {saving && (
+                    <p className="text-xs text-muted-foreground">
+                      Saving…
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <p>No details available</p>
+          )}
+        </div>
+
+        <DrawerFooter>
+          <DrawerClose asChild>
+            <Button variant="outline">Close</Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+/* ------------------------------------------------ */
+/* Columns */
+/* ------------------------------------------------ */
+
+function buildColumns(
+  fetchDetail: (id: string) => void,
+  selectedProperty: Property | null,
+  loadingDetail: boolean,
+  onStatusChange: (id: string, status: PropertyStatus) => Promise<void>
+): ColumnDef<Property>[] {
+  return [
+    {
+      accessorKey: "title",
+      header: "Title",
+      cell: ({ row }) => (
+        <PropertyDrawer
+          property={row.original}
+          onStatusChange={onStatusChange}
+          fetchDetail={fetchDetail}
+          selectedProperty={selectedProperty}
+          loadingDetail={loadingDetail}
+        />
+      ),
+    },
+    {
+      accessorKey: "address",
+      header: "Address",
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }) =>
+        row.original.price
+          ? `$${row.original.price.toLocaleString()}`
+          : "—",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant="outline">{row.original.status}</Badge>
+      ),
+    },
+  ];
+}
+
+/* ------------------------------------------------ */
+/* Main Page */
+/* ------------------------------------------------ */
 
 export default function Properties() {
-  const [properties, setProperties] = React.useState<Property[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [search, setSearch] = React.useState("");
+  const {
+    properties,
+    loading,
+    error,
+    updatePropertyStatus,
+    fetchPropertyDetail,
+    selectedProperty,
+    loadingDetail,
+  } = useProperties();
 
-  // Fetch properties from API
-  const fetchProperties = async () => {
-    try {
-      const res = await api.get<Property[]>("/admin/properties");
-      setProperties(res.data || []);
-    } catch (err) {
-      console.error("Failed to load properties", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    fetchProperties();
-  }, []);
-
-  // --- Metrics cards ---
-  const totalProperties = properties.length;
-  const availableProperties = properties.filter(
-    (p) => p.status === "AVAILABLE",
-  ).length;
-  const rentedOrSoldProperties = properties.filter(
-    (p) =>
-      p.status?.toLowerCase() === "rented" ||
-      p.status?.toLowerCase() === "sold",
-  ).length;
-
-  const columns = React.useMemo<ColumnDef<Property>[]>(
-    () => [
-      { accessorKey: "title", header: "Title" },
-      { accessorKey: "address", header: "Address" },
-      {
-        accessorKey: "price",
-        header: "Price",
-        cell: ({ row }) => row.original.price ?? "-",
-      },
-      {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => (
-          <Select
-            value={row.original.status || "DRAFT"}
-            onValueChange={(newStatus: PropertyStatus) =>
-              handleStatusChange(row.original.id, newStatus)
-            }
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="AVAILABLE">AVAILABLE</SelectItem>
-              <SelectItem value="SUSPENDED">SUSPENDED</SelectItem>
-              <SelectItem value="DRAFT">DRAFT</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
-      },
-    ],
-    [],
-  );
-  const handleStatusChange = async (propertyId: string, newStatus: string) => {
-    try {
-      await api.patch(`/admin/properties/${propertyId}/status`, {
-        status: newStatus,
-      });
-      // Update state locally
-      setProperties((prev) =>
-        prev.map((p) =>
-          p.id === propertyId ? { ...p, status: newStatus } : p,
-        ),
-      );
-    } catch (err) {
-      console.error("Failed to update status", err);
-    }
-  };
-
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [pagination, setPagination] = React.useState({
+  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
 
-  // React Table instance
-  const table = useReactTable({
-    data: properties.filter((p) =>
+  const columns = useMemo(
+    () =>
+      buildColumns(
+        fetchPropertyDetail,
+        selectedProperty,
+        loadingDetail,
+        updatePropertyStatus
+      ),
+    [fetchPropertyDetail, selectedProperty, loadingDetail, updatePropertyStatus]
+  );
+
+  const filteredData = useMemo(() => {
+    return properties.filter((p) =>
       [p.title, p.address, p.status, p.price?.toString()]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-        .includes(search.toLowerCase()),
-    ),
+        .includes(search.toLowerCase())
+    );
+  }, [properties, search]);
+
+  const table = useReactTable({
+    data: filteredData,
     columns,
-    state: { columnFilters, sorting, columnVisibility, pagination },
-    onColumnFiltersChange: setColumnFilters,
+    state: {
+      sorting,
+      pagination,
+    },
     onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -155,83 +281,80 @@ export default function Properties() {
   });
 
   if (loading) return <div>Loading properties…</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <div className="px-8 space-y-6">
       <h2 className="text-xl font-semibold">Properties</h2>
 
-      {/* --- Metrics Cards --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-        <div className="p-4 bg-white rounded-xl shadow text-center">
-          <p className="text-sm text-muted-foreground">Available Properties</p>
-          <p className="text-2xl font-bold">{availableProperties}</p>
-        </div>
-        <div className="p-4 bg-white rounded-xl shadow text-center">
-          <p className="text-sm text-muted-foreground">
-            Rented/Sold Properties
-          </p>
-          <p className="text-2xl font-bold">{rentedOrSoldProperties}</p>
-        </div>
-        <div className="p-4 bg-white rounded-xl shadow text-center">
-          <p className="text-sm text-muted-foreground">Total Properties</p>
-          <p className="text-2xl font-bold">{totalProperties}</p>
-        </div>
-      </div>
-
-      {/* --- Search Bar --- */}
-      <h2 className="text-md pt-6 font-semibold">Search in Properties</h2>
+      {/* Search */}
       <Input
         placeholder="Search properties…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full "
       />
 
-      {/* --- Properties Table --- */}
+      {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader className="bg-muted sticky top-0 z-10">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                  <TableHead
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="cursor-pointer select-none"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center h-24"
-                >
-                  No properties.
-                </TableCell>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
+                  </TableCell>
+                ))}
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+
+        <span>
+          Page {pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()}
+        </span>
+
+        <Button
+          variant="outline"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

@@ -21,6 +21,9 @@ export enum PropertyType {
   APARTMENT = "APARTMENT",
   HOUSE = "HOUSE",
   LAND = "LAND",
+  COMMERCIAL = "COMMERCIAL",
+  STUDIO = "STUDIO",
+  VILLA = "VILLA",
 }
 
 export enum PurchaseStatus {
@@ -57,6 +60,12 @@ export interface Property {
   address: string
   latitude: number | null
   longitude: number | null
+   apartment?: Apartment;
+  house?: House;
+  commercial?: Commercial;
+  land?: Land;
+  studio?: Studio;
+  villa?: Villa;
 }
 
 // Report (backend returns names in DTO)
@@ -120,4 +129,44 @@ export type Boost = {
   currency?: string
   durationDays: number
   status: BoostStatus
+}
+export interface Apartment {
+  propertyId: string;
+  bedrooms: number;
+  bathrooms: number;
+  floor: number;
+  hasElevator: boolean;
+}
+
+export interface House {
+  propertyId: string;
+  bedrooms: number;
+  bathrooms: number;
+  hasGarage: boolean;
+  landAreaSqm: number;
+}
+
+export interface Commercial {
+  propertyId: string;
+  areaSqm: number;
+  businessType: string;
+}
+
+export interface Land {
+  propertyId: string;
+  areaSqm: number;
+  constructible: boolean;
+}
+
+export interface Studio {
+  propertyId: string;
+  furnished: boolean;
+}
+
+export interface Villa {
+  propertyId: string;
+  bedrooms: number;
+  bathrooms: number;
+  landAreaSqm: number;
+  hasPool: boolean;
 }

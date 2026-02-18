@@ -25,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
 
   bool _isLoading = false;
-  bool _obscurePassword = true;
+  final bool _obscurePassword = true;
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
 <<<<<<< HEAD
-      backgroundColor: const Color(0xEAEBEE),
+      backgroundColor: const Color(0x00eaebee),
 =======
       backgroundColor: _kBackground, // ← updated background color
 >>>>>>> 04da17feb9bdf7a36759042bcf8c07aa0f01dc2d
@@ -291,11 +291,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.error, width: 1.8),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.8),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: AppColors.error, width: 2.2),
+          borderSide: const BorderSide(color: AppColors.error, width: 2.2),
         ),
         filled: true,
         fillColor: _kBackground, // same as page background

@@ -3,6 +3,7 @@ package com.homely.property.repository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.homely.common.enums.ListingType;
 import com.homely.common.enums.PropertyType;
+import com.homely.property.dto.PropertyDto;
 import com.homely.property.entity.Property;
 
 public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSpecificationExecutor<Property>  {
@@ -20,7 +22,16 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
     List<Property> findAllByOrderByCreatedAtDesc();
 
     // ✅ Seller properties
-    List<Property> findBySeller_Email(String email);
+    List<Property> findBySellerEmail(String email);
+    @Query("""
+  select new com.homely.property.dto.PropertyDto(
+    p.id, p.address, p.price, p.listingType, s.id
+  )
+  from Property p
+  join p.seller s
+  where p.id = :id
+""")
+Optional<PropertyDto> findPropertyDtoById(@Param("id") UUID id);
 
     // ✅ Filter (advanced filtering)
    @Query("""
