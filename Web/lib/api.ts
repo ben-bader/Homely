@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "https://zcvxc076-8082.uks1.devtunnels.ms/api",
+  baseURL: "https://unparrying-christene-reductively.ngrok-free.dev/api",
   withCredentials: true, // optional but fine
 });
 
