@@ -8,7 +8,6 @@ import 'property_detail_screen.dart';
 const _kBg = Color(0xFFF7F7F7);
 const _kAccent = Color(0xFF1A1A1A);
 
-// ── Global nav index so every tab can read/update it ─────────────────────────
 final navIndexProvider = StateProvider<int>((ref) => 0);
 
 class HomeScreen extends ConsumerWidget {
@@ -17,18 +16,18 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final idx = ref.watch(navIndexProvider);
-
     final tabs = [
       const _ExploreTab(),
-      const _PlaceholderTab(label: 'Reels'),
+      const _PlaceholderTab(label: 'Explore'),
       const _PlaceholderTab(label: 'Saved'),
-      const ConversationsScreen(), // lives permanently — never rebuilt
+      const ConversationsScreen(),
       const _PlaceholderTab(label: 'Profile'),
     ];
 
     return Scaffold(
       backgroundColor: _kBg,
-      // IndexedStack keeps all tabs alive → bottom nav always shows
+      // extendBody lets the list scroll behind the floating nav
+      extendBody: true,
       body: IndexedStack(index: idx, children: tabs),
       bottomNavigationBar: const _BottomNav(),
     );
@@ -61,7 +60,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top bar ───────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Row(
@@ -82,22 +80,15 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                   onTap: () {},
                 ),
                 const SizedBox(width: 10),
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 20,
-                  backgroundColor: const Color(0xFFEEEEEE),
-                  child: const Icon(
-                    Icons.person,
-                    color: Color(0xFF888888),
-                    size: 20,
-                  ),
+                  backgroundColor: Color(0xFFEEEEEE),
+                  child: Icon(Icons.person, color: Color(0xFF888888), size: 20),
                 ),
               ],
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // ── Search pill with filter icon inside ───────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -162,10 +153,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
               ),
             ),
           ),
-
           const SizedBox(height: 14),
-
-          // ── Filter chips ──────────────────────────────────────────────
           SizedBox(
             height: 38,
             child: ListView.separated(
@@ -205,16 +193,13 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
               },
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // ── Best Offers header ────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
+              children: const [
+                Text(
                   'Best Offers',
                   style: TextStyle(
                     fontSize: 18,
@@ -223,7 +208,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                     letterSpacing: -0.4,
                   ),
                 ),
-                const Text(
+                Text(
                   'See all',
                   style: TextStyle(
                     fontSize: 13,
@@ -234,10 +219,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
               ],
             ),
           ),
-
           const SizedBox(height: 14),
-
-          // ── Property list ─────────────────────────────────────────────
           Expanded(
             child: propertiesAsync.when(
               loading: () => const Center(
@@ -285,7 +267,8 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                       ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                      // extra bottom padding so last card clears the floating nav
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                       itemCount: props.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 16),
                       itemBuilder: (_, i) => PropertyCard(
@@ -318,7 +301,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   }
 }
 
-// ── Placeholder tabs ──────────────────────────────────────────────────────────
 class _PlaceholderTab extends StatelessWidget {
   final String label;
   const _PlaceholderTab({required this.label});
@@ -531,7 +513,6 @@ class _Chip extends StatelessWidget {
   final IconData icon;
   final String label;
   const _Chip({required this.icon, required this.label});
-
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -563,7 +544,6 @@ class _IconBtn extends StatelessWidget {
   final VoidCallback onTap;
   final bool badge;
   const _IconBtn({required this.icon, required this.onTap, this.badge = false});
-
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
@@ -598,16 +578,25 @@ class _IconBtn extends StatelessWidget {
   );
 }
 
-// ── BOTTOM NAV — Instagram-style individual circles ───────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BOTTOM NAV
+//  Matches screenshot exactly:
+//  • NO background bar — completely transparent so content shows through
+//  • Each icon = its own floating circle, fully independent
+//  • Inactive: white circle + soft drop shadow (frosted/glass look)
+//  • Active:   solid dark charcoal circle + stronger shadow
+//  • Icons:    thin outlined style (lignes fines et épurées)
+//  • extendBody: true on Scaffold so the nav truly floats over the list
+// ═══════════════════════════════════════════════════════════════════════════════
 class _BottomNav extends ConsumerWidget {
   const _BottomNav();
 
-  static const _icons = [
-    Icons.home_rounded,
-    Icons.play_circle_outline_rounded, // Reels
-    Icons.favorite_border_rounded, // Saved
-    Icons.chat_bubble_outline_rounded, // Chat
-    Icons.person_outline_rounded, // Profile
+  static const _navIcons = [
+    Icons.home_rounded, // 0 – Home   (filled = nicer when active)
+    Icons.location_on_outlined, // 1 – Map / Explore
+    Icons.favorite_border_rounded, // 2 – Saved
+    Icons.chat_bubble_outline_rounded, // 3 – Chat
+    Icons.person_outline_rounded, // 4 – Profile
   ];
 
   @override
@@ -615,54 +604,66 @@ class _BottomNav extends ConsumerWidget {
     final idx = ref.watch(navIndexProvider);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF0F0F0), width: 1)),
-      ),
+      // ── Fully transparent bar — circles float over the content ────────
+      color: Colors.transparent,
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          height: 64,
+        child: Padding(
+          padding: const EdgeInsets.only(
+            bottom: 16,
+            top: 8,
+            left: 12,
+            right: 12,
+          ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(_icons.length, (i) {
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_navIcons.length, (i) {
               final active = i == idx;
               return GestureDetector(
                 onTap: () => ref.read(navIndexProvider.notifier).state = i,
                 behavior: HitTestBehavior.opaque,
-                child: SizedBox(
-                  width: 60,
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeInOut,
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: active ? _kAccent : Colors.white,
-                        shape: BoxShape.circle,
-                        border: active
-                            ? null
-                            : Border.all(
-                                color: const Color(0xFFE8E8E8),
-                                width: 1.5,
-                              ),
-                        boxShadow: active
-                            ? [
-                                BoxShadow(
-                                  color: _kAccent.withOpacity(0.25),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ]
-                            : [],
-                      ),
-                      child: Icon(
-                        _icons[i],
-                        size: 22,
-                        color: active ? Colors.white : const Color(0xFF999999),
-                      ),
-                    ),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: active
+                        ? const Color(0xFF1C1C1C) // solid dark when active
+                        : Colors.white, // crisp white when inactive
+                    boxShadow: active
+                        ? [
+                            // Active: deeper, darker shadow
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.45),
+                              blurRadius: 18,
+                              spreadRadius: 1,
+                              offset: const Offset(0, 6),
+                            ),
+                          ]
+                        : [
+                            // Inactive: soft shadow = glass / frosted feel
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.14),
+                              blurRadius: 14,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 5),
+                            ),
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.90),
+                              blurRadius: 4,
+                              spreadRadius: -2,
+                              offset: const Offset(-1, -1),
+                            ),
+                          ],
+                  ),
+                  child: Icon(
+                    _navIcons[i],
+                    size: 23,
+                    color: active
+                        ? Colors.white
+                        : const Color(0xFF6B6B6B), // medium grey for thin look
                   ),
                 ),
               );
