@@ -110,7 +110,8 @@ function AppSidebar(
         <NavMain items={data.navMain} setActiveSection={setActiveSection}  activeSection={activeSection}/>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser setActiveSection={setActiveSection} />
+
       </SidebarFooter>
     </Sidebar>
   );
