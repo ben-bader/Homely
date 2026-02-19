@@ -3,29 +3,48 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/chat/screens/conversation_screen.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
-import 'package:mobile/core/navigation/bottom_nav_provider.dart';
 import 'property_detail_screen.dart';
 
 const _kBg = Color(0xFFF7F7F7);
 const _kAccent = Color(0xFF1A1A1A);
 
-class HomeScreen extends ConsumerStatefulWidget {
+// ── Global nav index so every tab can read/update it ─────────────────────────
+final navIndexProvider = StateProvider<int>((ref) => 0);
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final idx = ref.watch(navIndexProvider);
+
+    final tabs = [
+      const _ExploreTab(),
+      const _PlaceholderTab(label: 'Reels'),
+      const _PlaceholderTab(label: 'Saved'),
+      const ConversationsScreen(), // lives permanently — never rebuilt
+      const _PlaceholderTab(label: 'Profile'),
+    ];
+
+    return Scaffold(
+      backgroundColor: _kBg,
+      // IndexedStack keeps all tabs alive → bottom nav always shows
+      body: IndexedStack(index: idx, children: tabs),
+      bottomNavigationBar: const _BottomNav(),
+    );
+  }
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+// ── EXPLORE TAB ───────────────────────────────────────────────────────────────
+class _ExploreTab extends ConsumerStatefulWidget {
+  const _ExploreTab();
+  @override
+  ConsumerState<_ExploreTab> createState() => _ExploreTabState();
+}
+
+class _ExploreTabState extends ConsumerState<_ExploreTab> {
   final _searchController = TextEditingController();
-  final List<String> _types = [
-    'Any type',
-    'Rent',
-    'Buy',
-    'House',
-    'Apartment',
-    'Villa',
-  ];
+  final _types = ['Any type', 'Rent', 'Buy', 'House', 'Apartment', 'Villa'];
 
   @override
   void dispose() {
@@ -38,260 +57,252 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final filter = ref.watch(propertyFilterProvider);
     final propertiesAsync = ref.watch(propertiesProvider);
 
-    return Scaffold(
-      backgroundColor: _kBg,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Top bar ──────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Top bar ───────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Row(
+              children: [
+                const Text(
+                  'Explore',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: _kAccent,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+                const Spacer(),
+                _IconBtn(
+                  icon: Icons.notifications_outlined,
+                  badge: true,
+                  onTap: () {},
+                ),
+                const SizedBox(width: 10),
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: const Color(0xFFEEEEEE),
+                  child: const Icon(
+                    Icons.person,
+                    color: Color(0xFF888888),
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Search pill with filter icon inside ───────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: const Color(0xFFE0E0E0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color.fromRGBO(0, 0, 0, 0.04),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Row(
                 children: [
-                  const Text(
-                    'Explore',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: _kAccent,
-                      letterSpacing: -0.8,
+                  const SizedBox(width: 16),
+                  const Icon(
+                    Icons.search_rounded,
+                    color: Color(0xFF999999),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onSubmitted: (v) => ref
+                          .read(propertyFilterProvider.notifier)
+                          .update((s) => s.copyWith(search: v)),
+                      style: const TextStyle(fontSize: 15, color: _kAccent),
+                      decoration: const InputDecoration(
+                        hintText: 'Search your home...',
+                        hintStyle: TextStyle(
+                          color: Color(0xFF999999),
+                          fontSize: 14,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  // Notification bell icon
+                  Container(
+                    width: 1,
+                    height: 22,
+                    color: const Color(0xFFE0E0E0),
+                  ),
                   GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE8E8E8)),
-                      ),
-                      child: const Icon(
-                        Icons.notifications_outlined,
+                    onTap: () => _showFilterSheet(context),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14),
+                      child: Icon(
+                        Icons.tune_rounded,
                         color: _kAccent,
                         size: 20,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  // Profile picture
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: const Color(0xFFEEEEEE),
-                    backgroundImage: null, // Can be set from user profile
-                    child: const Icon(
-                      Icons.person,
-                      color: Color(0xFF888888),
-                      size: 20,
-                    ),
-                  ),
                 ],
               ),
             ),
+          ),
 
-            const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-            // ── Search bar ────────────────────────────────────────
-            Padding(
+          // ── Filter chips ──────────────────────────────────────────────
+          SizedBox(
+            height: 38,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(color: const Color(0xFFE0E0E0)),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    const Icon(
-                      Icons.search_rounded,
-                      color: Color(0xFF999999),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onSubmitted: (v) => ref
-                            .read(propertyFilterProvider.notifier)
-                            .update((s) => s.copyWith(search: v)),
-                        style: const TextStyle(fontSize: 15, color: _kAccent),
-                        decoration: const InputDecoration(
-                          hintText: 'Search your home...',
-                          hintStyle: TextStyle(
-                            color: Color(0xFF999999),
-                            fontSize: 14,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 14),
-                        ),
+              itemCount: _types.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final t = _types[i];
+                final selected = filter.type == t;
+                return GestureDetector(
+                  onTap: () => ref
+                      .read(propertyFilterProvider.notifier)
+                      .update((s) => s.copyWith(type: t)),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    decoration: BoxDecoration(
+                      color: selected ? _kAccent : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: selected ? _kAccent : const Color(0xFFE0E0E0),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => _showFilterSheet(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        child: const Icon(
-                          Icons.tune_rounded,
-                          color: Color(0xFF999999),
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // ── Filter chips ───────────────────────────────────────────
-            SizedBox(
-              height: 38,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _types.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, i) {
-                  final t = _types[i];
-                  final selected = filter.type == t;
-                  return GestureDetector(
-                    onTap: () => ref
-                        .read(propertyFilterProvider.notifier)
-                        .update((s) => s.copyWith(type: t)),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: selected ? _kAccent : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: selected ? _kAccent : const Color(0xFFE0E0E0),
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          t,
-                          style: TextStyle(
-                            color: selected ? Colors.white : _kAccent,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── Best Offers header ────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Best Offers',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: _kAccent,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Text(
-                      'See all',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF888888),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // ── Liste des propriétés ──────────────────────────────────────
-            Expanded(
-              child: propertiesAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: _kAccent,
-                  ),
-                ),
-                error: (e, _) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.wifi_off_rounded,
-                        size: 48,
-                        color: Color(0xFFCCCCCC),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '$e',
-                        style: const TextStyle(
-                          color: Color(0xFF888888),
+                    child: Center(
+                      child: Text(
+                        t,
+                        style: TextStyle(
+                          color: selected ? Colors.white : _kAccent,
+                          fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () => ref.invalidate(propertiesProvider),
-                        child: const Text(
-                          'Réessayer',
-                          style: TextStyle(color: _kAccent),
-                        ),
-                      ),
-                    ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // ── Best Offers header ────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Best Offers',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: _kAccent,
+                    letterSpacing: -0.4,
                   ),
                 ),
-                data: (properties) => properties.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Aucune propriété trouvée',
-                          style: TextStyle(color: Color(0xFF888888)),
+                const Text(
+                  'See all',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF888888),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // ── Property list ─────────────────────────────────────────────
+          Expanded(
+            child: propertiesAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: _kAccent,
+                ),
+              ),
+              error: (e, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.wifi_off_rounded,
+                      size: 48,
+                      color: Color(0xFFCCCCCC),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '$e',
+                      style: const TextStyle(
+                        color: Color(0xFF888888),
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () => ref.invalidate(propertiesProvider),
+                      child: const Text(
+                        'Réessayer',
+                        style: TextStyle(
+                          color: _kAccent,
+                          fontWeight: FontWeight.w700,
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                        itemCount: properties.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
-                        itemBuilder: (_, i) => PropertyCard(
-                          property: properties[i],
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => PropertyDetailScreen(
-                                propertyId: properties[i].id,
-                              ),
-                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              data: (props) => props.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Aucune propriété trouvée',
+                        style: TextStyle(color: Color(0xFF888888)),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                      itemCount: props.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      itemBuilder: (_, i) => PropertyCard(
+                        property: props[i],
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                PropertyDetailScreen(propertyId: props[i].id),
                           ),
                         ),
                       ),
-              ),
+                    ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      bottomNavigationBar: _BottomNav(),
     );
   }
 
@@ -307,11 +318,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+// ── Placeholder tabs ──────────────────────────────────────────────────────────
+class _PlaceholderTab extends StatelessWidget {
+  final String label;
+  const _PlaceholderTab({required this.label});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Text(
+      label,
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: _kAccent,
+      ),
+    ),
+  );
+}
+
 // ── Property Card ─────────────────────────────────────────────────────────────
 class PropertyCard extends ConsumerWidget {
   final Property property;
   final VoidCallback onTap;
-
   const PropertyCard({super.key, required this.property, required this.onTap});
 
   @override
@@ -504,6 +531,7 @@ class _Chip extends StatelessWidget {
   final IconData icon;
   final String label;
   const _Chip({required this.icon, required this.label});
+
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -530,95 +558,126 @@ class _Chip extends StatelessWidget {
   );
 }
 
+class _IconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool badge;
+  const _IconBtn({required this.icon, required this.onTap, this.badge = false});
 
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE8E8E8)),
+          ),
+          child: Icon(icon, color: _kAccent, size: 20),
+        ),
+        if (badge)
+          Positioned(
+            top: -2,
+            right: -2,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+// ── BOTTOM NAV — Instagram-style individual circles ───────────────────────────
 class _BottomNav extends ConsumerWidget {
+  const _BottomNav();
+
+  static const _icons = [
+    Icons.home_rounded,
+    Icons.play_circle_outline_rounded, // Reels
+    Icons.favorite_border_rounded, // Saved
+    Icons.chat_bubble_outline_rounded, // Chat
+    Icons.person_outline_rounded, // Profile
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTab = ref.watch(bottomNavTabProvider);
-    
+    final idx = ref.watch(navIndexProvider);
+
     return Container(
-      height: 70,
       decoration: const BoxDecoration(
         color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFF0F0F0), width: 1)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavItem(
-            icon: Icons.home_rounded,
-            active: currentTab == BottomNavTab.home,
-            onTap: () => ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.home,
-          ),
-          _NavItem(
-            icon: Icons.location_on_outlined,
-            active: currentTab == BottomNavTab.explore,
-            onTap: () => ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.explore,
-          ),
-          _NavItem(
-            icon: Icons.favorite_border_rounded,
-            active: currentTab == BottomNavTab.favorites,
-            onTap: () => ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.favorites,
-          ),
-          _NavItem(
-            icon: Icons.chat_bubble_outline_rounded,
-            active: currentTab == BottomNavTab.chat,
-            onTap: () {
-              ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.chat;
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ConversationsScreen()),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(_icons.length, (i) {
+              final active = i == idx;
+              return GestureDetector(
+                onTap: () => ref.read(navIndexProvider.notifier).state = i,
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: 60,
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeInOut,
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: active ? _kAccent : Colors.white,
+                        shape: BoxShape.circle,
+                        border: active
+                            ? null
+                            : Border.all(
+                                color: const Color(0xFFE8E8E8),
+                                width: 1.5,
+                              ),
+                        boxShadow: active
+                            ? [
+                                BoxShadow(
+                                  color: _kAccent.withOpacity(0.25),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      child: Icon(
+                        _icons[i],
+                        size: 22,
+                        color: active ? Colors.white : const Color(0xFF999999),
+                      ),
+                    ),
+                  ),
+                ),
               );
-            },
+            }),
           ),
-          _NavItem(
-            icon: Icons.person_outline_rounded,
-            active: currentTab == BottomNavTab.profile,
-            onTap: () => ref.read(bottomNavTabProvider.notifier).state = BottomNavTab.profile,
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final bool active;
-  final VoidCallback onTap;
-  const _NavItem({
-    required this.icon,
-    required this.active,
-    required this.onTap,
-  });
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        color: active ? _kAccent : Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: active ? [
-          BoxShadow(
-            color: _kAccent.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ] : null,
-      ),
-      child: Icon(
-        icon,
-        color: active ? Colors.white : const Color(0xFF999999),
-        size: 24,
-      ),
-    ),
-  );
-}
-
+// ── Filter sheet ──────────────────────────────────────────────────────────────
 class _FilterSheet extends ConsumerWidget {
   const _FilterSheet();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(propertyFilterProvider);
@@ -686,6 +745,7 @@ class _FilterSheet extends ConsumerWidget {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1A1A1A),
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
