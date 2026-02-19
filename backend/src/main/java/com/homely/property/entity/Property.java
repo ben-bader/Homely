@@ -47,22 +47,22 @@ public class Property extends BaseEntity {
     private Double latitude;
     private Double longitude;
 
-    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Apartment apartment;
 
-    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private House house;
 
-    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Villa villa;
 
-    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Studio studio;
 
-    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Commercial commercial;
 
-    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "property", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Land land;
 
 }
