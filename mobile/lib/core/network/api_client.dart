@@ -3,10 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/core/storage/secure_storage.dart';
 
 class ApiClient {
-  // ── Remplace par l'URL de ton partenaire ──────────────────────────────────
-  // Android emulator  → http://10.0.2.2:8080/api
-  // iOS simulator     → http://localhost:8080/api
-  // Déployé           → https://ton-api.com/api
+  
   static const String baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev';
 
   static final _storage = SecureStorage();

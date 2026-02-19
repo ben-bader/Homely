@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/chat/screens/conversation_screen.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
+import 'package:mobile/features/profile/screens/profile_screen.dart';
 import 'property_detail_screen.dart';
 
 const _kBg = Color(0xFFF7F7F7);
@@ -18,11 +19,11 @@ class HomeScreen extends ConsumerWidget {
     final idx = ref.watch(navIndexProvider);
 
     final tabs = [
-      const _ExploreTab(), // 0 - Maison
-      const _PlaceholderTab(label: 'Media'), // 1 - Media
-      const ConversationsScreen(), // 2 - Chat
-      const _PlaceholderTab(label: 'Favoris'), // 3 - Favoris
-      const _PlaceholderTab(label: 'Profile'), // 4 - Profile
+      const _ExploreTab(),
+      const _PlaceholderTab(label: 'Reels'),
+      const ConversationsScreen(),
+      const _PlaceholderTab(label: 'Favorites'),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -285,7 +286,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                     TextButton(
                       onPressed: () => ref.invalidate(propertiesProvider),
                       child: const Text(
-                        'Réessayer',
+                        'Try Again',
                         style: TextStyle(
                           color: _kAccent,
                           fontWeight: FontWeight.w700,
@@ -298,7 +299,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
               data: (props) => props.isEmpty
                   ? const Center(
                       child: Text(
-                        'Aucune propriété trouvée',
+                        'No properties found',
                         style: TextStyle(color: Color(0xFF888888)),
                       ),
                     )
@@ -566,20 +567,14 @@ class _IconBtn extends StatelessWidget {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Bottom Navigation Bar
-// Order: Maison | Media | Chat | Favoris | Profile
-// Style: large circle, dark fill when active, light border when inactive
-// ─────────────────────────────────────────────────────────────
 class _BottomNav extends ConsumerWidget {
   const _BottomNav();
 
-  // Icon order: Maison, Media, Chat, Favoris, Profile
   static const _items = [
-    (icon: Icons.home_rounded, label: 'Maison'),
-    (icon: Icons.photo_library_outlined, label: 'Media'),
+    (icon: Icons.home_rounded, label: 'Home'),
+    (icon: Icons.slow_motion_video_rounded, label: 'Reels'),
     (icon: Icons.chat_bubble_outline_rounded, label: 'Chat'),
-    (icon: Icons.favorite_border_rounded, label: 'Favoris'),
+    (icon: Icons.favorite_border_rounded, label: 'Favorites'),
     (icon: Icons.person_outline_rounded, label: 'Profile'),
   ];
 
