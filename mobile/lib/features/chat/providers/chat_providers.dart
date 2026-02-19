@@ -8,11 +8,11 @@ import '../services/websocket_service.dart';
 final chatRepositoryProvider =
     Provider((ref) => ChatRepository());
 
-/// Websocket
+/// WebSocket
 final websocketServiceProvider =
     Provider((ref) => WebSocketService());
 
-/// 🔹 Conversations Provider (THIS FIXES YOUR ERROR)
+/// 🔹 Conversations Provider
 final conversationsProvider =
     FutureProvider<List<Conversation>>((ref) async {
   final repo = ref.read(chatRepositoryProvider);
@@ -21,37 +21,46 @@ final conversationsProvider =
 
 /// 🔹 Chat Messages Provider
 final chatProvider = StateNotifierProvider.family<
-    ChatNotifier, List<ChatMessage>, String>(
-  (ref, conversationId) =>
-      ChatNotifier(ref, conversationId),
-);
+    ChatNotifier,
+    AsyncValue<List<ChatMessage>>,
+    String>((ref, conversationId) {
+  return ChatNotifier(ref, conversationId);
+});
 
-class ChatNotifier extends StateNotifier<List<ChatMessage>> {
+class ChatNotifier
+    extends StateNotifier<AsyncValue<List<ChatMessage>>> {
   final Ref ref;
   final String conversationId;
 
   ChatNotifier(this.ref, this.conversationId)
-      : super([]) {
+      : super(const AsyncValue.loading()) {
     _init();
   }
 
   Future<void> _init() async {
-    final repo = ref.read(chatRepositoryProvider);
-    final ws = ref.read(websocketServiceProvider);
+    try {
+      final repo = ref.read(chatRepositoryProvider);
+      final ws = ref.read(websocketServiceProvider);
 
-    if (!ws.isConnected) {
-      await ws.connect();
-    }
-
-    final messages =
-        await repo.fetchMessages(conversationId);
-    state = messages;
-
-    await ws.subscribe(conversationId, (message) {
-      if (!state.any((m) => m.id == message.id)) {
-        state = [...state, message];
+      if (!ws.isConnected) {
+        await ws.connect();
       }
-    });
+
+      final messages =
+          await repo.fetchMessages(conversationId);
+
+      state = AsyncValue.data(messages);
+
+      await ws.subscribe(conversationId, (message) {
+        state.whenData((current) {
+          if (!current.any((m) => m.id == message.id)) {
+            state = AsyncValue.data([...current, message]);
+          }
+        });
+      });
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   void send(String body) {

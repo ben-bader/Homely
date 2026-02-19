@@ -49,10 +49,7 @@ final propertyDetailProvider = FutureProvider.autoDispose
     });
 
 // ── Favoris avec optimistic update ───────────────────────────────────────────
-final favoritesProvider =
-    AsyncNotifierProvider<FavoritesNotifier, List<Property>>(
-      FavoritesNotifier.new,
-    );
+
 
 class FavoritesNotifier extends AsyncNotifier<List<Property>> {
   @override

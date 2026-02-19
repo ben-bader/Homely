@@ -26,54 +26,80 @@ public class JwtFilter extends OncePerRequestFilter {
     private final TokenBlacklist tokenBlacklist;
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain
+) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+    String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        filterChain.doFilter(request, response);
+        return;
+    }
 
-        String token = authHeader.substring(7);
+    String token = authHeader.substring(7);
+
+    try {
+
         if (tokenBlacklist.isBlacklisted(token)) {
-            filterChain.doFilter(request, response);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Token is blacklisted");
             return;
         }
+
         String email = jwtService.extractUsername(token);
 
         if (email != null &&
-            SecurityContextHolder.getContext().getAuthentication() == null) {
+                SecurityContextHolder.getContext().getAuthentication() == null) {
 
             User user = userService.getByEmail(email);
 
-            if (user != null && jwtService.isTokenValid(token, user) && user.isActive()){
+            if (user != null &&
+                    jwtService.isTokenValid(token, user) &&
+                    user.isActive()) {
 
-                var userDetails = org.springframework.security.core.userdetails.User
+                var userDetails =
+                        org.springframework.security.core.userdetails.User
                                 .withUsername(user.getEmail())
                                 .password(user.getPasswordHash())
                                 .authorities(user.getAuthorities())
                                 .disabled(!user.isActive())
                                 .build();
 
-                var authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
+                var authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource()
+                                .buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                SecurityContextHolder
+                        .getContext()
+                        .setAuthentication(authToken);
             }
         }
-        
-        filterChain.doFilter(request, response);
+
+    } catch (io.jsonwebtoken.ExpiredJwtException e) {
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.getWriter().write("Token expired");
+        return;
+
+    } catch (io.jsonwebtoken.JwtException e) {
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.getWriter().write("Invalid token");
+        return;
     }
+
+    filterChain.doFilter(request, response);
+}
 
         @Override
         protected boolean shouldNotFilter(HttpServletRequest request) {

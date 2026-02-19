@@ -7,7 +7,7 @@ class Endpoints {
 
   /// Base URL for the backend API
   /// Update this based on your environment
-  static const String baseUrl = 'http://localhost:8080/api';
+  static const String baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev';
 
   /// Base URL for development
   static const String devBaseUrl = 'http://localhost:8080/api';

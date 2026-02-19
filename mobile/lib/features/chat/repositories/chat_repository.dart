@@ -6,7 +6,7 @@ import '../models/conversation.dart';
 
 class ChatRepository {
   final String baseUrl =
-      "https://zcvxc076-8082.uks1.devtunnels.ms";
+      "https://unparrying-christene-reductively.ngrok-free.dev";
 
   final SecureStorage _storage = SecureStorage();
 

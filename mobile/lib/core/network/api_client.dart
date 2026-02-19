@@ -7,7 +7,7 @@ class ApiClient {
   // Android emulator  → http://10.0.2.2:8080/api
   // iOS simulator     → http://localhost:8080/api
   // Déployé           → https://ton-api.com/api
-  static const String baseUrl = 'https://zcvxc076-8082.uks1.devtunnels.ms';
+  static const String baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev';
 
   static final _storage = SecureStorage();
 

@@ -352,8 +352,7 @@ class PropertyCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favs = ref.watch(favoritesProvider).valueOrNull ?? [];
-    final isFav = favs.any((p) => p.id == property.id);
+
 
     return GestureDetector(
       onTap: onTap,
@@ -410,35 +409,7 @@ class PropertyCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: GestureDetector(
-                    onTap: () =>
-                        ref.read(favoritesProvider.notifier).toggle(property),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color.fromRGBO(0, 0, 0, 0.1),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        isFav
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        size: 18,
-                        color: isFav ? Colors.red : Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
+              
               ],
             ),
             Padding(

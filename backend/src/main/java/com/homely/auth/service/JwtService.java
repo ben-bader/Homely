@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.homely.user.entity.User;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -37,9 +38,14 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, User user) {
+    try {
         return extractUsername(token).equals(user.getEmail())
                 && !isTokenExpired(token);
+    } catch (JwtException e) {
+        return false;
     }
+}
+
 
     public java.util.Date extractExpiration(String token) {
         return extractClaim(token, io.jsonwebtoken.Claims::getExpiration);

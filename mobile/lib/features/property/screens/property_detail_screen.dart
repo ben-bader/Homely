@@ -54,8 +54,8 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   Widget build(BuildContext context) {
     final p = widget.property;
-    final favs = ref.watch(favoritesProvider).valueOrNull ?? [];
-    final isFav = favs.any((f) => f.id == p.id);
+    
+
     final h = MediaQuery.of(context).size.height;
 
     return Scaffold(
@@ -361,13 +361,7 @@ class _BodyState extends ConsumerState<_Body> {
                       color: _kAccent,
                     ),
                   ),
-                  _CircleBtn(
-                    icon: isFav
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    iconColor: isFav ? Colors.red : _kAccent,
-                    onTap: () => ref.read(favoritesProvider.notifier).toggle(p),
-                  ),
+                 
                 ],
               ),
             ),
@@ -401,37 +395,43 @@ class _ContactBtn extends ConsumerWidget {
       onTap: () async {
         try {
           final repo = ref.read(chatRepositoryProvider);
-          // Create conversation using propertyId only (sellerId is determined by backend)
-          final conv = await repo.createConversation(property.id);
-          if (context.mounted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(
-  conversationId: conv.id,
-  currentUserId: conv.clientId,
-),
 
+          // Create conversation
+          final conv = await repo.createConversation(property.id);
+
+          if (!context.mounted) return;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatScreen(
+                conversationId: conv.id,
+                currentUserId: conv.clientId,
+
+                // ✅ FIX: pass required data
+                sellerName: property.sellerName,
+                propertyTitle: property.title,
               ),
-            );
-          }
+            ),
+          );
         } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Erreur: $e'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+          if (!context.mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            );
-          }
+            ),
+          );
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
           color: _kAccent,
           borderRadius: BorderRadius.circular(20),
