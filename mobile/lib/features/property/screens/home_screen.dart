@@ -8,7 +8,6 @@ import 'property_detail_screen.dart';
 const _kBg = Color(0xFFF7F7F7);
 const _kAccent = Color(0xFF1A1A1A);
 
-// ── Global nav index so every tab can read/update it ─────────────────────────
 final navIndexProvider = StateProvider<int>((ref) => 0);
 
 class HomeScreen extends ConsumerWidget {
@@ -19,11 +18,11 @@ class HomeScreen extends ConsumerWidget {
     final idx = ref.watch(navIndexProvider);
 
     final tabs = [
-      const _ExploreTab(),
-      const _PlaceholderTab(label: 'Map'),
-      const _PlaceholderTab(label: 'Saved'),
-      const ConversationsScreen(),
-      const _PlaceholderTab(label: 'Profile'),
+      const _ExploreTab(), // 0 - Maison
+      const _PlaceholderTab(label: 'Media'), // 1 - Media
+      const ConversationsScreen(), // 2 - Chat
+      const _PlaceholderTab(label: 'Favoris'), // 3 - Favoris
+      const _PlaceholderTab(label: 'Profile'), // 4 - Profile
     ];
 
     return Scaffold(
@@ -34,7 +33,6 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-// ── Placeholder tabs ──────────────────────────────────────────────────────────
 class _PlaceholderTab extends StatelessWidget {
   final String label;
   const _PlaceholderTab({required this.label});
@@ -51,7 +49,6 @@ class _PlaceholderTab extends StatelessWidget {
   );
 }
 
-// ── EXPLORE TAB ───────────────────────────────────────────────────────────────
 class _ExploreTab extends ConsumerStatefulWidget {
   const _ExploreTab();
   @override
@@ -84,7 +81,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top bar ──────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Row(
@@ -120,7 +116,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
 
           const SizedBox(height: 16),
 
-          // ── Search pill with filter icon inside ───────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -188,7 +183,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
 
           const SizedBox(height: 14),
 
-          // ── Filter chips ──────────────────────────────────────────────
           SizedBox(
             height: 38,
             child: ListView.separated(
@@ -231,7 +225,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
 
           const SizedBox(height: 20),
 
-          // ── Best Offers header ────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -263,7 +256,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
 
           const SizedBox(height: 14),
 
-          // ── Property list ─────────────────────────────────────────────
           Expanded(
             child: propertiesAsync.when(
               loading: () => const Center(
@@ -344,7 +336,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   }
 }
 
-// ── Property Card ─────────────────────────────────────────────────────────────
 class PropertyCard extends ConsumerWidget {
   final Property property;
   final VoidCallback onTap;
@@ -352,8 +343,6 @@ class PropertyCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -409,7 +398,6 @@ class PropertyCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-              
               ],
             ),
             Padding(
@@ -578,16 +566,21 @@ class _IconBtn extends StatelessWidget {
   );
 }
 
-// ── BOTTOM NAV — Instagram-style individual circles ───────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Bottom Navigation Bar
+// Order: Maison | Media | Chat | Favoris | Profile
+// Style: large circle, dark fill when active, light border when inactive
+// ─────────────────────────────────────────────────────────────
 class _BottomNav extends ConsumerWidget {
   const _BottomNav();
 
-  static const _icons = [
-    Icons.home_rounded,
-    Icons.location_on_outlined, // Map
-    Icons.favorite_border_rounded, // Saved
-    Icons.chat_bubble_outline_rounded, // Chat
-    Icons.person_outline_rounded, // Profile
+  // Icon order: Maison, Media, Chat, Favoris, Profile
+  static const _items = [
+    (icon: Icons.home_rounded, label: 'Maison'),
+    (icon: Icons.photo_library_outlined, label: 'Media'),
+    (icon: Icons.chat_bubble_outline_rounded, label: 'Chat'),
+    (icon: Icons.favorite_border_rounded, label: 'Favoris'),
+    (icon: Icons.person_outline_rounded, label: 'Profile'),
   ];
 
   @override
@@ -602,44 +595,45 @@ class _BottomNav extends ConsumerWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 64,
+          height: 68,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(_icons.length, (i) {
+            children: List.generate(_items.length, (i) {
               final active = i == idx;
+              final item = _items[i];
               return GestureDetector(
                 onTap: () => ref.read(navIndexProvider.notifier).state = i,
                 behavior: HitTestBehavior.opaque,
                 child: SizedBox(
-                  width: 60,
+                  width: 64,
                   child: Center(
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeInOut,
-                      width: 46,
-                      height: 46,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
                         color: active ? _kAccent : Colors.white,
                         shape: BoxShape.circle,
                         border: active
                             ? null
                             : Border.all(
-                                color: const Color(0xFFE8E8E8),
+                                color: const Color(0xFFE0E0E0),
                                 width: 1.5,
                               ),
                         boxShadow: active
                             ? [
                                 BoxShadow(
-                                  color: _kAccent.withOpacity(0.25),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
+                                  color: _kAccent.withOpacity(0.30),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
                                 ),
                               ]
                             : [],
                       ),
                       child: Icon(
-                        _icons[i],
-                        size: 22,
+                        item.icon,
+                        size: 24,
                         color: active ? Colors.white : const Color(0xFF999999),
                       ),
                     ),
@@ -654,7 +648,6 @@ class _BottomNav extends ConsumerWidget {
   }
 }
 
-// ── Filter sheet ──────────────────────────────────────────────────────────────
 class _FilterSheet extends ConsumerWidget {
   const _FilterSheet();
 
