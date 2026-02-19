@@ -52,7 +52,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg">
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback>{user.sub.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm ml-2">
