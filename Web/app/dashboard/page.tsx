@@ -12,6 +12,7 @@ import Users from "@/components/dashboard-componenets/Users"
 import { useState } from "react"
 import AdminDashboardWrapper from "@/components/dashboard-componenets/AdminDashboardWrapper"
 import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
+import Profile from "@/components/profile"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")
@@ -24,6 +25,7 @@ export default function Page() {
     "visit requests": <VisitRequests />,
     dashboard: <Dashboard />,
     "audit logs": <AuditLogs />,
+    profile: <Profile />,
   }
   
   

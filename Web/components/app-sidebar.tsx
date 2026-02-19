@@ -48,8 +48,8 @@ const data = {
   },
   navMain: [
     {
-      title:"dashboard",
-      url:"#",
+      title: "dashboard",
+      url: "#",
       icon: IconDashboard
     },
     {
@@ -85,9 +85,9 @@ const data = {
   ],
 };
 function AppSidebar(
-  { setActiveSection,activeSection, ...props }: React.ComponentProps<typeof Sidebar> &{
+  { setActiveSection, activeSection, ...props }: React.ComponentProps<typeof Sidebar> & {
     setActiveSection: (section: string) => void,
-    activeSection : string
+    activeSection: string
   }
 ) {
   return (
@@ -107,10 +107,11 @@ function AppSidebar(
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} setActiveSection={setActiveSection}  activeSection={activeSection}/>
+        <NavMain items={data.navMain} setActiveSection={setActiveSection} activeSection={activeSection} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser/>
+        <NavUser setActiveSection={setActiveSection} />
+
       </SidebarFooter>
     </Sidebar>
   );
