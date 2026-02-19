@@ -17,9 +17,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/sidebar"
-import { getUserFromToken, JwtPayload } from "@/lib/auth"
-import { useRouter } from "next/navigation"
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import { getUserFromToken } from "@/lib/auth"
 
 interface NavUserProps {
   setActiveSection: (section: string) => void
@@ -27,8 +31,7 @@ interface NavUserProps {
 
 export function NavUser({ setActiveSection }: NavUserProps) {
   const { isMobile } = useSidebar()
-  const router = useRouter()
-  const [user, setUser] = React.useState<JwtPayload | null>(null)
+  const [user, setUser] = React.useState<any>(null)
 
   React.useEffect(() => {
     const decoded = getUserFromToken()
@@ -39,7 +42,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
 
   const logout = () => {
     localStorage.removeItem("jwt")
-    router.push("/")
+    setActiveSection("dashboard") // Optional: reset to dashboard after logout
   }
 
   return (
@@ -49,10 +52,10 @@ export function NavUser({ setActiveSection }: NavUserProps) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg">
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback>{user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{user.sub.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
 
-              <div className="grid flex-1 text-left text-sm">
+              <div className="grid flex-1 text-left text-sm ml-2">
                 <span className="font-medium">{user.name}</span>
                 <span className="text-xs text-muted-foreground">{user.sub}</span>
               </div>
@@ -67,11 +70,9 @@ export function NavUser({ setActiveSection }: NavUserProps) {
             sideOffset={4}
           >
             <DropdownMenuLabel>Account</DropdownMenuLabel>
-
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              {/* ✅ Profile triggers the profile page */}
               <DropdownMenuItem onClick={() => setActiveSection("profile")}>
                 <IconUserCircle />
                 Profile
