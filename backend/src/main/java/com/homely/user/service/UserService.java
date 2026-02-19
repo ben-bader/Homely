@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.homely.common.enums.RoleType;
+import com.homely.user.dto.UserUpdateRequest;
 import com.homely.user.entity.User;
 import com.homely.user.repository.UserRepository;
 
@@ -46,5 +47,18 @@ public class UserService {
         user.setActive(true);
         userRepository.save(user);
     }
+    public User updateBasicInfo(UUID id, UserUpdateRequest request) {
+
+    User user = getById(id);
+
+    if (request.getName() != null)
+        user.setName(request.getName());
+
+    if (request.getPhone() != null)
+        user.setPhone(request.getPhone());
+
+    return userRepository.save(user);
+}
+
 }
 
