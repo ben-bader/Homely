@@ -11,14 +11,12 @@ import { api } from "@/lib/api"
 
 export default function Profile() {
   const user = getUserFromToken()
+  const userId = user?.id
 
   const [form, setForm] = React.useState({
     name: user?.name || "",
     email: user?.sub || ""
   })
-
-  const [savingInfo, setSavingInfo] = React.useState(false)
-  const [savingPassword, setSavingPassword] = React.useState(false)
 
   const [passwordData, setPasswordData] = React.useState({
     currentPassword: "",
@@ -29,10 +27,14 @@ export default function Profile() {
   ////////////////////////////////////////////////////////////
   // UPDATE INFO
   ////////////////////////////////////////////////////////////
-
   const handleUpdateInfo = async () => {
+    if (!userId) {
+      toast.error("User not found")
+      return
+    }
+
     toast.promise(
-      api.put("/profile/me", {
+      api.put(`/users/${userId}`, {
         name: form.name,
         email: form.email
       }),
@@ -47,7 +49,6 @@ export default function Profile() {
   ////////////////////////////////////////////////////////////
   // UPDATE PASSWORD
   ////////////////////////////////////////////////////////////
-
   const handlePasswordUpdate = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("Passwords do not match", {
@@ -78,15 +79,19 @@ export default function Profile() {
   ////////////////////////////////////////////////////////////
   // DELETE ACCOUNT
   ////////////////////////////////////////////////////////////
-
   const handleDelete = () => {
+    if (!userId) {
+      toast.error("User not found")
+      return
+    }
+
     toast("Are you absolutely sure?", {
       description: "This action cannot be undone.",
       action: {
         label: "Delete",
         onClick: async () => {
           try {
-            await api.delete(`/users/${user?.id}`)
+            await api.delete(`/users/${userId}`)
 
             toast.success("Account deleted successfully")
 
@@ -114,7 +119,6 @@ export default function Profile() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-
             <div className="space-y-3">
               <Label>Name</Label>
               <Input
@@ -141,7 +145,6 @@ export default function Profile() {
             >
               Save Changes
             </Button>
-
           </CardContent>
         </Card>
 
@@ -155,7 +158,6 @@ export default function Profile() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-
             <div className="space-y-3">
               <Label>Current Password</Label>
               <Input
@@ -204,7 +206,6 @@ export default function Profile() {
             >
               Update Password
             </Button>
-
           </CardContent>
         </Card>
 
