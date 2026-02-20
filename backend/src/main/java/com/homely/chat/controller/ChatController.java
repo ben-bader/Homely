@@ -6,12 +6,7 @@ import java.util.UUID;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.homely.chat.dto.MessageDto;
 import com.homely.chat.entity.Conversation;
@@ -39,57 +34,67 @@ public class ChatController {
     public com.homely.chat.dto.ConversationDto createConversation(
             @PathVariable UUID propertyId,
             Principal principal) {
-        Conversation conversation = chatService.createConversation(propertyId, principal.getName());
+
+        Conversation conversation =
+                chatService.createConversation(propertyId, principal.getName());
+
         return conversationMapper.toDto(conversation);
     }
 
     @GetMapping("/conversations")
-    public List<com.homely.chat.dto.ConversationDto> getUserConversations(Principal principal) {
+    public List<com.homely.chat.dto.ConversationDto> getUserConversations(
+            Principal principal) {
+
         User user = userService.getByEmail(principal.getName());
-        return chatService.getUserConversations(user.getId()).stream()
+
+        return chatService.getUserConversations(user.getId())
+                .stream()
                 .map(conversationMapper::toDto)
                 .toList();
     }
 
     @GetMapping("/messages")
-    public List<MessageDto> getConversationMessages(@RequestParam UUID conversationId) {
-        return chatService.getConversationMessages(conversationId).stream()
+    public List<MessageDto> getConversationMessages(
+            @RequestParam UUID conversationId) {
+
+        return chatService.getConversationMessages(conversationId)
+                .stream()
                 .map(messageMapper::toDto)
                 .toList();
     }
 
+    // 🔥 REAL TIME SEND
     @MessageMapping("/chat.send")
-public void send(MessageDto mdto, Principal principal) {
-    if (principal == null) throw new RuntimeException("Unauthorized");
+    public void send(MessageDto mdto, Principal principal) {
 
-    Conversation conversation = chatService.getConversationById(mdto.getConversationId());
-    User sender = userService.getByEmail(principal.getName());
+        if (principal == null) {
+            throw new RuntimeException("Unauthorized");
+        }
 
-    if (!sender.getId().equals(conversation.getClient().getId())
-            && !sender.getId().equals(conversation.getSeller().getId())) {
-        throw new RuntimeException("User not part of the conversation");
+        Conversation conversation =
+                chatService.getConversationById(mdto.getConversationId());
+
+        User sender = userService.getByEmail(principal.getName());
+
+        if (!sender.getId().equals(conversation.getClient().getId())
+                && !sender.getId().equals(conversation.getSeller().getId())) {
+            throw new RuntimeException("User not part of conversation");
+        }
+
+        Message message = new Message();
+        message.setConversation(conversation);
+        message.setSender(sender);
+        message.setBody(mdto.getBody());
+        message.setAttachments(mdto.getAttachments());
+
+        chatService.saveMessage(message);
+
+        MessageDto dto = messageMapper.toDto(message);
+
+        // ✅ SEND TO TOPIC
+        messagingTemplate.convertAndSend(
+                "/topic/conversations/" + conversation.getId(),
+                dto
+        );
     }
-
-    Message message = new Message();
-    message.setConversation(conversation);
-    message.setSender(sender);
-    message.setBody(mdto.getBody());
-    message.setAttachments(mdto.getAttachments());
-
-    chatService.saveMessage(message);
-
-    MessageDto dto = messageMapper.toDto(message);
-
-    // 🔥 Send ONLY to the other participant
-    User receiver = sender.getId().equals(conversation.getClient().getId())
-            ? conversation.getSeller()
-            : conversation.getClient();
-
-    messagingTemplate.convertAndSendToUser(
-            receiver.getEmail(),
-            "/queue/conversations/" + conversation.getId(),
-            dto
-    );
-}
-
 }

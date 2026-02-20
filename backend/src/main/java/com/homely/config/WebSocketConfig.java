@@ -19,24 +19,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // This is the SockJS endpoint
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*"); // allow any frontend origin
+                .setAllowedOriginPatterns("*"); // allow frontend
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // Prefix for messages sent from server to client
-        registry.enableSimpleBroker("/topic", "/queue"); 
-        // Prefix for messages sent from client to server
-        registry.setApplicationDestinationPrefixes("/app"); 
-        // Optional: prefix for user-specific destinations
-        registry.setUserDestinationPrefix("/user");
+        registry.enableSimpleBroker("/topic");     // ONLY topic
+        registry.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        // Add authentication interceptor for JWT
         registration.interceptors(stompAuthInterceptor);
     }
 }

@@ -577,7 +577,7 @@ class _BottomNav extends ConsumerWidget {
   // Icon order: Maison, Media, Chat, Favoris, Profile
   static const _items = [
     (icon: Icons.home_rounded, label: 'Maison'),
-    (icon: Icons.photo_library_outlined, label: 'Media'),
+    (icon: Icons.play_arrow_rounded, label: 'Media'),
     (icon: Icons.chat_bubble_outline_rounded, label: 'Chat'),
     (icon: Icons.favorite_border_rounded, label: 'Favoris'),
     (icon: Icons.person_outline_rounded, label: 'Profile'),

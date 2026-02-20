@@ -38,30 +38,30 @@ class ChatNotifier
   }
 
   Future<void> _init() async {
-    try {
-      final repo = ref.read(chatRepositoryProvider);
-      final ws = ref.read(websocketServiceProvider);
+  try {
+    final repo = ref.read(chatRepositoryProvider);
+    final ws = ref.read(websocketServiceProvider);
 
-      if (!ws.isConnected) {
-        await ws.connect();
-      }
-
-      final messages =
-          await repo.fetchMessages(conversationId);
-
-      state = AsyncValue.data(messages);
-
-      await ws.subscribe(conversationId, (message) {
-        state.whenData((current) {
-          if (!current.any((m) => m.id == message.id)) {
-            state = AsyncValue.data([...current, message]);
-          }
-        });
-      });
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    if (!ws.isConnected) {
+      await ws.connect();
     }
+
+    final messages = await repo.fetchMessages(conversationId);
+    state = AsyncValue.data(messages);
+
+    ws.subscribe(conversationId, (message) {
+      state.whenData((current) {
+        if (!current.any((m) => m.id == message.id)) {
+          state = AsyncValue.data([...current, message]);
+        }
+      });
+    });
+
+  } catch (e, st) {
+    state = AsyncValue.error(e, st);
   }
+}
+
 
   void send(String body) {
     if (body.trim().isEmpty) return;

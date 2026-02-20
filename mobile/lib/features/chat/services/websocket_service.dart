@@ -1,50 +1,29 @@
-import 'dart:async';
 import 'dart:convert';
-import 'package:stomp_dart_client/stomp.dart';
-import 'package:stomp_dart_client/stomp_config.dart';
-import 'package:stomp_dart_client/stomp_frame.dart';
-import 'package:mobile/core/storage/secure_storage.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:mobile/features/auth/services/auth_service.dart';
 import '../models/message.dart';
 
 class WebSocketService {
-  static final WebSocketService _instance =
-      WebSocketService._internal();
-  factory WebSocketService() => _instance;
-  WebSocketService._internal();
-
-  final SecureStorage _storage = SecureStorage();
-
   StompClient? _client;
   bool _connected = false;
-  Completer<void>? _connectionCompleter;
-
-  final Map<String, void Function()> _subscriptions = {};
 
   bool get isConnected => _connected;
 
-  String get baseUrl {
-    final apiBaseUrl =
-        'https://zcvxc076-8082.uks1.devtunnels.ms';
-
-    return apiBaseUrl
-            .replaceFirst('https://', 'wss://')
-            .replaceAll('/api', '') +
-        '/ws';
-  }
+  final AuthService _authService = AuthService();
 
   Future<void> connect() async {
     if (_connected) return;
 
-    _connectionCompleter = Completer<void>();
+    final token = await _authService.getToken();
 
-    final token = await _storage.getToken();
     if (token == null) {
-      throw Exception('No token found');
+      print("No token found for WebSocket");
+      return;
     }
 
     _client = StompClient(
-      config: StompConfig(
-        url: baseUrl,
+      config: StompConfig.sockJS(
+        url: 'http://YOUR_SERVER/ws', // 🔥 change to your real backend
         stompConnectHeaders: {
           'Authorization': 'Bearer $token',
         },
@@ -53,67 +32,58 @@ class WebSocketService {
         },
         onConnect: (frame) {
           _connected = true;
-          _connectionCompleter?.complete();
+          print("✅ WebSocket Connected");
         },
-        onDisconnect: (_) {
+        onWebSocketError: (error) {
+          print("❌ WebSocket error: $error");
+        },
+        onDisconnect: (frame) {
           _connected = false;
+          print("🔌 WebSocket Disconnected");
         },
-        reconnectDelay: const Duration(seconds: 5),
       ),
     );
 
     _client!.activate();
-    return _connectionCompleter!.future;
   }
 
-  Future<void> subscribe(
+  void subscribe(
     String conversationId,
     Function(ChatMessage) onMessage,
-  ) async {
+  ) {
     if (!_connected) {
-      await connect();
+      print("WebSocket not connected");
+      return;
     }
 
-    if (_subscriptions.containsKey(conversationId)) return;
-
-    final unsubscribe = _client!.subscribe(
-      destination:
-          '/user/queue/conversations/$conversationId',
-      callback: (StompFrame frame) {
-        if (frame.body == null) return;
-
-        final json = jsonDecode(frame.body!);
-        final message =
-            ChatMessage.fromJson(json as Map<String, dynamic>);
-        onMessage(message);
+    _client?.subscribe(
+      destination: '/topic/conversations/$conversationId',
+      callback: (frame) {
+        if (frame.body != null) {
+          final data = jsonDecode(frame.body!);
+          final message = ChatMessage.fromJson(data);
+          onMessage(message);
+        }
       },
     );
 
-    _subscriptions[conversationId] = unsubscribe;
-  }
-
-  void unsubscribe(String conversationId) {
-    final unsub = _subscriptions.remove(conversationId);
-    unsub?.call();
+    print("📩 Subscribed to /topic/conversations/$conversationId");
   }
 
   void sendMessage(String conversationId, String body) {
-    if (!_connected || _client == null) return;
+    if (!_connected) return;
 
-    _client!.send(
+    _client?.send(
       destination: '/app/chat.send',
       body: jsonEncode({
-        'conversationId': conversationId,
-        'body': body,
+        "conversationId": conversationId,
+        "body": body,
+        "attachments": []
       }),
     );
   }
 
   void disconnect() {
-    for (final unsub in _subscriptions.values) {
-      unsub();
-    }
-    _subscriptions.clear();
     _client?.deactivate();
     _connected = false;
   }
