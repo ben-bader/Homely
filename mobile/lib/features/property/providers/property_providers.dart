@@ -2,15 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/property.dart';
 import '../repositories/property_repository.dart';
 
-// ── Repository ────────────────────────────────────────────────────────────────
 final propertyRepositoryProvider = Provider<PropertyRepository>(
   (_) => PropertyRepository(),
 );
 
-// ── Filter state ──────────────────────────────────────────────────────────────
 class PropertyFilter {
-  final String type; // 'Any type' | 'House' | 'Apartment' | 'Villa' | 'Studio'
-  final String status; // 'All' | 'Rent' | 'Buy'
+  final String type; 
+  final String status; 
   final String search;
 
   const PropertyFilter({
@@ -31,7 +29,6 @@ final propertyFilterProvider = StateProvider<PropertyFilter>(
   (_) => const PropertyFilter(),
 );
 
-// ── Properties list (se refetch automatiquement quand le filtre change) ───────
 final propertiesProvider = FutureProvider.autoDispose<List<Property>>((ref) {
   final filter = ref.watch(propertyFilterProvider);
   final repo = ref.watch(propertyRepositoryProvider);
@@ -42,13 +39,11 @@ final propertiesProvider = FutureProvider.autoDispose<List<Property>>((ref) {
   );
 });
 
-// ── Détail d'une propriété ────────────────────────────────────────────────────
 final propertyDetailProvider = FutureProvider.autoDispose
     .family<Property, String>((ref, id) {
       return ref.watch(propertyRepositoryProvider).fetchProperty(id);
     });
 
-// ── Favoris avec optimistic update ───────────────────────────────────────────
 
 
 class FavoritesNotifier extends AsyncNotifier<List<Property>> {

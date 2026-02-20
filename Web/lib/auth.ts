@@ -5,6 +5,8 @@ export interface JwtPayload {
   name: string       // full name
   role: string
   exp: number
+  id: string
+
 }
 
 export function getUserFromToken(): JwtPayload | null {
