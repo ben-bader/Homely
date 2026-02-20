@@ -10,5 +10,6 @@ import lombok.Setter;
 public class ProfileUpdateRequest {
     private String bio;
     private String address;
+     private String avtarUrl;
     private String idDocumentUrl;
 }

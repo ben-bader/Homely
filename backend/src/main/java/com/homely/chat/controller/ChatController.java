@@ -6,8 +6,14 @@ import java.util.UUID;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.homely.chat.dto.ChatMessageResponse;
 import com.homely.chat.dto.MessageDto;
 import com.homely.chat.entity.Conversation;
 import com.homely.chat.entity.Message;
@@ -35,8 +41,7 @@ public class ChatController {
             @PathVariable UUID propertyId,
             Principal principal) {
 
-        Conversation conversation =
-                chatService.createConversation(propertyId, principal.getName());
+        Conversation conversation = chatService.createConversation(propertyId, principal.getName());
 
         return conversationMapper.toDto(conversation);
     }
@@ -54,16 +59,20 @@ public class ChatController {
     }
 
     @GetMapping("/messages")
-    public List<MessageDto> getConversationMessages(
+    public List<ChatMessageResponse> getConversationMessages(
             @RequestParam UUID conversationId) {
 
         return chatService.getConversationMessages(conversationId)
                 .stream()
-                .map(messageMapper::toDto)
+                .map(m -> new ChatMessageResponse(
+                        m.getId(),
+                        m.getConversation().getId(),
+                        m.getSender().getId().toString(),
+                        m.getBody(),
+                        m.getCreatedAt()))
                 .toList();
     }
 
-    // 🔥 REAL TIME SEND
     @MessageMapping("/chat.send")
     public void send(MessageDto mdto, Principal principal) {
 
@@ -71,8 +80,7 @@ public class ChatController {
             throw new RuntimeException("Unauthorized");
         }
 
-        Conversation conversation =
-                chatService.getConversationById(mdto.getConversationId());
+        Conversation conversation = chatService.getConversationById(mdto.getConversationId());
 
         User sender = userService.getByEmail(principal.getName());
 
@@ -89,12 +97,16 @@ public class ChatController {
 
         chatService.saveMessage(message);
 
-        MessageDto dto = messageMapper.toDto(message);
+        ChatMessageResponse response = new ChatMessageResponse(
+                message.getId(),
+                message.getConversation().getId(),
+                message.getSender().getId().toString(),
+                message.getBody(),
+                message.getCreatedAt());
 
-        // ✅ SEND TO TOPIC
         messagingTemplate.convertAndSend(
-                "/topic/conversations/" + conversation.getId(),
-                dto
-        );
+                "/topic/chat/" + message.getConversation().getId(),
+                response);
     }
+
 }

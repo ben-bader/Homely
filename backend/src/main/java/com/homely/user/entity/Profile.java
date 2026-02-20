@@ -26,6 +26,7 @@ public class Profile {
     private String bio;
     private String address;
     private boolean verified;
+    private String avtarUrl;
     private String idDocumentUrl;
 }
 
