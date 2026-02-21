@@ -1,7 +1,6 @@
 import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/core/network/api_client.dart';
 
-
 // ─────────────────────────────────────────────────────────────
 // Models
 // ─────────────────────────────────────────────────────────────
@@ -10,15 +9,9 @@ class LoginRequest {
   final String email;
   final String password;
 
-  LoginRequest({
-    required this.email,
-    required this.password,
-  });
+  LoginRequest({required this.email, required this.password});
 
-  Map<String, dynamic> toJson() => {
-        'email': email,
-        'password': password,
-      };
+  Map<String, dynamic> toJson() => {'email': email, 'password': password};
 }
 
 class RegisterRequest {
@@ -37,12 +30,12 @@ class RegisterRequest {
   });
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'email': email,
-        'password': password,
-        'phone': phone,
-        'role': role,
-      };
+    'name': name,
+    'email': email,
+    'password': password,
+    'phone': phone,
+    'role': role,
+  };
 }
 
 class AuthResponse {
@@ -69,14 +62,14 @@ class AuthResponse {
     return AuthResponse(
       token: json['token'] ?? json['accessToken'] ?? '',
       userId: (json['id'] ?? json['userId'] ?? '').toString(),
-      name: json['name'] ??
+      name:
+          json['name'] ??
           '${json['firstName'] ?? ''} ${json['lastName'] ?? ''}'.trim(),
       email: json['email'] ?? '',
       role: json['role'] ?? 'CLIENT',
     );
   }
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // Service
@@ -139,5 +132,10 @@ class AuthService {
       role: r.role,
       name: r.name,
     );
+  }
+
+  /// GET TOKEN
+  Future<String?> getToken() async {
+    return await _storage.getToken();
   }
 }

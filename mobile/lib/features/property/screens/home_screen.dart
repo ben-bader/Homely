@@ -1,13 +1,15 @@
+// lib/features/property/screens/home_screen.dart
+
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/chat/screens/conversation_screen.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
 import 'package:mobile/features/profile/screens/profile_screen.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import 'property_detail_screen.dart';
-
-const _kBg = Color(0xFFF7F7F7);
-const _kAccent = Color(0xFF1A1A1A);
 
 final navIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -17,7 +19,6 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final idx = ref.watch(navIndexProvider);
-
     final tabs = [
       const _ExploreTab(),
       const _PlaceholderTab(label: 'Reels'),
@@ -25,9 +26,8 @@ class HomeScreen extends ConsumerWidget {
       const _PlaceholderTab(label: 'Favorites'),
       const ProfileScreen(),
     ];
-
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: AppColors.background,
       body: IndexedStack(index: idx, children: tabs),
       bottomNavigationBar: const _BottomNav(),
     );
@@ -39,17 +39,11 @@ class _PlaceholderTab extends StatelessWidget {
   const _PlaceholderTab({required this.label});
   @override
   Widget build(BuildContext context) => Center(
-    child: Text(
-      label,
-      style: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: _kAccent,
-      ),
-    ),
-  );
+        child: Text(label, style: Theme.of(context).textTheme.titleLarge),
+      );
 }
 
+// ── Explore Tab ───────────────────────────────────────────────────────────────
 class _ExploreTab extends ConsumerStatefulWidget {
   const _ExploreTab();
   @override
@@ -58,268 +52,251 @@ class _ExploreTab extends ConsumerStatefulWidget {
 
 class _ExploreTabState extends ConsumerState<_ExploreTab> {
   final _searchController = TextEditingController();
-  final List<String> _types = [
-    'Any type',
-    'Rent',
-    'Buy',
-    'House',
-    'Apartment',
-    'Villa',
-  ];
+  Timer? _debounce;
+
+  static const _types = ['Any type', 'Rent', 'Sell', 'House', 'Apartment', 'Villa'];
+  static const _listingTypes = {'Rent', 'Sell'};
 
   @override
   void dispose() {
     _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      ref.read(propertyFilterProvider.notifier).update(
+            (s) => s.copyWith(search: value.trim()),
+          );
+    });
+  }
+
+  void _onSearchSubmitted(String value) {
+    _debounce?.cancel();
+    ref.read(propertyFilterProvider.notifier).update(
+          (s) => s.copyWith(search: value.trim()),
+        );
+  }
+
+  void _onChipTap(String tapped) {
+    final notifier = ref.read(propertyFilterProvider.notifier);
+    if (tapped == 'Any type') {
+      notifier.update((s) => s.resetFilters());
+      return;
+    }
+    final filter = ref.read(propertyFilterProvider);
+    if (_listingTypes.contains(tapped)) {
+      final newStatus = filter.status == tapped ? null : tapped;
+      notifier.update((s) => s.copyWith(status: newStatus ?? 'All'));
+    } else {
+      final newType = filter.type == tapped ? null : tapped;
+      notifier.update((s) => s.copyWith(type: newType ?? 'Any type'));
+    }
+  }
+
+  bool _isChipSelected(String chip, PropertyFilter filter) {
+    if (chip == 'Any type') return !filter.isFiltering;
+    if (_listingTypes.contains(chip)) return filter.status == chip;
+    return filter.type == chip;
   }
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
     final filter = ref.watch(propertyFilterProvider);
-    final propertiesAsync = ref.watch(propertiesProvider);
+    final badgeCount = filter.activeFilterCount;
 
     return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: Row(
-              children: [
-                const Text(
-                  'Explore',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: _kAccent,
-                    letterSpacing: -0.8,
-                  ),
-                ),
-                const Spacer(),
-                _IconBtn(
-                  icon: Icons.notifications_outlined,
-                  badge: true,
-                  onTap: () {},
-                ),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: const Color(0xFFEEEEEE),
-                  child: const Icon(
-                    Icons.person,
-                    color: Color(0xFF888888),
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: const Color(0xFFE0E0E0)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.04),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
+      child: CustomScrollView(
+        slivers: [
+          // ── Header ───────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
                 children: [
-                  const SizedBox(width: 16),
-                  const Icon(
-                    Icons.search_rounded,
-                    color: Color(0xFF999999),
-                    size: 20,
-                  ),
+                  Text('Explore',
+                      style: tt.headlineMedium?.copyWith(color: AppColors.primary)),
+                  const Spacer(),
+                  _IconBtn(icon: Icons.notifications_outlined, badge: true, onTap: () {}),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onSubmitted: (v) => ref
-                          .read(propertyFilterProvider.notifier)
-                          .update((s) => s.copyWith(search: v)),
-                      style: const TextStyle(fontSize: 15, color: _kAccent),
-                      decoration: const InputDecoration(
-                        hintText: 'Search your home...',
-                        hintStyle: TextStyle(
-                          color: Color(0xFF999999),
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 22,
-                    color: const Color(0xFFE0E0E0),
-                  ),
-                  GestureDetector(
-                    onTap: () => _showFilterSheet(context),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14),
-                      child: Icon(
-                        Icons.tune_rounded,
-                        color: _kAccent,
-                        size: 20,
-                      ),
-                    ),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.accentLight,
+                    child: const Icon(Icons.person, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),
             ),
           ),
 
-          const SizedBox(height: 14),
-
-          SizedBox(
-            height: 38,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _types.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, i) {
-                final t = _types[i];
-                final selected = filter.type == t;
-                return GestureDetector(
-                  onTap: () => ref
-                      .read(propertyFilterProvider.notifier)
-                      .update((s) => s.copyWith(type: t)),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    decoration: BoxDecoration(
-                      color: selected ? _kAccent : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: selected ? _kAccent : const Color(0xFFE0E0E0),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        t,
-                        style: TextStyle(
-                          color: selected ? Colors.white : _kAccent,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
+          // ── Search bar ───────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 16),
+                    const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: _onSearchChanged,
+                        onSubmitted: _onSearchSubmitted,
+                        style: tt.bodyLarge?.copyWith(color: AppColors.primary),
+                        decoration: InputDecoration(
+                          hintText: 'Search your home...',
+                          hintStyle: tt.bodySmall?.copyWith(color: AppColors.textTertiary),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Best Offers',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: _kAccent,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {},
-                  child: const Text(
-                    'See all',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF888888),
-                      fontWeight: FontWeight.w500,
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _searchController,
+                      builder: (_, value, __) => value.text.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                ref
+                                    .read(propertyFilterProvider.notifier)
+                                    .update((s) => s.copyWith(clearSearch: true));
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8),
+                                child: Icon(Icons.close_rounded,
+                                    color: AppColors.textTertiary, size: 18),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          Expanded(
-            child: propertiesAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: _kAccent,
-                ),
-              ),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.wifi_off_rounded,
-                      size: 48,
-                      color: Color(0xFFCCCCCC),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '$e',
-                      style: const TextStyle(
-                        color: Color(0xFF888888),
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () => ref.invalidate(propertiesProvider),
-                      child: const Text(
-                        'Try Again',
-                        style: TextStyle(
-                          color: _kAccent,
-                          fontWeight: FontWeight.w700,
+                    Container(width: 1, height: 22, color: AppColors.borderLight),
+                    // ── Filter button with active-count badge ──
+                    GestureDetector(
+                      onTap: () => _showFilterSheet(context),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(Icons.tune_rounded, color: AppColors.primary, size: 20),
+                            if (badgeCount > 0)
+                              Positioned(
+                                top: -6,
+                                right: -8,
+                                child: Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '$badgeCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              data: (props) => props.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No properties found',
-                        style: TextStyle(color: Color(0xFF888888)),
+            ),
+          ),
+
+          // ── Filter chips ─────────────────────────────────
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 52,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+                itemCount: _types.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, i) {
+                  final t = _types[i];
+                  final selected = _isChipSelected(t, filter);
+                  return GestureDetector(
+                    onTap: () => _onChipTap(t),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.primary : const Color(0x00FFFFFF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(width: 1, color: AppColors.borderDark),
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                      itemCount: props.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 16),
-                      itemBuilder: (_, i) => PropertyCard(
-                        property: props[i],
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                PropertyDetailScreen(propertyId: props[i].id),
+                      child: Center(
+                        child: Text(
+                          t,
+                          style: tt.labelLarge?.copyWith(
+                            fontSize: 13,
+                            color: selected ? Colors.white : AppColors.primary,
                           ),
                         ),
                       ),
                     ),
+                  );
+                },
+              ),
             ),
           ),
+
+          // ── Section header ───────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    filter.search != null && filter.search!.isNotEmpty
+                        ? 'Results for "${filter.search}"'
+                        : filter.isFiltering
+                            ? 'Filtered Results'
+                            : 'Best Offers',
+                    style: tt.titleMedium?.copyWith(color: AppColors.primary),
+                  ),
+                  // Clear all filters button
+                  if (filter.isFiltering)
+                    GestureDetector(
+                      onTap: () => ref
+                          .read(propertyFilterProvider.notifier)
+                          .update((s) => s.resetFilters()),
+                      child: Text(
+                        'Clear filters',
+                        style: tt.labelMedium?.copyWith(color: AppColors.error),
+                      ),
+                    )
+                  else
+                    Text('See all',
+                        style: tt.labelMedium?.copyWith(color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Property list (isolated — only this rebuilds on data changes) ──
+          const _PropertyList(),
         ],
       ),
     );
@@ -328,15 +305,357 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   void _showFilterSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      backgroundColor: AppColors.cardBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) => const _FilterSheet(),
     );
   }
 }
 
+// ── Property List ─────────────────────────────────────────────────────────────
+class _PropertyList extends ConsumerWidget {
+  const _PropertyList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tt = Theme.of(context).textTheme;
+    final propertiesAsync = ref.watch(propertiesProvider);
+
+    return propertiesAsync.when(
+      loading: () => const SliverFillRemaining(
+        child: Center(
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+        ),
+      ),
+      error: (e, _) => SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textTertiary),
+              const SizedBox(height: 12),
+              Text('$e', style: tt.bodySmall),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => ref.invalidate(propertiesProvider),
+                child: Text('Try Again',
+                    style: tt.labelLarge?.copyWith(
+                        color: AppColors.primary, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (props) => props.isEmpty
+          ? SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.search_off_rounded,
+                        size: 48, color: AppColors.textTertiary),
+                    const SizedBox(height: 12),
+                    Text('No properties found', style: tt.bodyMedium),
+                  ],
+                ),
+              ),
+            )
+          : SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              sliver: SliverList.separated(
+                itemCount: props.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (_, i) => PropertyCard(
+                  property: props[i],
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PropertyDetailScreen(propertyId: props[i].id),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+// ── Filter Sheet ──────────────────────────────────────────────────────────────
+class _FilterSheet extends ConsumerStatefulWidget {
+  const _FilterSheet();
+  @override
+  ConsumerState<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends ConsumerState<_FilterSheet> {
+  // Local state — only committed to provider when Apply is tapped
+  late String? _status;
+  late String? _propertyType;
+  late TextEditingController _cityController;
+  late TextEditingController _minPriceController;
+  late TextEditingController _maxPriceController;
+
+  static const _statuses = ['All', 'Rent', 'Buy'];
+  static const _propertyTypes = ['Any type', 'House', 'Apartment', 'Villa', 'Studio', 'Commercial', 'Land'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-populate from current filter
+    final f = ref.read(propertyFilterProvider);
+    _status = f.status ?? 'All';
+    _propertyType = f.type ?? 'Any type';
+    _cityController = TextEditingController(text: f.city ?? '');
+    _minPriceController = TextEditingController(
+        text: f.minPrice != null ? f.minPrice!.toStringAsFixed(0) : '');
+    _maxPriceController = TextEditingController(
+        text: f.maxPrice != null ? f.maxPrice!.toStringAsFixed(0) : '');
+  }
+
+  @override
+  void dispose() {
+    _cityController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
+    super.dispose();
+  }
+
+  void _apply() {
+    final minText = _minPriceController.text.trim();
+    final maxText = _maxPriceController.text.trim();
+
+    ref.read(propertyFilterProvider.notifier).update((f) => PropertyFilter(
+          search: f.search, // preserve active search
+          status: _status == 'All' ? null : _status,
+          type: _propertyType == 'Any type' ? null : _propertyType,
+          city: _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+          minPrice: minText.isEmpty ? null : double.tryParse(minText),
+          maxPrice: maxText.isEmpty ? null : double.tryParse(maxText),
+        ));
+
+    Navigator.pop(context);
+  }
+
+  void _reset() {
+    setState(() {
+      _status = 'All';
+      _propertyType = 'Any type';
+      _cityController.clear();
+      _minPriceController.clear();
+      _maxPriceController.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+
+    return Padding(
+      // Shift up when keyboard appears
+      padding: EdgeInsets.fromLTRB(
+          24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 36),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Handle + title row ───────────────────────
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Filter',
+                    style: tt.headlineSmall?.copyWith(color: AppColors.primary)),
+                TextButton(
+                  onPressed: _reset,
+                  child: Text('Reset all',
+                      style: tt.labelMedium?.copyWith(color: AppColors.error)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // ── Status ───────────────────────────────────
+            Text('Listing type', style: tt.titleSmall?.copyWith(color: AppColors.primary)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              children: _statuses.map((s) {
+                final sel = _status == s;
+                return GestureDetector(
+                  onTap: () => setState(() => _status = s),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: sel ? AppColors.primary : AppColors.subtleBackground,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(s,
+                        style: tt.labelLarge?.copyWith(
+                            color: sel ? Colors.white : AppColors.primary,
+                            fontWeight: sel ? FontWeight.w600 : FontWeight.w500)),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Property type ────────────────────────────
+            Text('Property type', style: tt.titleSmall?.copyWith(color: AppColors.primary)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _propertyTypes.map((t) {
+                final sel = _propertyType == t;
+                return GestureDetector(
+                  onTap: () => setState(() => _propertyType = t),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: sel ? AppColors.primary : AppColors.subtleBackground,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(t,
+                        style: tt.labelLarge?.copyWith(
+                            color: sel ? Colors.white : AppColors.primary,
+                            fontWeight: sel ? FontWeight.w600 : FontWeight.w500)),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+
+            // ── City ─────────────────────────────────────
+            Text('City', style: tt.titleSmall?.copyWith(color: AppColors.primary)),
+            const SizedBox(height: 10),
+            _FilterTextField(
+              controller: _cityController,
+              hint: 'e.g. Casablanca, Rabat...',
+              icon: Icons.location_city_outlined,
+            ),
+            const SizedBox(height: 24),
+
+            // ── Price range ──────────────────────────────
+            Text('Price range (\$)',
+                style: tt.titleSmall?.copyWith(color: AppColors.primary)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _FilterTextField(
+                    controller: _minPriceController,
+                    hint: 'Min',
+                    icon: Icons.arrow_downward_rounded,
+                    numeric: true,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('–',
+                      style: tt.titleMedium?.copyWith(color: AppColors.textSecondary)),
+                ),
+                Expanded(
+                  child: _FilterTextField(
+                    controller: _maxPriceController,
+                    hint: 'Max',
+                    icon: Icons.arrow_upward_rounded,
+                    numeric: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // ── Apply button ─────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _apply,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('Apply filters',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Reusable filter text field ─────────────────────────────────────────────────
+class _FilterTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final bool numeric;
+
+  const _FilterTextField({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    this.numeric = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppColors.subtleBackground,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 12),
+          Icon(icon, size: 16, color: AppColors.textSecondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              keyboardType: numeric ? TextInputType.number : TextInputType.text,
+              inputFormatters: numeric
+                  ? [FilteringTextInputFormatter.digitsOnly]
+                  : null,
+              style: tt.bodyMedium?.copyWith(color: AppColors.primary),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: tt.bodySmall?.copyWith(color: AppColors.textTertiary),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Property Card ─────────────────────────────────────────────────────────────
 class PropertyCard extends ConsumerWidget {
   final Property property;
   final VoidCallback onTap;
@@ -344,17 +663,19 @@ class PropertyCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tt = Theme.of(context).textTheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
             BoxShadow(
-              color: Color.fromRGBO(0, 0, 0, 0.06),
-              blurRadius: 16,
-              offset: Offset(0, 4),
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -364,9 +685,7 @@ class PropertyCard extends ConsumerWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                   child: property.images.isNotEmpty
                       ? Image.network(
                           property.images.first,
@@ -381,28 +700,25 @@ class PropertyCard extends ConsumerWidget {
                   top: 14,
                   left: 14,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4)
+                      ],
                     ),
-                    child: Text(
-                      property.type,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1A1A1A),
-                      ),
-                    ),
+                    child: Text(property.type,
+                        style: tt.labelLarge?.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary)),
                   ),
                 ),
               ],
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -413,64 +729,44 @@ class PropertyCard extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              property.title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1A1A1A),
-                                letterSpacing: -0.3,
-                              ),
-                            ),
+                            Text(property.title,
+                                style: tt.titleSmall?.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.3)),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 12,
-                                  color: Color(0xFF888888),
-                                ),
+                                const Icon(Icons.location_on_outlined,
+                                    size: 13, color: AppColors.textSecondary),
                                 const SizedBox(width: 4),
-                                Text(
-                                  property.location,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF888888),
-                                  ),
+                                Expanded(
+                                  child: Text(property.location,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: tt.bodySmall),
                                 ),
                               ],
                             ),
                           ],
                         ),
                       ),
-                      Text(
-                        '\$${_fmt(property.price)}',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1A1A1A),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
+                      Text('\$${_fmt(property.price)}',
+                          style: tt.titleMedium?.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.accent,
+                              letterSpacing: -0.5)),
                     ],
                   ),
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      _Chip(
-                        icon: Icons.bed_outlined,
-                        label: '${property.beds} Beds',
-                      ),
-                      const SizedBox(width: 8),
-                      _Chip(
-                        icon: Icons.bathtub_outlined,
-                        label: '${property.baths} Baths',
-                      ),
-                      const SizedBox(width: 8),
-                      _Chip(
-                        icon: Icons.garage_outlined,
-                        label: '${property.garages} Garage',
-                      ),
+                      ...property.chips.take(3).map(
+                            (c) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _Chip(icon: c.icon, label: c.label),
+                            ),
+                          ),
                     ],
                   ),
                 ],
@@ -489,44 +785,41 @@ class PropertyCard extends ConsumerWidget {
   }
 
   Widget _placeholder() => Container(
-    height: 200,
-    width: double.infinity,
-    color: const Color(0xFFF0F0F0),
-    child: const Icon(Icons.home_outlined, size: 48, color: Color(0xFFCCCCCC)),
-  );
+        height: 200,
+        width: double.infinity,
+        color: AppColors.subtleBackground,
+        child: const Icon(Icons.home_outlined, size: 48, color: AppColors.textTertiary),
+      );
 }
 
+// ── Chip ──────────────────────────────────────────────────────────────────────
 class _Chip extends StatelessWidget {
   final IconData icon;
   final String label;
   const _Chip({required this.icon, required this.label});
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
-      color: _kBg,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: const Color(0xFFE8E8E8)),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: const Color(0xFF666666)),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF444444),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.subtleBackground,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: AppColors.textSecondary),
+          const SizedBox(width: 5),
+          Text(label, style: tt.labelMedium?.copyWith(fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
 }
 
+// ── Icon Btn ──────────────────────────────────────────────────────────────────
 class _IconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -535,49 +828,42 @@ class _IconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE8E8E8)),
-          ),
-          child: Icon(icon, color: _kAccent, size: 20),
-        ),
-        if (badge)
-          Positioned(
-            top: -2,
-            right: -2,
-            child: Container(
-              width: 10,
-              height: 10,
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
+        onTap: onTap,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(555),
               ),
+              child: Icon(icon, color: AppColors.primary, size: 20),
             ),
-          ),
-      ],
-    ),
-  );
+            if (badge)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                      color: AppColors.error, shape: BoxShape.circle),
+                ),
+              ),
+          ],
+        ),
+      );
 }
 
+// ── Bottom Nav ────────────────────────────────────────────────────────────────
 class _BottomNav extends ConsumerWidget {
   const _BottomNav();
 
   static const _items = [
-<<<<<<< HEAD
-    (icon: Icons.home_rounded, label: 'Maison'),
-    (icon: Icons.play_arrow_rounded, label: 'Media'),
-=======
     (icon: Icons.home_rounded, label: 'Home'),
     (icon: Icons.slow_motion_video_rounded, label: 'Reels'),
->>>>>>> 47238fa41b8a086273227b11cb582b9f1b394c98
     (icon: Icons.chat_bubble_outline_rounded, label: 'Chat'),
     (icon: Icons.favorite_border_rounded, label: 'Favorites'),
     (icon: Icons.person_outline_rounded, label: 'Profile'),
@@ -586,11 +872,15 @@ class _BottomNav extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final idx = ref.watch(navIndexProvider);
-
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF0F0F0), width: 1)),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 16,
+              offset: const Offset(0, -4))
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -613,29 +903,20 @@ class _BottomNav extends ConsumerWidget {
                       width: 52,
                       height: 52,
                       decoration: BoxDecoration(
-                        color: active ? _kAccent : Colors.white,
+                        color: active ? AppColors.primary : Colors.transparent,
                         shape: BoxShape.circle,
-                        border: active
-                            ? null
-                            : Border.all(
-                                color: const Color(0xFFE0E0E0),
-                                width: 1.5,
-                              ),
                         boxShadow: active
                             ? [
                                 BoxShadow(
-                                  color: _kAccent.withOpacity(0.30),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
+                                    color: AppColors.primary.withOpacity(0.25),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4))
                               ]
                             : [],
                       ),
-                      child: Icon(
-                        item.icon,
-                        size: 24,
-                        color: active ? Colors.white : const Color(0xFF999999),
-                      ),
+                      child: Icon(item.icon,
+                          size: 24,
+                          color: active ? Colors.white : AppColors.textTertiary),
                     ),
                   ),
                 ),
@@ -643,97 +924,6 @@ class _BottomNav extends ConsumerWidget {
             }),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FilterSheet extends ConsumerWidget {
-  const _FilterSheet();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final filter = ref.watch(propertyFilterProvider);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Filter',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1A1A1A),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Status',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: Color(0xFF1A1A1A),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            children: ['All', 'Rent', 'Buy'].map((s) {
-              final sel = filter.status == s;
-              return GestureDetector(
-                onTap: () => ref
-                    .read(propertyFilterProvider.notifier)
-                    .update((f) => f.copyWith(status: s)),
-                child: Chip(
-                  label: Text(s),
-                  backgroundColor: sel
-                      ? const Color(0xFF1A1A1A)
-                      : const Color(0xFFEFEFEF),
-                  labelStyle: TextStyle(
-                    color: sel ? Colors.white : const Color(0xFF1A1A1A),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1A1A),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'Apply',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile/features/auth/screens/login_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'features/auth/screens/login_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/property/screens/home_screen.dart';
 import 'features/auth/services/auth_service.dart';
@@ -15,7 +17,7 @@ void main() async {
   ]);
 
   runApp(
-    const ProviderScope(  
+    const ProviderScope(
       child: HomelyApp(),
     ),
   );
@@ -29,13 +31,23 @@ class HomelyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Homely',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.grey,
-        scaffoldBackgroundColor: const Color(0xFFF7F7F7),
-        useMaterial3: true,
-        fontFamily: 'Inter', // ou ta font préférée
-      ),
+      theme: _buildTheme(),
       home: const SplashScreen(),
+    );
+  }
+
+  ThemeData _buildTheme() {
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.grey,
+        brightness: Brightness.light,
+      ),
+      scaffoldBackgroundColor: const Color(0xFFF7F7F7),
+    );
+
+    return base.copyWith(
+      textTheme: GoogleFonts.outfitTextTheme(base.textTheme),
     );
   }
 }
@@ -50,8 +62,8 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   final _authService = AuthService();
-  late AnimationController _controller;
-  late Animation<double> _pulseAnimation;
+  late final AnimationController _controller;
+  late final Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -65,7 +77,9 @@ class _SplashScreenState extends State<SplashScreen>
     _pulseAnimation = Tween<double>(
       begin: 0.95,
       end: 1.05,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
 
     _checkAuthStatus();
   }
@@ -77,30 +91,25 @@ class _SplashScreenState extends State<SplashScreen>
 
     final isLoggedIn = await _authService.isLoggedIn();
 
-    if (isLoggedIn) {
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      // Redirige vers l'onboarding
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo animé
             ScaleTransition(
               scale: _pulseAnimation,
               child: Container(
@@ -122,26 +131,30 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
+
+            /// Title using theme (IMPORTANT)
+            Text(
               'Homely',
-              style: TextStyle(
-                fontSize: 36,
+              style: tt.headlineLarge?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
                 letterSpacing: -1,
               ),
             ),
+
             const SizedBox(height: 8),
+
             Text(
               'Your Real Estate Partner',
-              style: TextStyle(
-                fontSize: 14,
+              style: tt.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
                 color: Colors.white.withOpacity(0.6),
                 letterSpacing: 0.5,
               ),
             ),
+
             const SizedBox(height: 48),
+
             SizedBox(
               width: 30,
               height: 30,
@@ -160,201 +173,5 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-}
-
-class TestHomeScreen extends StatelessWidget {
-  final String role;
-
-  const TestHomeScreen({super.key, required this.role});
-
-  @override
-  Widget build(BuildContext context) {
-    final _authService = AuthService();
-    final isClient = role == 'CLIENT';
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.grey.shade900,
-        title: Text(
-          isClient ? 'Client Dashboard' : 'Seller Dashboard',
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  backgroundColor: Colors.grey.shade900,
-                  title: const Text(
-                    'Logout',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  content: const Text(
-                    'Are you sure you want to logout?',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text(
-                        'Logout',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-
-              if (confirm == true && context.mounted) {
-                await _authService.logout();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: isClient
-                        ? [Colors.blue.shade600, Colors.blue.shade800]
-                        : [Colors.green.shade600, Colors.green.shade800],
-                  ),
-                ),
-                child: Icon(
-                  isClient ? Icons.search_rounded : Icons.sell_rounded,
-                  size: 80,
-                  color: Colors.white,
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              Text(
-                isClient ? 'Welcome Client!' : 'Welcome Seller!',
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: -1,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 16),
-
-              Text(
-                isClient
-                    ? 'Browse properties and find your dream home'
-                    : 'Manage your listings and reach more buyers',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.7),
-                  letterSpacing: 0.3,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 48),
-
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.verified_user_rounded,
-                      color: Colors.white.withOpacity(0.9),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Role: $role',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white.withOpacity(0.9),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.white.withOpacity(0.6),
-                      size: 32,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '✅ Authentication Successful!',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This is a test home screen.\nYour actual home screen will be implemented by your team.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.6),
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

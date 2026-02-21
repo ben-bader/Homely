@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/scheduler.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:mobile/features/auth/services/auth_service.dart';
 import '../models/message.dart';
@@ -11,9 +12,11 @@ class WebSocketService {
 
   final AuthService _authService = AuthService();
 
-  Future<void> connect() async {
-    if (_connected) return;
-
+  Future<void> connect({VoidCallback? onConnected}) async {
+     if (_connected) {
+    onConnected?.call();
+    return;
+  }
     final token = await _authService.getToken();
 
     if (token == null) {
@@ -23,7 +26,7 @@ class WebSocketService {
 
     _client = StompClient(
       config: StompConfig.sockJS(
-        url: 'http://YOUR_SERVER/ws', // 🔥 change to your real backend
+        url: 'https://unparrying-christene-reductively.ngrok-free.dev/ws', // 🔥 change to your real backend
         stompConnectHeaders: {
           'Authorization': 'Bearer $token',
         },
@@ -32,6 +35,7 @@ class WebSocketService {
         },
         onConnect: (frame) {
           _connected = true;
+           onConnected?.call();
           print("✅ WebSocket Connected");
         },
         onWebSocketError: (error) {
@@ -57,7 +61,7 @@ class WebSocketService {
     }
 
     _client?.subscribe(
-      destination: '/topic/conversations/$conversationId',
+      destination: '/topic/chat/$conversationId',
       callback: (frame) {
         if (frame.body != null) {
           final data = jsonDecode(frame.body!);
@@ -67,7 +71,7 @@ class WebSocketService {
       },
     );
 
-    print("📩 Subscribed to /topic/conversations/$conversationId");
+    print("📩 Subscribed to /topic/chat/$conversationId");
   }
 
   void sendMessage(String conversationId, String body) {
@@ -78,7 +82,7 @@ class WebSocketService {
       body: jsonEncode({
         "conversationId": conversationId,
         "body": body,
-        "attachments": []
+        "attachments": {}
       }),
     );
   }

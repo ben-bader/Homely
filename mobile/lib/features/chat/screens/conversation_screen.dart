@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import '../providers/chat_providers.dart';
 import 'chat_screen.dart';
-
-const _kBg = Color(0xFFF7F7F7);
-const _kAccent = Color(0xFF1A1A1A);
 
 class ConversationsScreen extends ConsumerWidget {
   const ConversationsScreen({super.key});
@@ -14,37 +13,37 @@ class ConversationsScreen extends ConsumerWidget {
     final convsAsync = ref.watch(conversationsProvider);
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: _kBg,
+        backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'Messages',
-          style: TextStyle(
-              color: _kAccent,
-              fontWeight: FontWeight.w800,
-              fontSize: 20),
-        ),
+        title: Text('Messages',
+            style: GoogleFonts.outfit(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w800,
+                fontSize: 20)),
       ),
       body: convsAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
-        error: (e, _) =>
-            Center(child: Text("Error: $e")),
+        loading: () => const Center(
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.primary)),
+        error: (e, _) => Center(
+            child: Text('Error: $e',
+                style:
+                    GoogleFonts.outfit(color: AppColors.textSecondary))),
         data: (convs) {
           if (convs.isEmpty) {
-            return const Center(
-              child: Text('No conversations yet'),
-            );
+            return Center(
+                child: Text('No conversations yet',
+                    style: GoogleFonts.outfit(
+                        color: AppColors.textSecondary)));
           }
-
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: convs.length,
             itemBuilder: (_, i) {
               final conv = convs[i];
-
               return GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -52,68 +51,57 @@ class ConversationsScreen extends ConsumerWidget {
                     builder: (_) => ChatScreen(
                       conversationId: conv.id,
                       currentUserId: conv.clientId,
-                      sellerName:
-                          conv.sellerName ?? "Seller",
-                      propertyTitle:
-                          conv.propertyTitle ?? "",
+                      sellerName: conv.sellerName ?? 'Seller',
+                      propertyTitle: conv.propertyTitle ?? '',
                     ),
                   ),
                 ),
                 child: Container(
-                  margin:
-                      const EdgeInsets.only(bottom: 12),
-                  padding:
-                      const EdgeInsets.all(14),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.circular(16),
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 24,
-                        backgroundColor:
-                            Color(0xFFEEEEEE),
-                        child: Icon(Icons.person),
+                        backgroundColor: AppColors.borderLight,
+                        child: const Icon(Icons.person,
+                            color: AppColors.textSecondary),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              conv.sellerName ??
-                                  "Seller",
-                              style:
-                                  const TextStyle(
-                                fontWeight:
-                                    FontWeight.w700,
-                              ),
-                            ),
+                            Text(conv.sellerName ?? 'Seller',
+                                style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: AppColors.primary)),
+                            const SizedBox(height: 3),
+                            Text(conv.propertyTitle ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary)),
                             const SizedBox(height: 4),
-                            Text(
-                              conv.propertyTitle ??
-                                  "",
-                              maxLines: 1,
-                              overflow:
-                                  TextOverflow.ellipsis,
-                              style:
-                                  const TextStyle(
-                                fontSize: 12,
-                                color:
-                                    Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              conv.lastMessage ??
-                                  "",
-                              maxLines: 1,
-                              overflow:
-                                  TextOverflow.ellipsis,
-                            ),
+                            Text(conv.lastMessage ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.outfit(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary)),
                           ],
                         ),
                       ),

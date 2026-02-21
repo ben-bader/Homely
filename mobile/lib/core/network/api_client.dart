@@ -3,8 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:mobile/core/storage/secure_storage.dart';
 
 class ApiClient {
-  
-  static const String baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev';
+  static const String baseUrl =
+      'https://unparrying-christene-reductively.ngrok-free.dev';
 
   static final _storage = SecureStorage();
 
@@ -25,9 +25,7 @@ class ApiClient {
     Map<String, String>? queryParams,
     bool auth = true,
   }) async {
-    final uri = Uri.parse(
-      '$baseUrl$path',
-    ).replace(queryParameters: queryParams);
+    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
     final res = await http
         .get(uri, headers: await _headers(auth: auth))
         .timeout(const Duration(seconds: 15));
@@ -49,7 +47,10 @@ class ApiClient {
     return _handle(res);
   }
 
-  static Future<dynamic> put(String path, {Map<String, dynamic>? body}) async {
+  static Future<dynamic> put(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
     final res = await http
         .put(
           Uri.parse('$baseUrl$path'),
@@ -67,6 +68,13 @@ class ApiClient {
     return _handle(res);
   }
 
+  // ── User ──────────────────────────────────────────────────
+  static Future<Map<String, dynamic>> fetchUserById(String userId) async {
+    final data = await get('/api/users/$userId');
+    return data as Map<String, dynamic>;
+  }
+
+  // ── Response handler ──────────────────────────────────────
   static dynamic _handle(http.Response res) {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       if (res.body.isEmpty) return null;
@@ -79,21 +87,21 @@ class ApiClient {
     String message;
     try {
       final json = jsonDecode(res.body);
-      message = json['message'] ?? json['error'] ?? 'Erreur ${res.statusCode}';
+      message = json['message'] ?? json['error'] ?? 'Error ${res.statusCode}';
     } catch (_) {
-      message = res.body.isNotEmpty ? res.body : 'Erreur ${res.statusCode}';
+      message = res.body.isNotEmpty ? res.body : 'Error ${res.statusCode}';
     }
     switch (res.statusCode) {
       case 400:
-        throw ApiException('Données invalides: $message', 400);
+        throw ApiException('Invalid data: $message', 400);
       case 401:
-        throw ApiException('Non autorisé. Reconnectez-vous.', 401);
+        throw ApiException('Unauthorized. Please log in again.', 401);
       case 403:
-        throw ApiException('Accès refusé.', 403);
+        throw ApiException('Access denied.', 403);
       case 404:
-        throw ApiException('Ressource introuvable.', 404);
+        throw ApiException('Resource not found.', 404);
       case 500:
-        throw ApiException('Erreur serveur. Réessayez.', 500);
+        throw ApiException('Server error. Please try again.', 500);
       default:
         throw ApiException(message, res.statusCode);
     }

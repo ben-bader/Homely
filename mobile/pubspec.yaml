@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  stomp_dart_client: ^1.0.0
+ 
   # UI & Icons
   cupertino_icons: ^1.0.6
 
@@ -21,6 +21,8 @@ dependencies:
   http: ^1.2.0
   dio: ^5.4.0
 
+
+  stomp_dart_client: ^3.0.1
 
 
 
@@ -67,7 +69,7 @@ dependencies:
   # Chat & Real-time
   socket_io_client: ^2.0.3
   
-  
+  google_fonts: ^6.2.1
   # Maps (if needed for property location)
   # google_maps_flutter: ^2.5.3
   # geolocator: ^11.0.0
@@ -95,6 +97,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  
   # Assets
   assets:
     # Onboarding Images

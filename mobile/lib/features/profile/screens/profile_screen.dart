@@ -1,42 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/profile/models/profile.dart';
 import 'package:mobile/features/profile/repositories/profile_repository.dart';
 
-const _kBg = Color(0xFFF7F7F7);
-const _kAccent = Color(0xFF1A1A1A);
-const _kGrey = Color(0xFF888888);
-const _kBorder = Color(0xFFE8E8E8);
-
-// ─────────────────────────────────────────────────────────────
-// Profile Screen (read view)
-// ─────────────────────────────────────────────────────────────
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(profileNotifierProvider);
-
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: AppColors.background,
       body: profileAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: _kAccent),
-        ),
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.primary)),
         error: (e, _) => _ErrorView(
-          message: e.toString(),
-          onRetry: () => ref.invalidate(profileNotifierProvider),
-        ),
+            message: e.toString(),
+            onRetry: () => ref.invalidate(profileNotifierProvider)),
         data: (profile) => _ProfileContent(profile: profile),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Main content
-// ─────────────────────────────────────────────────────────────
 class _ProfileContent extends StatelessWidget {
   final Profile profile;
   const _ProfileContent({required this.profile});
@@ -52,23 +41,20 @@ class _ProfileContent extends StatelessWidget {
             // ── Header ──────────────────────────────────────
             Row(
               children: [
-                const Text(
-                  'Profile',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: _kAccent,
-                    letterSpacing: -0.8,
-                  ),
-                ),
+                Text('Profile',
+                    style: GoogleFonts.outfit(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                        letterSpacing: -0.8)),
                 const Spacer(),
                 _ActionBtn(
                   icon: Icons.edit_outlined,
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => EditProfileScreen(profile: profile),
-                    ),
+                        builder: (_) =>
+                            EditProfileScreen(profile: profile)),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -81,24 +67,22 @@ class _ProfileContent extends StatelessWidget {
 
             const SizedBox(height: 28),
 
-            // ── Avatar + name card ───────────────────────────
+            // ── Avatar card ─────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.cardBackground,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.06),
-                    blurRadius: 16,
-                    offset: Offset(0, 4),
-                  ),
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4))
                 ],
               ),
               child: Column(
                 children: [
-                  // avatar
                   Stack(
                     children: [
                       Container(
@@ -106,14 +90,14 @@ class _ProfileContent extends StatelessWidget {
                         height: 90,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFEEEEEE),
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: const [
+                          color: AppColors.borderLight,
+                          border:
+                              Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
                             BoxShadow(
-                              color: Color.fromRGBO(0, 0, 0, 0.10),
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
-                            ),
+                                color: Colors.black.withOpacity(0.10),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4))
                           ],
                         ),
                         child: profile.avatarUrl != null
@@ -134,87 +118,66 @@ class _ProfileContent extends StatelessWidget {
                           width: 28,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: _kAccent,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border:
+                                Border.all(color: Colors.white, width: 2),
                           ),
-                          child: const Icon(
-                            Icons.camera_alt_outlined,
-                            size: 14,
-                            color: Colors.white,
-                          ),
+                          child: const Icon(Icons.camera_alt_outlined,
+                              size: 14, color: Colors.white),
                         ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 16),
-
-                  Text(
-                    profile.fullName,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: _kAccent,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-
+                  Text(profile.fullName,
+                      style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                          letterSpacing: -0.4)),
                   const SizedBox(height: 4),
-
-                  Text(
-                    profile.email,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: _kGrey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
+                  Text(profile.email,
+                      style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500)),
                   if (profile.city != null || profile.country != null) ...[
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 13,
-                          color: _kGrey,
-                        ),
+                        const Icon(Icons.location_on_outlined,
+                            size: 13, color: AppColors.textSecondary),
                         const SizedBox(width: 4),
                         Text(
-                          [
-                            profile.city,
-                            profile.country,
-                          ].where((v) => v != null).join(', '),
-                          style: const TextStyle(fontSize: 13, color: _kGrey),
+                          [profile.city, profile.country]
+                              .where((v) => v != null)
+                              .join(', '),
+                          style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              color: AppColors.textSecondary),
                         ),
                       ],
                     ),
                   ],
-
-                  if (profile.bio != null && profile.bio!.isNotEmpty) ...[
+                  if (profile.bio != null &&
+                      profile.bio!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
+                          horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: _kBg,
+                        color: AppColors.background,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _kBorder),
                       ),
-                      child: Text(
-                        profile.bio!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF555555),
-                          height: 1.5,
-                        ),
-                      ),
+                      child: Text(profile.bio!,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                              height: 1.5)),
                     ),
                   ],
                 ],
@@ -223,45 +186,38 @@ class _ProfileContent extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // ── Info section ─────────────────────────────────
-            const _SectionTitle(title: 'Personal Info'),
+            _SectionTitle(title: 'Personal Info'),
             const SizedBox(height: 12),
 
             _InfoTile(
-              icon: Icons.person_outline_rounded,
-              label: 'First Name',
-              value: profile.firstName,
-            ),
+                icon: Icons.person_outline_rounded,
+                label: 'First Name',
+                value: profile.firstName,
+                isFirst: true),
             _InfoTile(
-              icon: Icons.person_outline_rounded,
-              label: 'Last Name',
-              value: profile.lastName,
-            ),
+                icon: Icons.person_outline_rounded,
+                label: 'Last Name',
+                value: profile.lastName),
             _InfoTile(
-              icon: Icons.email_outlined,
-              label: 'Email',
-              value: profile.email,
-            ),
+                icon: Icons.email_outlined,
+                label: 'Email',
+                value: profile.email),
             _InfoTile(
-              icon: Icons.phone_outlined,
-              label: 'Phone',
-              value: profile.phone ?? '—',
-            ),
+                icon: Icons.phone_outlined,
+                label: 'Phone',
+                value: profile.phone ?? '—'),
             _InfoTile(
-              icon: Icons.location_city_outlined,
-              label: 'City',
-              value: profile.city ?? '—',
-            ),
+                icon: Icons.location_city_outlined,
+                label: 'City',
+                value: profile.city ?? '—'),
             _InfoTile(
-              icon: Icons.flag_outlined,
-              label: 'Country',
-              value: profile.country ?? '—',
-              isLast: true,
-            ),
+                icon: Icons.flag_outlined,
+                label: 'Country',
+                value: profile.country ?? '—',
+                isLast: true),
 
             const SizedBox(height: 24),
 
-            // ── Edit button ──────────────────────────────────
             SizedBox(
               width: double.infinity,
               height: 54,
@@ -269,29 +225,22 @@ class _ProfileContent extends StatelessWidget {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => EditProfileScreen(profile: profile),
-                  ),
+                      builder: (_) =>
+                          EditProfileScreen(profile: profile)),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kAccent,
+                  backgroundColor: AppColors.primary,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                      borderRadius: BorderRadius.circular(16)),
                 ),
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Edit Profile',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
+                icon: const Icon(Icons.edit_outlined,
+                    color: Colors.white, size: 18),
+                label: Text('Edit Profile',
+                    style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15)),
               ),
             ),
           ],
@@ -300,16 +249,16 @@ class _ProfileContent extends StatelessWidget {
     );
   }
 
-  Widget _defaultAvatar() =>
-      const Icon(Icons.person, color: Color(0xFF888888), size: 40);
+  Widget _defaultAvatar() => const Icon(Icons.person,
+      color: AppColors.textSecondary, size: 40);
 
   void _confirmLogout(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.cardBackground,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
         child: Column(
@@ -319,24 +268,19 @@ class _ProfileContent extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
-                borderRadius: BorderRadius.circular(2),
-              ),
+                  color: AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Log Out',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: _kAccent,
-              ),
-            ),
+            Text('Log Out',
+                style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary)),
             const SizedBox(height: 10),
-            const Text(
-              'Are you sure you want to log out?',
-              style: TextStyle(fontSize: 14, color: _kGrey),
-            ),
+            Text('Are you sure you want to log out?',
+                style: GoogleFonts.outfit(
+                    fontSize: 14, color: AppColors.textSecondary)),
             const SizedBox(height: 28),
             Row(
               children: [
@@ -344,43 +288,35 @@ class _ProfileContent extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: _kBorder, width: 1.5),
+                      side: const BorderSide(
+                          color: AppColors.borderLight, width: 1.5),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                          borderRadius: BorderRadius.circular(14)),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                        color: _kAccent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: Text('Cancel',
+                        style: GoogleFonts.outfit(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      // TODO: call your auth logout logic here
-                    },
+                    onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade600,
+                      backgroundColor: AppColors.error,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                          borderRadius: BorderRadius.circular(14)),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text(
-                      'Log Out',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: Text('Log Out',
+                        style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],
@@ -392,18 +328,18 @@ class _ProfileContent extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Edit Profile Screen
-// ─────────────────────────────────────────────────────────────
+// ── Edit Profile ──────────────────────────────────────────────────────────────
 class EditProfileScreen extends ConsumerStatefulWidget {
   final Profile profile;
   const EditProfileScreen({super.key, required this.profile});
 
   @override
-  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() =>
+      _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+class _EditProfileScreenState
+    extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _firstName;
   late final TextEditingController _lastName;
@@ -415,12 +351,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _firstName = TextEditingController(text: widget.profile.firstName);
-    _lastName = TextEditingController(text: widget.profile.lastName);
-    _phone = TextEditingController(text: widget.profile.phone ?? '');
+    _firstName =
+        TextEditingController(text: widget.profile.firstName);
+    _lastName =
+        TextEditingController(text: widget.profile.lastName);
+    _phone =
+        TextEditingController(text: widget.profile.phone ?? '');
     _bio = TextEditingController(text: widget.profile.bio ?? '');
-    _city = TextEditingController(text: widget.profile.city ?? '');
-    _country = TextEditingController(text: widget.profile.country ?? '');
+    _city =
+        TextEditingController(text: widget.profile.city ?? '');
+    _country =
+        TextEditingController(text: widget.profile.country ?? '');
   }
 
   @override
@@ -442,46 +383,43 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       bio: _bio.text.trim().isEmpty ? null : _bio.text.trim(),
       city: _city.text.trim().isEmpty ? null : _city.text.trim(),
-      country: _country.text.trim().isEmpty ? null : _country.text.trim(),
+      country: _country.text.trim().isEmpty
+          ? null
+          : _country.text.trim(),
     );
-    await ref.read(profileNotifierProvider.notifier).saveProfile(request);
+    await ref
+        .read(profileNotifierProvider.notifier)
+        .saveProfile(request);
     if (mounted) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isSaving = ref.watch(profileNotifierProvider).isLoading;
-
+    final isSaving =
+        ref.watch(profileNotifierProvider).isLoading;
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: _kBg,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
             margin: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.cardBackground,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _kBorder),
             ),
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: _kAccent,
-              size: 16,
-            ),
+            child: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.primary, size: 16),
           ),
         ),
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: _kAccent,
-            letterSpacing: -0.4,
-          ),
-        ),
+        title: Text('Edit Profile',
+            style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+                letterSpacing: -0.4)),
         centerTitle: true,
       ),
       body: Form(
@@ -491,7 +429,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // avatar picker
               Center(
                 child: Stack(
                   children: [
@@ -500,14 +437,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       height: 90,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFEEEEEE),
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: const [
+                        color: AppColors.borderLight,
+                        border:
+                            Border.all(color: Colors.white, width: 3),
+                        boxShadow: [
                           BoxShadow(
-                            color: Color.fromRGBO(0, 0, 0, 0.10),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
+                              color: Colors.black.withOpacity(0.10),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4))
                         ],
                       ),
                       child: widget.profile.avatarUrl != null
@@ -515,129 +452,109 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               child: Image.network(
                                 widget.profile.avatarUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.person,
-                                  color: Color(0xFF888888),
-                                  size: 40,
-                                ),
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.person,
+                                        color:
+                                            AppColors.textSecondary,
+                                        size: 40),
                               ),
                             )
-                          : const Icon(
-                              Icons.person,
-                              color: Color(0xFF888888),
-                              size: 40,
-                            ),
+                          : const Icon(Icons.person,
+                              color: AppColors.textSecondary,
+                              size: 40),
                     ),
                     Positioned(
                       bottom: 0,
                       right: 0,
                       child: GestureDetector(
-                        onTap: () {
-                          // TODO: image picker
-                        },
+                        onTap: () {},
                         child: Container(
                           width: 28,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: _kAccent,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            border: Border.all(
+                                color: Colors.white, width: 2),
                           ),
                           child: const Icon(
-                            Icons.camera_alt_outlined,
-                            size: 14,
-                            color: Colors.white,
-                          ),
+                              Icons.camera_alt_outlined,
+                              size: 14,
+                              color: Colors.white),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 28),
-
-              const _SectionTitle(title: 'Personal Info'),
-              const SizedBox(height: 12),
-
-              _FormField(
-                controller: _firstName,
-                label: 'First Name',
-                icon: Icons.person_outline_rounded,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
-              ),
+              _SectionTitle(title: 'Personal Info'),
               const SizedBox(height: 12),
               _FormField(
-                controller: _lastName,
-                label: 'Last Name',
-                icon: Icons.person_outline_rounded,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
-              ),
+                  controller: _firstName,
+                  label: 'First Name',
+                  icon: Icons.person_outline_rounded,
+                  validator: (v) => v == null || v.trim().isEmpty
+                      ? 'Required'
+                      : null),
               const SizedBox(height: 12),
               _FormField(
-                controller: _phone,
-                label: 'Phone',
-                icon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-              ),
+                  controller: _lastName,
+                  label: 'Last Name',
+                  icon: Icons.person_outline_rounded,
+                  validator: (v) => v == null || v.trim().isEmpty
+                      ? 'Required'
+                      : null),
               const SizedBox(height: 12),
               _FormField(
-                controller: _bio,
-                label: 'Bio',
-                icon: Icons.info_outline_rounded,
-                maxLines: 3,
-              ),
-
+                  controller: _phone,
+                  label: 'Phone',
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone),
+              const SizedBox(height: 12),
+              _FormField(
+                  controller: _bio,
+                  label: 'Bio',
+                  icon: Icons.info_outline_rounded,
+                  maxLines: 3),
               const SizedBox(height: 24),
-              const _SectionTitle(title: 'Location'),
-              const SizedBox(height: 12),
-
-              _FormField(
-                controller: _city,
-                label: 'City',
-                icon: Icons.location_city_outlined,
-              ),
+              _SectionTitle(title: 'Location'),
               const SizedBox(height: 12),
               _FormField(
-                controller: _country,
-                label: 'Country',
-                icon: Icons.flag_outlined,
-              ),
-
+                  controller: _city,
+                  label: 'City',
+                  icon: Icons.location_city_outlined),
+              const SizedBox(height: 12),
+              _FormField(
+                  controller: _country,
+                  label: 'Country',
+                  icon: Icons.flag_outlined),
               const SizedBox(height: 32),
-
               SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
                   onPressed: isSaving ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _kAccent,
-                    disabledBackgroundColor: const Color(0xFF666666),
+                    backgroundColor: AppColors.primary,
+                    disabledBackgroundColor:
+                        AppColors.primary.withOpacity(0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                        borderRadius: BorderRadius.circular(16)),
                   ),
                   child: isSaving
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Save Changes',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
+                              strokeWidth: 2,
+                              color: Colors.white))
+                      : Text('Save Changes',
+                          style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15)),
                 ),
               ),
             ],
@@ -648,24 +565,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Shared widgets
-// ─────────────────────────────────────────────────────────────
-
+// ── Shared widgets ────────────────────────────────────────────────────────────
 class _SectionTitle extends StatelessWidget {
   final String title;
   const _SectionTitle({required this.title});
 
   @override
-  Widget build(BuildContext context) => Text(
-    title,
-    style: const TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.w800,
-      color: _kAccent,
-      letterSpacing: -0.3,
-    ),
-  );
+  Widget build(BuildContext context) => Text(title,
+      style: GoogleFonts.outfit(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: AppColors.primary,
+          letterSpacing: -0.3));
 }
 
 class _InfoTile extends StatelessWidget {
@@ -673,75 +584,70 @@ class _InfoTile extends StatelessWidget {
   final String label;
   final String value;
   final bool isLast;
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.isLast = false,
-  });
+  final bool isFirst;
+  const _InfoTile(
+      {required this.icon,
+      required this.label,
+      required this.value,
+      this.isLast = false,
+      this.isFirst = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(label == 'First Name' ? 16 : 0),
-          topRight: Radius.circular(label == 'First Name' ? 16 : 0),
+          topLeft: Radius.circular(isFirst ? 16 : 0),
+          topRight: Radius.circular(isFirst ? 16 : 0),
           bottomLeft: Radius.circular(isLast ? 16 : 0),
           bottomRight: Radius.circular(isLast ? 16 : 0),
         ),
         border: Border(
           bottom: isLast
               ? BorderSide.none
-              : const BorderSide(color: Color(0xFFF2F2F2)),
+              : const BorderSide(color: AppColors.borderLight),
         ),
-        boxShadow: label == 'First Name'
-            ? const [
+        boxShadow: isFirst
+            ? [
                 BoxShadow(
-                  color: Color.fromRGBO(0, 0, 0, 0.04),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2))
               ]
             : null,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+            horizontal: 16, vertical: 14),
         child: Row(
           children: [
             Container(
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: _kBg,
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _kBorder),
               ),
-              child: Icon(icon, size: 16, color: const Color(0xFF666666)),
+              child: Icon(icon,
+                  size: 16, color: AppColors.textSecondary),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: _kGrey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text(label,
+                      style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500)),
                   const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: _kAccent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text(value,
+                      style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -760,47 +666,50 @@ class _FormField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
 
-  const _FormField({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.maxLines = 1,
-    this.keyboardType,
-    this.validator,
-  });
+  const _FormField(
+      {required this.controller,
+      required this.label,
+      required this.icon,
+      this.maxLines = 1,
+      this.keyboardType,
+      this.validator});
 
   @override
   Widget build(BuildContext context) => TextFormField(
-    controller: controller,
-    maxLines: maxLines,
-    keyboardType: keyboardType,
-    validator: validator,
-    style: const TextStyle(fontSize: 14, color: _kAccent),
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: _kGrey, fontSize: 13),
-      prefixIcon: Icon(icon, size: 18, color: const Color(0xFF888888)),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _kBorder),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _kBorder),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _kAccent, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.red.shade400),
-      ),
-    ),
-  );
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        validator: validator,
+        style: GoogleFonts.outfit(
+            fontSize: 14, color: AppColors.primary),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.outfit(
+              color: AppColors.textSecondary, fontSize: 13),
+          prefixIcon: Icon(icon,
+              size: 18, color: AppColors.textSecondary),
+          filled: true,
+          fillColor: AppColors.cardBackground,
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 14),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                  color: AppColors.borderLight)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                  color: AppColors.borderLight)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                  color: AppColors.accent, width: 1.5)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide:
+                  const BorderSide(color: AppColors.error)),
+        ),
+      );
 }
 
 class _ActionBtn extends StatelessWidget {
@@ -810,53 +719,56 @@ class _ActionBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _kBorder),
-      ),
-      child: Icon(icon, color: _kAccent, size: 18),
-    ),
-  );
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2))
+            ],
+          ),
+          child: Icon(icon, color: AppColors.primary, size: 18),
+        ),
+      );
 }
 
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView(
+      {required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.wifi_off_rounded,
-            size: 48,
-            color: Color(0xFFCCCCCC),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.wifi_off_rounded,
+                  size: 48, color: AppColors.textTertiary),
+              const SizedBox(height: 12),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                      color: AppColors.textSecondary,
+                      fontSize: 13)),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: onRetry,
+                child: Text('Retry',
+                    style: GoogleFonts.outfit(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700)),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: _kGrey, fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text(
-              'Retry',
-              style: TextStyle(color: _kAccent, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }

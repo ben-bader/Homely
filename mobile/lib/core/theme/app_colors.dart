@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   AppColors._();
-  static const Color primary = Color(0xFF2C3E50);
+  static const Color primary = Color(0xFF151515);
 
-  static const Color accent = Color(0xFF3498DB);
-  static const Color accentLight = Color(0xFF5DADE2);
+  static const Color accent = Color(0xFF1C1C1C);
+  static const Color accentLight = Color(0xBF1F1F1F);
 
-  static const Color background = Color(0xFFFAFAFA);
+  static const Color background = Color(0xFFEBEBEB);
 
   static const Color cardBackground = Color(0xFFFFFFFF);
 
@@ -92,24 +92,7 @@ class AppColors {
   }
 
   /// Get property type color by name
-  static Color getPropertyTypeColor(String type) {
-    switch (type.toUpperCase()) {
-      case 'APARTMENT':
-        return apartment;
-      case 'HOUSE':
-        return house;
-      case 'VILLA':
-        return villa;
-      case 'STUDIO':
-        return studio;
-      case 'LAND':
-        return land;
-      case 'COMMERCIAL':
-        return commercial;
-      default:
-        return primary;
-    }
-  }
+ 
 
   /// Get status color by status
   static Color getStatusColor(String status) {

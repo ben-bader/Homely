@@ -1,72 +1,123 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/property.dart';
-import '../repositories/property_repository.dart';
+// lib/features/property/providers/property_providers.dart
 
-final propertyRepositoryProvider = Provider<PropertyRepository>(
-  (_) => PropertyRepository(),
-);
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/features/property/models/property.dart';
+import 'package:mobile/features/property/repositories/property_repository.dart';
+
+// ── Filter State ──────────────────────────────────────────────────────────────
 
 class PropertyFilter {
-  final String type; 
-  final String status; 
-  final String search;
+  final String? type;         // propertyType: 'HOUSE', 'APARTMENT', etc.
+  final String? status;       // listingType:  'RENT', 'BUY'
+  final String? search;       // triggers /search endpoint
+  final String? city;         // city name substring match
+  final double? minPrice;
+  final double? maxPrice;
 
   const PropertyFilter({
-    this.type = 'Any type',
-    this.status = 'All',
-    this.search = '',
+    this.type,
+    this.status,
+    this.search,
+    this.city,
+    this.minPrice,
+    this.maxPrice,
   });
 
-  PropertyFilter copyWith({String? type, String? status, String? search}) =>
+  PropertyFilter copyWith({
+    String? type,
+    String? status,
+    String? search,
+    String? city,
+    double? minPrice,
+    double? maxPrice,
+    bool clearSearch = false,
+    bool clearType = false,
+    bool clearCity = false,
+    bool clearMinPrice = false,
+    bool clearMaxPrice = false,
+  }) =>
       PropertyFilter(
-        type: type ?? this.type,
+        type: clearType ? null : (type ?? this.type),
         status: status ?? this.status,
-        search: search ?? this.search,
+        search: clearSearch ? null : (search ?? this.search),
+        city: clearCity ? null : (city ?? this.city),
+        minPrice: clearMinPrice ? null : (minPrice ?? this.minPrice),
+        maxPrice: clearMaxPrice ? null : (maxPrice ?? this.maxPrice),
       );
+
+  /// Returns a fully reset filter, preserving only the search term.
+  PropertyFilter resetFilters() => PropertyFilter(search: search);
+
+  bool get isFiltering =>
+      (type != null && type != 'Any type') ||
+      (status != null && status != 'All') ||
+      (city != null && city!.isNotEmpty) ||
+      minPrice != null ||
+      maxPrice != null;
+
+  int get activeFilterCount {
+    int count = 0;
+    if (status != null && status != 'All') count++;
+    if (type != null && type != 'Any type') count++;
+    if (city != null && city!.isNotEmpty) count++;
+    if (minPrice != null || maxPrice != null) count++;
+    return count;
+  }
 }
 
-final propertyFilterProvider = StateProvider<PropertyFilter>(
-  (_) => const PropertyFilter(),
-);
+final propertyFilterProvider =
+    StateProvider<PropertyFilter>((ref) => const PropertyFilter());
 
-final propertiesProvider = FutureProvider.autoDispose<List<Property>>((ref) {
+// ── Properties Provider ───────────────────────────────────────────────────────
+
+final propertiesProvider = FutureProvider.autoDispose<List<Property>>((ref) async {
   final filter = ref.watch(propertyFilterProvider);
   final repo = ref.watch(propertyRepositoryProvider);
-  return repo.fetchProperties(
-    type: filter.type,
-    status: filter.status,
-    search: filter.search.isEmpty ? null : filter.search,
-  );
+
+  // 1. Search takes priority
+  if (filter.search != null && filter.search!.trim().isNotEmpty) {
+    return repo.search(filter.search!.trim());
+  }
+
+  // 2. Any active filter → use filter endpoint
+  final typeParam = _toPropertyType(filter.type);
+  final listingParam = _toListingType(filter.status);
+
+  if (typeParam != null ||
+      listingParam != null ||
+      filter.city != null ||
+      filter.minPrice != null ||
+      filter.maxPrice != null) {
+    return repo.filter(
+      propertyType: typeParam,
+      listingType: listingParam,
+      city: filter.city,
+      minPrice: filter.minPrice,
+      maxPrice: filter.maxPrice,
+    );
+  }
+
+  // 3. Default: load all
+  return repo.getAll();
 });
 
-final propertyDetailProvider = FutureProvider.autoDispose
-    .family<Property, String>((ref, id) {
-      return ref.watch(propertyRepositoryProvider).fetchProperty(id);
-    });
+// ── Property Detail Provider ──────────────────────────────────────────────────
 
+final propertyDetailProvider =
+    FutureProvider.autoDispose.family<Property, String>((ref, id) async {
+  final repo = ref.watch(propertyRepositoryProvider);
+  return repo.getById(id);
+});
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-class FavoritesNotifier extends AsyncNotifier<List<Property>> {
-  @override
-  Future<List<Property>> build() =>
-      ref.read(propertyRepositoryProvider).fetchFavorites();
+String? _toPropertyType(String? label) {
+  if (label == null || label == 'Any type') return null;
+  if (label == 'Rent' || label == 'Buy') return null;
+  return label.toUpperCase();
+}
 
-  Future<void> toggle(Property property) async {
-    final repo = ref.read(propertyRepositoryProvider);
-    final current = state.valueOrNull ?? [];
-    final isAlreadyFav = current.any((p) => p.id == property.id);
-    final addFav = !isAlreadyFav;
-
-    state = AsyncData(
-      addFav
-          ? [...current, property..isFavorite = true]
-          : current.where((p) => p.id != property.id).toList(),
-    );
-
-    try {
-      await repo.toggleFavorite(property.id, add: addFav);
-    } catch (_) {
-      state = AsyncData(current); 
-    }
-  }
+String? _toListingType(String? label) {
+  if (label == null || label == 'All') return null;
+  return label.toUpperCase();
 }

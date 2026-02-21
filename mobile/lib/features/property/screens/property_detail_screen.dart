@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
 import 'package:mobile/features/chat/repositories/chat_repository.dart';
-import 'package:mobile/features/chat/providers/chat_providers.dart';
 import 'package:mobile/features/chat/screens/chat_screen.dart';
-import 'package:mobile/features/chat/models/conversation.dart';
-
-const _kBg = Color(0xFFF7F7F7);
-const _kAccent = Color(0xFF1A1A1A);
-
+import 'package:mobile/features/chat/providers/chat_providers.dart';
+import 'package:mobile/features/property/repositories/property_repository.dart';
 class PropertyDetailScreen extends ConsumerWidget {
   final String propertyId;
   const PropertyDetailScreen({super.key, required this.propertyId});
@@ -19,14 +17,14 @@ class PropertyDetailScreen extends ConsumerWidget {
     final async = ref.watch(propertyDetailProvider(propertyId));
     return async.when(
       loading: () => const Scaffold(
-        backgroundColor: _kBg,
+        backgroundColor: AppColors.background,
         body: Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: _kAccent),
-        ),
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.primary)),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: _kBg,
-        appBar: AppBar(backgroundColor: _kBg, elevation: 0),
+        backgroundColor: AppColors.background,
+        appBar: AppBar(backgroundColor: AppColors.background, elevation: 0),
         body: Center(child: Text('$e')),
       ),
       data: (p) => _Body(property: p),
@@ -53,24 +51,23 @@ class _BodyState extends ConsumerState<_Body> {
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
     final p = widget.property;
-    
-
     final h = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Property image ────────────────────────────────────
+                // ── Hero image ─────────────────────────────
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
+                    bottomLeft: Radius.circular(28),
+                    bottomRight: Radius.circular(28),
                   ),
                   child: SizedBox(
                     height: h * 0.42,
@@ -97,25 +94,23 @@ class _BodyState extends ConsumerState<_Body> {
                                   left: 0,
                                   right: 0,
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
                                     children: List.generate(
                                       p.images.length,
                                       (i) => AnimatedContainer(
                                         duration: const Duration(
-                                          milliseconds: 250,
-                                        ),
+                                            milliseconds: 250),
                                         margin: const EdgeInsets.symmetric(
-                                          horizontal: 3,
-                                        ),
+                                            horizontal: 3),
                                         width: _imgIdx == i ? 20 : 7,
                                         height: 7,
                                         decoration: BoxDecoration(
                                           color: _imgIdx == i
                                               ? Colors.white
                                               : Colors.white54,
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
                                         ),
                                       ),
                                     ),
@@ -127,166 +122,158 @@ class _BodyState extends ConsumerState<_Body> {
                   ),
                 ),
 
-                // ── Property info card ───────────────────────────────────────────
-                Transform.translate(
-                  offset: const Offset(0, -24),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title + Price
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                p.title,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: _kAccent,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'A\$${_fmt(p.price)}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: _kAccent,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on_outlined,
-                              size: 15,
-                              color: Color(0xFF888888),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                p.location,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF888888),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        // ── Specs grid ────────────────────────────
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _SpecBox(
-                                icon: Icons.bed_outlined,
-                                label: '${p.beds}\nBeds',
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _SpecBox(
-                                icon: Icons.bathtub_outlined,
-                                label: '${p.baths}\nBaths',
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _SpecBox(
-                                icon: Icons.garage_outlined,
-                                label: '${p.garages}\nGarage',
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _SpecBox(
-                                icon: Icons.square_foot_outlined,
-                                label: '${p.sqm.toInt()}\nsqm',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // ── Rest of content ───────────────────────────────────────────
+                // ── Content ────────────────────────────────
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 28),
-
-                      // ── Listing Agent ──────────────────────────────────────
-                      const Text(
-                        'Listing Agent',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: _kAccent,
-                        ),
+                      // ── Title + badge + price ─────────────
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                // headlineSmall: w700, 24px — property name
+                                Text(p.title,
+                                    style: tt.headlineSmall?.copyWith(
+                                        letterSpacing: -0.5)),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: p.listingType.toUpperCase() ==
+                                            'RENT'
+                                        ? const Color(0xFFE8F4FD)
+                                        : const Color(0xFFE8F8EE),
+                                    borderRadius:
+                                        BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    p.listingType.toUpperCase(),
+                                    // labelSmall: w400 — but override to w700 for badge
+                                    style: tt.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                      color: p.listingType
+                                                  .toUpperCase() ==
+                                              'RENT'
+                                          ? const Color(0xFF1976D2)
+                                          : const Color(0xFF2E7D32),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Price — titleMedium: w700 with accent color
+                          Text('${p.currency} ${_fmt(p.price)}',
+                              style: tt.titleMedium?.copyWith(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.accent,
+                                  letterSpacing: -0.5)),
+                        ],
                       ),
-                      const SizedBox(height: 14),
+
+                      const SizedBox(height: 10),
+
+                      // ── Location ──────────────────────────
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined,
+                              size: 15,
+                              color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            // bodySmall: w400, 12px — location text
+                            child: Text(p.location,
+                                style: tt.bodySmall?.copyWith(
+                                    fontSize: 13)),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ── Specs grid ────────────────────────
+                      Row(
+                        children: List.generate(
+                          p.chips.length,
+                          (i) => [
+                            Expanded(
+                                child: _SpecBox(
+                                    icon: p.chips[i].icon,
+                                    label: p.chips[i].label)),
+                            if (i < p.chips.length - 1)
+                              const SizedBox(width: 10),
+                          ],
+                        ).expand((e) => e).toList(),
+                      ),
+
+                      // ── Description ───────────────────────
+                      if (p.description.isNotEmpty) ...[
+                        const SizedBox(height: 32),
+                        // titleSmall: w600, 16px — section label
+                        Text('Description', style: tt.titleSmall),
+                        const SizedBox(height: 10),
+                        // bodyMedium: w400, 14px — description body
+                        Text(p.description,
+                            style: tt.bodyMedium?.copyWith(height: 1.6)),
+                      ],
+
+                      const SizedBox(height: 32),
+
+                      // ── Listing Agent ─────────────────────
+                      // titleSmall: w600, 16px — section label
+                      Text('Listing Agent', style: tt.titleSmall),
+                      const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.cardBackground,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE8E8E8)),
+                         
                         ),
                         child: Row(
                           children: [
                             CircleAvatar(
                               radius: 24,
-                              backgroundColor: const Color(0xFFEEEEEE),
+                              backgroundColor: AppColors.borderLight,
                               backgroundImage: p.sellerAvatar != null
                                   ? NetworkImage(p.sellerAvatar!)
                                   : null,
                               child: p.sellerAvatar == null
-                                  ? const Icon(
-                                      Icons.person,
-                                      color: Color(0xFF888888),
-                                    )
+                                  ? const Icon(Icons.person,
+                                      color: AppColors.textSecondary)
                                   : null,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                 children: [
+                                  // labelLarge: w500 — agent name, override to w700
                                   Text(
-                                    p.sellerName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                      color: _kAccent,
-                                    ),
+                                    p.sellerName.isNotEmpty
+                                        ? p.sellerName
+                                        : 'Agent',
+                                    style: tt.labelLarge?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    p.sellerAgency,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF888888),
-                                    ),
-                                  ),
+                                  if (p.sellerAgency.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    // bodySmall: w400, 12px — agency name
+                                    Text(p.sellerAgency,
+                                        style: tt.bodySmall),
+                                  ],
                                 ],
                               ),
                             ),
@@ -295,40 +282,32 @@ class _BodyState extends ConsumerState<_Body> {
                         ),
                       ),
 
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 32),
 
-                      // ── Location Address ───────────────────────────────
-                      const Text(
-                        'Location Address',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: _kAccent,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
+                      // ── Location Address ──────────────────
+                      // titleSmall: w600, 16px — section label
+                      Text('Location Address', style: tt.titleSmall),
+                      const SizedBox(height: 12),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           height: 160,
-                          color: const Color(0xFFDFDFDF),
+                          color: AppColors.borderLight,
                           child: Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  color: Colors.red,
-                                  size: 32,
-                                ),
+                                const Icon(Icons.location_on,
+                                    color: Colors.red, size: 32),
                                 const SizedBox(height: 6),
-                                Text(
-                                  p.location,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: _kAccent,
-                                  ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24),
+                                  // labelLarge: w500 — map location label
+                                  child: Text(p.location,
+                                      textAlign: TextAlign.center,
+                                      style: tt.labelLarge?.copyWith(
+                                          fontWeight: FontWeight.w600)),
                                 ),
                               ],
                             ),
@@ -342,10 +321,11 @@ class _BodyState extends ConsumerState<_Body> {
             ),
           ),
 
-          // ── Top bar overlay ──────────────────────────────────────────
+          // ── Top bar overlay ────────────────────────────────
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -353,15 +333,10 @@ class _BodyState extends ConsumerState<_Body> {
                     icon: Icons.arrow_back_ios_new_rounded,
                     onTap: () => Navigator.pop(context),
                   ),
-                  const Text(
-                    'Property Detail',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: _kAccent,
-                    ),
-                  ),
-                 
+                  // titleLarge: w600, 22px — "Property Detail"
+                  Text('Property Detail',
+                      style: tt.titleLarge?.copyWith(fontSize: 17)),
+                  const SizedBox(width: 40),
                 ],
               ),
             ),
@@ -372,43 +347,39 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Widget _imgPlaceholder(double h) => Container(
-    height: h * 0.42,
-    color: const Color(0xFFEEEEEE),
-    child: const Icon(Icons.home_outlined, size: 64, color: Color(0xFFCCCCCC)),
-  );
+        height: h * 0.42,
+        color: AppColors.borderMedium,
+        child: const Icon(Icons.home_outlined,
+            size: 64, color: AppColors.textTertiary),
+      );
 
   String _fmt(double p) {
-    if (p >= 1000000) return '${(p / 1000000).toStringAsFixed(3)}';
+    if (p >= 1000000) return '${(p / 1000000).toStringAsFixed(2)}M';
     if (p >= 1000) return '${(p / 1000).toStringAsFixed(0)}K';
     return p.toStringAsFixed(0);
   }
 }
 
-// ── "Chat with Seller" → creates conversation and opens chat screen ──────────────────────────────────
+// ── Chat with Seller ──────────────────────────────────────────────────────────
 class _ContactBtn extends ConsumerWidget {
   final Property property;
   const _ContactBtn({required this.property});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tt = Theme.of(context).textTheme;
     return GestureDetector(
       onTap: () async {
         try {
           final repo = ref.read(chatRepositoryProvider);
-
-          // Create conversation
           final conv = await repo.createConversation(property.id);
-
           if (!context.mounted) return;
-
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => ChatScreen(
                 conversationId: conv.id,
                 currentUserId: conv.clientId,
-
-                // ✅ FIX: pass required data
                 sellerName: property.sellerName,
                 propertyTitle: property.title,
               ),
@@ -416,96 +387,91 @@ class _ContactBtn extends ConsumerWidget {
           );
         } catch (e) {
           if (!context.mounted) return;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ));
         }
       },
       child: Container(
         padding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: _kAccent,
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Text(
-          'Chat with Seller',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 13,
-          ),
-        ),
+        // labelSmall: w400 — override to w700 for button text
+        child: Text('Chat with Seller',
+            style: tt.labelSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 12)),
       ),
     );
   }
 }
 
+// ── Spec box ──────────────────────────────────────────────────────────────────
 class _SpecBox extends StatelessWidget {
   final IconData icon;
   final String label;
   const _SpecBox({required this.icon, required this.label});
+
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0xFFE8E8E8)),
-    ),
-    child: Column(
-      children: [
-        Icon(icon, size: 22, color: const Color(0xFF555555)),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFF666666),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 22, color: AppColors.textSecondary),
+          const SizedBox(height: 8),
+          // labelSmall: w400, 11px — spec label (e.g. "3 Beds")
+          Text(label,
+              textAlign: TextAlign.center,
+              style: tt.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
 }
 
+// ── Circle back button ────────────────────────────────────────────────────────
 class _CircleBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final Color iconColor;
-  const _CircleBtn({
-    required this.icon,
-    required this.onTap,
-    this.iconColor = _kAccent,
-  });
+  const _CircleBtn(
+      {required this.icon,
+      required this.onTap,
+      this.iconColor = AppColors.primary});
+
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 40,
-      height: 40,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.08),
-            blurRadius: 12,
-            offset: Offset(0, 2),
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Icon(icon, size: 18, color: iconColor),
-    ),
-  );
+          child: Icon(icon, size: 18, color: iconColor),
+        ),
+      );
 }
