@@ -123,9 +123,9 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                   _IconBtn(icon: Icons.notifications_outlined, badge: true, onTap: () {}),
                   const SizedBox(width: 10),
                   CircleAvatar(
-                    radius: 20,
+                    radius: 22.5,
                     backgroundColor: AppColors.accentLight,
-                    child: const Icon(Icons.person, color: AppColors.textSecondary, size: 20),
+                    child: const Icon(Icons.person, color: AppColors.background, size: 25),
                   ),
                 ],
               ),
@@ -833,8 +833,8 @@ class _IconBtn extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Container(
-              width: 50,
-              height: 50,
+              width: 45,
+              height: 45,
               decoration: BoxDecoration(
                 color: AppColors.cardBackground,
                 borderRadius: BorderRadius.circular(555),
