@@ -673,8 +673,8 @@ class PropertyCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 8,
+              color: const Color.fromARGB(145, 0, 0, 0).withOpacity(0.03),
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
