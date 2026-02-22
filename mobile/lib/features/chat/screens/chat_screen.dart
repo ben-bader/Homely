@@ -30,8 +30,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 200), () {
       if (_scrollController.hasClients) {
-        _scrollController
-            .jumpTo(_scrollController.position.maxScrollExtent);
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     });
   }
@@ -39,9 +38,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _send() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    ref
-        .read(chatProvider(widget.conversationId).notifier)
-        .send(text);
+    ref.read(chatProvider(widget.conversationId).notifier).send(text);
     _controller.clear();
   }
 
@@ -55,8 +52,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncMessages =
-        ref.watch(chatProvider(widget.conversationId));
+    final asyncMessages = ref.watch(chatProvider(widget.conversationId));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -68,21 +64,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           onTap: () => Navigator.pop(context),
           child: Container(
             margin: const EdgeInsets.all(10),
-            child: const Icon(Icons.arrow_back,
-                color: AppColors.primary, size: 30),
+            child: const Icon(
+              Icons.arrow_back,
+              color: AppColors.accent,
+              size: 30,
+            ),
           ),
         ),
         title: Column(
           children: [
-            Text(widget.sellerName,
-                style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AppColors.primary)),
-            Text(widget.propertyTitle,
-                style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: AppColors.textSecondary)),
+            Text(
+              widget.sellerName,
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.accent,
+              ),
+            ),
+            Text(
+              widget.propertyTitle,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
           ],
         ),
       ),
@@ -92,55 +97,60 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           Expanded(
             child: asyncMessages.when(
               loading: () => const Center(
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.primary)),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              ),
               error: (e, _) => Center(
-                  child: Text('Error: $e',
-                      style: GoogleFonts.outfit(
-                          color: AppColors.textSecondary))),
+                child: Text(
+                  'Error: $e',
+                  style: GoogleFonts.outfit(color: AppColors.textSecondary),
+                ),
+              ),
               data: (messages) {
                 if (messages.isEmpty) {
                   return Center(
-                      child: Text('No messages yet',
-                          style: GoogleFonts.outfit(
-                              color: AppColors.textSecondary)));
+                    child: Text(
+                      'No messages yet',
+                      style: GoogleFonts.outfit(color: AppColors.textSecondary),
+                    ),
+                  );
                 }
-                WidgetsBinding.instance
-                    .addPostFrameCallback((_) => _scrollToBottom());
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _scrollToBottom(),
+                );
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
                   itemCount: messages.length,
                   itemBuilder: (_, i) {
                     final msg = messages[i];
-                    final isMe =
-                        msg.senderId == widget.currentUserId;
+                    final isMe = msg.senderId == widget.currentUserId;
                     return Align(
                       alignment: isMe
                           ? Alignment.centerRight
                           : Alignment.centerLeft,
                       child: Padding(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Column(
                           crossAxisAlignment: isMe
                               ? CrossAxisAlignment.end
                               : CrossAxisAlignment.start,
                           children: [
                             Container(
-                              constraints: const BoxConstraints(
-                                  maxWidth: 280),
+                              constraints: const BoxConstraints(maxWidth: 280),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: isMe
                                     ? AppColors.primary
                                     : AppColors.cardBackground,
                                 borderRadius: BorderRadius.only(
-                                  topLeft:
-                                      const Radius.circular(18),
-                                  topRight:
-                                      const Radius.circular(18),
+                                  topLeft: const Radius.circular(18),
+                                  topRight: const Radius.circular(18),
                                   bottomLeft: isMe
                                       ? const Radius.circular(18)
                                       : const Radius.circular(4),
@@ -150,25 +160,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black
-                                        .withOpacity(0.05),
+                                    color: Colors.black.withOpacity(0.05),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
-                              child: Text(msg.body,
-                                  style: GoogleFonts.outfit(
-                                      color: isMe
-                                          ? Colors.white
-                                          : AppColors.primary,
-                                      fontSize: 14)),
+                              child: Text(
+                                msg.body,
+                                style: GoogleFonts.outfit(
+                                  color: isMe
+                                      ? Colors.white
+                                      : AppColors.primary,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 4),
-                            Text(_formatTime(msg.sentAt),
-                                style: GoogleFonts.outfit(
-                                    fontSize: 11,
-                                    color: AppColors.textTertiary)),
+                            Text(
+                              _formatTime(msg.sentAt),
+                              style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                color: AppColors.textTertiary,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -182,26 +197,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // ── Input bar ──────────────────────────────────
           Container(
             padding: const EdgeInsets.all(12),
-            color: AppColors.cardBackground,
+            color: AppColors.cardBackground.withOpacity(0.95),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: AppColors.primary.withOpacity(0.07),
                       borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.15),
+                        width: 1,
+                      ),
                     ),
                     child: TextField(
                       controller: _controller,
                       style: GoogleFonts.outfit(
-                          color: AppColors.primary, fontSize: 15),
+                        color: AppColors.primary,
+                        fontSize: 15,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
                         hintStyle: GoogleFonts.outfit(
-                            color: AppColors.textTertiary,
-                            fontSize: 14),
+                          color: AppColors.textTertiary,
+                          fontSize: 14,
+                        ),
                         border: InputBorder.none,
                       ),
                     ),
@@ -215,8 +236,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                   child: IconButton(
                     onPressed: _send,
-                    icon: const Icon(Icons.send,
-                        color: Colors.white, size: 20),
+                    icon: const Icon(Icons.send, color: Colors.white, size: 20),
                   ),
                 ),
               ],
