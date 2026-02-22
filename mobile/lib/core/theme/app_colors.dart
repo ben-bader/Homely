@@ -2,111 +2,89 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   AppColors._();
-  static const Color primary = Color(0xff3D5A80);
 
-  static const Color accent = Color(0xFF1C1C1C);
-  static const Color accentLight = Color(0xBF1F1F1F);
+  // ==================== CORE BRAND ====================
+  static const Color primary = Color(0xFF3D5A80);       // Steel blue — unchanged
+  static const Color primaryLight = Color(0xFF5B7FA6);  // Lighter tint for hover/states
+  static const Color primaryDark = Color(0xFF2C4260);   // Deeper for pressed states
 
-  static const Color background = Color.fromARGB(255, 238, 238, 238);
+  static const Color accent = Color(0xFF1C2B3A);        // Near-black with blue undertone
+  static const Color accentLight = Color(0xFF2E4057);   // Softer dark blue-grey
 
+  // ==================== BACKGROUNDS ====================
+  static const Color background = Color(0xFFFFFFFF);    // Slightly blue-tinted off-white
   static const Color cardBackground = Color(0xFFFFFFFF);
+  static const Color subtleBackground = Color(0xFFEEF2F7); // Blue-tinted subtle bg
+  static const Color glassOverlay = Color(0x70FFFFFF);
 
-  static const Color subtleBackground = Color(0xFFF5F5F5);
+  // ==================== TEXT ====================
+  static const Color textPrimary = Color(0xFF1C2B3A);   // Deep blue-black
+  static const Color textSecondary = Color(0xFF6B7E92); // Blue-grey mid
+  static const Color textTertiary = Color(0xFFAAB8C6);  // Light blue-grey
+  static const Color textDisabled = Color(0xFFCDD5DE);
 
-  static const Color glassOverlay = Color(0x63FEFEFE);
+  // ==================== SEMANTIC COLORS ====================
+  // Kept functional but nudged toward the blue-steel family
 
-  static const Color textPrimary = Color(0xFF2C3E50);
-  static const Color textSecondary = Color(0xFF7F8C8D);
+  static const Color success = Color(0xFF2E8B6A);       // Teal-green (not pure green)
+  static const Color successLight = Color(0xFF3DAF87);
 
-  static const Color textTertiary = Color(0xFFBDC3C7);
+  static const Color error = Color(0xFFCF4A3C);         // Muted red, less aggressive
+  static const Color errorLight = Color(0xFFE07060);
 
-  static const Color textDisabled = Color(0xFFCCD1D3);
+  static const Color warning = Color(0xFFD4872A);       // Warm amber
+  static const Color warningLight = Color(0xFFE8A84A);
 
-  static const Color success = Color(0xFF27AE60);
-  static const Color successLight = Color(0xFF2ECC71);
+  static const Color info = Color(0xFF3D5A80);          // Reuse primary for info
+  static const Color infoLight = Color(0xFF5B7FA6);
 
-  /// Error - Red
-  static const Color error = Color(0xFFE74C3C);
-  static const Color errorLight = Color(0xFFEC7063);
+  // ==================== BORDERS ====================
+  static const Color borderLight = Color(0xFFE2E8EF);   // Blue-tinted light border
+  static const Color borderMedium = Color(0xFFC5D0DC);
+  static const Color borderDark = Color(0xFFA8B8C8);
 
-  /// Warning - Orange
-  static const Color warning = Color(0xFFF39C12);
-  static const Color warningLight = Color(0xFFF1C40F);
+  // ==================== SPECIAL ====================
+  static const Color shadow = Color(0x1A2C4260);        // Blue-tinted shadow
+  static const Color overlay = Color(0x803D5A80);       // Brand-tinted scrim
+  static Color whiteGlass = const Color(0xFFFFFFFF).withOpacity(0.85);
 
-  /// Info - Blue
-  static const Color info = Color(0xFF3498DB);
-  static const Color infoLight = Color(0xFF5DADE2);
-
-  // ==================== BORDER COLORS ====================
-  /// Light border - Very subtle
-  static const Color borderLight = Color(0xFFE8E8E8);
-
-  /// Medium border
-  static const Color borderMedium = Color(0xFFD0D0D0);
-
-  /// Dark border
-  static const Color borderDark = Color(0xFFBDBDBD);
-
-  // ==================== SPECIAL COLORS ====================
-  /// Shadow color
-  static const Color shadow = Color(0x1A000000);
-
-  /// Overlay/Scrim
-  static const Color overlay = Color(0x80000000);
-
-  /// White with opacity for glassmorphism
-  static Color whiteGlass = Colors.white.withOpacity(0.85);
-
-  /// Gradient colors
   static const List<Color> primaryGradient = [
-    Color(0xFF2C3E50),
-    Color(0xFF3498DB),
+    Color(0xFF2C4260),  // primaryDark
+    Color(0xFF3D5A80),  // primary
   ];
 
   static const List<Color> accentGradient = [
-    Color(0xFF3498DB),
-    Color(0xFF2980B9),
+    Color(0xFF3D5A80),
+    Color(0xFF5B7FA6),
   ];
 
   // ==================== PROPERTY TYPE COLORS ====================
-  /// For different property categories
-  static const Color apartment = Color(0xFF3498DB);
-  static const Color house = Color(0xFF27AE60);
-  static const Color villa = Color(0xFF9B59B6);
-  static const Color studio = Color(0xFFE67E22);
-  static const Color land = Color(0xFF95A5A6);
-  static const Color commercial = Color(0xFFE74C3C);
+  // All pulled from the same analogous blue/teal/slate family
+  static const Color apartment = Color(0xFF3D5A80);  // primary blue
+  static const Color house = Color(0xFF2E8B6A);      // teal green
+  static const Color villa = Color(0xFF5B4E8A);      // muted blue-purple
+  static const Color studio = Color(0xFF7A9EB5);     // pale steel blue
+  static const Color land = Color(0xFF8A9BAD);       // warm blue-grey
+  static const Color commercial = Color(0xFFCF4A3C); // muted red
 
   // ==================== STATUS COLORS ====================
-  /// Property/Listing status colors
-  static const Color statusActive = Color(0xFF27AE60);
-  static const Color statusPending = Color(0xFFF39C12);
-  static const Color statusSold = Color(0xFFE74C3C);
-  static const Color statusBoosted = Color(0xFF9B59B6);
+  static const Color statusActive = Color(0xFF2E8B6A);
+  static const Color statusPending = Color(0xFFD4872A);
+  static const Color statusSold = Color(0xFFCF4A3C);
+  static const Color statusBoosted = Color(0xFF5B4E8A);
 
-  // ==================== HELPER METHODS ====================
-
-  /// Get color with custom opacity
+  // ==================== HELPERS ====================
   static Color withOpacity(Color color, double opacity) {
     return color.withOpacity(opacity);
   }
 
-  /// Get property type color by name
- 
-
-  /// Get status color by status
   static Color getStatusColor(String status) {
     switch (status.toUpperCase()) {
-      case 'ACTIVE':
-        return statusActive;
-      case 'PENDING':
-        return statusPending;
-      case 'SOLD':
-        return statusSold;
-      case 'BOOSTED':
-        return statusBoosted;
-      default:
-        return textSecondary;
+      case 'ACTIVE':   return statusActive;
+      case 'PENDING':  return statusPending;
+      case 'SOLD':     return statusSold;
+      case 'BOOSTED':  return statusBoosted;
+      default:         return textSecondary;
     }
   }
 }

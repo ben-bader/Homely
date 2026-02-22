@@ -112,9 +112,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     children: [
                       Text('Create your\nAccount',
                           style: GoogleFonts.outfit(
-                              color: AppColors.primary,
+                              color: AppColors.accent,
                               fontSize: 38,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               letterSpacing: -1.0,
                               height: 1.15)),
                       const SizedBox(height: 12),
@@ -128,7 +128,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           label: 'Full Name',
                           child: _buildTextField(
                               controller: _nameController,
-                              hintText: 'Mohamed El Amraoui',
+                              hintText: 'Jhon Doe',
                               validator: Validators.validateName)),
                       const SizedBox(height: 20),
                       _buildLabeledField(
@@ -192,7 +192,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       const SizedBox(height: 24),
                       Text('I am a:',
                           style: GoogleFonts.outfit(
-                              color: AppColors.primary,
+                              color: AppColors.accent,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.3)),
@@ -249,8 +249,8 @@ class _SignupScreenState extends State<SignupScreen> {
       children: [
         Text(label,
             style: GoogleFonts.outfit(
-                color: AppColors.primary,
-                fontSize: 14,
+                color: AppColors.accent,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2)),
         const SizedBox(height: 8),
@@ -273,7 +273,7 @@ class _SignupScreenState extends State<SignupScreen> {
       obscureText: obscureText,
       validator: validator,
       style: GoogleFonts.outfit(
-          color: AppColors.primary,
+          color: AppColors.accent,
           fontSize: 16,
           fontWeight: FontWeight.w500),
       decoration: InputDecoration(
@@ -336,7 +336,7 @@ class _SignupScreenState extends State<SignupScreen> {
             Icon(icon,
                 color: isSelected
                     ? Colors.white
-                    : AppColors.textSecondary,
+                    : AppColors.primary,
                 size: 28),
             const SizedBox(height: 8),
             Text(role,

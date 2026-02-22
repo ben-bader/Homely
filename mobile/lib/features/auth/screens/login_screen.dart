@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/validators.dart';
+import 'package:mobile/features/property/screens/home_screen.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
 
@@ -22,38 +23,33 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-    try {
-      final request = LoginRequest(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+  if (!_formKey.currentState!.validate()) return;
+  setState(() => _isLoading = true);
+  try {
+    final request = LoginRequest(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+    final response = await _authService.login(request);
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-      final response = await _authService.login(request);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Welcome back, ${response.firstName}!',
-              style: GoogleFonts.outfit()),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        ));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.toString(), style: GoogleFonts.outfit()),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        ));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString(), style: GoogleFonts.outfit()),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ));
+    }
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
 
   @override
   void dispose() {
@@ -91,9 +87,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'Sign in to your\nAccount',
                         style: GoogleFonts.outfit(
-                          color: AppColors.primary,
+                          color: AppColors.accent,
                           fontSize: 38,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: -1.0,
                           height: 1.15,
                         ),
@@ -147,9 +143,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   MaterialTapTargetSize.shrinkWrap),
                           child: Text('Forgot Password?',
                               style: GoogleFonts.outfit(
-                                  color: AppColors.accent,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600)),
+                                  color: AppColors.primary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500)),
                         ),
                       ),
                       const SizedBox(height: 36),
@@ -161,6 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text("Don't have an account? ",
                               style: GoogleFonts.outfit(
                                   color: AppColors.textSecondary,
+                                  
                                   fontSize: 15)),
                           GestureDetector(
                             onTap: () => Navigator.push(
@@ -196,9 +193,9 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(label,
             style: GoogleFonts.outfit(
-                color: AppColors.primary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                color: AppColors.accent,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
                 letterSpacing: 0.2)),
         const SizedBox(height: 8),
         child,

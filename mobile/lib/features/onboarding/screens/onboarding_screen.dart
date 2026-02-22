@@ -150,17 +150,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             right: 28,
             top: MediaQuery.of(context).size.height * 0.14,
             child: Text(
-              items[index].title,
+              items[index].title.toUpperCase(),
               textAlign: TextAlign.left,
               style: GoogleFonts.outfit(
-                fontSize: 64,
-                fontWeight: FontWeight.w900,
+                fontSize: 48,
+                fontWeight: FontWeight.w800,
                 color: Colors.white,
                 height: 1.05,
-                letterSpacing: -2.0,
+                letterSpacing: 1,
                 shadows: const [
                   Shadow(
-                      color: Colors.black54,
+                      color: Color(0x13000000),
                       offset: Offset(0, 2),
                       blurRadius: 16)
                 ],

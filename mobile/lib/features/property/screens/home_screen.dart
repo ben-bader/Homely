@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/features/chat/screens/conversation_screen.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
@@ -161,14 +162,14 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                   duration: const Duration(milliseconds: 200),
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
+                    color: AppColors.subtleBackground,
                     borderRadius: BorderRadius.circular(50),
                     
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.001),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        offset: const Offset(1, 2),
                       ),
                     ],
                   ),
@@ -559,12 +560,13 @@ class _FeaturedCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.92),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    property.type,
+                     property.type.toLowerCase().splitMapJoin("")
+                          .replaceAllMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase()),
                     style: tt.labelSmall?.copyWith(
-                      color: AppColors.primary,
+                      color: AppColors.accent,
                       fontWeight: FontWeight.w700,
                       fontSize: 10,
                     ),
@@ -1013,11 +1015,11 @@ class PropertyCard extends ConsumerWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withOpacity(0.09),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -1220,12 +1222,12 @@ class _NotifBtn extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.cardBackground,
+                color: AppColors.subtleBackground,
                 borderRadius: BorderRadius.circular(50),
                 
               ),
               child: const Icon(Icons.notifications_outlined,
-                  color: AppColors.primary, size: 20),
+                  color: AppColors.accentLight, size: 20),
             ),
             Positioned(
               top: 1,
@@ -1273,7 +1275,7 @@ class _BottomNav extends ConsumerWidget {
 
   static const _items = [
     (icon: Icons.search_rounded, outlinedIcon: Icons.search_rounded, label: 'Explore'),
-    (icon: Icons.slow_motion_video_rounded, outlinedIcon: Icons.slow_motion_video_rounded, label: 'Reels'),
+    (icon: Icons.slow_motion_video_rounded, outlinedIcon: Icons.slow_motion_video_rounded, label: 'Tours'),
     (icon: Icons.chat_bubble_rounded, outlinedIcon: Icons.chat_bubble_outline_rounded, label: 'Inbox'),
     (icon: Icons.favorite_rounded, outlinedIcon: Icons.favorite_border_rounded, label: 'Wishlists'),
     (icon: Icons.person_rounded, outlinedIcon: Icons.person_outline_rounded, label: 'Profile'),
@@ -1288,7 +1290,7 @@ class _BottomNav extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
+            color: AppColors.background,
             border: Border(
               top: BorderSide(
                 color: Colors.black.withOpacity(0.08),
@@ -1326,20 +1328,21 @@ class _BottomNav extends ConsumerWidget {
                                 size: 26,
                                 color: active
                                     ? AppColors.primary
-                                    : Colors.black.withOpacity(0.4),
+                                    : AppColors.accent.withAlpha(120),
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             AnimatedDefaultTextStyle(
                               duration: const Duration(milliseconds: 150),
                               style: TextStyle(
+                                fontFamily: GoogleFonts.outfit().fontFamily,
                                 fontSize: 10,
                                 fontWeight: active
                                     ? FontWeight.w700
                                     : FontWeight.w400,
                                 color: active
                                     ? AppColors.primary
-                                    : Colors.black.withOpacity(0.4),
+                                    : AppColors.accent.withAlpha(120),
                                 letterSpacing: 0.1,
                               ),
                               child: Text(item.label),
