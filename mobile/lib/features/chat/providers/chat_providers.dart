@@ -97,7 +97,38 @@ class ChatNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> {
     state = const AsyncValue.loading();
     await _init();
   }
+  // ✅ EDIT
+Future<void> editMessage(String messageId, String newText, String userId) async {
+  try {
+    final updated = await _repo.editMessage(
+      messageId: messageId,
+      content: newText,
+      userId: userId,
+    );
 
+    state.whenData((current) {
+      state = AsyncValue.data(
+        current.map((m) => m.id == messageId ? updated : m).toList(),
+      );
+    });
+  } catch (_) {}
+}
+
+// ✅ DELETE
+Future<void> deleteMessage(String messageId, String userId) async {
+  try {
+    await _repo.deleteMessage(
+      messageId: messageId,
+      userId: userId,
+    );
+
+    state.whenData((current) {
+      state = AsyncValue.data(
+        current.where((m) => m.id != messageId).toList(),
+      );
+    });
+  } catch (_) {}
+}
   ChatRepository get _repo => _ref.read(chatRepositoryProvider);
   WebSocketService get _ws => _ref.read(websocketServiceProvider);
 }

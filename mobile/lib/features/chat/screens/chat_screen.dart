@@ -50,6 +50,167 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
   }
 
+  void _showMessageOptions(
+    BuildContext context,
+    String messageId,
+    String body,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text("Edit"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showEditDialog(messageId, body);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text(
+                  "Delete",
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  ref
+                      .read(chatProvider(widget.conversationId).notifier)
+                      .deleteMessage(messageId, widget.currentUserId);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditDialog(String messageId, String oldText) {
+  final editController = TextEditingController(text: oldText);
+
+  showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      backgroundColor: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+
+            /// Title
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Edit message",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade900,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            /// Input
+            TextField(
+              controller: editController,
+              autofocus: true,
+              maxLines: null,
+              cursorColor: const Color(0xFFFF385C), // Airbnb pink
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                hintText: "Edit your message...",
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            /// Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      "Cancel",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final newText = editController.text.trim();
+                      if (newText.isNotEmpty) {
+                        ref
+                            .read(chatProvider(widget.conversationId).notifier)
+                            .editMessage(
+                              messageId,
+                              newText,
+                              widget.currentUserId,
+                            );
+                      }
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.background,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      "Save",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     final asyncMessages = ref.watch(chatProvider(widget.conversationId));
@@ -138,41 +299,52 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               ? CrossAxisAlignment.end
                               : CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              constraints: const BoxConstraints(maxWidth: 280),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isMe
-                                    ? AppColors.primary
-                                    : AppColors.cardBackground,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(18),
-                                  topRight: const Radius.circular(18),
-                                  bottomLeft: isMe
-                                      ? const Radius.circular(18)
-                                      : const Radius.circular(4),
-                                  bottomRight: isMe
-                                      ? const Radius.circular(4)
-                                      : const Radius.circular(18),
+                            GestureDetector(
+                              onLongPress: isMe
+                                  ? () => _showMessageOptions(
+                                      context,
+                                      msg.id,
+                                      msg.body,
+                                    )
+                                  : null,
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 280,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                msg.body,
-                                style: GoogleFonts.outfit(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
                                   color: isMe
-                                      ? Colors.white
-                                      : AppColors.primary,
-                                  fontSize: 14,
+                                      ? AppColors.primary
+                                      : AppColors.cardBackground,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: const Radius.circular(18),
+                                    topRight: const Radius.circular(18),
+                                    bottomLeft: isMe
+                                        ? const Radius.circular(18)
+                                        : const Radius.circular(4),
+                                    bottomRight: isMe
+                                        ? const Radius.circular(4)
+                                        : const Radius.circular(18),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  msg.body,
+                                  style: GoogleFonts.outfit(
+                                    color: isMe
+                                        ? Colors.white
+                                        : AppColors.primary,
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ),
                             ),
@@ -197,19 +369,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // ── Input bar ──────────────────────────────────
           Container(
             padding: const EdgeInsets.all(12),
-            color: AppColors.cardBackground.withOpacity(0.95),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.07),
+                      color: AppColors.borderLight,
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.15),
+                        color: AppColors.borderMedium,
                         width: 1,
-                      ),
+                      )
                     ),
                     child: TextField(
                       controller: _controller,

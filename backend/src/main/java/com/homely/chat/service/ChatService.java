@@ -71,5 +71,32 @@ public class ChatService {
     public void saveMessage(Message message) {
         messageRepository.save(message);
     }
+
+    @Transactional
+public Message editMessage(Long messageId, String newContent, UUID userId) {
+    Message message = messageRepository.findById(messageId)
+            .orElseThrow(() -> new RuntimeException("Message not found"));
+
+    // Only sender can edit
+    if (!message.getSender().getId().equals(userId)) {
+        throw new RuntimeException("You are not allowed to edit this message");
+    }
+
+    message.setBody(newContent);
+    return messageRepository.save(message);
+}
+
+@Transactional
+public void deleteMessage(Long messageId, UUID userId) {
+    Message message = messageRepository.findById(messageId)
+            .orElseThrow(() -> new RuntimeException("Message not found"));
+
+    // Only sender can delete
+    if (!message.getSender().getId().equals(userId)) {
+        throw new RuntimeException("You are not allowed to delete this message");
+    }
+
+    messageRepository.delete(message);
+}
 }
 

@@ -6,9 +6,11 @@ import java.util.UUID;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -109,4 +111,20 @@ public class ChatController {
                 response);
     }
 
+    @PutMapping("/message/{messageId}")
+    public Message editMessage(
+            @PathVariable Long messageId,
+            @RequestParam String content,
+            @RequestParam UUID userId) {
+
+        return chatService.editMessage(messageId, content, userId);
+    }
+
+    @DeleteMapping("/message/{messageId}")
+    public void deleteMessage(
+            @PathVariable Long messageId,
+            @RequestParam UUID userId) {
+
+        chatService.deleteMessage(messageId, userId);
+    }
 }

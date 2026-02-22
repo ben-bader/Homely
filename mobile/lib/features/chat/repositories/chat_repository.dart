@@ -124,4 +124,40 @@ class ChatRepository {
 
     return [];
   }
+  // ✅ EDIT MESSAGE
+Future<ChatMessage> editMessage({
+  required String messageId,
+  required String content,
+  required String userId,
+}) async {
+  final response = await http.put(
+    Uri.parse("$baseUrl/api/chat/message/$messageId"
+        "?content=${Uri.encodeComponent(content)}&userId=$userId"),
+    headers: await _headers(),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception("Failed to edit message");
+  }
+
+  final decoded = jsonDecode(response.body);
+  return ChatMessage.fromJson(decoded);
+}
+
+// ✅ DELETE MESSAGE
+Future<void> deleteMessage({
+  required String messageId,
+  required String userId,
+}) async {
+  final response = await http.delete(
+    Uri.parse("$baseUrl/api/chat/message/$messageId"
+        "?userId=$userId"),
+    headers: await _headers(),
+  );
+
+  if (response.statusCode != 200 &&
+      response.statusCode != 204) {
+    throw Exception("Failed to delete message");
+  }
+}
 }
