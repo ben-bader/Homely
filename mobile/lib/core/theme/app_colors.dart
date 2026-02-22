@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   AppColors._();
-  static const Color primary = Color(0xFF151515);
+  static const Color primary = Color(0xff3D5A80);
 
   static const Color accent = Color(0xFF1C1C1C);
   static const Color accentLight = Color(0xBF1F1F1F);
 
-  static const Color background = Color(0xFFEBEBEB);
+  static const Color background = Color.fromARGB(255, 238, 238, 238);
 
   static const Color cardBackground = Color(0xFFFFFFFF);
 
   static const Color subtleBackground = Color(0xFFF5F5F5);
 
-  static const Color glassOverlay = Color(0xFFFEFEFE);
+  static const Color glassOverlay = Color(0x63FEFEFE);
 
   static const Color textPrimary = Color(0xFF2C3E50);
   static const Color textSecondary = Color(0xFF7F8C8D);

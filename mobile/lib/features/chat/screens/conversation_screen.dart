@@ -16,13 +16,14 @@ class ConversationsScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
+        
         elevation: 0,
         centerTitle: true,
         title: Text('Messages',
             style: GoogleFonts.outfit(
                 color: AppColors.primary,
-                fontWeight: FontWeight.w800,
-                fontSize: 20)),
+                fontWeight: FontWeight.w500,
+                fontSize: 24)),
       ),
       body: convsAsync.when(
         loading: () => const Center(
@@ -64,7 +65,7 @@ class ConversationsScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.005),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -85,27 +86,31 @@ class ConversationsScreen extends ConsumerWidget {
                           children: [
                             Text(conv.sellerName ?? 'Seller',
                                 style: GoogleFonts.outfit(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 18,
                                     color: AppColors.primary)),
-                            const SizedBox(height: 3),
-                            Text(conv.propertyTitle ?? '',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary)),
-                            const SizedBox(height: 4),
+                            
+                
                             Text(conv.lastMessage ?? '',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.outfit(
-                                    fontSize: 13,
+                                    fontSize: 14,
                                     color: AppColors.textSecondary)),
                           ],
                         ),
                       ),
+                      Text(
+                        conv.lastAt != null
+                            ? TimeOfDay.fromDateTime(conv.lastAt!)
+                                .format(context)
+                            : '',
+                        style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: AppColors.textSecondary),
+                      ),
                     ],
+
                   ),
                 ),
               );

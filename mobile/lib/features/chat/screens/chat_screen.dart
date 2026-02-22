@@ -68,12 +68,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           onTap: () => Navigator.pop(context),
           child: Container(
             margin: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.primary, size: 16),
+            child: const Icon(Icons.arrow_back,
+                color: AppColors.primary, size: 30),
           ),
         ),
         title: Column(

@@ -1,6 +1,7 @@
 // lib/features/property/screens/home_screen.dart
 
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,7 @@ class HomeScreen extends ConsumerWidget {
     ];
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBody: true,
       body: IndexedStack(index: idx, children: tabs),
       bottomNavigationBar: const _BottomNav(),
     );
@@ -52,14 +54,17 @@ class _ExploreTab extends ConsumerStatefulWidget {
 
 class _ExploreTabState extends ConsumerState<_ExploreTab> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   Timer? _debounce;
+  bool _searchFocused = false;
 
-  static const _types = ['Any type', 'Rent', 'Sell', 'House', 'Apartment', 'Villa'];
+  static const _types = ['All types', 'Rent', 'Sell', 'House', 'Apartment', 'Villa'];
   static const _listingTypes = {'Rent', 'Sell'};
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -82,14 +87,14 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
 
   void _onChipTap(String tapped) {
     final notifier = ref.read(propertyFilterProvider.notifier);
-    if (tapped == 'Any type') {
+    if (tapped == 'All types') {
       notifier.update((s) => s.resetFilters());
       return;
     }
     final filter = ref.read(propertyFilterProvider);
     if (_listingTypes.contains(tapped)) {
       final newStatus = filter.status == tapped ? null : tapped;
-      notifier.update((s) => s.copyWith(status: newStatus ?? 'All'));
+      notifier.update((s) => s.copyWith(status: newStatus ?? 'All types'));
     } else {
       final newType = filter.type == tapped ? null : tapped;
       notifier.update((s) => s.copyWith(type: newType ?? 'Any type'));
@@ -97,7 +102,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   }
 
   bool _isChipSelected(String chip, PropertyFilter filter) {
-    if (chip == 'Any type') return !filter.isFiltering;
+    if (chip == 'All types') return !filter.isFiltering;
     if (_listingTypes.contains(chip)) return filter.status == chip;
     return filter.type == chip;
   }
@@ -109,24 +114,38 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
     final badgeCount = filter.activeFilterCount;
 
     return SafeArea(
+      bottom: false,
       child: CustomScrollView(
+        controller: _scrollController,
+        physics: const BouncingScrollPhysics(),
         slivers: [
           // ── Header ───────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Explore',
-                      style: tt.headlineMedium?.copyWith(color: AppColors.primary)),
-                  const Spacer(),
-                  _IconBtn(icon: Icons.notifications_outlined, badge: true, onTap: () {}),
-                  const SizedBox(width: 10),
-                  CircleAvatar(
-                    radius: 22.5,
-                    backgroundColor: AppColors.accentLight,
-                    child: const Icon(Icons.person, color: AppColors.background, size: 25),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        
+                        Text(
+                          'Explore',
+                          style: tt.headlineSmall?.copyWith(
+                            color: AppColors.accent,
+                            letterSpacing: -0.5,
+                            height: 1.1,
+                            fontSize: 30,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  _NotifBtn(onTap: () {}),
+                  const SizedBox(width: 10),
+                  const _AvatarBtn(),
                 ],
               ),
             ),
@@ -135,89 +154,109 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
           // ── Search bar ───────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.cardBackground,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: _onSearchChanged,
-                        onSubmitted: _onSearchSubmitted,
-                        style: tt.bodyLarge?.copyWith(color: AppColors.primary),
-                        decoration: InputDecoration(
-                          hintText: 'Search your home...',
-                          hintStyle: tt.bodySmall?.copyWith(color: AppColors.textTertiary),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Focus(
+                onFocusChange: (v) => setState(() => _searchFocused = v),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(50),
+                    
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.001),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 16),
+                      Icon(
+                        Icons.search_rounded,
+                        color: _searchFocused
+                            ? AppColors.primary
+                            : AppColors.textTertiary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          onSubmitted: _onSearchSubmitted,
+                          style: tt.bodyLarge?.copyWith(color: AppColors.primary),
+                          decoration: InputDecoration(
+                            hintText: 'City, neighborhood, address...',
+                            hintStyle: tt.bodySmall
+                                ?.copyWith(color: AppColors.textTertiary),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
                         ),
                       ),
-                    ),
-                    ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _searchController,
-                      builder: (_, value, __) => value.text.isNotEmpty
-                          ? GestureDetector(
-                              onTap: () {
-                                _searchController.clear();
-                                ref
-                                    .read(propertyFilterProvider.notifier)
-                                    .update((s) => s.copyWith(clearSearch: true));
-                              },
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 8),
-                                child: Icon(Icons.close_rounded,
-                                    color: AppColors.textTertiary, size: 18),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                    Container(width: 1, height: 22, color: AppColors.borderLight),
-                    // ── Filter button with active-count badge ──
-                    GestureDetector(
-                      onTap: () => _showFilterSheet(context),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Icon(Icons.tune_rounded, color: AppColors.primary, size: 20),
-                            if (badgeCount > 0)
-                              Positioned(
-                                top: -6,
-                                right: -8,
-                                child: Container(
-                                  width: 16,
-                                  height: 16,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.error,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      '$badgeCount',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700,
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _searchController,
+                        builder: (_, value, __) => value.text.isNotEmpty
+                            ? GestureDetector(
+                                onTap: () {
+                                  _searchController.clear();
+                                  ref
+                                      .read(propertyFilterProvider.notifier)
+                                      .update((s) => s.copyWith(clearSearch: true));
+                                },
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Icon(Icons.close_rounded,
+                                      color: AppColors.textTertiary, size: 18),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                      Container(width: 1, height: 20, color: AppColors.borderLight),
+                      GestureDetector(
+                        onTap: () => _showFilterSheet(context),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(Icons.tune_rounded,
+                                  color: AppColors.primary, size: 20),
+                              if (badgeCount > 0)
+                                Positioned(
+                                  top: -5,
+                                  right: -7,
+                                  child: Container(
+                                    width: 15,
+                                    height: 15,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '$badgeCount',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -226,10 +265,10 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
           // ── Filter chips ─────────────────────────────────
           SliverToBoxAdapter(
             child: SizedBox(
-              height: 52,
+              height: 50,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                 itemCount: _types.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
@@ -238,19 +277,30 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                   return GestureDetector(
                     onTap: () => _onChipTap(t),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.symmetric(horizontal: 18),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.primary : const Color(0x00FFFFFF),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(width: 1, color: AppColors.borderDark),
+                        color: selected
+                            ? AppColors.primary
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(50),
+                        border: Border.all(
+                          color: selected
+                              ? AppColors.primary
+                              : AppColors.borderMedium,
+                          width: 1,
+                        ),
                       ),
                       child: Center(
                         child: Text(
                           t,
-                          style: tt.labelLarge?.copyWith(
-                            fontSize: 13,
-                            color: selected ? Colors.white : AppColors.primary,
+                          style: tt.labelMedium?.copyWith(
+                            fontWeight:
+                                selected ? FontWeight.w700 : FontWeight.w500,
+                              fontSize: 14,
+                            color: selected
+                                ? Colors.white
+                                : AppColors.accent,
                           ),
                         ),
                       ),
@@ -261,42 +311,76 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
             ),
           ),
 
+          // ── Featured / horizontal scroll ─────────────────
+          if (!filter.isFiltering && (filter.search == null || filter.search!.isEmpty))
+            const _FeaturedSection(),
+
           // ── Section header ───────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 14),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    filter.search != null && filter.search!.isNotEmpty
-                        ? 'Results for "${filter.search}"'
-                        : filter.isFiltering
-                            ? 'Filtered Results'
-                            : 'Best Offers',
-                    style: tt.titleMedium?.copyWith(color: AppColors.primary),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        filter.search != null && filter.search!.isNotEmpty
+                            ? 'Results'
+                            : filter.isFiltering
+                                ? 'Filtered'
+                                : 'Best Offers',
+                        style: tt.titleLarge?.copyWith(
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      if (filter.search != null && filter.search!.isNotEmpty)
+                        Text(
+                          'for "${filter.search}"',
+                          style: tt.bodySmall
+                              ?.copyWith(color: AppColors.textSecondary),
+                        ),
+                    ],
                   ),
-                  // Clear all filters button
                   if (filter.isFiltering)
                     GestureDetector(
                       onTap: () => ref
                           .read(propertyFilterProvider.notifier)
                           .update((s) => s.resetFilters()),
-                      child: Text(
-                        'Clear filters',
-                        style: tt.labelMedium?.copyWith(color: AppColors.error),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Clear all',
+                          style: tt.labelSmall?.copyWith(
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w600),
+                        ),
                       ),
                     )
                   else
                     Text('See all',
-                        style: tt.labelMedium?.copyWith(color: AppColors.textSecondary)),
+                        style: tt.labelMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
           ),
 
-          // ── Property list (isolated — only this rebuilds on data changes) ──
+          // ── Property list ─────────────────────────────────
           const _PropertyList(),
+
+          // ── Bottom padding for nav bar ────────────────────
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );
@@ -311,6 +395,193 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) => const _FilterSheet(),
     );
+  }
+}
+
+// ── Featured Section (horizontal scroll cards) ────────────────────────────────
+class _FeaturedSection extends ConsumerWidget {
+  const _FeaturedSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tt = Theme.of(context).textTheme;
+    final propertiesAsync = ref.watch(propertiesProvider);
+
+    return propertiesAsync.maybeWhen(
+      data: (props) {
+        if (props.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+        final featured = props.take(5).toList();
+        return SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Featured',
+                      style: tt.titleLarge?.copyWith(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                    Text('See all',
+                        style: tt.labelMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 220,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+                  itemCount: featured.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (ctx, i) => _FeaturedCard(
+                    property: featured[i],
+                    onTap: () => Navigator.push(
+                      ctx,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PropertyDetailScreen(propertyId: featured[i].id),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+    );
+  }
+}
+
+class _FeaturedCard extends StatelessWidget {
+  final Property property;
+  final VoidCallback onTap;
+  const _FeaturedCard({required this.property, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Image
+              property.images.isNotEmpty
+                  ? Image.network(
+                      property.images.first,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: const Color(0xFFF0E9E3),
+                        child: const Icon(Icons.home_outlined,
+                            size: 48, color: AppColors.textTertiary),
+                      ),
+                    )
+                  : Container(
+                      color: const Color(0xFFF0E9E3),
+                      child: const Icon(Icons.home_outlined,
+                          size: 48, color: AppColors.textTertiary),
+                    ),
+              // Gradient overlay
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.65),
+                    ],
+                    stops: const [0.4, 1.0],
+                  ),
+                ),
+              ),
+              // Content
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      property.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: tt.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '\$${_fmt(property.price)}',
+                      style: tt.titleSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Type badge
+              Positioned(
+                top: 12,
+                left: 12,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.92),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    property.type,
+                    style: tt.labelSmall?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _fmt(double p) {
+    if (p >= 1000000) return '${(p / 1000000).toStringAsFixed(1)}M';
+    if (p >= 1000) return '${(p / 1000).toStringAsFixed(0)}K';
+    return p.toStringAsFixed(0);
   }
 }
 
@@ -334,15 +605,38 @@ class _PropertyList extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textTertiary),
-              const SizedBox(height: 12),
-              Text('$e', style: tt.bodySmall),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.subtleBackground,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.wifi_off_rounded,
+                    size: 32, color: AppColors.textTertiary),
+              ),
               const SizedBox(height: 16),
+              Text('Something went wrong',
+                  style:
+                      tt.titleSmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 6),
+              Text('$e',
+                  style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 20),
               TextButton(
                 onPressed: () => ref.invalidate(propertiesProvider),
-                child: Text('Try Again',
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: Text('Try again',
                     style: tt.labelLarge?.copyWith(
-                        color: AppColors.primary, fontWeight: FontWeight.w700)),
+                        color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -354,25 +648,41 @@ class _PropertyList extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.search_off_rounded,
-                        size: 48, color: AppColors.textTertiary),
-                    const SizedBox(height: 12),
-                    Text('No properties found', style: tt.bodyMedium),
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppColors.subtleBackground,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.search_off_rounded,
+                          size: 32, color: AppColors.textTertiary),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('No properties found',
+                        style: tt.titleSmall?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    Text('Try adjusting your filters',
+                        style: tt.bodySmall
+                            ?.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
               ),
             )
           : SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
               sliver: SliverList.separated(
                 itemCount: props.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (_, i) => PropertyCard(
                   property: props[i],
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => PropertyDetailScreen(propertyId: props[i].id),
+                      builder: (_) =>
+                          PropertyDetailScreen(propertyId: props[i].id),
                     ),
                   ),
                 ),
@@ -390,7 +700,6 @@ class _FilterSheet extends ConsumerStatefulWidget {
 }
 
 class _FilterSheetState extends ConsumerState<_FilterSheet> {
-  // Local state — only committed to provider when Apply is tapped
   late String? _status;
   late String? _propertyType;
   late TextEditingController _cityController;
@@ -398,12 +707,19 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   late TextEditingController _maxPriceController;
 
   static const _statuses = ['All', 'Rent', 'Buy'];
-  static const _propertyTypes = ['Any type', 'House', 'Apartment', 'Villa', 'Studio', 'Commercial', 'Land'];
+  static const _propertyTypes = [
+    'Any type',
+    'House',
+    'Apartment',
+    'Villa',
+    'Studio',
+    'Commercial',
+    'Land'
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Pre-populate from current filter
     final f = ref.read(propertyFilterProvider);
     _status = f.status ?? 'All';
     _propertyType = f.type ?? 'Any type';
@@ -427,10 +743,12 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     final maxText = _maxPriceController.text.trim();
 
     ref.read(propertyFilterProvider.notifier).update((f) => PropertyFilter(
-          search: f.search, // preserve active search
+          search: f.search,
           status: _status == 'All' ? null : _status,
           type: _propertyType == 'Any type' ? null : _propertyType,
-          city: _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
+          city: _cityController.text.trim().isEmpty
+              ? null
+              : _cityController.text.trim(),
           minPrice: minText.isEmpty ? null : double.tryParse(minText),
           maxPrice: maxText.isEmpty ? null : double.tryParse(maxText),
         ));
@@ -453,7 +771,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     final tt = Theme.of(context).textTheme;
 
     return Padding(
-      // Shift up when keyboard appears
       padding: EdgeInsets.fromLTRB(
           24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 36),
       child: SingleChildScrollView(
@@ -461,10 +778,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Handle + title row ───────────────────────
             Center(
               child: Container(
-                width: 40,
+                width: 36,
                 height: 4,
                 decoration: BoxDecoration(
                     color: AppColors.borderLight,
@@ -475,45 +791,64 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Filter',
-                    style: tt.headlineSmall?.copyWith(color: AppColors.primary)),
-                TextButton(
-                  onPressed: _reset,
-                  child: Text('Reset all',
-                      style: tt.labelMedium?.copyWith(color: AppColors.error)),
+                Text('Filters',
+                    style: tt.headlineSmall?.copyWith(
+                        color: AppColors.primary, fontWeight: FontWeight.w800)),
+                GestureDetector(
+                  onTap: _reset,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text('Reset all',
+                        style: tt.labelSmall?.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w600)),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // ── Status ───────────────────────────────────
-            Text('Listing type', style: tt.titleSmall?.copyWith(color: AppColors.primary)),
+            // Status
+            Text('Listing type',
+                style: tt.labelLarge?.copyWith(
+                    color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
+            Row(
               children: _statuses.map((s) {
                 final sel = _status == s;
-                return GestureDetector(
-                  onTap: () => setState(() => _status = s),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: sel ? AppColors.primary : AppColors.subtleBackground,
-                      borderRadius: BorderRadius.circular(20),
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _status = s),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 22, vertical: 11),
+                      decoration: BoxDecoration(
+                        color: sel ? AppColors.primary : AppColors.subtleBackground,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(s,
+                          style: tt.labelLarge?.copyWith(
+                              color: sel ? Colors.white : AppColors.primary,
+                              fontWeight:
+                                  sel ? FontWeight.w700 : FontWeight.w500)),
                     ),
-                    child: Text(s,
-                        style: tt.labelLarge?.copyWith(
-                            color: sel ? Colors.white : AppColors.primary,
-                            fontWeight: sel ? FontWeight.w600 : FontWeight.w500)),
                   ),
                 );
               }).toList(),
             ),
             const SizedBox(height: 24),
 
-            // ── Property type ────────────────────────────
-            Text('Property type', style: tt.titleSmall?.copyWith(color: AppColors.primary)),
+            // Property type
+            Text('Property type',
+                style: tt.labelLarge?.copyWith(
+                    color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -524,23 +859,27 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   onTap: () => setState(() => _propertyType = t),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: sel ? AppColors.primary : AppColors.subtleBackground,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(t,
                         style: tt.labelLarge?.copyWith(
                             color: sel ? Colors.white : AppColors.primary,
-                            fontWeight: sel ? FontWeight.w600 : FontWeight.w500)),
+                            fontWeight:
+                                sel ? FontWeight.w700 : FontWeight.w500)),
                   ),
                 );
               }).toList(),
             ),
             const SizedBox(height: 24),
 
-            // ── City ─────────────────────────────────────
-            Text('City', style: tt.titleSmall?.copyWith(color: AppColors.primary)),
+            // City
+            Text('City',
+                style: tt.labelLarge?.copyWith(
+                    color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: 10),
             _FilterTextField(
               controller: _cityController,
@@ -549,9 +888,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // ── Price range ──────────────────────────────
+            // Price range
             Text('Price range (\$)',
-                style: tt.titleSmall?.copyWith(color: AppColors.primary)),
+                style: tt.labelLarge?.copyWith(
+                    color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -566,7 +906,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text('–',
-                      style: tt.titleMedium?.copyWith(color: AppColors.textSecondary)),
+                      style: tt.titleMedium
+                          ?.copyWith(color: AppColors.textSecondary)),
                 ),
                 Expanded(
                   child: _FilterTextField(
@@ -580,7 +921,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 32),
 
-            // ── Apply button ─────────────────────────────
+            // Apply
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -590,10 +931,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   backgroundColor: AppColors.primary,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text('Apply filters',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: Text('Apply filters',
+                    style: tt.labelLarge?.copyWith(
+                        color: Colors.white, fontWeight: FontWeight.w700)),
               ),
             ),
           ],
@@ -603,7 +945,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   }
 }
 
-// ── Reusable filter text field ─────────────────────────────────────────────────
+// ── Filter text field ─────────────────────────────────────────────────────────
 class _FilterTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
@@ -624,7 +966,7 @@ class _FilterTextField extends StatelessWidget {
       height: 48,
       decoration: BoxDecoration(
         color: AppColors.subtleBackground,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -634,14 +976,15 @@ class _FilterTextField extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              keyboardType: numeric ? TextInputType.number : TextInputType.text,
-              inputFormatters: numeric
-                  ? [FilteringTextInputFormatter.digitsOnly]
-                  : null,
+              keyboardType:
+                  numeric ? TextInputType.number : TextInputType.text,
+              inputFormatters:
+                  numeric ? [FilteringTextInputFormatter.digitsOnly] : null,
               style: tt.bodyMedium?.copyWith(color: AppColors.primary),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: tt.bodySmall?.copyWith(color: AppColors.textTertiary),
+                hintStyle:
+                    tt.bodySmall?.copyWith(color: AppColors.textTertiary),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -659,7 +1002,8 @@ class _FilterTextField extends StatelessWidget {
 class PropertyCard extends ConsumerWidget {
   final Property property;
   final VoidCallback onTap;
-  const PropertyCard({super.key, required this.property, required this.onTap});
+  const PropertyCard(
+      {super.key, required this.property, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -670,104 +1014,142 @@ class PropertyCard extends ConsumerWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: const Color.fromARGB(145, 0, 0, 0).withOpacity(0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Image with overlaid badges ──────────────
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  child: property.images.isNotEmpty
-                      ? Image.network(
-                          property.images.first,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholder(),
-                        )
-                      : _placeholder(),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
+                  child: SizedBox(
+                    height: 190,
+                    width: double.infinity,
+                    child: property.images.isNotEmpty
+                        ? Image.network(
+                            property.images.first,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _placeholder(),
+                          )
+                        : _placeholder(),
+                  ),
                 ),
+                // Type badge — top left
                 Positioned(
                   top: 14,
                   left: 14,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
                       color: AppColors.cardBackground,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4)
-                      ],
+                      borderRadius: BorderRadius.circular(50),
                     ),
-                    child: Text(property.type,
-                        style: tt.labelLarge?.copyWith(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary)),
+                    child: Text(
+                      property.type.toLowerCase().splitMapJoin("")
+                          .replaceAllMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase()),
+                      style: tt.labelMedium?.copyWith(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+                // Favorite button — top right
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.favorite_border_rounded,
+                      size: 18,
+                      color: AppColors.accent,
+                    ),
                   ),
                 ),
               ],
             ),
+
+            // ── Content ─────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Title + price row
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(property.title,
-                                style: tt.titleSmall?.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: -0.3)),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on_outlined,
-                                    size: 13, color: AppColors.textSecondary),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(property.location,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: tt.bodySmall),
-                                ),
-                              ],
-                            ),
-                          ],
+                        child: Text(
+                          property.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tt.titleSmall?.copyWith(
+                            color: AppColors.accent,
+                            letterSpacing: -0.3,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
-                      Text('\$${_fmt(property.price)}',
-                          style: tt.titleMedium?.copyWith(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.accent,
-                              letterSpacing: -0.5)),
+                      const SizedBox(width: 8),
+                      Text(
+                        '\$${_fmt(property.price)}',
+                        style: tt.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accent,
+                          letterSpacing: -0.4,
+                          fontSize: 17,
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 6),
+                  // Location
                   Row(
                     children: [
-                      ...property.chips.take(3).map(
-                            (c) => Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: _Chip(icon: c.icon, label: c.label),
-                            ),
-                          ),
+                      const Icon(Icons.location_on_outlined,
+                          size: 16, color: AppColors.textPrimary),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          property.location,
+                          overflow: TextOverflow.ellipsis,
+                          style: tt.bodySmall?.copyWith(
+                              color: AppColors.textPrimary, fontSize: 12),
+                        ),
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Chips
+                  Row(
+                    children: property.chips
+                        .take(3)
+                        .map(
+                          (c) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _Chip(icon: c.icon, label: c.label),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ],
               ),
@@ -785,10 +1167,12 @@ class PropertyCard extends ConsumerWidget {
   }
 
   Widget _placeholder() => Container(
-        height: 200,
-        width: double.infinity,
-        color: AppColors.subtleBackground,
-        child: const Icon(Icons.home_outlined, size: 48, color: AppColors.textTertiary),
+        height: 190,
+        color: const Color(0xFFF0E9E3),
+        child: const Center(
+          child: Icon(Icons.home_outlined,
+              size: 48, color: AppColors.textTertiary),
+        ),
       );
 }
 
@@ -802,29 +1186,29 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.subtleBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: AppColors.textSecondary),
-          const SizedBox(width: 5),
-          Text(label, style: tt.labelMedium?.copyWith(fontWeight: FontWeight.w500)),
+          Icon(icon, size: 16, color: AppColors.accent),
+          const SizedBox(width: 4),
+          Text(label,
+              style: tt.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w500, fontSize: 12)),
         ],
       ),
     );
   }
 }
 
-// ── Icon Btn ──────────────────────────────────────────────────────────────────
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
+// ── Notification Button ───────────────────────────────────────────────────────
+class _NotifBtn extends StatelessWidget {
   final VoidCallback onTap;
-  final bool badge;
-  const _IconBtn({required this.icon, required this.onTap, this.badge = false});
+  const _NotifBtn({required this.onTap});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -833,95 +1217,141 @@ class _IconBtn extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Container(
-              width: 45,
-              height: 45,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(555),
+                borderRadius: BorderRadius.circular(50),
+                
               ),
-              child: Icon(icon, color: AppColors.primary, size: 20),
+              child: const Icon(Icons.notifications_outlined,
+                  color: AppColors.primary, size: 20),
             ),
-            if (badge)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                      color: AppColors.error, shape: BoxShape.circle),
-                ),
+            Positioned(
+              top: 1,
+              right: 1,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                    color: AppColors.error, shape: BoxShape.circle),
               ),
+            ),
           ],
         ),
       );
 }
 
+// ── Avatar Button ─────────────────────────────────────────────────────────────
+class _AvatarBtn extends StatelessWidget {
+  const _AvatarBtn();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.accentLight,
+          borderRadius: BorderRadius.circular(50),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.person_rounded,
+            color: AppColors.background, size: 22),
+      );
+}
+
 // ── Bottom Nav ────────────────────────────────────────────────────────────────
+
 class _BottomNav extends ConsumerWidget {
   const _BottomNav();
 
   static const _items = [
-    (icon: Icons.home_rounded, label: 'Home'),
-    (icon: Icons.slow_motion_video_rounded, label: 'Reels'),
-    (icon: Icons.chat_bubble_outline_rounded, label: 'Chat'),
-    (icon: Icons.favorite_border_rounded, label: 'Favorites'),
-    (icon: Icons.person_outline_rounded, label: 'Profile'),
+    (icon: Icons.search_rounded, outlinedIcon: Icons.search_rounded, label: 'Explore'),
+    (icon: Icons.slow_motion_video_rounded, outlinedIcon: Icons.slow_motion_video_rounded, label: 'Reels'),
+    (icon: Icons.chat_bubble_rounded, outlinedIcon: Icons.chat_bubble_outline_rounded, label: 'Inbox'),
+    (icon: Icons.favorite_rounded, outlinedIcon: Icons.favorite_border_rounded, label: 'Wishlists'),
+    (icon: Icons.person_rounded, outlinedIcon: Icons.person_outline_rounded, label: 'Profile'),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final idx = ref.watch(navIndexProvider);
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 16,
-              offset: const Offset(0, -4))
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 68,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(_items.length, (i) {
-              final active = i == idx;
-              final item = _items[i];
-              return GestureDetector(
-                onTap: () => ref.read(navIndexProvider.notifier).state = i,
-                behavior: HitTestBehavior.opaque,
-                child: SizedBox(
-                  width: 64,
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeInOut,
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: active ? AppColors.primary : Colors.transparent,
-                        shape: BoxShape.circle,
-                        boxShadow: active
-                            ? [
-                                BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.25),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4))
-                              ]
-                            : [],
+
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.85),
+            border: Border(
+              top: BorderSide(
+                color: Colors.black.withOpacity(0.08),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 60,
+              child: Row(
+                children: List.generate(_items.length, (i) {
+                  final active = i == idx;
+                  final item = _items[i];
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => ref.read(navIndexProvider.notifier).state = i,
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOut,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              transitionBuilder: (child, anim) => ScaleTransition(
+                                scale: anim,
+                                child: child,
+                              ),
+                              child: Icon(
+                                active ? item.icon : item.outlinedIcon,
+                                key: ValueKey(active),
+                                size: 26,
+                                color: active
+                                    ? AppColors.primary
+                                    : Colors.black.withOpacity(0.4),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 150),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: active
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                                color: active
+                                    ? AppColors.primary
+                                    : Colors.black.withOpacity(0.4),
+                                letterSpacing: 0.1,
+                              ),
+                              child: Text(item.label),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Icon(item.icon,
-                          size: 24,
-                          color: active ? Colors.white : AppColors.textTertiary),
                     ),
-                  ),
-                ),
-              );
-            }),
+                  );
+                }),
+              ),
+            ),
           ),
         ),
       ),
