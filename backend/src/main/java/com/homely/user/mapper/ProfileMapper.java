@@ -10,11 +10,16 @@ import com.homely.user.entity.Profile;
 @Mapper(componentModel = "spring")
 public interface ProfileMapper {
 
-    @Mapping(target = "userId", source = "userId")
+    // 🔥 MERGE USER + PROFILE INTO ONE DTO
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "name", source = "user.name")
+    @Mapping(target = "email", source = "user.email")
+    @Mapping(target = "phone", source = "user.phone")
     ProfileDto toDto(Profile entity);
 
     @Mapping(target = "userId", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "verified", ignore = true)
-    void updateFromRequest(ProfileUpdateRequest request, @org.mapstruct.MappingTarget Profile profile);
+    void updateFromRequest(ProfileUpdateRequest request,
+                           @org.mapstruct.MappingTarget Profile profile);
 }

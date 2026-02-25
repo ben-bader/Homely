@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as ApiClient;
+import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/profile/models/profile.dart';
 import 'package:mobile/features/profile/repositories/profile_repository.dart';
@@ -33,6 +35,24 @@ class ProfileScreen extends ConsumerWidget {
 class _ProfileContent extends StatelessWidget {
   final Profile profile;
   const _ProfileContent({required this.profile});
+  Future<void> _logout(BuildContext context) async {
+    final SecureStorage _storage = SecureStorage();
+
+    try {
+      await ApiClient.post('/api/auth/logout' as Uri);
+
+      // Remove stored token
+      await _storage.deleteToken();
+
+      if (!context.mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Logout failed")));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -406,9 +426,7 @@ class _ProfileContent extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(sheetCtx);
-                    },
+                    onPressed: () => _logout(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
                       elevation: 0,

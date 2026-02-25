@@ -380,8 +380,8 @@ class _ContactBtn extends ConsumerWidget {
               builder: (_) => ChatScreen(
                 conversationId: conv.id,
                 currentUserId: conv.clientId,
-                sellerName: property.sellerName,
-                propertyTitle: property.title,
+                chatTitle: property.sellerName,
+                chatSubtitle: property.title,
               ),
             ),
           );

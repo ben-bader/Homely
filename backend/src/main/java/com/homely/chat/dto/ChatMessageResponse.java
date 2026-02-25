@@ -12,6 +12,7 @@ public class ChatMessageResponse {
     private Long id;
     private UUID conversationId;
     private String senderId;
+    private String senderName; 
     private String body;
     private Instant sentAt;
 }

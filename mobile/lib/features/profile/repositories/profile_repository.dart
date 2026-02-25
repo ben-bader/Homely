@@ -60,4 +60,5 @@ class ProfileNotifier extends AsyncNotifier<Profile> {
       state = previous;
     }
   }
+  
 }

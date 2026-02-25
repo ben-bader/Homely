@@ -70,6 +70,7 @@ public class ChatController {
                         m.getId(),
                         m.getConversation().getId(),
                         m.getSender().getId().toString(),
+                        m.getSender().getName(),
                         m.getBody(),
                         m.getCreatedAt()))
                 .toList();
@@ -103,6 +104,7 @@ public class ChatController {
                 message.getId(),
                 message.getConversation().getId(),
                 message.getSender().getId().toString(),
+                message.getSender().getName(),
                 message.getBody(),
                 message.getCreatedAt());
 

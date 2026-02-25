@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/features/notifications/services/notification_service.dart';
 
 import 'features/auth/screens/login_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
@@ -15,7 +16,7 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-
+  await NotificationService().init();
   runApp(
     const ProviderScope(
       child: HomelyApp(),
@@ -98,6 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
             isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
       ),
     );
+    NotificationService().startPolling(_authService);
   }
 
   @override

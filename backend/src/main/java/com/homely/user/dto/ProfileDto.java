@@ -8,7 +8,15 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ProfileDto {
+
     private UUID userId;
+
+    // 🔥 FROM USER
+    private String name;
+    private String email;
+    private String phone;
+
+    // 🔥 FROM PROFILE
     private String bio;
     private String address;
     private boolean verified;

@@ -31,8 +31,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "bennanibader2006@gmail.com",
-  "password": "123456"
+  "email": "benbader1231@gmail.com",
+  "password": "Bader12345"
 }
 
 ###
@@ -366,4 +366,69 @@ Authorization: Bearer {{token}}
     "hasElevator": false
   }
 }
+###
+
+### Create a MESSAGE notification
+POST http://localhost:8080/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "06dde16f-482d-4965-be69-8b852934c685",
+  "type": "MESSAGE",
+  "payload": "You have a new message from Ahmed about 'Modern Villa in Casablanca'"
+}
+
+###
+
+### Create an ALERT notification
+POST {{baseUrl}}/notifications
+Content-Type: application/json
+
+{
+  "userId": "06dde16f-482d-4965-be69-8b852934c685",
+  "type": "ALERT",
+  "payload": "Your property listing 'Apartment in Rabat' has been approved"
+}
+
+###
+
+### Create a BOOKING notification
+POST {{baseUrl}}/notifications
+Content-Type: application/json
+
+{
+  "userId": "06dde16f-482d-4965-be69-8b852934c685",
+  "type": "BOOKING",
+  "payload": "A viewing has been scheduled for your property on March 1st at 3:00 PM"
+}
+
+###
+
+### Create a PRICE_DROP notification
+POST {{baseUrl}}/notifications
+Content-Type: application/json
+
+{
+  "userId": "06dde16f-482d-4965-be69-8b852934c685",
+  "type": "PRICE_DROP",
+  "payload": "A property you saved dropped in price from $250,000 to $210,000"
+}
+
+###
+
+### Create a SYSTEM notification
+POST {{baseUrl}}/notifications
+Content-Type: application/json
+
+{
+  "userId": "06dde16f-482d-4965-be69-8b852934c685",
+  "type": "SYSTEM",
+  "payload": "Your account has been verified successfully. Welcome to Homely!"
+}
+
+###
+
+### Get all unread notifications for this user
+GET {{baseUrl}}/notifications/unread?userId=06dde16f-482d-4965-be69-8b852934c685
+
 ###

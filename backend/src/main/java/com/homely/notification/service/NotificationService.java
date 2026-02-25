@@ -12,6 +12,7 @@ import com.homely.notification.mapper.NotificationMapper;
 import com.homely.notification.repository.NotificationRepository;
 import com.homely.user.service.UserService;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -34,4 +35,10 @@ public class NotificationService {
     public List<Notification> getUnreadNotifications(UUID userId) {
         return notificationRepository.findByUserIdAndReadFalse(userId);
     }
+    public NotificationDto markAsRead(UUID notificationId) {
+    Notification notification = notificationRepository.findById(notificationId)
+            .orElseThrow(() -> new EntityNotFoundException("Notification not found: " + notificationId));
+    notification.setRead(true);
+    return notificationMapper.toDto(notificationRepository.save(notification));
+}
 }

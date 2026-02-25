@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/core/network/api_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Models
@@ -109,13 +113,27 @@ class AuthService {
   }
 
   /// LOGOUT
-  Future<void> logout() async {
-    await _storage.clearAll();
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await ApiClient.post('/api/auth/logout');
+
+      // Remove stored token
+      await _storage.deleteToken();
+
+      if (!context.mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Logout failed")));
+    }
   }
 
   /// CHECK IF USER IS LOGGED IN
   Future<bool> isLoggedIn() async {
-    return await _storage.hasToken();
+    final userId = await getCurrentUserId();
+    return userId != null;
   }
 
   /// GET USER ROLE
@@ -137,5 +155,38 @@ class AuthService {
   /// GET TOKEN
   Future<String?> getToken() async {
     return await _storage.getToken();
+  }
+
+ Future<String?> getCurrentUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token'); // whatever key you store JWT under
+    if (token == null) return null;
+    return _extractUserIdFromToken(token);
+  }
+
+  String? _extractUserIdFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+
+      // Decode the payload (middle part)
+      final payload = parts[1];
+      // Fix base64 padding
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final map = jsonDecode(decoded) as Map<String, dynamic>;
+
+      // JWT claim is usually 'sub' or 'userId' or 'id'
+      return map['sub'] as String?   // try 'sub' first
+          ?? map['userId'] as String?
+          ?? map['id'] as String?;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> saveUserId(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userId', userId);
   }
 }

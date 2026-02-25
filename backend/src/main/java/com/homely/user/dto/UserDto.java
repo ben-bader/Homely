@@ -4,9 +4,7 @@ import java.util.UUID;
 
 import com.homely.common.enums.RoleType;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter

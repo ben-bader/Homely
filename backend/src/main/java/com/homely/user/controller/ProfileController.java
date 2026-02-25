@@ -2,7 +2,11 @@ package com.homely.user.controller;
 
 import java.security.Principal;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.user.dto.ProfileDto;
 import com.homely.user.dto.ProfileUpdateRequest;
@@ -29,36 +33,34 @@ public class ProfileController {
     ////////////////////////////////////////////////////////////
 
     @GetMapping("/me")
-    public ProfileDto getMyProfile(Principal principal) {
+public ProfileDto getMyProfile(Principal principal) {
 
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+    User user = userRepository.findByEmail(principal.getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Profile profile = profileService.getById(user.getId());
+    Profile profile = profileService.getById(user.getId());
 
-        return profileMapper.toDto(profile);
-    }
+    return profileMapper.toDto(profile);
+}
 
     ////////////////////////////////////////////////////////////
     // ✅ UPDATE MY PROFILE
     ////////////////////////////////////////////////////////////
 
     @PutMapping("/me")
-    public ProfileDto updateMyProfile(
-            Principal principal,
-            @Valid @RequestBody ProfileUpdateRequest request) {
+public ProfileDto updateMyProfile(
+        Principal principal,
+        @Valid @RequestBody ProfileUpdateRequest request) {
 
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+    User user = userRepository.findByEmail(principal.getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Profile profile = profileService.getById(user.getId());
+    Profile profile = profileService.getById(user.getId());
 
-        profileMapper.updateFromRequest(request, profile);
+    profileMapper.updateFromRequest(request, profile);
 
-        Profile updated = profileService.update(profile);
+    Profile updated = profileService.update(profile);
 
-        return profileMapper.toDto(updated);
-    }
+    return profileMapper.toDto(updated);
+}
 }

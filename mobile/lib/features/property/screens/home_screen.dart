@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/features/auth/services/auth_service.dart';
 import 'package:mobile/features/chat/screens/conversation_screen.dart';
+import 'package:mobile/features/notifications/screens/notifications_screen.dart';
+import 'package:mobile/features/notifications/services/notification_service.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
 import 'package:mobile/features/profile/screens/profile_screen.dart';
@@ -41,9 +44,8 @@ class _PlaceholderTab extends StatelessWidget {
   final String label;
   const _PlaceholderTab({required this.label});
   @override
-  Widget build(BuildContext context) => Center(
-        child: Text(label, style: Theme.of(context).textTheme.titleLarge),
-      );
+  Widget build(BuildContext context) =>
+      Center(child: Text(label, style: Theme.of(context).textTheme.titleLarge));
 }
 
 // ── Explore Tab ───────────────────────────────────────────────────────────────
@@ -59,7 +61,14 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   Timer? _debounce;
   bool _searchFocused = false;
 
-  static const _types = ['All types', 'Rent', 'Sell', 'House', 'Apartment', 'Villa'];
+  static const _types = [
+    'All types',
+    'Rent',
+    'Sell',
+    'House',
+    'Apartment',
+    'Villa',
+  ];
   static const _listingTypes = {'Rent', 'Sell'};
 
   @override
@@ -73,17 +82,31 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   void _onSearchChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
-      ref.read(propertyFilterProvider.notifier).update(
-            (s) => s.copyWith(search: value.trim()),
-          );
+      ref
+          .read(propertyFilterProvider.notifier)
+          .update((s) => s.copyWith(search: value.trim()));
     });
+  }
+
+  final _authService = AuthService();
+  String? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    _userId = await _authService.getCurrentUserId();
+    if (mounted) setState(() {});
   }
 
   void _onSearchSubmitted(String value) {
     _debounce?.cancel();
-    ref.read(propertyFilterProvider.notifier).update(
-          (s) => s.copyWith(search: value.trim()),
-        );
+    ref
+        .read(propertyFilterProvider.notifier)
+        .update((s) => s.copyWith(search: value.trim()));
   }
 
   void _onChipTap(String tapped) {
@@ -131,7 +154,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        
                         Text(
                           'Explore',
                           style: tt.headlineSmall?.copyWith(
@@ -144,7 +166,24 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                       ],
                     ),
                   ),
-                  _NotifBtn(onTap: () {}),
+                  // AFTER:
+                  _NotifBtn(
+                    onTap: () async {
+                      if (_userId == null) {
+                        // userId not loaded yet, try loading again
+                        await _loadUserId();
+                      }
+                      if (_userId == null || !mounted) return;
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => NotificationsScreen(userId: _userId!),
+                        ),
+                      );
+                      // refresh bell count after returning
+                      setState(() {});
+                    },
+                  ),
                   const SizedBox(width: 10),
                   const _AvatarBtn(),
                 ],
@@ -164,7 +203,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                   decoration: BoxDecoration(
                     color: AppColors.subtleBackground,
                     borderRadius: BorderRadius.circular(50),
-                    
+
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
@@ -189,11 +228,14 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                           controller: _searchController,
                           onChanged: _onSearchChanged,
                           onSubmitted: _onSearchSubmitted,
-                          style: tt.bodyLarge?.copyWith(color: AppColors.primary),
+                          style: tt.bodyLarge?.copyWith(
+                            color: AppColors.primary,
+                          ),
                           decoration: InputDecoration(
                             hintText: 'City, neighborhood, address...',
-                            hintStyle: tt.bodySmall
-                                ?.copyWith(color: AppColors.textTertiary),
+                            hintStyle: tt.bodySmall?.copyWith(
+                              color: AppColors.textTertiary,
+                            ),
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
@@ -208,18 +250,28 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                                   _searchController.clear();
                                   ref
                                       .read(propertyFilterProvider.notifier)
-                                      .update((s) => s.copyWith(clearSearch: true));
+                                      .update(
+                                        (s) => s.copyWith(clearSearch: true),
+                                      );
                                 },
                                 child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Icon(Icons.close_rounded,
-                                      color: AppColors.textTertiary, size: 18),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    color: AppColors.textTertiary,
+                                    size: 18,
+                                  ),
                                 ),
                               )
                             : const SizedBox.shrink(),
                       ),
-                      Container(width: 1, height: 20, color: AppColors.borderLight),
+                      Container(
+                        width: 1,
+                        height: 20,
+                        color: AppColors.borderLight,
+                      ),
                       GestureDetector(
                         onTap: () => _showFilterSheet(context),
                         child: Padding(
@@ -227,8 +279,11 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                           child: Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              Icon(Icons.tune_rounded,
-                                  color: AppColors.primary, size: 20),
+                              Icon(
+                                Icons.tune_rounded,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
                               if (badgeCount > 0)
                                 Positioned(
                                   top: -5,
@@ -296,12 +351,11 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                         child: Text(
                           t,
                           style: tt.labelMedium?.copyWith(
-                            fontWeight:
-                                selected ? FontWeight.w700 : FontWeight.w500,
-                              fontSize: 14,
-                            color: selected
-                                ? Colors.white
-                                : AppColors.accent,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            fontSize: 14,
+                            color: selected ? Colors.white : AppColors.accent,
                           ),
                         ),
                       ),
@@ -313,7 +367,8 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
           ),
 
           // ── Featured / horizontal scroll ─────────────────
-          if (!filter.isFiltering && (filter.search == null || filter.search!.isEmpty))
+          if (!filter.isFiltering &&
+              (filter.search == null || filter.search!.isEmpty))
             const _FeaturedSection(),
 
           // ── Section header ───────────────────────────────
@@ -331,8 +386,8 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                         filter.search != null && filter.search!.isNotEmpty
                             ? 'Results'
                             : filter.isFiltering
-                                ? 'Filtered'
-                                : 'Best Offers',
+                            ? 'Filtered'
+                            : 'Best Offers',
                         style: tt.titleLarge?.copyWith(
                           color: AppColors.accent,
                           fontWeight: FontWeight.w800,
@@ -342,8 +397,9 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                       if (filter.search != null && filter.search!.isNotEmpty)
                         Text(
                           'for "${filter.search}"',
-                          style: tt.bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
+                          style: tt.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                     ],
                   ),
@@ -354,7 +410,9 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                           .update((s) => s.resetFilters()),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.error.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(20),
@@ -362,16 +420,20 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                         child: Text(
                           'Clear all',
                           style: tt.labelSmall?.copyWith(
-                              color: AppColors.error,
-                              fontWeight: FontWeight.w600),
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     )
                   else
-                    Text('See all',
-                        style: tt.labelMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500)),
+                    Text(
+                      'See all',
+                      style: tt.labelMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -393,7 +455,8 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
       isScrollControlled: true,
       backgroundColor: AppColors.cardBackground,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (_) => const _FilterSheet(),
     );
   }
@@ -410,7 +473,8 @@ class _FeaturedSection extends ConsumerWidget {
 
     return propertiesAsync.maybeWhen(
       data: (props) {
-        if (props.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+        if (props.isEmpty)
+          return const SliverToBoxAdapter(child: SizedBox.shrink());
         final featured = props.take(5).toList();
         return SliverToBoxAdapter(
           child: Column(
@@ -429,10 +493,13 @@ class _FeaturedSection extends ConsumerWidget {
                         letterSpacing: -0.4,
                       ),
                     ),
-                    Text('See all',
-                        style: tt.labelMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500)),
+                    Text(
+                      'See all',
+                      style: tt.labelMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -498,14 +565,20 @@ class _FeaturedCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                         color: const Color(0xFFF0E9E3),
-                        child: const Icon(Icons.home_outlined,
-                            size: 48, color: AppColors.textTertiary),
+                        child: const Icon(
+                          Icons.home_outlined,
+                          size: 48,
+                          color: AppColors.textTertiary,
+                        ),
                       ),
                     )
                   : Container(
                       color: const Color(0xFFF0E9E3),
-                      child: const Icon(Icons.home_outlined,
-                          size: 48, color: AppColors.textTertiary),
+                      child: const Icon(
+                        Icons.home_outlined,
+                        size: 48,
+                        color: AppColors.textTertiary,
+                      ),
                     ),
               // Gradient overlay
               DecoratedBox(
@@ -556,15 +629,22 @@ class _FeaturedCard extends StatelessWidget {
                 top: 12,
                 left: 12,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.92),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                     property.type.toLowerCase().splitMapJoin("")
-                          .replaceAllMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase()),
+                    property.type
+                        .toLowerCase()
+                        .splitMapJoin("")
+                        .replaceAllMapped(
+                          RegExp(r'^\w'),
+                          (m) => m[0]!.toUpperCase(),
+                        ),
                     style: tt.labelSmall?.copyWith(
                       color: AppColors.accent,
                       fontWeight: FontWeight.w700,
@@ -599,7 +679,10 @@ class _PropertyList extends ConsumerWidget {
     return propertiesAsync.when(
       loading: () => const SliverFillRemaining(
         child: Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
         ),
       ),
       error: (e, _) => SliverFillRemaining(
@@ -614,17 +697,26 @@ class _PropertyList extends ConsumerWidget {
                   color: AppColors.subtleBackground,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.wifi_off_rounded,
-                    size: 32, color: AppColors.textTertiary),
+                child: const Icon(
+                  Icons.wifi_off_rounded,
+                  size: 32,
+                  color: AppColors.textTertiary,
+                ),
               ),
               const SizedBox(height: 16),
-              Text('Something went wrong',
-                  style:
-                      tt.titleSmall?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+              Text(
+                'Something went wrong',
+                style: tt.titleSmall?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 6),
-              Text('$e',
-                  style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
-                  textAlign: TextAlign.center),
+              Text(
+                '$e',
+                style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () => ref.invalidate(propertiesProvider),
@@ -632,13 +724,20 @@ class _PropertyList extends ConsumerWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
-                child: Text('Try again',
-                    style: tt.labelLarge?.copyWith(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                child: Text(
+                  'Try again',
+                  style: tt.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
@@ -657,18 +756,27 @@ class _PropertyList extends ConsumerWidget {
                         color: AppColors.subtleBackground,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.search_off_rounded,
-                          size: 32, color: AppColors.textTertiary),
+                      child: const Icon(
+                        Icons.search_off_rounded,
+                        size: 32,
+                        color: AppColors.textTertiary,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    Text('No properties found',
-                        style: tt.titleSmall?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      'No properties found',
+                      style: tt.titleSmall?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text('Try adjusting your filters',
-                        style: tt.bodySmall
-                            ?.copyWith(color: AppColors.textSecondary)),
+                    Text(
+                      'Try adjusting your filters',
+                      style: tt.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -716,7 +824,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     'Villa',
     'Studio',
     'Commercial',
-    'Land'
+    'Land',
   ];
 
   @override
@@ -727,9 +835,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     _propertyType = f.type ?? 'Any type';
     _cityController = TextEditingController(text: f.city ?? '');
     _minPriceController = TextEditingController(
-        text: f.minPrice != null ? f.minPrice!.toStringAsFixed(0) : '');
+      text: f.minPrice != null ? f.minPrice!.toStringAsFixed(0) : '',
+    );
     _maxPriceController = TextEditingController(
-        text: f.maxPrice != null ? f.maxPrice!.toStringAsFixed(0) : '');
+      text: f.maxPrice != null ? f.maxPrice!.toStringAsFixed(0) : '',
+    );
   }
 
   @override
@@ -744,16 +854,20 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     final minText = _minPriceController.text.trim();
     final maxText = _maxPriceController.text.trim();
 
-    ref.read(propertyFilterProvider.notifier).update((f) => PropertyFilter(
-          search: f.search,
-          status: _status == 'All' ? null : _status,
-          type: _propertyType == 'Any type' ? null : _propertyType,
-          city: _cityController.text.trim().isEmpty
-              ? null
-              : _cityController.text.trim(),
-          minPrice: minText.isEmpty ? null : double.tryParse(minText),
-          maxPrice: maxText.isEmpty ? null : double.tryParse(maxText),
-        ));
+    ref
+        .read(propertyFilterProvider.notifier)
+        .update(
+          (f) => PropertyFilter(
+            search: f.search,
+            status: _status == 'All' ? null : _status,
+            type: _propertyType == 'Any type' ? null : _propertyType,
+            city: _cityController.text.trim().isEmpty
+                ? null
+                : _cityController.text.trim(),
+            minPrice: minText.isEmpty ? null : double.tryParse(minText),
+            maxPrice: maxText.isEmpty ? null : double.tryParse(maxText),
+          ),
+        );
 
     Navigator.pop(context);
   }
@@ -774,7 +888,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 36),
+        24,
+        16,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 36,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -785,30 +903,40 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: AppColors.borderLight,
-                    borderRadius: BorderRadius.circular(2)),
+                  color: AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Filters',
-                    style: tt.headlineSmall?.copyWith(
-                        color: AppColors.primary, fontWeight: FontWeight.w800)),
+                Text(
+                  'Filters',
+                  style: tt.headlineSmall?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 GestureDetector(
                   onTap: _reset,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.error.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text('Reset all',
-                        style: tt.labelSmall?.copyWith(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'Reset all',
+                      style: tt.labelSmall?.copyWith(
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -816,9 +944,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             const SizedBox(height: 24),
 
             // Status
-            Text('Listing type',
-                style: tt.labelLarge?.copyWith(
-                    color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+            Text(
+              'Listing type',
+              style: tt.labelLarge?.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 10),
             Row(
               children: _statuses.map((s) {
@@ -830,16 +962,22 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 22, vertical: 11),
+                        horizontal: 22,
+                        vertical: 11,
+                      ),
                       decoration: BoxDecoration(
-                        color: sel ? AppColors.primary : AppColors.subtleBackground,
+                        color: sel
+                            ? AppColors.primary
+                            : AppColors.subtleBackground,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(s,
-                          style: tt.labelLarge?.copyWith(
-                              color: sel ? Colors.white : AppColors.primary,
-                              fontWeight:
-                                  sel ? FontWeight.w700 : FontWeight.w500)),
+                      child: Text(
+                        s,
+                        style: tt.labelLarge?.copyWith(
+                          color: sel ? Colors.white : AppColors.primary,
+                          fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -848,9 +986,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             const SizedBox(height: 24),
 
             // Property type
-            Text('Property type',
-                style: tt.labelLarge?.copyWith(
-                    color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+            Text(
+              'Property type',
+              style: tt.labelLarge?.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -862,16 +1004,22 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
-                      color: sel ? AppColors.primary : AppColors.subtleBackground,
+                      color: sel
+                          ? AppColors.primary
+                          : AppColors.subtleBackground,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(t,
-                        style: tt.labelLarge?.copyWith(
-                            color: sel ? Colors.white : AppColors.primary,
-                            fontWeight:
-                                sel ? FontWeight.w700 : FontWeight.w500)),
+                    child: Text(
+                      t,
+                      style: tt.labelLarge?.copyWith(
+                        color: sel ? Colors.white : AppColors.primary,
+                        fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
                   ),
                 );
               }).toList(),
@@ -879,9 +1027,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             const SizedBox(height: 24),
 
             // City
-            Text('City',
-                style: tt.labelLarge?.copyWith(
-                    color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+            Text(
+              'City',
+              style: tt.labelLarge?.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 10),
             _FilterTextField(
               controller: _cityController,
@@ -891,9 +1043,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             const SizedBox(height: 24),
 
             // Price range
-            Text('Price range (\$)',
-                style: tt.labelLarge?.copyWith(
-                    color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+            Text(
+              'Price range (\$)',
+              style: tt.labelLarge?.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -907,9 +1063,12 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('–',
-                      style: tt.titleMedium
-                          ?.copyWith(color: AppColors.textSecondary)),
+                  child: Text(
+                    '–',
+                    style: tt.titleMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: _FilterTextField(
@@ -933,11 +1092,16 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   backgroundColor: AppColors.primary,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-                child: Text('Apply filters',
-                    style: tt.labelLarge?.copyWith(
-                        color: Colors.white, fontWeight: FontWeight.w700)),
+                child: Text(
+                  'Apply filters',
+                  style: tt.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ],
@@ -978,15 +1142,16 @@ class _FilterTextField extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              keyboardType:
-                  numeric ? TextInputType.number : TextInputType.text,
-              inputFormatters:
-                  numeric ? [FilteringTextInputFormatter.digitsOnly] : null,
+              keyboardType: numeric ? TextInputType.number : TextInputType.text,
+              inputFormatters: numeric
+                  ? [FilteringTextInputFormatter.digitsOnly]
+                  : null,
               style: tt.bodyMedium?.copyWith(color: AppColors.primary),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle:
-                    tt.bodySmall?.copyWith(color: AppColors.textTertiary),
+                hintStyle: tt.bodySmall?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -1004,8 +1169,7 @@ class _FilterTextField extends StatelessWidget {
 class PropertyCard extends ConsumerWidget {
   final Property property;
   final VoidCallback onTap;
-  const PropertyCard(
-      {super.key, required this.property, required this.onTap});
+  const PropertyCard({super.key, required this.property, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1032,8 +1196,9 @@ class PropertyCard extends ConsumerWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                   child: SizedBox(
                     height: 190,
                     width: double.infinity,
@@ -1052,14 +1217,21 @@ class PropertyCard extends ConsumerWidget {
                   left: 14,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 7),
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(50),
                     ),
                     child: Text(
-                      property.type.toLowerCase().splitMapJoin("")
-                          .replaceAllMapped(RegExp(r'^\w'), (m) => m[0]!.toUpperCase()),
+                      property.type
+                          .toLowerCase()
+                          .splitMapJoin("")
+                          .replaceAllMapped(
+                            RegExp(r'^\w'),
+                            (m) => m[0]!.toUpperCase(),
+                          ),
                       style: tt.labelMedium?.copyWith(
                         color: AppColors.accent,
                         fontWeight: FontWeight.w700,
@@ -1127,15 +1299,20 @@ class PropertyCard extends ConsumerWidget {
                   // Location
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 16, color: AppColors.textPrimary),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: AppColors.textPrimary,
+                      ),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           property.location,
                           overflow: TextOverflow.ellipsis,
                           style: tt.bodySmall?.copyWith(
-                              color: AppColors.textPrimary, fontSize: 12),
+                            color: AppColors.textPrimary,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -1169,13 +1346,12 @@ class PropertyCard extends ConsumerWidget {
   }
 
   Widget _placeholder() => Container(
-        height: 190,
-        color: const Color(0xFFF0E9E3),
-        child: const Center(
-          child: Icon(Icons.home_outlined,
-              size: 48, color: AppColors.textTertiary),
-        ),
-      );
+    height: 190,
+    color: const Color(0xFFF0E9E3),
+    child: const Center(
+      child: Icon(Icons.home_outlined, size: 48, color: AppColors.textTertiary),
+    ),
+  );
 }
 
 // ── Chip ──────────────────────────────────────────────────────────────────────
@@ -1198,9 +1374,13 @@ class _Chip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: AppColors.accent),
           const SizedBox(width: 4),
-          Text(label,
-              style: tt.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w500, fontSize: 12)),
+          Text(
+            label,
+            style: tt.labelSmall?.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -1208,40 +1388,77 @@ class _Chip extends StatelessWidget {
 }
 
 // ── Notification Button ───────────────────────────────────────────────────────
-class _NotifBtn extends StatelessWidget {
+class _NotifBtn extends StatefulWidget {
   final VoidCallback onTap;
   const _NotifBtn({required this.onTap});
 
   @override
+  State<_NotifBtn> createState() => _NotifBtnState();
+}
+
+class _NotifBtnState extends State<_NotifBtn> {
+  final _service = NotificationService();
+  final _authService = AuthService();
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final userId = await _authService.getCurrentUserId();
+    if (userId == null) return;
+    final data = await _service.fetchUnread(userId);
+    if (mounted) setState(() => _unreadCount = data.length);
+  }
+
+  @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.subtleBackground,
-                borderRadius: BorderRadius.circular(50),
-                
-              ),
-              child: const Icon(Icons.notifications_outlined,
-                  color: AppColors.accentLight, size: 20),
-            ),
-            Positioned(
-              top: 1,
-              right: 1,
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                    color: AppColors.error, shape: BoxShape.circle),
-              ),
-            ),
-          ],
+    onTap: widget.onTap,
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.subtleBackground,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: const Icon(
+            Icons.notifications_outlined,
+            color: AppColors.accentLight,
+            size: 20,
+          ),
         ),
-      );
+        if (_unreadCount > 0)
+          Positioned(
+            top: 1,
+            right: 1,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  '$_unreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
 }
 
 // ── Avatar Button ─────────────────────────────────────────────────────────────
@@ -1250,22 +1467,25 @@ class _AvatarBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: AppColors.accentLight,
-          borderRadius: BorderRadius.circular(50),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    width: 44,
+    height: 44,
+    decoration: BoxDecoration(
+      color: AppColors.accentLight,
+      borderRadius: BorderRadius.circular(50),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
         ),
-        child: const Icon(Icons.person_rounded,
-            color: AppColors.background, size: 22),
-      );
+      ],
+    ),
+    child: const Icon(
+      Icons.person_rounded,
+      color: AppColors.background,
+      size: 22,
+    ),
+  );
 }
 
 // ── Bottom Nav ────────────────────────────────────────────────────────────────
@@ -1274,11 +1494,31 @@ class _BottomNav extends ConsumerWidget {
   const _BottomNav();
 
   static const _items = [
-    (icon: Icons.search_rounded, outlinedIcon: Icons.search_rounded, label: 'Explore'),
-    (icon: Icons.slow_motion_video_rounded, outlinedIcon: Icons.slow_motion_video_rounded, label: 'Tours'),
-    (icon: Icons.chat_bubble_rounded, outlinedIcon: Icons.chat_bubble_outline_rounded, label: 'Inbox'),
-    (icon: Icons.favorite_rounded, outlinedIcon: Icons.favorite_border_rounded, label: 'Wishlists'),
-    (icon: Icons.person_rounded, outlinedIcon: Icons.person_outline_rounded, label: 'Profile'),
+    (
+      icon: Icons.search_rounded,
+      outlinedIcon: Icons.search_rounded,
+      label: 'Explore',
+    ),
+    (
+      icon: Icons.slow_motion_video_rounded,
+      outlinedIcon: Icons.slow_motion_video_rounded,
+      label: 'Tours',
+    ),
+    (
+      icon: Icons.chat_bubble_rounded,
+      outlinedIcon: Icons.chat_bubble_outline_rounded,
+      label: 'Inbox',
+    ),
+    (
+      icon: Icons.favorite_rounded,
+      outlinedIcon: Icons.favorite_border_rounded,
+      label: 'Wishlists',
+    ),
+    (
+      icon: Icons.person_rounded,
+      outlinedIcon: Icons.person_outline_rounded,
+      label: 'Profile',
+    ),
   ];
 
   @override
@@ -1308,7 +1548,8 @@ class _BottomNav extends ConsumerWidget {
                   final item = _items[i];
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () => ref.read(navIndexProvider.notifier).state = i,
+                      onTap: () =>
+                          ref.read(navIndexProvider.notifier).state = i,
                       behavior: HitTestBehavior.opaque,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
@@ -1318,10 +1559,8 @@ class _BottomNav extends ConsumerWidget {
                           children: [
                             AnimatedSwitcher(
                               duration: const Duration(milliseconds: 200),
-                              transitionBuilder: (child, anim) => ScaleTransition(
-                                scale: anim,
-                                child: child,
-                              ),
+                              transitionBuilder: (child, anim) =>
+                                  ScaleTransition(scale: anim, child: child),
                               child: Icon(
                                 active ? item.icon : item.outlinedIcon,
                                 key: ValueKey(active),
