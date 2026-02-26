@@ -26,18 +26,19 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     super.dispose();
   }
 
-  List<Conversation> _filter(List<Conversation> convs) {
+  List<Conversation> _filter(List<Conversation> convs, String currentUserId) {
     final q = _query.trim().toLowerCase();
 
     if (q.isEmpty) return convs;
 
     return convs.where((c) {
-      final nameMatch =
-          (c.sellerName ?? '').toLowerCase().contains(q);
-      final msgMatch =
-          (c.lastMessage ?? '').toLowerCase().contains(q);
-      final propMatch =
-          (c.propertyTitle ?? '').toLowerCase().contains(q);
+      // Search against the name of whoever the current user is talking to
+      final nameMatch = c
+          .otherPersonName(currentUserId)
+          .toLowerCase()
+          .contains(q);
+      final msgMatch = (c.lastMessage ?? '').toLowerCase().contains(q);
+      final propMatch = (c.propertyTitle ?? '').toLowerCase().contains(q);
 
       return nameMatch || msgMatch || propMatch;
     }).toList();
@@ -62,8 +63,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                     child: _searchOpen
                         ? _SearchField(
                             controller: _searchController,
-                            onChanged: (v) =>
-                                setState(() => _query = v),
+                            onChanged: (v) => setState(() => _query = v),
                             onClose: () {
                               setState(() {
                                 _searchOpen = false;
@@ -76,25 +76,25 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                             "Messages",
                             style: GoogleFonts.outfit(
                               color: AppColors.accent,
-                            letterSpacing: -0.5,
-                            height: 1.1,
-                            fontSize: 30,
+                              letterSpacing: -0.5,
+                              height: 1.1,
+                              fontSize: 30,
                             ),
                           ),
                   ),
                   if (!_searchOpen) ...[
                     IconButton(
-                      icon: const Icon(Icons.search,
-                          color: AppColors.accent),
-                      onPressed: () =>
-                          setState(() => _searchOpen = true),
+                      icon: const Icon(Icons.search, color: AppColors.accent),
+                      onPressed: () => setState(() => _searchOpen = true),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.more_vert,
-                          color: AppColors.accent),
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: AppColors.accent,
+                      ),
                       onPressed: () {},
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),
@@ -104,38 +104,49 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
               child: convsAsync.when(
                 loading: () => const Center(
                   child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primary),
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
                 ),
-                error: (e, _) => Center(
-                  child: Text("Error: $e"),
-                ),
+                error: (e, _) => Center(child: Text("Error: $e")),
                 data: (convs) {
-                  if (convs.isEmpty) {
-                    return const _EmptyState();
-                  }
+                  if (convs.isEmpty) return const _EmptyState();
 
-                  final filtered = _filter(convs);
-
-                  if (filtered.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No results for "$_query"',
-                        style: GoogleFonts.outfit(
-                          color: AppColors.textSecondary,
-                        ),
+                  return profileAsync.when(
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
                       ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: filtered.length,
-                    padding: const EdgeInsets.only(top: 8),
-                    itemBuilder: (_, i) => _ConversationTile(
-                      conv: filtered[i],
-                      query: _query,
-                      profileAsync: profileAsync,
                     ),
+                    error: (e, _) => Center(child: Text("Error: $e")),
+                    data: (profile) {
+                      if (profile == null) return const _EmptyState();
+
+                      final currentUserId = profile.userId;
+                      final filtered = _filter(convs, currentUserId);
+
+                      if (filtered.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'No results for "$_query"',
+                            style: GoogleFonts.outfit(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        itemCount: filtered.length,
+                        padding: const EdgeInsets.only(top: 8),
+                        itemBuilder: (_, i) => _ConversationTile(
+                          conv: filtered[i],
+                          currentUserId:
+                              currentUserId, // ← pass current user ID
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -195,8 +206,7 @@ class _SearchFieldState extends State<_SearchField> {
       child: Row(
         children: [
           const SizedBox(width: 12),
-          const Icon(Icons.search,
-              color: AppColors.textTertiary),
+          const Icon(Icons.search, color: AppColors.textTertiary),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -210,10 +220,7 @@ class _SearchFieldState extends State<_SearchField> {
               ),
             ),
           ),
-          IconButton(
-            onPressed: widget.onClose,
-            icon: const Icon(Icons.close),
-          )
+          IconButton(onPressed: widget.onClose, icon: const Icon(Icons.close)),
         ],
       ),
     );
@@ -224,60 +231,39 @@ class _SearchFieldState extends State<_SearchField> {
 /// CONVERSATION TILE
 /// ============================================================
 
-class _ConversationTile extends ConsumerWidget {
+class _ConversationTile extends StatelessWidget {
   final Conversation conv;
-  final String query;
-  final AsyncValue profileAsync;
+  final String currentUserId; // ← replaces profileAsync
 
-  const _ConversationTile({
-    required this.conv,
-    required this.query,
-    required this.profileAsync,
-  });
+  const _ConversationTile({required this.conv, required this.currentUserId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final hasUnread = conv.unread > 0;
 
-    final initials = (conv.sellerName ?? "S")
-        .split(" ")
-        .where((e) => e.isNotEmpty)
-        .take(2)
-        .map((e) => e[0].toUpperCase())
-        .join();
+    // ── DYNAMIC: use otherPersonName() instead of hardcoded sellerName ──
+    final displayName = conv.otherPersonName(currentUserId);
+    final initials = conv.otherPersonInitials(currentUserId);
 
     return InkWell(
       onTap: () {
-        profileAsync.when(
-          data: (profile) {
-            if (profile == null) return;
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(
-
-                  conversationId: conv.id,
-                  currentUserId: profile.userId,
-                  chatTitle: conv.sellerName ?? "Seller",
-                  chatSubtitle: conv.propertyTitle ?? "",
-                ),
-              ),
-            );
-          },
-          loading: () {},
-          error: (_, __) {},
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              conversationId: conv.id,
+              currentUserId: currentUserId,
+              chatTitle: displayName, // ← dynamic name
+              chatSubtitle: conv.propertyTitle ?? "",
+            ),
+          ),
         );
       },
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(
-              color: AppColors.borderLight,
-              width: 0.8,
-            ),
+            bottom: BorderSide(color: AppColors.borderLight, width: 0.8),
           ),
         ),
         child: Row(
@@ -289,11 +275,10 @@ class _ConversationTile extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    conv.sellerName ?? "Seller",
+                    displayName, // ← dynamic name
                     style: GoogleFonts.outfit(
                       fontSize: 16,
-                      fontWeight:
-                          hasUnread ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
                       color: AppColors.accent,
                     ),
                   ),
@@ -308,7 +293,7 @@ class _ConversationTile extends ConsumerWidget {
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -324,18 +309,13 @@ class _Avatar extends StatelessWidget {
   final String initials;
   final bool hasUnread;
 
-  const _Avatar({
-    required this.initials,
-    required this.hasUnread,
-  });
+  const _Avatar({required this.initials, required this.hasUnread});
 
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: 26,
-      backgroundColor: hasUnread
-          ? AppColors.primary
-          : AppColors.borderLight,
+      backgroundColor: hasUnread ? AppColors.primary : AppColors.borderLight,
       child: Text(
         initials,
         style: GoogleFonts.outfit(
@@ -356,8 +336,6 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text("No messages yet"),
-    );
+    return const Center(child: Text("No messages yet"));
   }
 }

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/media/models/property_media.dart';
 import 'package:mobile/features/media/providers/media_providers.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 
 class PropertyMediaGallery extends ConsumerWidget {
   final String propertyId;
-
   final bool editable;
-  
   final void Function(PropertyMedia video)? onVideoTap;
 
   const PropertyMediaGallery({
@@ -39,38 +40,33 @@ class PropertyMediaGallery extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (images.isNotEmpty) ...[
-              _SectionHeader(
-                title: 'Photos',
-                count: images.length,
-              ),
+              _SectionHeader(title: 'Photos', count: images.length),
               const SizedBox(height: 12),
               _ImageGrid(
                 images: images,
                 editable: editable,
                 onDelete: editable
                     ? (id) => ref
-                        .read(propertyMediaProvider(propertyId).notifier)
-                        .removeMedia(id)
+                          .read(propertyMediaProvider(propertyId).notifier)
+                          .removeMedia(id)
                     : null,
               ),
             ],
-
             if (videos.isNotEmpty) ...[
               SizedBox(height: images.isNotEmpty ? 24 : 0),
-              _SectionHeader(
-                title: 'Videos',
-                count: videos.length,
-              ),
+              _SectionHeader(title: 'Videos', count: videos.length),
               const SizedBox(height: 12),
               _VideoList(
                 videos: videos,
                 editable: editable,
                 onDelete: editable
                     ? (id) => ref
-                        .read(propertyMediaProvider(propertyId).notifier)
-                        .removeMedia(id)
+                          .read(propertyMediaProvider(propertyId).notifier)
+                          .removeMedia(id)
                     : null,
-                onVideoTap: onVideoTap,
+                // use caller's handler OR default to inline player
+                onVideoTap:
+                    onVideoTap ?? (video) => _openVideoPlayer(context, video),
               ),
             ],
           ],
@@ -78,8 +74,180 @@ class PropertyMediaGallery extends ConsumerWidget {
       },
     );
   }
+
+  static void _openVideoPlayer(BuildContext context, PropertyMedia video) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => _VideoPlayerScreen(media: video),
+      ),
+    );
+  }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// INLINE VIDEO PLAYER SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _VideoPlayerScreen extends StatefulWidget {
+  final PropertyMedia media;
+  const _VideoPlayerScreen({required this.media});
+
+  @override
+  State<_VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
+  late VideoPlayerController _videoController;
+  ChewieController? _chewieController;
+  bool _hasError = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.portraitUp,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    _initPlayer();
+  }
+
+  Future<void> _initPlayer() async {
+    try {
+      _videoController = VideoPlayerController.networkUrl(
+        Uri.parse(widget.media.url),
+      );
+      await _videoController.initialize();
+
+      _chewieController = ChewieController(
+        videoPlayerController: _videoController,
+        autoPlay: true,
+        looping: false,
+        allowFullScreen: true,
+        allowMuting: true,
+        showControls: true,
+        placeholder: widget.media.thumbnailUrl != null
+            ? Image.network(widget.media.thumbnailUrl!, fit: BoxFit.cover)
+            : null,
+        materialProgressColors: ChewieProgressColors(
+          playedColor: AppColors.primary,
+          handleColor: AppColors.primary,
+          backgroundColor: AppColors.borderLight,
+          bufferedColor: AppColors.primary.withValues(alpha: 0.3),
+        ),
+      );
+
+      if (mounted) setState(() {});
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = e.toString();
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _chewieController?.dispose();
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Video ${widget.media.displayOrder + 1}',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: _hasError
+            ? _PlayerError(
+                message: _errorMessage ?? 'Failed to load video',
+                onRetry: () {
+                  setState(() {
+                    _hasError = false;
+                    _errorMessage = null;
+                  });
+                  _initPlayer();
+                },
+              )
+            : _chewieController != null
+            ? Chewie(controller: _chewieController!)
+            : const CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 2,
+              ),
+      ),
+    );
+  }
+}
+
+class _PlayerError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _PlayerError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.videocam_off_rounded, color: Colors.white54, size: 56),
+        const SizedBox(height: 16),
+        Text(
+          'Could not play video',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          message,
+          style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text('Retry', style: GoogleFonts.outfit()),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HERO BANNER
+// ─────────────────────────────────────────────────────────────────────────────
 
 class PropertyHeroBanner extends ConsumerWidget {
   final String propertyId;
@@ -96,9 +264,7 @@ class PropertyHeroBanner extends ConsumerWidget {
     final images = ref.watch(propertyImagesProvider(propertyId));
     final totalCount = ref.watch(propertyMediaCountProvider(propertyId));
 
-    if (images.isEmpty) {
-      return _HeroPlaceholder(height: height);
-    }
+    if (images.isEmpty) return _HeroPlaceholder(height: height);
 
     return GestureDetector(
       onTap: () => _openGallerySheet(context, propertyId),
@@ -116,7 +282,6 @@ class PropertyHeroBanner extends ConsumerWidget {
               ),
             ),
           ),
-
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
@@ -135,14 +300,15 @@ class PropertyHeroBanner extends ConsumerWidget {
               ),
             ),
           ),
-
           if (totalCount > 1)
             Positioned(
               bottom: 14,
               right: 14,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(20),
@@ -150,15 +316,19 @@ class PropertyHeroBanner extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.photo_library_outlined,
-                        size: 14, color: Colors.white),
+                    const Icon(
+                      Icons.photo_library_outlined,
+                      size: 14,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       '$totalCount',
                       style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700),
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -175,21 +345,23 @@ class PropertyHeroBanner extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (_) => DraggableScrollableSheet(
         initialChildSize: 0.92,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (_, controller) => _GallerySheet(
-          propertyId: propertyId,
-          scrollController: controller,
-        ),
+        builder: (_, controller) =>
+            _GallerySheet(propertyId: propertyId, scrollController: controller),
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GALLERY SHEET
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _GallerySheet extends StatelessWidget {
   final String propertyId;
@@ -212,8 +384,9 @@ class _GallerySheet extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: AppColors.borderLight,
-                    borderRadius: BorderRadius.circular(2)),
+                  color: AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
               const SizedBox(height: 16),
               Align(
@@ -221,22 +394,23 @@ class _GallerySheet extends StatelessWidget {
                 child: Text(
                   'All Media',
                   style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                      letterSpacing: -0.4),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                    letterSpacing: -0.4,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
             ],
           ),
         ),
-        // Content
         Expanded(
           child: ListView(
             controller: scrollController,
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
             children: [
+              // no onVideoTap needed → falls back to _openVideoPlayer automatically
               PropertyMediaGallery(propertyId: propertyId),
             ],
           ),
@@ -246,6 +420,9 @@ class _GallerySheet extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// IMAGE GRID
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ImageGrid extends StatelessWidget {
   final List<PropertyMedia> images;
@@ -280,11 +457,15 @@ class _ImageGrid extends StatelessWidget {
   }
 
   void _openFullscreen(
-      BuildContext context, List<PropertyMedia> images, int initial) {
+    BuildContext context,
+    List<PropertyMedia> images,
+    int initial,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => _FullscreenGallery(images: images, initialIndex: initial),
+        builder: (_) =>
+            _FullscreenGallery(images: images, initialIndex: initial),
       ),
     );
   }
@@ -317,17 +498,17 @@ class _ImageTile extends StatelessWidget {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: AppColors.borderLight,
-                child: const Icon(Icons.broken_image_outlined,
-                    color: AppColors.textSecondary),
+                child: const Icon(
+                  Icons.broken_image_outlined,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
             if (editable)
               Positioned(
                 top: 4,
                 right: 4,
-                child: _DeleteButton(
-                  onTap: () => onDelete?.call(media.id),
-                ),
+                child: _DeleteButton(onTap: () => onDelete?.call(media.id)),
               ),
           ],
         ),
@@ -336,6 +517,9 @@ class _ImageTile extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// VIDEO LIST
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _VideoList extends StatelessWidget {
   final List<PropertyMedia> videos;
@@ -354,15 +538,17 @@ class _VideoList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: videos
-          .map((v) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _VideoTile(
-                  media: v,
-                  editable: editable,
-                  onDelete: onDelete,
-                  onTap: onVideoTap,
-                ),
-              ))
+          .map(
+            (v) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _VideoTile(
+                media: v,
+                editable: editable,
+                onDelete: onDelete,
+                onTap: onVideoTap,
+              ),
+            ),
+          )
           .toList(),
     );
   }
@@ -390,112 +576,121 @@ class _VideoTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 110,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  media.thumbnailUrl != null
-                      ? Image.network(
-                          media.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _videoPlaceholder(),
-                        )
-                      : _videoPlaceholder(),
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.50),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.play_arrow_rounded,
-                          color: Colors.white, size: 22),
-                    ),
-                  ),
-                ],
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            Expanded(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 110,
+                child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'VIDEO',
-                            style: GoogleFonts.outfit(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primary,
-                                letterSpacing: 0.5),
-                          ),
+                    media.thumbnailUrl != null
+                        ? Image.network(
+                            media.thumbnailUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _videoPlaceholder(),
+                          )
+                        : _videoPlaceholder(),
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.50),
+                          shape: BoxShape.circle,
                         ),
-                        if (media.durationSeconds > 0) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            _formatDuration(media.durationSeconds),
-                            style: GoogleFonts.outfit(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Order #${media.displayOrder + 1}',
-                      style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600),
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-            if (editable)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: _DeleteButton(onTap: () => onDelete?.call(media.id)),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'VIDEO',
+                              style: GoogleFonts.outfit(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          if (media.durationSeconds > 0) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              _formatDuration(media.durationSeconds),
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Order #${media.displayOrder + 1}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-          ],
+              if (editable)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: _DeleteButton(onTap: () => onDelete?.call(media.id)),
+                ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
 
   Widget _videoPlaceholder() => Container(
-        color: const Color(0xFF1A1A2E),
-        child: const Icon(Icons.videocam_outlined,
-            color: Colors.white54, size: 32),
-      );
+    color: const Color(0xFF1A1A2E),
+    child: const Icon(Icons.videocam_outlined, color: Colors.white54, size: 32),
+  );
 
   String _formatDuration(int seconds) {
     final m = seconds ~/ 60;
@@ -504,15 +699,14 @@ class _VideoTile extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FULLSCREEN IMAGE GALLERY
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _FullscreenGallery extends StatefulWidget {
   final List<PropertyMedia> images;
   final int initialIndex;
-
-  const _FullscreenGallery({
-    required this.images,
-    required this.initialIndex,
-  });
+  const _FullscreenGallery({required this.images, required this.initialIndex});
 
   @override
   State<_FullscreenGallery> createState() => _FullscreenGalleryState();
@@ -548,7 +742,9 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
         title: Text(
           '${_current + 1} / ${widget.images.length}',
           style: GoogleFonts.outfit(
-              color: Colors.white, fontWeight: FontWeight.w600),
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
       ),
@@ -562,9 +758,10 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
               widget.images[i].url,
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => const Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.white54,
-                  size: 64),
+                Icons.broken_image_outlined,
+                color: Colors.white54,
+                size: 64,
+              ),
             ),
           ),
         ),
@@ -573,11 +770,13 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED SMALL WIDGETS
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   final String title;
   final int count;
-
   const _SectionHeader({required this.title, required this.count});
 
   @override
@@ -587,10 +786,11 @@ class _SectionHeader extends StatelessWidget {
         Text(
           title,
           style: GoogleFonts.outfit(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary,
-              letterSpacing: -0.3),
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primary,
+            letterSpacing: -0.3,
+          ),
         ),
         const SizedBox(width: 8),
         Container(
@@ -602,9 +802,10 @@ class _SectionHeader extends StatelessWidget {
           child: Text(
             '$count',
             style: GoogleFonts.outfit(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
           ),
         ),
       ],
@@ -628,9 +829,10 @@ class _DeleteButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 4,
-                offset: const Offset(0, 1))
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
           ],
         ),
         child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
@@ -672,15 +874,19 @@ class _GalleryEmpty extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          const Icon(Icons.photo_library_outlined,
-              size: 48, color: AppColors.textSecondary),
+          const Icon(
+            Icons.photo_library_outlined,
+            size: 48,
+            color: AppColors.textSecondary,
+          ),
           const SizedBox(height: 12),
           Text(
             'No media yet',
             style: GoogleFonts.outfit(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500),
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -691,7 +897,6 @@ class _GalleryEmpty extends StatelessWidget {
 class _GalleryError extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-
   const _GalleryError({required this.message, required this.onRetry});
 
   @override
@@ -700,21 +905,29 @@ class _GalleryError extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         children: [
-          const Icon(Icons.wifi_off_rounded,
-              size: 40, color: AppColors.textSecondary),
+          const Icon(
+            Icons.wifi_off_rounded,
+            size: 40,
+            color: AppColors.textSecondary,
+          ),
           const SizedBox(height: 10),
           Text(
             'Failed to load media',
             style: GoogleFonts.outfit(
-                fontSize: 13, color: AppColors.textSecondary),
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 12),
           TextButton(
             onPressed: onRetry,
-            child: Text('Retry',
-                style: GoogleFonts.outfit(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700)),
+            child: Text(
+              'Retry',
+              style: GoogleFonts.outfit(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -735,8 +948,11 @@ class _HeroPlaceholder extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Center(
-        child: Icon(Icons.home_outlined,
-            size: 56, color: AppColors.textSecondary),
+        child: Icon(
+          Icons.home_outlined,
+          size: 56,
+          color: AppColors.textSecondary,
+        ),
       ),
     );
   }
