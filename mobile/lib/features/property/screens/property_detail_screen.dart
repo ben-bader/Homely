@@ -8,9 +8,11 @@ import 'package:mobile/features/chat/repositories/chat_repository.dart';
 import 'package:mobile/features/chat/screens/chat_screen.dart';
 import 'package:mobile/features/chat/providers/chat_providers.dart';
 import 'package:mobile/features/property/repositories/property_repository.dart';
+import 'package:mobile/features/auth/services/auth_service.dart';
 class PropertyDetailScreen extends ConsumerWidget {
   final String propertyId;
   const PropertyDetailScreen({super.key, required this.propertyId});
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,6 +44,19 @@ class _Body extends ConsumerStatefulWidget {
 class _BodyState extends ConsumerState<_Body> {
   int _imgIdx = 0;
   final _pageCtrl = PageController();
+  String? _currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUserId();
+  }
+
+  Future<void> _loadCurrentUserId() async {
+    final authService = AuthService();
+    final userId = await authService.getCurrentUserId();
+    if (mounted) setState(() => _currentUserId = userId);
+  }
 
   @override
   void dispose() {
@@ -261,9 +276,7 @@ class _BodyState extends ConsumerState<_Body> {
                                 children: [
                                   // labelLarge: w500 — agent name, override to w700
                                   Text(
-                                    p.sellerName.isNotEmpty
-                                        ? p.sellerName
-                                        : 'Agent',
+                                   p.sellerName,
                                     style: tt.labelLarge?.copyWith(
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.primary),
@@ -277,7 +290,22 @@ class _BodyState extends ConsumerState<_Body> {
                                 ],
                               ),
                             ),
-                            _ContactBtn(property: p),
+                            if (_currentUserId != p.sellerId)
+                              _ContactBtn(property: p)
+                            else
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.subtleBackground,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text('Your Property',
+                                    style: tt.labelSmall?.copyWith(
+                                        color: AppColors.accent,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12)),
+                              ),
                           ],
                         ),
                       ),
@@ -335,7 +363,10 @@ class _BodyState extends ConsumerState<_Body> {
                   ),
                   // titleLarge: w600, 22px — "Property Detail"
                   Text('Property Detail',
-                      style: tt.titleLarge?.copyWith(fontSize: 17)),
+                      style: tt.titleLarge?.copyWith(color: AppColors.accent,
+                            letterSpacing: -0.5,
+                            height: 1.1,
+                            fontSize: 25,)),
                   const SizedBox(width: 40),
                 ],
               ),
@@ -426,12 +457,12 @@ class _SpecBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.borderLight,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 22, color: AppColors.textSecondary),
+          Icon(icon, size: 22, color: AppColors.accent),
           const SizedBox(height: 8),
           // labelSmall: w400, 11px — spec label (e.g. "3 Beds")
           Text(label,
@@ -452,7 +483,7 @@ class _CircleBtn extends StatelessWidget {
   const _CircleBtn(
       {required this.icon,
       required this.onTap,
-      this.iconColor = AppColors.primary});
+      this.iconColor = AppColors.accent});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -461,7 +492,7 @@ class _CircleBtn extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.cardBackground,
+          
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
@@ -471,7 +502,7 @@ class _CircleBtn extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(icon, size: 18, color: iconColor),
+          child: Icon(icon, size: 22, color: iconColor),
         ),
       );
 }

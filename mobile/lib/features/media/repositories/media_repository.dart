@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/features/media/models/property_media.dart';
 
@@ -13,7 +14,7 @@ final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
 class MediaRepository {
   final _storage = SecureStorage();
   Future<List<PropertyMedia>> getByPropertyId(String propertyId) async {
-    final data = await ApiClient.get('/api/media/$propertyId/media');
+    final data = await ApiClient.get(Endpoints.getMediaByPropertyId(propertyId));
     final list = data as List<dynamic>;
     return list
         .map((e) => PropertyMedia.fromJson(e as Map<String, dynamic>))
@@ -21,14 +22,14 @@ class MediaRepository {
       ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
   }
   Future<PropertyMedia> create(PropertyMediaCreateRequest request) async {
-    final data = await ApiClient.post('/api/media', body: request.toJson());
+    final data = await ApiClient.post(Endpoints.createMedia, body: request.toJson());
     return PropertyMedia.fromJson(data as Map<String, dynamic>);
   }
   Future<void> delete(String id) async {
-    await ApiClient.delete('/api/media/$id');
+    await ApiClient.delete(Endpoints.deleteMediaById(id));
   }
   Future<String> uploadVideo(VideoUploadRequest request) async {
-    final uri = Uri.parse('${ApiClient.baseUrl}/api/media/upload').replace(
+    final uri = Uri.parse('${ApiClient.baseUrl}${Endpoints.uploadVideo}').replace(
       queryParameters: {
         'propertyId': request.propertyId,
         'displayOrder': request.displayOrder.toString(),

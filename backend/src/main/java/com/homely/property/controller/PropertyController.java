@@ -3,20 +3,28 @@ package com.homely.property.controller;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.common.enums.ListingType;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 import com.homely.property.dto.PropertyCreateRequest;
 import com.homely.property.dto.PropertyDto;
-import com.homely.property.mapper.PropertyMapper;
+import com.homely.property.dto.PropertyUpdateRequest;
 import com.homely.property.service.PropertyService;
 
 import jakarta.validation.Valid;
@@ -92,6 +100,18 @@ public class PropertyController {
             @RequestParam PropertyStatus status) {
 
         return propertyService.updateStatus(id, status);
+    }
+
+    // ✅ Update property (seller only)
+    @PreAuthorize("hasRole('SELLER')")
+    @PutMapping("/{id}")
+    public ResponseEntity<PropertyDto> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody PropertyUpdateRequest request,
+            Principal principal) {
+
+        return ResponseEntity.ok(
+                propertyService.update(id, request, principal.getName()));
     }
 
     // ✅ Delete

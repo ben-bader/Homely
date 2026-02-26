@@ -24,8 +24,7 @@ class AuthApi {
   /// Register new user
   /// POST /api/auth/register
   Future<dynamic> register({
-    required String firstName,
-    required String lastName,
+    required String name,
     required String email,
     required String password,
     required String phone,
@@ -34,8 +33,7 @@ class AuthApi {
     return await ApiClient.post(
       Endpoints.register,
       body: {
-        'firstName': firstName,
-        'lastName': lastName,
+        'name':name,
         'email': email,
         'password': password,
         'phone': phone,

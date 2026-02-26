@@ -2,6 +2,7 @@ package com.homely.property.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+
 import com.homely.property.dto.PropertyCreateRequest;
 import com.homely.property.dto.PropertyDto;
 import com.homely.property.entity.Property;
@@ -26,5 +27,6 @@ public interface PropertyMapper {
     Property toEntity(PropertyCreateRequest request);
 
     @Mapping(target = "sellerId", expression = "java(entity.getSeller() != null ? entity.getSeller().getId() : null)")
+    @Mapping(target = "sellerName", expression = "java(entity.getSeller() != null ? entity.getSeller().getName() : null)")
     PropertyDto toDto(Property entity);
 }

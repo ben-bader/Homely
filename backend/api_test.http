@@ -5,10 +5,10 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-    "email": "testAdmin@example.com",
-    "password": "Fanou9123",
-    "name": "Fanou9",
-    "phone": "1234567890",
+    "email": "bichoufarouk@gmail.com",
+    "password": "Farou9123",
+    "name": "Farouk Bichou",
+    "phone": "0601020304",
     "role": "ADMIN"
 }
 ###
@@ -31,8 +31,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "benbader1231@gmail.com",
-  "password": "Bader12345"
+  "email": "medamraoui@gmail.com",
+  "password": "Med12345678"
 }
 
 ###

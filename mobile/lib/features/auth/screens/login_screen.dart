@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/validators.dart';
+import 'package:mobile/features/auth/models/login_request.dart';
 import 'package:mobile/features/property/screens/home_screen.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';

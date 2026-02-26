@@ -1,13 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/core/storage/secure_storage.dart';
-
 class ApiClient {
-  static const String baseUrl =
-      'https://unparrying-christene-reductively.ngrok-free.dev';
 
   static final _storage = SecureStorage();
-
+  static const String baseUrl = Endpoints.baseUrl;
   static Future<Map<String, String>> _headers({bool auth = true}) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -70,7 +68,7 @@ class ApiClient {
 
   // ── User ──────────────────────────────────────────────────
   static Future<Map<String, dynamic>> fetchUserById(String userId) async {
-    final data = await get('/api/users/$userId');
+    final data = await get(Endpoints.userById(userId));
     return data as Map<String, dynamic>;
   }
 

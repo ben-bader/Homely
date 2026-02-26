@@ -1,5 +1,3 @@
-// lib/features/property/screens/home_screen.dart
-
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -14,9 +12,18 @@ import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
 import 'package:mobile/features/profile/screens/profile_screen.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/features/seller/screens/create_property_screen.dart';
+import 'package:mobile/features/seller/screens/seller_listings_screen.dart';
+import 'package:mobile/features/tours/screens/tours_screen.dart';
 import 'property_detail_screen.dart';
 
 final navIndexProvider = StateProvider<int>((ref) => 0);
+
+// Provider to get user role
+final userRoleProvider = FutureProvider<String>((ref) async {
+  final authService = AuthService();
+  return authService.getUserRoleFromStorage();
+});
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -24,19 +31,87 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final idx = ref.watch(navIndexProvider);
-    final tabs = [
+    final userRoleAsync = ref.watch(userRoleProvider);
+
+    return userRoleAsync.when(
+      loading: () => Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
+      error: (_, __) => Scaffold(
+        backgroundColor: AppColors.background,
+        body: const _PlaceholderTab(label: 'Error loading user'),
+      ),
+      data: (userRole) {
+        final isSeller = userRole == 'SELLER';
+        final tabs = isSeller ? _buildSellerTabs() : _buildClientTabs();
+
+        // Debug print
+        print('=== HomeScreen Debug ===');
+        print('User Role: $userRole');
+        print('Is Seller: $isSeller');
+        print('Num Tabs: ${tabs.length}');
+        print('=======================');
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          extendBody: true,
+          body: Stack(
+            children: [
+              IndexedStack(index: idx, children: tabs),
+              // Debug indicator
+            ],
+          ),
+          bottomNavigationBar: _BottomNav(isSeller: isSeller),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildClientTabs() {
+    return [
       const _ExploreTab(),
-      const _PlaceholderTab(label: 'Reels'),
+      const ToursScreen(),
       const ConversationsScreen(),
       const _PlaceholderTab(label: 'Favorites'),
       const ProfileScreen(),
     ];
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      extendBody: true,
-      body: IndexedStack(index: idx, children: tabs),
-      bottomNavigationBar: const _BottomNav(),
-    );
+  }
+
+  List<Widget> _buildSellerTabs() {
+    // Seller tabs: Explore, Inbox, Create (+), Listings, Profile
+    return [
+      const _ExploreTab(),
+      const ConversationsScreen(),
+      const _CreatePropertyPlaceholder(), // Placeholder for center + button
+      const _SellerListingsTab(),
+      const ProfileScreen(),
+    ];
+  }
+}
+
+// Placeholder for the center + button
+class _CreatePropertyPlaceholder extends StatelessWidget {
+  const _CreatePropertyPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.shrink();
+  }
+}
+
+// Seller listings tab
+class _SellerListingsTab extends StatelessWidget {
+  const _SellerListingsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SellerListingsScreen();
   }
 }
 
@@ -915,7 +990,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 Text(
                   'Filters',
                   style: tt.headlineSmall?.copyWith(
-                    color: AppColors.primary,
+                    color: AppColors.accent,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -947,7 +1022,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             Text(
               'Listing type',
               style: tt.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.accent,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -974,7 +1049,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                       child: Text(
                         s,
                         style: tt.labelLarge?.copyWith(
-                          color: sel ? Colors.white : AppColors.primary,
+                          color: sel ? Colors.white : AppColors.accent,
                           fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                         ),
                       ),
@@ -989,7 +1064,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             Text(
               'Property type',
               style: tt.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.accent,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1016,7 +1091,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                     child: Text(
                       t,
                       style: tt.labelLarge?.copyWith(
-                        color: sel ? Colors.white : AppColors.primary,
+                        color: sel ? Colors.white : AppColors.accent,
                         fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
@@ -1030,7 +1105,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             Text(
               'City',
               style: tt.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.accent,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1038,6 +1113,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             _FilterTextField(
               controller: _cityController,
               hint: 'e.g. Casablanca, Rabat...',
+              
               icon: Icons.location_city_outlined,
             ),
             const SizedBox(height: 24),
@@ -1046,7 +1122,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             Text(
               'Price range (\$)',
               style: tt.labelLarge?.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.accent,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1146,7 +1222,7 @@ class _FilterTextField extends StatelessWidget {
               inputFormatters: numeric
                   ? [FilteringTextInputFormatter.digitsOnly]
                   : null,
-              style: tt.bodyMedium?.copyWith(color: AppColors.primary),
+              style: tt.bodyMedium?.copyWith(color: AppColors.accent),
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: tt.bodySmall?.copyWith(
@@ -1491,9 +1567,10 @@ class _AvatarBtn extends StatelessWidget {
 // ── Bottom Nav ────────────────────────────────────────────────────────────────
 
 class _BottomNav extends ConsumerWidget {
-  const _BottomNav();
+  final bool isSeller;
+  const _BottomNav({this.isSeller = false});
 
-  static const _items = [
+  static const _clientItems = [
     (
       icon: Icons.search_rounded,
       outlinedIcon: Icons.search_rounded,
@@ -1521,9 +1598,38 @@ class _BottomNav extends ConsumerWidget {
     ),
   ];
 
+  static const _sellerItems = [
+    (
+      icon: Icons.search_rounded,
+      outlinedIcon: Icons.search_rounded,
+      label: 'Explore',
+    ),
+    (
+      icon: Icons.chat_bubble_rounded,
+      outlinedIcon: Icons.chat_bubble_outline_rounded,
+      label: 'Inbox',
+    ),
+    (
+      icon: Icons.add_rounded,
+      outlinedIcon: Icons.add_rounded,
+      label: 'Create',
+    ),
+    (
+      icon: Icons.home_rounded,
+      outlinedIcon: Icons.home_outlined,
+      label: 'Listings',
+    ),
+    (
+      icon: Icons.person_rounded,
+      outlinedIcon: Icons.person_outline_rounded,
+      label: 'Profile',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final idx = ref.watch(navIndexProvider);
+    final items = isSeller ? _sellerItems : _clientItems;
 
     return ClipRect(
       child: BackdropFilter(
@@ -1543,9 +1649,45 @@ class _BottomNav extends ConsumerWidget {
             child: SizedBox(
               height: 60,
               child: Row(
-                children: List.generate(_items.length, (i) {
+                children: List.generate(items.length, (i) {
                   final active = i == idx;
-                  final item = _items[i];
+                  final item = items[i];
+
+                  // Special handling for seller's create button (index 2)
+                  if (isSeller && i == 2) {
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CreatePropertyScreen(),
+                            ),
+                          );
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.add_rounded,
+                                size: 26,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
                   return Expanded(
                     child: GestureDetector(
                       onTap: () =>

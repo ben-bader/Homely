@@ -20,31 +20,44 @@ import lombok.RequiredArgsConstructor;
 
 public class SupabaseStorageService {
 
-
-     private final String supabaseUrl;
+    private final String supabaseUrl;
     private final String serviceKey;
+    private final String bucket;
+
     @Autowired
     public SupabaseStorageService(Dotenv dotenv) {
         this.supabaseUrl = dotenv.get("SUPABASE_URL");
         this.serviceKey = dotenv.get("SUPABASE_SERVICE_KEY");
+        this.bucket = dotenv.get("SUPABASE_BUCKET", "property-videos");
     }
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String uploadVideo(MultipartFile file, UUID propertyId) throws IOException {
 
+        if (supabaseUrl == null || supabaseUrl.isBlank()) {
+            throw new RuntimeException("SUPABASE_URL is not configured");
+        }
+        if (serviceKey == null || serviceKey.isBlank()) {
+            throw new RuntimeException("SUPABASE_SERVICE_KEY is not configured");
+        }
+
         String path = "property-" + propertyId + "/" + UUID.randomUUID() + ".mp4";
 
-        String uploadUrl = supabaseUrl + "/storage/v1/object/property-videos/" + path;
+        String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + path;
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(serviceKey);
+        headers.set("Authorization", "Bearer " + serviceKey);
+        headers.set("apikey", serviceKey); // 🔥 THIS WAS MISSING
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
 
-        HttpEntity<byte[]> entity =
-                new HttpEntity<>(file.getBytes(), headers);
+        try {
+            restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to upload to Supabase storage: " + ex.getMessage(), ex);
+        }
 
-        restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
-
-        return supabaseUrl + "/storage/v1/object/public/property-videos/" + path;
+        return supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + path;
     }
 }

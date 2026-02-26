@@ -9,11 +9,14 @@ class PropertyMediaGallery extends ConsumerWidget {
   final String propertyId;
 
   final bool editable;
+  
+  final void Function(PropertyMedia video)? onVideoTap;
 
   const PropertyMediaGallery({
     super.key,
     required this.propertyId,
     this.editable = false,
+    this.onVideoTap,
   });
 
   @override
@@ -67,6 +70,7 @@ class PropertyMediaGallery extends ConsumerWidget {
                         .read(propertyMediaProvider(propertyId).notifier)
                         .removeMedia(id)
                     : null,
+                onVideoTap: onVideoTap,
               ),
             ],
           ],
@@ -337,11 +341,13 @@ class _VideoList extends StatelessWidget {
   final List<PropertyMedia> videos;
   final bool editable;
   final Future<void> Function(String id)? onDelete;
+  final void Function(PropertyMedia video)? onVideoTap;
 
   const _VideoList({
     required this.videos,
     required this.editable,
     this.onDelete,
+    this.onVideoTap,
   });
 
   @override
@@ -354,6 +360,7 @@ class _VideoList extends StatelessWidget {
                   media: v,
                   editable: editable,
                   onDelete: onDelete,
+                  onTap: onVideoTap,
                 ),
               ))
           .toList(),
@@ -365,20 +372,24 @@ class _VideoTile extends StatelessWidget {
   final PropertyMedia media;
   final bool editable;
   final Future<void> Function(String id)? onDelete;
+  final void Function(PropertyMedia video)? onTap;
 
   const _VideoTile({
     required this.media,
     required this.editable,
     this.onDelete,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: () => onTap?.call(media),
+      child: Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -475,6 +486,7 @@ class _VideoTile extends StatelessWidget {
               ),
           ],
         ),
+      ),
       ),
     );
   }

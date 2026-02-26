@@ -76,8 +76,9 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                             "Messages",
                             style: GoogleFonts.outfit(
                               color: AppColors.accent,
-                              fontSize: 30,
-                              fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                            height: 1.1,
+                            fontSize: 30,
                             ),
                           ),
                   ),

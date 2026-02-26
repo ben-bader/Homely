@@ -7,7 +7,7 @@ class Endpoints {
 
   /// Base URL for the backend API
   /// Update this based on your environment
-  static const String baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev';
+  static const String baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev/api';
 
   /// Base URL for development
   static const String devBaseUrl = 'http://localhost:8080/api';
@@ -71,6 +71,9 @@ class Endpoints {
   /// GET - Get featured/boosted properties
   static const String featuredProperties = '/properties/featured';
 
+  /// GET - Get current seller's listings
+  static const String sellerListings = '/properties/my-listed';
+
   // ==================== MEDIA ENDPOINTS ====================
 
   /// POST - Upload property media
@@ -85,6 +88,19 @@ class Endpoints {
   static String getPropertyMedia(String propertyId) =>
       '/properties/$propertyId/media';
 
+  /// GET - Get media by property ID (media service endpoint)
+  static String getMediaByPropertyId(String propertyId) =>
+      '/media/$propertyId/media';
+
+  /// POST - Create media entry
+  static const String createMedia = '/media';
+
+  /// DELETE - Delete media by ID
+  static String deleteMediaById(String id) => '/media/$id';
+
+  /// POST - Upload video file
+  static const String uploadVideo = '/media/upload';
+
   // ==================== USER ENDPOINTS ====================
 
   /// GET - Get current user profile
@@ -95,6 +111,12 @@ class Endpoints {
 
   /// PUT - Update user profile
   static const String updateProfile = '/users/profile';
+
+  /// GET - Get current user profile (alternative endpoint)
+  static const String getProfileMe = '/profile/me';
+
+  /// PUT - Update current user profile (alternative endpoint)
+  static const String updateProfileMe = '/profile/me';
 
   /// PUT - Change password
   static const String changePassword = '/users/change-password';
@@ -127,6 +149,24 @@ class Endpoints {
   /// PUT - Mark conversation as read
   static String markAsRead(String conversationId) =>
       '/conversations/$conversationId/read';
+
+  // ==================== CHAT ENDPOINTS (ALTERNATIVE) ====================
+
+  /// GET - Get chat messages
+  static const String chatMessages = '/chat/messages';
+
+  /// GET - Get chat conversations
+  static const String chatConversations = '/chat/conversations';
+
+  /// POST - Create chat conversation for property
+  static String createChatConversation(String propertyId) =>
+      '/chat/conversations/$propertyId';
+
+  /// PUT - Edit chat message
+  static String editChatMessage(String messageId) => '/chat/message/$messageId';
+
+  /// DELETE - Delete chat message
+  static String deleteChatMessage(String messageId) => '/chat/message/$messageId';
 
   // ==================== BOOST ENDPOINTS ====================
 

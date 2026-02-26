@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/features/profile/models/profile.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
@@ -12,13 +13,13 @@ final profileNotifierProvider = AsyncNotifierProvider<ProfileNotifier, Profile>(
 
 class ProfileRepository {
   Future<Profile> getMyProfile() async {
-    final data = await ApiClient.get('/api/profile/me');
+    final data = await ApiClient.get(Endpoints.getProfileMe);
     return Profile.fromJson(data as Map<String, dynamic>);
   }
 
   Future<Profile> updateProfileFields(ProfileUpdateRequest request) async {
     final data = await ApiClient.put(
-      '/api/profile/me',
+      Endpoints.updateProfileMe,
       body: request.toProfileJson(),
     );
     return Profile.fromJson(data as Map<String, dynamic>);
@@ -28,7 +29,7 @@ class ProfileRepository {
     String userId,
     ProfileUpdateRequest request,
   ) async {
-    await ApiClient.put('/api/users/$userId', body: request.toUserJson());
+    await ApiClient.put(Endpoints.userById(userId), body: request.toUserJson());
   }
 }
 

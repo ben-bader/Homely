@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as ApiClient;
-import 'package:mobile/core/storage/secure_storage.dart';
+import 'package:mobile/features/auth/services/auth_service.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/profile/models/profile.dart';
 import 'package:mobile/features/profile/repositories/profile_repository.dart';
+import 'package:mobile/features/seller/providers/seller_providers.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -36,22 +36,17 @@ class _ProfileContent extends StatelessWidget {
   final Profile profile;
   const _ProfileContent({required this.profile});
   Future<void> _logout(BuildContext context) async {
-    final SecureStorage _storage = SecureStorage();
+    final AuthService authService = AuthService();
 
     try {
-      await ApiClient.post('/api/auth/logout' as Uri);
-
-      // Remove stored token
-      await _storage.deleteToken();
-
-      if (!context.mounted) return;
-
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      await authService.logout();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Logout failed")));
+      debugPrint("Logout error: $e");
     }
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   @override
@@ -67,10 +62,10 @@ class _ProfileContent extends StatelessWidget {
                 Text(
                   'Profile',
                   style: GoogleFonts.outfit(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                    letterSpacing: -0.8,
+                   color: AppColors.accent,
+                            letterSpacing: -0.5,
+                            height: 1.1,
+                            fontSize: 30,
                   ),
                 ),
                 const Spacer(),
@@ -291,6 +286,9 @@ class _ProfileContent extends StatelessWidget {
 
             const SizedBox(height: 24),
 
+            // Seller Listings Section (only for sellers)
+            _SellerListingsSection(userEmail: profile.email),
+
             if (profile.bio != null && profile.bio!.isNotEmpty) ...[
               const _SectionTitle(title: 'About'),
               const SizedBox(height: 12),
@@ -426,7 +424,10 @@ class _ProfileContent extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => _logout(context),
+                    onPressed: () {
+                      Navigator.pop(sheetCtx);
+                      _logout(context);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
                       elevation: 0,
@@ -942,4 +943,186 @@ class _ErrorView extends StatelessWidget {
       ),
     ),
   );
+}
+
+// ── Seller Listings Section ───────────────────────────────────────────────────
+class _SellerListingsSection extends ConsumerWidget {
+  final String userEmail;
+  const _SellerListingsSection({required this.userEmail});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final listingsAsync = ref.watch(sellerListingsProvider);
+    final tt = Theme.of(context).textTheme;
+
+    return listingsAsync.when(
+      loading: () => Column(
+        children: [
+          const _SectionTitle(title: 'My Listings'),
+          const SizedBox(height: 12),
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+      error: (_, __) => SizedBox.shrink(),
+      data: (listings) {
+        if (listings.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          children: [
+            const _SectionTitle(title: 'My Listings'),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: List.generate(
+                  listings.length > 3 ? 3 : listings.length,
+                  (i) {
+                    final property = listings[i];
+                    return Column(
+                      children: [
+                        if (i > 0)
+                          Divider(
+                            color: AppColors.borderLight,
+                            height: 1,
+                            indent: 16,
+                            endIndent: 16,
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              if (property.images.isNotEmpty)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    property.images.first,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 60,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.subtleBackground,
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.home_outlined,
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.subtleBackground,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.home_outlined,
+                                    size: 24,
+                                  ),
+                                ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      property.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: tt.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '\$${_formatPrice(property.price)}',
+                                      style: tt.labelSmall?.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(property.status),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  property.status.replaceAll('_', ' '),
+                                  style: tt.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatPrice(double price) {
+    if (price >= 1000000) return '${(price / 1000000).toStringAsFixed(1)}M';
+    if (price >= 1000) return '${(price / 1000).toStringAsFixed(0)}K';
+    return price.toStringAsFixed(0);
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'ACTIVE':
+        return Colors.green;
+      case 'INACTIVE':
+        return Colors.orange;
+      case 'SOLD':
+        return Colors.red;
+      case 'RENTED':
+        return Colors.blue;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
 }

@@ -1,147 +1,93 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:mobile/core/network/auth_api.dart';
+
+import 'package:mobile/features/auth/models/auth_response.dart';
+import 'package:mobile/features/auth/models/login_request.dart';
+import 'package:mobile/features/auth/models/register_request.dart';
 import 'package:mobile/core/storage/secure_storage.dart';
-import 'package:mobile/core/network/api_client.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-// ─────────────────────────────────────────────────────────────
-// Models
-// ─────────────────────────────────────────────────────────────
-
-class LoginRequest {
-  final String email;
-  final String password;
-
-  LoginRequest({required this.email, required this.password});
-
-  Map<String, dynamic> toJson() => {'email': email, 'password': password};
-}
-
-class RegisterRequest {
-  final String name;
-  final String email;
-  final String password;
-  final String phone;
-  final String role; // CLIENT | SELLER
-
-  RegisterRequest({
-    required this.name,
-    required this.email,
-    required this.password,
-    required this.phone,
-    required this.role,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'email': email,
-    'password': password,
-    'phone': phone,
-    'role': role,
-  };
-}
-
-class AuthResponse {
-  final String token;
-  final String userId;
-  final String name;
-  final String email;
-  final String role;
-
-  AuthResponse({
-    required this.token,
-    required this.userId,
-    required this.name,
-    required this.email,
-    required this.role,
-  });
-
-  String get firstName => name.split(' ').first;
-
-  String get lastName =>
-      name.split(' ').length > 1 ? name.split(' ').sublist(1).join(' ') : '';
-
-  factory AuthResponse.fromJson(Map<String, dynamic> json) {
-    return AuthResponse(
-      token: json['token'] ?? json['accessToken'] ?? '',
-      userId: (json['id'] ?? json['userId'] ?? '').toString(),
-      name:
-          json['name'] ??
-          '${json['firstName'] ?? ''} ${json['lastName'] ?? ''}'.trim(),
-      email: json['email'] ?? '',
-      role: json['role'] ?? 'CLIENT',
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// Service
-// ─────────────────────────────────────────────────────────────
 
 class AuthService {
+  final AuthApi _api = AuthApi();
   final SecureStorage _storage = SecureStorage();
 
-  /// LOGIN
+  // ─────────────────────────────────────────
+  // LOGIN
+  // ─────────────────────────────────────────
+
   Future<AuthResponse> login(LoginRequest request) async {
-    final data = await ApiClient.post(
-      '/api/auth/login', // ✅ Correct endpoint
-      body: request.toJson(),
-      auth: false,
+    final data = await _api.login(
+      email: request.email,
+      password: request.password,
     );
 
-    final response = AuthResponse.fromJson(data);
+    final auth = AuthResponse.fromJson(data);
+    await _saveSession(auth);
 
-    await _saveSession(response);
-
-    return response;
+    return auth;
   }
 
-  /// REGISTER
+  // ─────────────────────────────────────────
+  // REGISTER
+  // ─────────────────────────────────────────
+
   Future<AuthResponse> register(RegisterRequest request) async {
-    final data = await ApiClient.post(
-      '/api/auth/register', // ✅ Correct endpoint
-      body: request.toJson(),
-      auth: false,
+    final data = await _api.register(
+      name: request.name,
+      email: request.email,
+      password: request.password,
+      phone: request.phone,
+      role: request.role,
     );
 
-    final response = AuthResponse.fromJson(data);
+    final auth = AuthResponse.fromJson(data);
+    await _saveSession(auth);
 
-    await _saveSession(response);
-
-    return response;
+    return auth;
   }
 
-  /// LOGOUT
-  Future<void> _logout(BuildContext context) async {
+  // ─────────────────────────────────────────
+  // LOGOUT
+  // ─────────────────────────────────────────
+
+  Future<void> logout() async {
     try {
-      await ApiClient.post('/api/auth/logout');
+      await _api.logout();
+    } catch (_) {}
 
-      // Remove stored token
-      await _storage.deleteToken();
-
-      if (!context.mounted) return;
-
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Logout failed")));
-    }
+    await _storage.deleteToken();
+    await _storage.clearAll();
   }
 
-  /// CHECK IF USER IS LOGGED IN
-  Future<bool> isLoggedIn() async {
-    final userId = await getCurrentUserId();
-    return userId != null;
+  // ─────────────────────────────────────────
+  // PASSWORD + AUTH HELPERS
+  // ─────────────────────────────────────────
+
+  Future forgotPassword(String email) async {
+    return await _api.forgotPassword(email: email);
   }
 
-  /// GET USER ROLE
-  Future<String?> getUserRole() async {
-    return await _storage.getUserRole();
+  Future resetPassword(String token, String newPassword) async {
+    return await _api.resetPassword(token: token, newPassword: newPassword);
   }
 
-  /// SAVE SESSION
+  Future verifyEmail(String token) async {
+    return await _api.verifyEmail(token: token);
+  }
+
+  Future resendVerification(String email) async {
+    return await _api.resendVerification(email: email);
+  }
+
+  Future refreshToken(String refreshToken) async {
+    return await _api.refreshToken(refreshToken: refreshToken);
+  }
+
+  // ─────────────────────────────────────────
+  // SESSION STORAGE
+  // ─────────────────────────────────────────
+
   Future<void> _saveSession(AuthResponse r) async {
     await _storage.saveUserData(
       token: r.token,
@@ -150,17 +96,51 @@ class AuthService {
       role: r.role,
       name: r.name,
     );
+
+    await _storage.saveUserRole(r.role);
+
+    debugPrint("Session saved → ${r.role}");
   }
 
-  /// GET TOKEN
+  Future<bool> isLoggedIn() async {
+    final token = await _storage.getToken();
+    return token != null;
+  }
+
+  Future<String> getUserRole() async {
+    final role = await _storage.getUserRole();
+    return role ?? "CLIENT";
+  }
+
+  Future<AuthResponse?> getCurrentSession() async {
+    final token = await _storage.getToken();
+    if (token == null) return null;
+
+    final email = await _storage.getUserEmail();
+    final name = await _storage.getUserName();
+    final role = await _storage.getUserRole();
+    final userId = await _storage.getUserId();
+
+    return AuthResponse(
+      token: token,
+      userId: userId ?? "",
+      email: email ?? "",
+      role: role ?? "CLIENT",
+      name: name ?? "",
+    );
+  }
+
   Future<String?> getToken() async {
     return await _storage.getToken();
   }
 
- Future<String?> getCurrentUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token'); // whatever key you store JWT under
+  Future<String?> getCurrentUserId() async {
+    final userId = await _storage.getUserId();
+    if (userId != null) return userId;
+
+    final token = await _storage.getToken();
     if (token == null) return null;
+
     return _extractUserIdFromToken(token);
   }
 
@@ -169,24 +149,66 @@ class AuthService {
       final parts = token.split('.');
       if (parts.length != 3) return null;
 
-      // Decode the payload (middle part)
       final payload = parts[1];
-      // Fix base64 padding
       final normalized = base64Url.normalize(payload);
-      final decoded = utf8.decode(base64Url.decode(normalized));
-      final map = jsonDecode(decoded) as Map<String, dynamic>;
 
-      // JWT claim is usually 'sub' or 'userId' or 'id'
-      return map['sub'] as String?   // try 'sub' first
-          ?? map['userId'] as String?
-          ?? map['id'] as String?;
-    } catch (e) {
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final map = jsonDecode(decoded);
+
+      return map['sub'] ?? map['userId'] ?? map['id'];
+    } catch (_) {
       return null;
     }
   }
 
-  Future<void> saveUserId(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userId', userId);
+  Future<String> getUserRoleFromStorage() async {
+    final role = await _storage.getUserRole();
+
+    if (role != null && role.isNotEmpty) return role;
+
+    final token = await _storage.getToken();
+    if (token != null) {
+      final decodedRole = _extractRoleFromToken(token);
+
+      if (decodedRole != null) {
+        await _storage.saveUserRole(decodedRole);
+        return decodedRole;
+      }
+    }
+
+    return "CLIENT";
+  }
+
+  String? _extractRoleFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final map = jsonDecode(decoded);
+
+      String? role = map['role']?.toString();
+
+      if (role == null) return null;
+
+      role = role.toUpperCase();
+
+      if (role.startsWith("ROLE_")) {
+        role = role.substring(5);
+      }
+
+      if (role.contains("SELLER")) return "SELLER";
+      if (role.contains("ADMIN")) return "ADMIN";
+      if (role.contains("CLIENT") || role.contains("USER")) {
+        return "CLIENT";
+      }
+
+      return role;
+    } catch (_) {
+      return null;
+    }
   }
 }

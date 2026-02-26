@@ -23,6 +23,7 @@ public class PropertyDto {
 
     private UUID id;
     private UUID sellerId;
+    private String sellerName;
     private String title;
     private String description;
     private BigDecimal price;

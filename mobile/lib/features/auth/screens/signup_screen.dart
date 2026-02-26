@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/utils/validators.dart';
+import 'package:mobile/features/auth/models/register_request.dart';
 import '../services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -50,7 +51,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-              'Account created successfully, ${response.firstName}!',
+              'Account created successfully, ${response.name}!',
               style: GoogleFonts.outfit()),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,

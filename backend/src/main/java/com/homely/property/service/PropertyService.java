@@ -13,8 +13,21 @@ import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 import com.homely.property.dto.PropertyCreateRequest;
 import com.homely.property.dto.PropertyDto;
-import com.homely.property.entity.*;
-import com.homely.property.mapper.*;
+import com.homely.property.dto.PropertyUpdateRequest;
+import com.homely.property.entity.Apartment;
+import com.homely.property.entity.Commercial;
+import com.homely.property.entity.House;
+import com.homely.property.entity.Land;
+import com.homely.property.entity.Property;
+import com.homely.property.entity.Studio;
+import com.homely.property.entity.Villa;
+import com.homely.property.mapper.ApartmentMapper;
+import com.homely.property.mapper.CommercialMapper;
+import com.homely.property.mapper.HouseMapper;
+import com.homely.property.mapper.LandMapper;
+import com.homely.property.mapper.PropertyMapper;
+import com.homely.property.mapper.StudioMapper;
+import com.homely.property.mapper.VillaMapper;
 import com.homely.property.repository.PropertyRepository;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
@@ -215,6 +228,108 @@ Specification<Property> spec = (root, query, cb) -> null;
         property.setStatus(status);
 
         return propertyMapper.toDto(propertyRepository.save(property));
+    }
+
+    // ================= UPDATE PROPERTY =================
+    public PropertyDto update(UUID propertyId, PropertyUpdateRequest request, String userEmail) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
+
+        if (property.getSeller() == null || !property.getSeller().getEmail().equals(userEmail)) {
+            throw new RuntimeException("Only the owner can update this property");
+        }
+
+        if (request.getTitle() != null) property.setTitle(request.getTitle());
+        if (request.getDescription() != null) property.setDescription(request.getDescription());
+        if (request.getPrice() != null) property.setPrice(request.getPrice());
+        if (request.getCurrency() != null) property.setCurrency(request.getCurrency());
+        if (request.getListingType() != null) property.setListingType(request.getListingType());
+        if (request.getPropertyType() != null) property.setPropertyType(request.getPropertyType());
+        if (request.getStatus() != null) property.setStatus(request.getStatus());
+        if (request.getAddress() != null) property.setAddress(request.getAddress());
+        if (request.getLatitude() != null) property.setLatitude(request.getLatitude());
+        if (request.getLongitude() != null) property.setLongitude(request.getLongitude());
+
+        // Subtype updates (create subtype if missing)
+        if (request.getApartment() != null) {
+            var ar = request.getApartment();
+            Apartment a = property.getApartment();
+            if (a == null) {
+                a = new Apartment();
+                a.setProperty(property);
+                property.setApartment(a);
+            }
+            a.setBedrooms(ar.getBedrooms());
+            a.setBathrooms(ar.getBathrooms());
+            a.setFloor(ar.getFloor());
+            a.setHasElevator(ar.isHasElevator());
+        }
+
+        if (request.getHouse() != null) {
+            var hr = request.getHouse();
+            House h = property.getHouse();
+            if (h == null) {
+                h = new House();
+                h.setProperty(property);
+                property.setHouse(h);
+            }
+            h.setBedrooms(hr.getBedrooms());
+            h.setBathrooms(hr.getBathrooms());
+            h.setHasGarage(hr.isHasGarage());
+            h.setLandAreaSqm(hr.getLandAreaSqm());
+        }
+
+        if (request.getVilla() != null) {
+            var vr = request.getVilla();
+            Villa v = property.getVilla();
+            if (v == null) {
+                v = new Villa();
+                v.setProperty(property);
+                property.setVilla(v);
+            }
+            v.setBedrooms(vr.getBedrooms());
+            v.setBathrooms(vr.getBathrooms());
+            v.setLandAreaSqm(vr.getLandAreaSqm());
+            v.setHasPool(vr.isHasPool());
+        }
+
+        if (request.getStudio() != null) {
+            var sr = request.getStudio();
+            Studio s = property.getStudio();
+            if (s == null) {
+                s = new Studio();
+                s.setProperty(property);
+                property.setStudio(s);
+            }
+            s.setFurnished(sr.isFurnished());
+        }
+
+        if (request.getCommercial() != null) {
+            var cr = request.getCommercial();
+            Commercial c = property.getCommercial();
+            if (c == null) {
+                c = new Commercial();
+                c.setProperty(property);
+                property.setCommercial(c);
+            }
+            c.setAreaSqm(cr.getAreaSqm());
+            c.setBusinessType(cr.getBusinessType());
+        }
+
+        if (request.getLand() != null) {
+            var lr = request.getLand();
+            Land l = property.getLand();
+            if (l == null) {
+                l = new Land();
+                l.setProperty(property);
+                property.setLand(l);
+            }
+            l.setAreaSqm(lr.getAreaSqm());
+            l.setConstructible(lr.isConstructible());
+        }
+
+        Property saved = propertyRepository.save(property);
+        return propertyMapper.toDto(saved);
     }
 
     // ================= DELETE =================

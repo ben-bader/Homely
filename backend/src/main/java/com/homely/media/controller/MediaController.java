@@ -41,7 +41,7 @@ public class MediaController {
 
 
         @GetMapping("/{propertyId}/media")
-        public List<PropertyMedia> getMedia(@PathVariable UUID propertyId) {
+        public List<PropertyMediaDto> getMedia(@PathVariable UUID propertyId) {
                 return mediaService.findByPropertyId(propertyId);
         }
 
