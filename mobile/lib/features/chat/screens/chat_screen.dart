@@ -28,6 +28,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   String? _otherUserName;
+
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 200), () {
       if (_scrollController.hasClients) {
@@ -237,13 +238,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
 
               data: (messages) {
+                // only attempt to derive name from messages if we don't already
+                // have one; do NOT fall back to our own message which would
+                // overwrite the passed-in chatTitle with the sender's name.
                 if (_otherUserName == null && messages.isNotEmpty) {
-                  final other = messages.firstWhere(
-                    (m) => m.senderId != widget.currentUserId,
-                    orElse: () => messages.first,
-                  );
-
-                  _otherUserName = other.senderName;
+                  final others = messages
+                      .where((m) => m.senderId != widget.currentUserId);
+                  if (others.isNotEmpty) {
+                    _otherUserName = others.first.senderName;
+                  }
                 }
                 if (messages.isEmpty) {
                   return Center(

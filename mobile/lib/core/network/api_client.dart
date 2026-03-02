@@ -47,21 +47,46 @@ class ApiClient {
 
   static Future<dynamic> put(
     String path, {
+    Map<String, String>? queryParams,
     Map<String, dynamic>? body,
+    bool auth = true,
   }) async {
+    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
     final res = await http
         .put(
-          Uri.parse('$baseUrl$path'),
-          headers: await _headers(),
+          uri,
+          headers: await _headers(auth: auth),
           body: body != null ? jsonEncode(body) : null,
         )
         .timeout(const Duration(seconds: 15));
     return _handle(res);
   }
 
-  static Future<dynamic> delete(String path) async {
+  static Future<dynamic> delete(
+    String path, {
+    Map<String, String>? queryParams,
+    bool auth = true,
+  }) async {
+    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
     final res = await http
-        .delete(Uri.parse('$baseUrl$path'), headers: await _headers())
+        .delete(uri, headers: await _headers(auth: auth))
+        .timeout(const Duration(seconds: 15));
+    return _handle(res);
+  }
+
+  static Future<dynamic> patch(
+    String path, {
+    Map<String, String>? queryParams,
+    Map<String, dynamic>? body,
+    bool auth = true,
+  }) async {
+    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
+    final res = await http
+        .patch(
+          uri,
+          headers: await _headers(auth: auth),
+          body: body != null ? jsonEncode(body) : null,
+        )
         .timeout(const Duration(seconds: 15));
     return _handle(res);
   }

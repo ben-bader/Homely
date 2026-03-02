@@ -140,11 +140,65 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                       return ListView.builder(
                         itemCount: filtered.length,
                         padding: const EdgeInsets.only(top: 8),
-                        itemBuilder: (_, i) => _ConversationTile(
-                          conv: filtered[i],
-                          currentUserId:
-                              currentUserId, // ← pass current user ID
-                        ),
+                        itemBuilder: (_, i) {
+                          final conv = filtered[i];
+                          final deletable = conv.lastMessage == null;
+                          return Dismissible(
+                            key: ValueKey(conv.id),
+                            direction: deletable
+                                ? DismissDirection.endToStart
+                                : DismissDirection.none,
+                            confirmDismiss: (direction) async {
+                              if (!deletable) return false;
+                              return await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('Delete conversation'),
+                                      content: const Text(
+                                          'This conversation has no messages. Delete it?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(ctx, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(ctx, true),
+                                          child: const Text('Delete',
+                                              style:
+                                                  TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    ),
+                                  ) ??
+                                  false;
+                            },
+                            onDismissed: (direction) async {
+                              try {
+                                await ref
+                                    .read(chatRepositoryProvider)
+                                    .deleteConversation(conv.id);
+                                ref.invalidate(conversationsProvider);
+                              } catch (e) {
+                                // ignore; could show snackbar
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString())));
+                              }
+                            },
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                              ),
+                            ),
+                            child: _ConversationTile(
+                              conv: conv,
+                              currentUserId: currentUserId,
+                            ),
+                          );
+                        },
                       );
                     },
                   );

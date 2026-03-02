@@ -41,4 +41,11 @@ public class NotificationService {
     notification.setRead(true);
     return notificationMapper.toDto(notificationRepository.save(notification));
 }
+
+    public List<Notification> getAllByEmail(String email) {
+        return notificationRepository.findByUserEmail(email);
+    }
+    public List<Notification> getUnreadByEmail(String email) {
+        return notificationRepository.findByUserEmailAndReadFalse(email);
+    }
 }

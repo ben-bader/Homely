@@ -1,15 +1,15 @@
 package com.homely.chat.mapper;
 
+import java.util.Comparator;
+
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.AfterMapping;
 import org.mapstruct.MappingTarget;
 
 import com.homely.chat.dto.ConversationDto;
 import com.homely.chat.entity.Conversation;
 import com.homely.chat.entity.Message;
-
-import java.util.Comparator;
 
 @Mapper(componentModel = "spring")
 public interface ConversationMapper {
@@ -19,7 +19,9 @@ public interface ConversationMapper {
     @Mapping(target = "sellerId", source = "seller.id")
     @Mapping(target = "propertyTitle", expression = "java(entity.getProperty() != null ? entity.getProperty().getTitle() : null)")
     @Mapping(target = "sellerName", expression = "java(entity.getSeller() != null ? entity.getSeller().getName() : null)")
+    @Mapping(target = "clientName", expression = "java(entity.getClient() != null ? entity.getClient().getName() : null)")
     @Mapping(target = "sellerAvatar", ignore = true) // Profile doesn't have profilePicture field
+    @Mapping(target = "clientAvatar", ignore = true)
     @Mapping(target = "lastMessage", ignore = true)
     @Mapping(target = "lastMessageAt", ignore = true)
     @Mapping(target = "unreadCount", ignore = true)

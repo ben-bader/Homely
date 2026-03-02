@@ -1,18 +1,17 @@
 import 'dart:async';
-import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/features/auth/services/auth_service.dart';
 import 'package:mobile/features/notifications/models/notifications.dart';
 
 class NotificationService {
-  static const String _baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev/api/notifications';
-
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
   Timer? _pollTimer;
-  List<String> _seenIds = []; // tracks already-shown notifications
+  final List<String> _seenIds = [];
 
   // Call once at app start
   Future<void> init() async {
@@ -29,26 +28,35 @@ class NotificationService {
     ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  // Start polling every 15 seconds
- void startPolling(AuthService authService) async {
-  final userId = await authService.getCurrentUserId();
-  if (userId == null) return;
-
-  _pollTimer?.cancel();
-  _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
-    final notifications = await fetchUnread(userId);
-    for (final n in notifications) {
-      if (!_seenIds.contains(n.id)) {
-        _seenIds.add(n.id);
-        _showLocalNotification(n);
-      }
+  Future<void> startPolling(AuthService authService) async {
+    final userId = await authService.getCurrentUserId();
+    if (userId == null) {
+      debugPrint('[NotificationService] ⚠️ Failed to start polling: userId is null');
+      return;
     }
-  });
-}
+
+    debugPrint('[NotificationService] ✅ Starting polling for userId: $userId');
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+      try {
+        final notifications = await fetchUnread(userId);
+        debugPrint('[NotificationService] 📬 Fetched ${notifications.length} notifications');
+        for (final n in notifications) {
+          if (!_seenIds.contains(n.id)) {
+            _seenIds.add(n.id);
+            _showLocalNotification(n);
+          }
+        }
+      } catch (e) {
+        debugPrint('[NotificationService] ❌ Polling error: $e');
+      }
+    });
+  }
 
   void stopPolling() => _pollTimer?.cancel();
 
   void _showLocalNotification(NotificationModel n) {
+    debugPrint('[NotificationService] 🔔 Showing notification: ${n.type} - ${n.payload}');
     const androidDetails = AndroidNotificationDetails(
       'homely_channel',
       'Homely Notifications',
@@ -66,19 +74,36 @@ class NotificationService {
 
   Future<List<NotificationModel>> fetchUnread(String userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/unread?userId=$userId'),
+      final data = await ApiClient.get(
+        Endpoints.notifications,
+        queryParams: {'userId': userId},
+        auth: true,
       );
-      if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
-        return data.map((e) => NotificationModel.fromJson(e)).toList();
+
+      if (data is List) {
+        return data.map((e) => NotificationModel.fromJson(e as Map<String, dynamic>)).toList();
       }
-    } catch (_) {}
-    return [];
+      if (data is Map && data['content'] is List) {
+        return (data['content'] as List)
+            .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('[NotificationService] 🚫 Error fetching notifications: $e');
+      return [];
+    }
   }
 
   Future<void> markAsRead(String notificationId) async {
-    await http.patch(Uri.parse('$_baseUrl/$notificationId/read'));
+    try {
+      await ApiClient.patch(
+        Endpoints.markNotificationAsRead(notificationId),
+        auth: true,
+      );
+    } catch (e) {
+      debugPrint('[NotificationService] ❌ Error marking as read: $e');
+    }
   }
 
   String titleFor(String type) {

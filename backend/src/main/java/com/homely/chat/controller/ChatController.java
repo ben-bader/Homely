@@ -60,6 +60,14 @@ public class ChatController {
                 .toList();
     }
 
+    @DeleteMapping("/conversations/{conversationId}")
+    public void deleteConversation(
+            @PathVariable UUID conversationId,
+            Principal principal) {
+        User user = userService.getByEmail(principal.getName());
+        chatService.deleteConversationIfEmpty(conversationId, user.getId());
+    }
+
     @GetMapping("/messages")
     public List<ChatMessageResponse> getConversationMessages(
             @RequestParam UUID conversationId) {

@@ -30,6 +30,29 @@ public class ChatService {
     public Conversation getConversationById(UUID conversationId) {
         return conversationRepository.findById(conversationId).orElseThrow();
     }
+
+    /**
+     * Delete a conversation only if it contains no messages.
+     * User must be either client or seller on the conversation.
+     */
+    @Transactional
+    public void deleteConversationIfEmpty(UUID conversationId, UUID userId) {
+        Conversation conv = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new RuntimeException("Conversation not found"));
+
+        // check membership
+        if (!conv.getClient().getId().equals(userId) &&
+                !conv.getSeller().getId().equals(userId)) {
+            throw new RuntimeException("User not part of conversation");
+        }
+
+        long count = messageRepository.countByConversationId(conversationId);
+        if (count > 0) {
+            throw new RuntimeException("Conversation not empty");
+        }
+
+        conversationRepository.delete(conv);
+    }
     public List<Conversation> getUserConversations(UUID userId) {
         List<Conversation> conversations = conversationRepository.findByClientIdOrSellerId(userId, userId);
         // Force fetch of lazy-loaded relationships
@@ -38,6 +61,9 @@ public class ChatService {
             if (conv.getSeller() != null) {
                 conv.getSeller().getName();
                 // Profile doesn't have profilePicture field, skip it
+            }
+            if (conv.getClient() != null) {
+                conv.getClient().getName();
             }
             if (conv.getMessages() != null && !conv.getMessages().isEmpty()) {
                 conv.getMessages().size(); // Force fetch messages

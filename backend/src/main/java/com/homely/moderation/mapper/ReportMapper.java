@@ -1,4 +1,4 @@
-package com.homely.notification;
+package com.homely.moderation.mapper;
 
 import java.util.UUID;
 

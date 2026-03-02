@@ -1,163 +1,102 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:mobile/core/storage/secure_storage.dart';
+import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/endpoints.dart';
 import '../models/message.dart';
 import '../models/conversation.dart';
 
 class ChatRepository {
-  final String baseUrl =
-      "https://unparrying-christene-reductively.ngrok-free.dev";
-
-  final SecureStorage _storage = SecureStorage();
-
-  Future<Map<String, String>> _headers() async {
-    final token = await _storage.getToken();
-
-    return {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
-  }
+  // repository now proxies through ApiClient; headers managed globally
 
   // ✅ FETCH MESSAGES
   Future<List<ChatMessage>> fetchMessages(
       String conversationId) async {
-    final response = await http.get(
-      Uri.parse(
-          "$baseUrl/api/chat/messages?conversationId=$conversationId"),
-      headers: await _headers(),
+    final data = await ApiClient.get(
+      Endpoints.chatMessages,
+      queryParams: {'conversationId': conversationId},
+      auth: true,
     );
 
-    if (response.statusCode != 200) {
-      throw Exception(
-          "Failed to load messages: ${response.statusCode}");
-    }
-
-    final decoded = jsonDecode(response.body);
-
-    // If backend returns List
-    if (decoded is List) {
-      return decoded
-          .map((e) =>
-              ChatMessage.fromJson(
-                  e as Map<String, dynamic>))
+    if (data is List) {
+      return data
+          .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-
-    // If backend returns { content: [...] }
-    if (decoded is Map &&
-        decoded['content'] is List) {
-      return (decoded['content'] as List)
-          .map((e) =>
-              ChatMessage.fromJson(
-                  e as Map<String, dynamic>))
+    if (data is Map && data['content'] is List) {
+      return (data['content'] as List)
+          .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-
     return [];
   }
 
   // ✅ CREATE CONVERSATION
   Future<Conversation> createConversation(
       String propertyId) async {
-    final response = await http.post(
-      Uri.parse(
-          "$baseUrl/api/chat/conversations/$propertyId"),
-      headers: await _headers(),
+    final data = await ApiClient.post(
+      Endpoints.createChatConversation(propertyId),
+      auth: true,
     );
 
-    if (response.statusCode != 200 &&
-        response.statusCode != 201) {
-      throw Exception(
-          "Failed to create conversation");
-    }
-
-    final decoded =
-        jsonDecode(response.body);
-
-    return Conversation.fromJson(
-        decoded as Map<String, dynamic>);
+    return Conversation.fromJson(data as Map<String, dynamic>);
   }
 
   // ✅ FETCH CONVERSATIONS
-  Future<List<Conversation>>
-      fetchConversations() async {
-    final response = await http.get(
-      Uri.parse(
-          "$baseUrl/api/chat/conversations"),
-      headers: await _headers(),
+  Future<List<Conversation>> fetchConversations() async {
+    final data = await ApiClient.get(
+      Endpoints.chatConversations,
+      auth: true,
     );
 
-    if (response.statusCode != 200) {
-      throw Exception(
-          "Failed to load conversations: ${response.statusCode}");
-    }
-
-    final decoded =
-        jsonDecode(response.body);
-
-    if (decoded is List) {
-      return decoded
-          .map((e) =>
-              Conversation.fromJson(
-                  e as Map<String, dynamic>))
+    if (data is List) {
+      return data
+          .map((e) => Conversation.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-
-    if (decoded is Map &&
-        decoded['content'] is List) {
-      return (decoded['content'] as List)
-          .map((e) =>
-              Conversation.fromJson(
-                  e as Map<String, dynamic>))
+    if (data is Map && data['content'] is List) {
+      return (data['content'] as List)
+          .map((e) => Conversation.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-
-    if (decoded is Map &&
-        decoded['data'] is List) {
-      return (decoded['data'] as List)
-          .map((e) =>
-              Conversation.fromJson(
-                  e as Map<String, dynamic>))
+    if (data is Map && data['data'] is List) {
+      return (data['data'] as List)
+          .map((e) => Conversation.fromJson(e as Map<String, dynamic>))
           .toList();
     }
-
     return [];
   }
   // ✅ EDIT MESSAGE
-Future<ChatMessage> editMessage({
-  required String messageId,
-  required String content,
-  required String userId,
-}) async {
-  final response = await http.put(
-    Uri.parse("$baseUrl/api/chat/message/$messageId"
-        "?content=${Uri.encodeComponent(content)}&userId=$userId"),
-    headers: await _headers(),
-  );
-
-  if (response.statusCode != 200) {
-    throw Exception("Failed to edit message");
+  Future<ChatMessage> editMessage({
+    required String messageId,
+    required String content,
+    required String userId,
+  }) async {
+    final data = await ApiClient.put(
+      Endpoints.editChatMessage(messageId),
+      queryParams: {
+        'content': content,
+        'userId': userId,
+      },
+      auth: true,
+    );
+    return ChatMessage.fromJson(data);
   }
 
-  final decoded = jsonDecode(response.body);
-  return ChatMessage.fromJson(decoded);
-}
-
-// ✅ DELETE MESSAGE
-Future<void> deleteMessage({
-  required String messageId,
-  required String userId,
-}) async {
-  final response = await http.delete(
-    Uri.parse("$baseUrl/api/chat/message/$messageId"
-        "?userId=$userId"),
-    headers: await _headers(),
-  );
-
-  if (response.statusCode != 200 &&
-      response.statusCode != 204) {
-    throw Exception("Failed to delete message");
+  // ✅ DELETE MESSAGE
+  Future<void> deleteMessage({
+    required String messageId,
+    required String userId,
+  }) async {
+    await ApiClient.delete(
+      Endpoints.deleteChatMessage(messageId),
+      queryParams: {'userId': userId},
+      auth: true,
+    );
   }
-}
+
+  // ✅ DELETE CONVERSATION (only removes if it has no messages)
+  Future<void> deleteConversation(String conversationId) async {
+    await ApiClient.delete(
+      '/chat/conversations/$conversationId',
+      auth: true,
+    );
+  }
 }

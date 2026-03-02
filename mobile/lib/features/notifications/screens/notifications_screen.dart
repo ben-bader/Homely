@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/notifications/services/notification_service.dart';
 import 'package:mobile/features/notifications/models/notifications.dart';
 class NotificationsScreen extends StatefulWidget {
@@ -38,7 +40,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title:  Text(
+                  'Notifications',
+                  style: GoogleFonts.outfit(
+                   color: AppColors.accent,
+                            letterSpacing: -0.5,
+                            height: 1.1,
+                            fontSize: 30,
+                  ),
+                ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -66,7 +76,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         key: Key(n.id),
                         direction: DismissDirection.endToStart,
                         background: Container(
-                          color: Colors.green,
+                          color: AppColors.primary,
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(right: 20),
                           child: const Icon(Icons.check, color: Colors.white),
@@ -75,10 +85,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor:
-                                Theme.of(context).colorScheme.primaryContainer,
+                                AppColors.borderLight,
                             child: Icon(
                               _iconFor(n.type),
-                              color: Theme.of(context).colorScheme.primary,
+                              color: AppColors.primary,
                             ),
                           ),
                           title: Text(

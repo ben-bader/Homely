@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.moderation.dto.ReportDto;
 import com.homely.moderation.entity.Report;
+import com.homely.moderation.mapper.ReportMapper;
 import com.homely.moderation.service.ModerationService;
-import com.homely.notification.ReportMapper;
 import com.homely.property.service.PropertyService;
 import com.homely.user.dto.UserUpdateRequest;
 import com.homely.user.entity.User;
