@@ -19,44 +19,33 @@ export function SectionCards() {
   const [reports, setReports] = useState(0);
   const [boosts, setBoosts] = useState(0);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [usersRes, propertiesRes, reportsRes, boostsRes] =
-          await Promise.all([
-            api.get("/admin/users"),
-            api.get("/admin/properties"),
-            api.get("/admin/reports"),
-            api.get("/admin/boosts"),
-          ]);
+ useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const res = await api.get("/admin/dashboard-stats");
 
-        setUsers(usersRes.data.length);
-        setProperties(propertiesRes.data.length);
-        setReports(reportsRes.data.length);
+      const data = res.data || {};
 
-        // Only count ACTIVE boosts
-        const activeBoosts = boostsRes.data.filter(
-          (b: any) => b.status === "COMPLETED"
-        );
-        setBoosts(activeBoosts.length);
-      } catch (error) {
-        console.error("Failed to load dashboard stats", error);
-      }
-    };
+      setUsers(data.users || 0);
+      setProperties(data.properties || 0);
+      setReports(data.reports || 0);
+      setBoosts(data.boosts || 0);
 
-    fetchStats();
-  }, []);
+    } catch (error) {
+      console.error("Failed to load dashboard stats", error);
+    }
+  };
+
+  fetchStats();
+}, []);
 
   return (
     <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6">
-      
       {/* USERS */}
       <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
         <CardHeader>
           <CardDescription>Total Users</CardDescription>
-          <CardTitle className="text-3xl font-bold">
-            {users}
-          </CardTitle>
+          <CardTitle className="text-3xl font-bold">{users}</CardTitle>
           <CardAction>
             <Badge variant="outline" className="bg-gray-50">
               <IconUsers className="size-4 mr-1" />
@@ -73,9 +62,7 @@ export function SectionCards() {
       <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
         <CardHeader>
           <CardDescription>Total Properties</CardDescription>
-          <CardTitle className="text-3xl font-bold">
-            {properties}
-          </CardTitle>
+          <CardTitle className="text-3xl font-bold">{properties}</CardTitle>
           <CardAction>
             <Badge variant="outline" className="bg-gray-50">
               <IconHome className="size-4 mr-1" />
@@ -92,9 +79,7 @@ export function SectionCards() {
       <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
         <CardHeader>
           <CardDescription>Total Reports</CardDescription>
-          <CardTitle className="text-3xl font-bold">
-            {reports}
-          </CardTitle>
+          <CardTitle className="text-3xl font-bold">{reports}</CardTitle>
           <CardAction>
             <Badge variant="outline" className="bg-gray-50">
               <IconFlag className="size-4 mr-1" />
@@ -111,9 +96,7 @@ export function SectionCards() {
       <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
         <CardHeader>
           <CardDescription>Active Boosts</CardDescription>
-          <CardTitle className="text-3xl font-bold">
-            {boosts}
-          </CardTitle>
+          <CardTitle className="text-3xl font-bold">{boosts}</CardTitle>
           <CardAction>
             <Badge variant="outline" className="bg-gray-50">
               <IconRocket className="size-4 mr-1" />

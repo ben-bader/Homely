@@ -31,8 +31,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "medamraoui@gmail.com",
-  "password": "Med12345678"
+  "email": "bichoufarouk@gmail.com",
+  "password": "Farou9123"
 }
 
 ###
@@ -161,7 +161,7 @@ Authorization: Bearer {{token}}
 
 ###
 # Get boost by ID
-GET {{baseUrl}}/boost/481836da-9969-46d1-8838-11bd7a395643
+GET {{baseUrl}}/admin/properties
 Authorization: Bearer {{token}}
 
 ###
