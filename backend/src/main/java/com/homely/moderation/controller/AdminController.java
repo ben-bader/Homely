@@ -18,6 +18,7 @@ import com.homely.boost.entity.BoostPurchase;
 import com.homely.boost.mapper.BoostPurchaseMapper;
 import com.homely.boost.mapper.BoostPurchaseMapperImpl;
 import com.homely.boost.service.BoostService;
+import com.homely.common.dto.ApiResponse;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PurchaseStatus;
 import com.homely.common.enums.ReportStatus;
@@ -26,6 +27,7 @@ import com.homely.feedback.mapper.FeedbackMapper;
 import com.homely.feedback.service.FeedbackService;
 import com.homely.moderation.dto.AuditLogDto;
 import com.homely.moderation.dto.ReportDto;
+import com.homely.moderation.entity.DashboardStats;
 import com.homely.moderation.entity.Report;
 import com.homely.moderation.mapper.AuditLogMapper;
 import com.homely.moderation.mapper.ReportMapper;
@@ -66,7 +68,7 @@ public class AdminController {
     private final PropertyViewService propertyViewService;
     private final FeedbackService feedbackService;
     private final VisitRequestService visitRequestService;
-     private final PropertyRepository propertyRepository;
+    private final PropertyRepository propertyRepository;
 
     private final ReportMapper reportMapper;
     private final AuditLogMapper auditLogMapper;
@@ -97,9 +99,6 @@ public class AdminController {
             Principal principal) {
 
         User admin = userService.getByEmail(principal.getName());
-        if (admin == null)
-            throw new RuntimeException("Admin not found");
-
         Report updated = moderationService.updateReportStatus(id, status, admin);
 
         moderationService.logAction(
@@ -126,9 +125,6 @@ public class AdminController {
     public void activateUser(@PathVariable UUID id, Principal principal) {
 
         User admin = userService.getByEmail(principal.getName());
-        if (admin == null)
-            throw new RuntimeException("Admin not found");
-
         userService.activate(id);
 
         moderationService.logAction(
@@ -158,20 +154,24 @@ public class AdminController {
     }
 
     @GetMapping("/boosts")
-    public List<BoostPurchaseDto> getAllBoosts() {
-        return boostService.getAll().stream().map(boostPurchaseMapper::toDto).toList();
+    public ApiResponse<List<BoostPurchaseDto>> getAllBoosts() {
+        return new ApiResponse<>(
+                boostService.getAll().stream()
+                        .map(boostPurchaseMapper::toDto)
+                        .toList());
     }
 
     @GetMapping("/properties")
     public List<PropertyDto> getAllProperties() {
         return propertyService.getAll();
     }
+
     @GetMapping("/properties/{id}")
     public ResponseEntity<PropertyDto> getProperty(@PathVariable UUID id) {
         return propertyRepository.findById(id)
-            .map(propertyMapper::toDto)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+                .map(propertyMapper::toDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/property-views")
@@ -234,5 +234,14 @@ public class AdminController {
 
         // Convert to DTO if needed
         return updated; // or use a mapper
+    }
+
+    @GetMapping("/admin/dashboard-stats")
+    public DashboardStats stats() {
+        return new DashboardStats(
+                userService.getAll().size(),
+                propertyService.getAll().size(),
+                moderationService.getReports().size(),
+                boostService.getAll().size());
     }
 }
