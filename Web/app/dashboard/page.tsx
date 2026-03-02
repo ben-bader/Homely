@@ -13,20 +13,22 @@ import { useState } from "react"
 import AdminDashboardWrapper from "@/components/dashboard-componenets/AdminDashboardWrapper"
 import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
 import Profile from "@/components/dashboard-componenets/profile"
+import Chat from "@/components/dashboard-componenets/Chat";
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")
   
   const components: Record<string, React.ReactNode> = {
-    users: <Users />,
-    properties: <Properties />,
-    reports: <Reports />,
-    boosts: <Boosts />,
-    "visit requests": <VisitRequests />,
-    dashboard: <Dashboard />,
-    "audit logs": <AuditLogs />,
-    profile: <Profile />,
-  }
+  users: <Users />,
+  properties: <Properties />,
+  reports: <Reports />,
+  boosts: <Boosts />,
+  "visit requests": <VisitRequests />,
+  dashboard: <Dashboard />,
+  "audit logs": <AuditLogs />,
+  profile: <Profile />,
+  chats: <Chat />, // <-- add your new chat table here
+};
   
   
     return (
