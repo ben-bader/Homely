@@ -232,7 +232,6 @@ public class AdminController {
                 admin,
                 "Changed boost id " + id + " status to " + status);
 
-        // Convert to DTO if needed
         return updated; // or use a mapper
     }
 
