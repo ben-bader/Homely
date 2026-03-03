@@ -22,6 +22,7 @@ import {
   IconUser,
   IconUsers,
   IconHistory,
+  IconMessageCircle,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -82,6 +83,11 @@ const data = {
       url: "#",
       icon: IconHistory,
     },
+    {
+  title: "chats",
+  url: "/chat",
+  icon: IconMessageCircle,
+}
   ],
 };
 function AppSidebar(
