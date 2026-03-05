@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import { useChats } from "@/hooks/useChats";
 
 import {
@@ -50,7 +50,7 @@ interface Conversation {
 }
 
 /* -----------------------------
-   Chat Drawer (unchanged)
+   Chat Drawer
 ----------------------------- */
 
 function ChatDrawer({
@@ -63,20 +63,27 @@ function ChatDrawer({
   const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const fetchMessages = async (open: boolean) => {
-    if (!open || messages.length > 0) return;
+  // Scroll to bottom whenever messages load
+  useEffect(() => {
+    if (messages.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  const fetchMessages = async (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen || messages.length > 0) return;
 
     try {
       setLoading(true);
-
       const res = await api.get<ChatMessageResponse[]>(
         `/chat/messages?conversationId=${conversation.id}`
       );
-
       const newMessages = res.data;
       setMessages(newMessages);
-
       setConversations((prev) =>
         prev.map((c) =>
           c.id === conversation.id ? { ...c, messages: newMessages } : c
@@ -90,23 +97,18 @@ function ChatDrawer({
   const toggleUser = async (userId: string, active: boolean) => {
     try {
       setUpdatingUser(userId);
-
       if (active) {
         await api.put(`/admin/users/${userId}/deactivate`);
       } else {
         await api.put(`/admin/users/${userId}/activate`);
       }
-
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== conversation.id) return c;
-
           return {
             ...c,
-            sellerActive:
-              c.sellerId === userId ? !active : c.sellerActive,
-            clientActive:
-              c.clientId === userId ? !active : c.clientActive,
+            sellerActive: c.sellerId === userId ? !active : c.sellerActive,
+            clientActive: c.clientId === userId ? !active : c.clientActive,
           };
         })
       );
@@ -116,56 +118,102 @@ function ChatDrawer({
   };
 
   return (
-    <Drawer direction="right" onOpenChange={fetchMessages}>
+    <Drawer direction="right" open={open} onOpenChange={fetchMessages}>
       <DrawerTrigger asChild>
         <Button variant="outline">Show Conversation</Button>
       </DrawerTrigger>
 
-      <DrawerContent>
-        <div className="p-4 space-y-4">
-          <h2 className="text-lg font-semibold">Conversation</h2>
+      <DrawerContent className="flex flex-col h-full max-w-md ml-auto">
+        {/* Header */}
+        <div className="px-4 py-3 border-b bg-white">
+          <h2 className="text-base font-semibold">
+            {conversation.sellerName} &amp; {conversation.clientName}
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Property: {conversation.propertyId}
+          </p>
+        </div>
 
-          <div className="flex gap-4">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                toggleUser(conversation.sellerId, conversation.sellerActive)
-              }
-            >
-              {conversation.sellerActive ? "Deactivate Seller" : "Activate Seller"}
-            </Button>
+        {/* User controls */}
+        <div className="flex gap-2 px-4 py-2 border-b bg-gray-50">
+          <Button
+            size="sm"
+            variant={conversation.sellerActive ? "destructive" : "outline"}
+            disabled={updatingUser === conversation.sellerId}
+            onClick={() =>
+              toggleUser(conversation.sellerId, conversation.sellerActive)
+            }
+          >
+            {updatingUser === conversation.sellerId
+              ? "Updating…"
+              : conversation.sellerActive
+              ? "Deactivate Seller"
+              : "Activate Seller"}
+          </Button>
 
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                toggleUser(conversation.clientId, conversation.clientActive)
-              }
-            >
-              {conversation.clientActive ? "Deactivate Client" : "Activate Client"}
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            variant={conversation.clientActive ? "destructive" : "outline"}
+            disabled={updatingUser === conversation.clientId}
+            onClick={() =>
+              toggleUser(conversation.clientId, conversation.clientActive)
+            }
+          >
+            {updatingUser === conversation.clientId
+              ? "Updating…"
+              : conversation.clientActive
+              ? "Deactivate Client"
+              : "Activate Client"}
+          </Button>
+        </div>
 
-          <div className="max-h-[60vh] overflow-y-auto border-t pt-4">
-            {loading ? (
-              <p>Loading messages...</p>
-            ) : messages.length > 0 ? (
-              messages.map((msg) => (
-                <div key={msg.id} className="border-b py-2">
-                  <p className="font-semibold">{msg.senderName}</p>
-                  <p>{msg.body}</p>
-                  <p className="text-xs text-muted-foreground">
+        {/* Messages — messenger style */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 bg-gray-100">
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground">
+              Loading messages…
+            </p>
+          ) : messages.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground">
+              No messages yet
+            </p>
+          ) : (
+            messages.map((msg) => {
+              const isSeller = msg.senderId === conversation.sellerId;
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${isSeller ? "items-end" : "items-start"}`}
+                >
+                  <span className="text-[10px] text-muted-foreground mb-0.5 px-1">
+                    {msg.senderName}
+                  </span>
+                  <div
+                    className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-snug shadow-sm ${
+                      isSeller
+                        ? "bg-[#3D5A80] text-white rounded-br-sm"
+                        : "bg-white text-gray-900 rounded-bl-sm"
+                    }`}
+                  >
+                    {msg.body}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-0.5 px-1">
                     {new Date(msg.createdAt).toLocaleString()}
-                  </p>
+                  </span>
                 </div>
-              ))
-            ) : (
-              <p>No messages</p>
-            )}
-          </div>
+              );
+            })
+          )}
+          <div ref={bottomRef} />
+        </div>
 
-          <Button variant="outline" className="w-full">
+        {/* Footer close */}
+        <div className="px-4 py-3 border-t bg-white">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setOpen(false)}
+          >
             Close
           </Button>
         </div>
@@ -243,10 +291,7 @@ export default function ChatPage() {
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
               </TableRow>

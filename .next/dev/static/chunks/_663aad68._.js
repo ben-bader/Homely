@@ -464,7 +464,14 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib
 ;
 const api = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
     baseURL: "https://unparrying-christene-reductively.ngrok-free.dev/api",
-    withCredentials: true
+    //withCredentials: true, // optional but fine
+    headers: {
+        "ngrok-skip-browser-warning": "true"
+    }
+});
+api.interceptors.response.use((response)=>{
+    console.log(response.config.url, response.data);
+    return response;
 });
 api.interceptors.request.use((config)=>{
     const jwt = localStorage.getItem("jwt");
