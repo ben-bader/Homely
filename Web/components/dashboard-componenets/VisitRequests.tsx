@@ -67,34 +67,34 @@ export default function VisitRequests() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-5 mb-6">
-        <Card>
+        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
           <CardHeader>
             <CardTitle>Pending</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-bold">{pendingCount}</CardContent>
         </Card>
-        <Card>
+        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
           <CardHeader>
             <CardTitle>Completed</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-bold">{completedCount}</CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
           <CardHeader>
             <CardTitle>Approved</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-bold">{approvedCount}</CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
           <CardHeader>
             <CardTitle>Canceled</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-bold">{rejectedCount}</CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
           <CardHeader>
             <CardTitle>Total</CardTitle>
           </CardHeader>
