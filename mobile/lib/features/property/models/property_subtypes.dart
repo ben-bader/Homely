@@ -1,125 +1,145 @@
-// Property subtype DTOs
-class ApartmentDto {
-  final String propertyId;
+class ApartmentData {
+  final String? propertyId;
   final int bedrooms;
   final int bathrooms;
   final int floor;
   final bool hasElevator;
 
-  ApartmentDto({
-    required this.propertyId,
+  const ApartmentData({
+    this.propertyId,
     required this.bedrooms,
     required this.bathrooms,
     required this.floor,
     required this.hasElevator,
   });
 
-  factory ApartmentDto.fromJson(Map<String, dynamic> json) => ApartmentDto(
-    propertyId: json['propertyId']?.toString() ?? '',
-    bedrooms: json['bedrooms'] ?? 0,
-    bathrooms: json['bathrooms'] ?? 0,
-    floor: json['floor'] ?? 0,
-    hasElevator: json['hasElevator'] ?? false,
+  factory ApartmentData.fromJson(Map<String, dynamic> j) => ApartmentData(
+    propertyId: j['propertyId']?.toString(),
+    bedrooms: (j['bedrooms'] as num?)?.toInt() ?? 0,
+    bathrooms: (j['bathrooms'] as num?)?.toInt() ?? 0,
+    floor: (j['floor'] as num?)?.toInt() ?? 0,
+    hasElevator: j['hasElevator'] as bool? ?? false,
   );
+
+  Map<String, dynamic> toCreateJson() => {
+    'bedrooms': bedrooms,
+    'bathrooms': bathrooms,
+    'floor': floor,
+    'hasElevator': hasElevator,
+  };
 }
 
-class HouseDto {
-  final String propertyId;
+class HouseData {
+  final String? propertyId;
   final int bedrooms;
   final int bathrooms;
   final bool hasGarage;
   final double? landAreaSqm;
 
-  HouseDto({
-    required this.propertyId,
+  const HouseData({
+    this.propertyId,
     required this.bedrooms,
     required this.bathrooms,
     required this.hasGarage,
     this.landAreaSqm,
   });
 
-  factory HouseDto.fromJson(Map<String, dynamic> json) => HouseDto(
-    propertyId: json['propertyId']?.toString() ?? '',
-    bedrooms: json['bedrooms'] ?? 0,
-    bathrooms: json['bathrooms'] ?? 0,
-    hasGarage: json['hasGarage'] ?? false,
-    landAreaSqm: json['landAreaSqm']?.toDouble(),
+  factory HouseData.fromJson(Map<String, dynamic> j) => HouseData(
+    propertyId: j['propertyId']?.toString(),
+    bedrooms: (j['bedrooms'] as num?)?.toInt() ?? 0,
+    bathrooms: (j['bathrooms'] as num?)?.toInt() ?? 0,
+    hasGarage: j['hasGarage'] as bool? ?? false,
+    landAreaSqm: (j['landAreaSqm'] as num?)?.toDouble(),
   );
-  
-  int get garages => hasGarage ? 1 : 0;
+
+  Map<String, dynamic> toCreateJson() => {
+    'bedrooms': bedrooms,
+    'bathrooms': bathrooms,
+    'hasGarage': hasGarage,
+    if (landAreaSqm != null) 'landAreaSqm': landAreaSqm,
+  };
 }
 
-class VillaDto {
-  final String propertyId;
+class VillaData {
+  final String? propertyId;
   final int bedrooms;
   final int bathrooms;
-  final bool hasPool;
   final double? landAreaSqm;
+  final bool hasPool;
 
-  VillaDto({
-    required this.propertyId,
+  const VillaData({
+    this.propertyId,
     required this.bedrooms,
     required this.bathrooms,
-    required this.hasPool,
     this.landAreaSqm,
+    required this.hasPool,
   });
 
-  factory VillaDto.fromJson(Map<String, dynamic> json) => VillaDto(
-    propertyId: json['propertyId']?.toString() ?? '',
-    bedrooms: json['bedrooms'] ?? 0,
-    bathrooms: json['bathrooms'] ?? 0,
-    hasPool: json['hasPool'] ?? false,
-    landAreaSqm: json['landAreaSqm']?.toDouble(),
+  factory VillaData.fromJson(Map<String, dynamic> j) => VillaData(
+    propertyId: j['propertyId']?.toString(),
+    bedrooms: (j['bedrooms'] as num?)?.toInt() ?? 0,
+    bathrooms: (j['bathrooms'] as num?)?.toInt() ?? 0,
+    landAreaSqm: (j['landAreaSqm'] as num?)?.toDouble(),
+    hasPool: j['hasPool'] as bool? ?? false,
   );
+
+  Map<String, dynamic> toCreateJson() => {
+    'bedrooms': bedrooms,
+    'bathrooms': bathrooms,
+    if (landAreaSqm != null) 'landAreaSqm': landAreaSqm,
+    'hasPool': hasPool,
+  };
 }
 
-class StudioDto {
-  final String propertyId;
+class StudioData {
+  final String? propertyId;
   final bool furnished;
 
-  StudioDto({
-    required this.propertyId,
-    required this.furnished,
-  });
+  const StudioData({this.propertyId, required this.furnished});
 
-  factory StudioDto.fromJson(Map<String, dynamic> json) => StudioDto(
-    propertyId: json['propertyId']?.toString() ?? '',
-    furnished: json['furnished'] ?? false,
+  factory StudioData.fromJson(Map<String, dynamic> j) => StudioData(
+    propertyId: j['propertyId']?.toString(),
+    furnished: j['furnished'] as bool? ?? false,
   );
+
+  Map<String, dynamic> toCreateJson() => {'furnished': furnished};
 }
 
-class CommercialDto {
-  final String propertyId;
-  final String businessType;
+class CommercialData {
+  final String? propertyId;
   final double? areaSqm;
+  final String? businessType;
 
-  CommercialDto({
-    required this.propertyId,
-    required this.businessType,
-    this.areaSqm,
-  });
+  const CommercialData({this.propertyId, this.areaSqm, this.businessType});
 
-  factory CommercialDto.fromJson(Map<String, dynamic> json) => CommercialDto(
-    propertyId: json['propertyId']?.toString() ?? '',
-    businessType: json['businessType'] ?? '',
-    areaSqm: json['areaSqm']?.toDouble(),
+  factory CommercialData.fromJson(Map<String, dynamic> j) => CommercialData(
+    propertyId: j['propertyId']?.toString(),
+    areaSqm: (j['areaSqm'] as num?)?.toDouble(),
+    businessType: j['businessType']?.toString(),
   );
+
+  Map<String, dynamic> toCreateJson() => {
+    if (areaSqm != null) 'areaSqm': areaSqm,
+    if (businessType != null && businessType!.isNotEmpty)
+      'businessType': businessType,
+  };
 }
 
-class LandDto {
-  final String propertyId;
+class LandData {
+  final String? propertyId;
   final double? areaSqm;
   final bool constructible;
 
-  LandDto({
-    required this.propertyId,
-    this.areaSqm,
-    required this.constructible,
-  });
+  const LandData({this.propertyId, this.areaSqm, required this.constructible});
 
-  factory LandDto.fromJson(Map<String, dynamic> json) => LandDto(
-    propertyId: json['propertyId']?.toString() ?? '',
-    areaSqm: json['areaSqm']?.toDouble(),
-    constructible: json['constructible'] ?? false,
+  factory LandData.fromJson(Map<String, dynamic> j) => LandData(
+    propertyId: j['propertyId']?.toString(),
+    areaSqm: (j['areaSqm'] as num?)?.toDouble(),
+    constructible: j['constructible'] as bool? ?? false,
   );
+
+  Map<String, dynamic> toCreateJson() => {
+    if (areaSqm != null) 'areaSqm': areaSqm,
+    'constructible': constructible,
+  };
 }
