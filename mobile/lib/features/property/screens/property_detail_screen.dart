@@ -646,7 +646,6 @@ class _CircleBtn extends StatelessWidget {
     child: Container(
       width: 40,
       height: 40,
-    
       child: Icon(icon, size: 24, color: iconColor),
     ),
   );
