@@ -432,3 +432,5 @@ Content-Type: application/json
 GET {{baseUrl}}/notifications/unread?userId=06dde16f-482d-4965-be69-8b852934c685
 
 ###
+GET  {{baseUrl}}/admin/dashboard-stats
+Authorization: Bearer {{token}}

@@ -32,9 +32,9 @@ export function LoginForm({
         password,
       });
 
-      const { token } = res.data;
+      const { jwt } = res.data;
 
-      localStorage.setItem("jwt", token);
+      localStorage.setItem("jwt", jwt);
       
       router.push("/dashboard");
     } catch (err) {

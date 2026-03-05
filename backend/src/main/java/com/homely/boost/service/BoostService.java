@@ -72,5 +72,7 @@ public class BoostService {
 
     return boostPurchaseMapper.toDto(saved);
 }
-
+public long count(){
+        return boostPurchaseRepository.count();
+    }
 }

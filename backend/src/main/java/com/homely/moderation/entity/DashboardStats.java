@@ -10,8 +10,8 @@ import lombok.Setter;
 @RequiredArgsConstructor
 @AllArgsConstructor
 public class DashboardStats {
-    private int users;
-    private int properties;
-    private int reports;
-    private int boosts;
+    private long users;
+    private long properties;
+    private long reports;
+    private long boosts;
 }

@@ -1,7 +1,5 @@
-import { GalleryVerticalEnd } from "lucide-react"
 
 import { LoginForm } from "@/components/login-form"
-import { IconHome } from "@tabler/icons-react"
 import Logo from "@/components/logo/Logo";
 export default function LoginPage() {
   return (

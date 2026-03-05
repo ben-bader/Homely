@@ -63,4 +63,7 @@ public class ModerationService {
     public List<AuditLog> getAllAuditLogs() {
         return auditLogRepository.findAllByOrderByCreatedAtDesc();
     }
+    public long count(){
+        return reportRepository.count();
+    }
 }

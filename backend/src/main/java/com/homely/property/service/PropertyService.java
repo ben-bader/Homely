@@ -340,5 +340,7 @@ Specification<Property> spec = (root, query, cb) -> null;
     return propertyRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Property not found"));
 }
-
+public long count(){
+        return propertyRepository.count();
+    }
 }

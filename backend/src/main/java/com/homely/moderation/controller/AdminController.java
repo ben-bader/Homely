@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.homely.boost.dto.BoostPurchaseDto;
 import com.homely.boost.entity.BoostPurchase;
 import com.homely.boost.mapper.BoostPurchaseMapper;
-import com.homely.boost.mapper.BoostPurchaseMapperImpl;
 import com.homely.boost.service.BoostService;
 import com.homely.common.dto.ApiResponse;
 import com.homely.common.enums.PropertyStatus;
@@ -55,10 +54,8 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('ADMIN')")
 public class AdminController {
-
-    private final BoostPurchaseMapperImpl boostPurchaseMapperImpl;
 
     private final ModerationService moderationService;
     private final UserService userService;
@@ -209,7 +206,7 @@ public class AdminController {
         return updated;
     }
 
-    @PutMapping("boosts/{id}/status")
+    @PutMapping("/boosts/{id}/status")
     public BoostPurchaseDto updateBoostStatus(
             @PathVariable UUID id,
             @RequestParam PurchaseStatus status,
@@ -235,12 +232,12 @@ public class AdminController {
         return updated; // or use a mapper
     }
 
-    @GetMapping("/admin/dashboard-stats")
+    @GetMapping("/dashboard-stats")
     public DashboardStats stats() {
         return new DashboardStats(
-                userService.getAll().size(),
-                propertyService.getAll().size(),
-                moderationService.getReports().size(),
-                boostService.getAll().size());
+                userService.count(),
+                propertyService.count(),
+                moderationService.count(),
+                boostService.count());
     }
 }
