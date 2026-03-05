@@ -17,7 +17,6 @@ import com.homely.boost.dto.BoostPurchaseDto;
 import com.homely.boost.entity.BoostPurchase;
 import com.homely.boost.mapper.BoostPurchaseMapper;
 import com.homely.boost.service.BoostService;
-import com.homely.common.dto.ApiResponse;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PurchaseStatus;
 import com.homely.common.enums.ReportStatus;
@@ -54,7 +53,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final ModerationService moderationService;
@@ -151,11 +150,10 @@ public class AdminController {
     }
 
     @GetMapping("/boosts")
-    public ApiResponse<List<BoostPurchaseDto>> getAllBoosts() {
-        return new ApiResponse<>(
-                boostService.getAll().stream()
+    public List<BoostPurchaseDto> getAllBoosts() {
+        return boostService.getAll().stream()
                         .map(boostPurchaseMapper::toDto)
-                        .toList());
+                        .toList();
     }
 
     @GetMapping("/properties")

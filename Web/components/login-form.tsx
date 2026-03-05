@@ -23,27 +23,30 @@ export function LoginForm({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const login = async (e:React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    try {
-      setLoading(true)
-      const res = await api.post("/auth/login", {
-        email,
-        password,
-      });
+ const login = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-      const { jwt } = res.data;
+  try {
+    setLoading(true);
+    setError("");
 
-      localStorage.setItem("jwt", jwt);
-      
-      router.push("/dashboard");
-    } catch (err) {
-      console.log(err);
+    const res = await api.post("/auth/login", {
+      email,
+      password,
+    });
 
-      setError("Login failed");
-      setLoading(false)
-    }
-  };
+    const token = res.data.token;
+
+    localStorage.setItem("jwt", token);
+
+    router.push("/dashboard");
+  } catch (err) {
+    console.log(err);
+    setError("Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <form onSubmit={login} className={cn("flex flex-col gap-6", className)} {...props}>
