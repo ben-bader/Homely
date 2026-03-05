@@ -81,7 +81,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
+                "http://localhost:3000",
                 "https://*.devtunnels.ms",
             "https://unparrying-christene-reductively.ngrok-free.dev"));
 
