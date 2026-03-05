@@ -13,13 +13,13 @@ import ReportDetails from "./details/ReportDetails"; // your existing ReportDeta
 const getStatusColor = (status: ReportStatus) => {
   switch (status) {
     case ReportStatus.OPEN:
-      return "bg-yellow-500/20 text-yellow-500";
+      return "bg-yellow-500/20 text-yellow-500 border-yellow-500";
     case ReportStatus.REVIEWED:
-      return "bg-blue-500/20 text-blue-500";
+      return "bg-blue-500/20 text-blue-500 border-blue-500";
     case ReportStatus.RESOLVED:
-      return "bg-green-500/20 text-green-500";
+      return "bg-green-500/20 text-green-500 border-green-500";
     case ReportStatus.DISMISSED:
-      return "bg-red-500/20 text-red-500";
+      return "bg-red-500/20 text-red-500 border-red-500";
   }
 };
 
