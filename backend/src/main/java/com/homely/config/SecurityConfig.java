@@ -82,8 +82,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
-                "https://*.devtunnels.ms",
-            "https://unparrying-christene-reductively.ngrok-free.dev"));
+                "https://unparrying-christene-reductively.ngrok-free.dev"));
 
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT",
