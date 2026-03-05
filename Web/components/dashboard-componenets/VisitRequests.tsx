@@ -12,13 +12,13 @@ import { VisitRequestDetails } from "./details/VisistRequestDetails"; // inline 
 const getStatusColor = (status: VisitStatus) => {
   switch (status) {
     case VisitStatus.PENDING:
-      return "bg-yellow-500/20 text-yellow-500";
-         case VisitStatus.CONFIRMED:
-           return "bg-green-500/20 text-green-500";
+      return "bg-yellow-500/20 text-yellow-500 border-yellow-500";
+         case VisitStatus.APPROVED:
+           return "bg-green-500/20 text-green-500 border-green-500";
            case VisitStatus.COMPLETED:
-               return "bg-blue-500/20 text-blue-500";
-         case VisitStatus.CANCELLED:
-           return "bg-red-500/20 text-red-500";
+               return "bg-blue-500/20 text-blue-500 border-blue-500";
+         case VisitStatus.REJECTED:
+           return "bg-red-500/20 text-red-500 border-red-500";
   }
 };
 
@@ -29,9 +29,9 @@ export default function VisitRequests() {
 
   // Stats
   const pendingCount = visitRequests.filter((r) => r.status === VisitStatus.PENDING).length;
-  const approvedCount = visitRequests.filter((r) => r.status === VisitStatus.CONFIRMED).length;
-  const completedCount = visitRequests.filter((r) => r.status === VisitStatus.CONFIRMED).length;
-  const rejectedCount = visitRequests.filter((r) => r.status === VisitStatus.CANCELLED).length;
+  const approvedCount = visitRequests.filter((r) => r.status === VisitStatus.APPROVED).length;
+  const completedCount = visitRequests.filter((r) => r.status === VisitStatus.COMPLETED).length;
+  const rejectedCount = visitRequests.filter((r) => r.status === VisitStatus.REJECTED).length;
   const totalCount = visitRequests.length;
 
   // Filtered list
@@ -117,8 +117,8 @@ export default function VisitRequests() {
             <Card key={req.id} className="border hover:shadow-lg transition">
               <CardHeader className="flex justify-between items-start">
                 <CardTitle className="text-lg">{req.propertyTitle}</CardTitle>
-                <Badge variant="outline" className={`capitalize ${getStatusColor(req.status)}`}>
-                  {req.status.toLowerCase()}
+                <Badge variant="outline" className={`capitalize  ${getStatusColor(req.status)}`}>
+                  {req.status.toLocaleString().toLocaleLowerCase()}
                 </Badge>
               </CardHeader>
               <CardContent className="space-y-2">

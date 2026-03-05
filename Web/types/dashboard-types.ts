@@ -100,10 +100,11 @@ export interface AuditLog {
   updatedAt?: string
 }
 export enum VisitStatus {
-  PENDING = "PENDING",
-  CONFIRMED = "CONFIRMED",
-  CANCELLED = "CANCELLED",
-  COMPLETED = "COMPLETED",
+    PENDING="PENDING",
+    APPROVED="APPROVED",
+    REJECTED="REJECTED",
+    COMPLETED="COMPLETED"
+
 }
 
 export type VisitRequest = {
