@@ -22,6 +22,7 @@
 
   import { api } from "@/lib/api";
   import type { Boost, BoostStatus } from "@/types/dashboard-types";
+import Link from "next/link";
 
   /* ------------------------------------------------ */
   /* Boost Drawer Component */
@@ -51,9 +52,9 @@
     return (
       <Drawer direction="right">
         <DrawerTrigger asChild>
-          <Button variant="link" className="text-left px-0 truncate w-full">
+          <DrawerTitle className="text-left px-0 truncate w-full hover:underline">
             {boost.propertyTitle}
-          </Button>
+          </DrawerTitle>
         </DrawerTrigger>
 
         <DrawerContent>

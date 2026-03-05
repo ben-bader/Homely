@@ -72,21 +72,21 @@ export default function ReportsPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3 mb-6">
-        <Card>
+        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
           <CardHeader>
             <CardTitle>Waiting Reports</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-bold">{waitingReports}</CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
           <CardHeader>
             <CardTitle>Reports in Review</CardTitle>
           </CardHeader>
           <CardContent className="text-2xl font-bold">{viewingReports}</CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
           <CardHeader>
             <CardTitle>All Reports</CardTitle>
           </CardHeader>
