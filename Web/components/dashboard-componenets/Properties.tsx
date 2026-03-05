@@ -49,7 +49,7 @@ import { useProperties } from "@/hooks/useProperties";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
 
 /* ------------------------------------------------ */
-/* Property Drawer */
+/* Status Change Drawer (on title click)            */
 /* ------------------------------------------------ */
 
 function PropertyDrawer({
@@ -113,7 +113,6 @@ function PropertyDrawer({
                   <Label>Title</Label>
                   <Input value={selectedProperty.title} readOnly />
                 </div>
-
                 <div className="flex flex-col gap-2">
                   <Label>Address</Label>
                   <Input value={selectedProperty.address ?? "—"} readOnly />
@@ -144,19 +143,13 @@ function PropertyDrawer({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="AVAILABLE">
-                        Available
-                      </SelectItem>
-                      <SelectItem value="SUSPENDED">
-                        Suspended
-                      </SelectItem>
+                      <SelectItem value="AVAILABLE">Available</SelectItem>
+                      <SelectItem value="SUSPENDED">Suspended</SelectItem>
                       <SelectItem value="DRAFT">Draft</SelectItem>
                     </SelectContent>
                   </Select>
                   {saving && (
-                    <p className="text-xs text-muted-foreground">
-                      Saving…
-                    </p>
+                    <p className="text-xs text-muted-foreground">Saving…</p>
                   )}
                 </div>
               </div>
@@ -177,7 +170,186 @@ function PropertyDrawer({
 }
 
 /* ------------------------------------------------ */
-/* Columns */
+/* Info Row helper                                  */
+/* ------------------------------------------------ */
+
+function InfoRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      {typeof value === "string" || typeof value === "number" ? (
+        <span
+          className={
+            mono
+              ? "font-mono text-xs break-all text-foreground"
+              : "text-sm font-medium text-foreground"
+          }
+        >
+          {value}
+        </span>
+      ) : (
+        <div className="mt-0.5">{value}</div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------ */
+/* Copy Field helper                                */
+/* ------------------------------------------------ */
+
+function CopyField({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-2 mt-0.5">
+      <span className="font-mono text-xs break-all text-foreground flex-1">
+        {value}
+      </span>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-6 px-2 text-xs shrink-0"
+        onClick={handleCopy}
+      >
+        {copied ? "Copied!" : "Copy"}
+      </Button>
+    </div>
+  );
+}
+
+/* ------------------------------------------------ */
+/* More Options Drawer                              */
+/* ------------------------------------------------ */
+
+function MoreOptionsDrawer({
+  property,
+  fetchDetail,
+  selectedProperty,
+  loadingDetail,
+}: {
+  property: Property;
+  fetchDetail: (id: string) => void;
+  selectedProperty: Property | null;
+  loadingDetail: boolean;
+}) {
+  // Only use selectedProperty if it matches this row
+  const p =
+    selectedProperty?.id === property.id ? selectedProperty : null;
+
+  return (
+    <Drawer
+      direction="right"
+      onOpenChange={(open) => {
+        if (open) fetchDetail(property.id);
+      }}
+    >
+      <DrawerTrigger asChild>
+        <Button variant="outline" size="sm">
+          More Options
+        </Button>
+      </DrawerTrigger>
+
+      <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
+        <DrawerHeader className="border-b pb-4">
+          <DrawerTitle className="text-base font-semibold">
+            Property Info
+          </DrawerTitle>
+          <DrawerDescription className="text-xs text-muted-foreground">
+            Full details for this listing
+          </DrawerDescription>
+        </DrawerHeader>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          {loadingDetail && !p ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : p ? (
+            <>
+              {/* Property section */}
+              <section className="space-y-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                  Property
+                </p>
+                <InfoRow label="Title" value={p.title} />
+                <InfoRow label="Property ID" value={p.id} mono />
+                <InfoRow label="Address" value={p.address ?? "—"} />
+                <InfoRow
+                  label="Price"
+                  value={p.price ? `$${p.price.toLocaleString()}` : "—"}
+                />
+                <InfoRow
+                  label="Status"
+                  value={
+                    <Badge
+                      variant={
+                        p.status === "AVAILABLE"
+                          ? "default"
+                          : p.status === "SUSPENDED"
+                          ? "destructive"
+                          : "secondary"
+                      }
+                    >
+                      {p.status}
+                    </Badge>
+                  }
+                />
+              </section>
+
+              {/* Seller section */}
+              <section className="space-y-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                  Seller
+                </p>
+                <InfoRow
+                  label="Seller Name"
+                  value={(p as any).sellerName ?? "—"}
+                />
+                <InfoRow
+                  label="Seller ID"
+                  value={
+                    <CopyField value={(p as any).sellerId ?? "—"} />
+                  }
+                />
+              </section>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No details available.
+            </p>
+          )}
+        </div>
+
+        <DrawerFooter className="border-t">
+          <DrawerClose asChild>
+            <Button variant="outline" className="w-full">
+              Close
+            </Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+/* ------------------------------------------------ */
+/* Columns                                          */
 /* ------------------------------------------------ */
 
 function buildColumns(
@@ -187,6 +359,15 @@ function buildColumns(
   onStatusChange: (id: string, status: PropertyStatus) => Promise<void>
 ): ColumnDef<Property>[] {
   return [
+    {
+      accessorKey: "id",
+      header: "Property ID",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs text-muted-foreground">
+          {row.original.id}
+        </span>
+      ),
+    },
     {
       accessorKey: "title",
       header: "Title",
@@ -201,10 +382,6 @@ function buildColumns(
       ),
     },
     {
-      accessorKey: "address",
-      header: "Address",
-    },
-    {
       accessorKey: "price",
       header: "Price",
       cell: ({ row }) =>
@@ -216,14 +393,36 @@ function buildColumns(
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <Badge variant="outline">{row.original.status}</Badge>
+        <Badge
+          variant={
+            row.original.status === "AVAILABLE"
+              ? "default"
+              : row.original.status === "SUSPENDED"
+              ? "destructive"
+              : "secondary"
+          }
+        >
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      id: "options",
+      header: "",
+      cell: ({ row }) => (
+        <MoreOptionsDrawer
+          property={row.original}
+          fetchDetail={fetchDetail}
+          selectedProperty={selectedProperty}
+          loadingDetail={loadingDetail}
+        />
       ),
     },
   ];
 }
 
 /* ------------------------------------------------ */
-/* Main Page */
+/* Main Page                                        */
 /* ------------------------------------------------ */
 
 export default function Properties() {
@@ -257,7 +456,7 @@ export default function Properties() {
 
   const filteredData = useMemo(() => {
     return properties.filter((p) =>
-      [p.title, p.address, p.status, p.price?.toString()]
+      [p.title, p.status, p.price?.toString(), p.id]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
@@ -268,10 +467,7 @@ export default function Properties() {
   const table = useReactTable({
     data: filteredData,
     columns,
-    state: {
-      sorting,
-      pagination,
-    },
+    state: { sorting, pagination },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
@@ -287,14 +483,15 @@ export default function Properties() {
     <div className="px-8 space-y-6">
       <h2 className="text-xl font-semibold">Properties</h2>
 
-      {/* Search */}
       <Input
         placeholder="Search properties…"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPagination((p) => ({ ...p, pageIndex: 0 }));
+        }}
       />
 
-      {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
           <TableHeader>
@@ -310,6 +507,9 @@ export default function Properties() {
                       header.column.columnDef.header,
                       header.getContext()
                     )}
+                    {{ asc: " ↑", desc: " ↓" }[
+                      header.column.getIsSorted() as string
+                    ] ?? ""}
                   </TableHead>
                 ))}
               </TableRow>
@@ -321,10 +521,7 @@ export default function Properties() {
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
               </TableRow>
@@ -333,7 +530,6 @@ export default function Properties() {
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex justify-between items-center">
         <Button
           variant="outline"
@@ -344,8 +540,7 @@ export default function Properties() {
         </Button>
 
         <span>
-          Page {pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+          Page {pagination.pageIndex + 1} of {table.getPageCount()}
         </span>
 
         <Button

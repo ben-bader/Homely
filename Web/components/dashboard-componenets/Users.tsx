@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useUsers } from "@/hooks/useUsers";
+import { api } from "@/lib/api";
 
 import {
   useReactTable,
@@ -22,6 +23,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,41 +45,213 @@ export type User = {
   name: string;
   email: string;
   role: string;
+  isActive: boolean;
+};
+
+type PropertySummary = {
+  id: string;
+  title: string;
   status: string;
 };
 
-/* ---------------- COLUMNS ---------------- */
+/* ---------------- INFO ROW ---------------- */
 
-function buildColumns(): ColumnDef<User>[] {
-  return [
-    {
-      accessorKey: "name",
-      header: "Name",
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
-    },
-    {
-      accessorKey: "role",
-      header: "Role",
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => (
-        <Badge variant="outline">
-          {row.original.status || "UNKNOWN"}
-        </Badge>
-      ),
-    },
-  ];
+function InfoRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      {typeof value === "string" || typeof value === "number" ? (
+        <span
+          className={
+            mono
+              ? "font-mono text-xs break-all text-foreground"
+              : "text-sm font-medium text-foreground"
+          }
+        >
+          {value}
+        </span>
+      ) : (
+        <div className="mt-0.5">{value}</div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- MORE OPTIONS DRAWER ---------------- */
+
+function MoreOptionsDrawer({ user }: { user: User }) {
+  const [properties, setProperties] = useState<PropertySummary[]>([]);
+  const [loadingProps, setLoadingProps] = useState(false);
+
+  const isSeller = user.role?.toUpperCase() === "SELLER";
+
+  const handleOpen = async (open: boolean) => {
+    if (!open || !isSeller || properties.length > 0) return;
+    try {
+      setLoadingProps(true);
+      const res = await api.get<PropertySummary[]>("/admin/properties");
+      // Filter properties belonging to this seller
+      const sellerProps = res.data.filter(
+        (p: any) => p.sellerId === user.id || p.ownerId === user.id
+      );
+      setProperties(sellerProps);
+    } finally {
+      setLoadingProps(false);
+    }
+  };
+
+  return (
+    <Drawer direction="right" onOpenChange={handleOpen}>
+      <DrawerTrigger asChild>
+        <Button variant="outline" size="sm">
+          More Options
+        </Button>
+      </DrawerTrigger>
+
+      <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
+        <DrawerHeader className="border-b pb-4">
+          <DrawerTitle className="text-base font-semibold">
+            User Info
+          </DrawerTitle>
+          <DrawerDescription className="text-xs text-muted-foreground">
+            Full details for this user
+          </DrawerDescription>
+        </DrawerHeader>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          {/* User details section */}
+          <section className="space-y-4">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+              User
+            </p>
+            <InfoRow label="Name" value={user.name} />
+            <InfoRow label="User ID" value={user.id} mono />
+            <InfoRow label="Email" value={user.email} />
+            <InfoRow label="Role" value={user.role} />
+            <InfoRow
+              label="Status"
+              value={
+                <Badge variant={user.isActive ? "default" : "secondary"}>
+                  {user.isActive ? "Active" : "Inactive"}
+                </Badge>
+              }
+            />
+          </section>
+
+          {/* Properties section — only for sellers */}
+          {isSeller && (
+            <section className="space-y-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                Listed Properties
+              </p>
+
+              {loadingProps ? (
+                <p className="text-sm text-muted-foreground">
+                  Loading properties…
+                </p>
+              ) : properties.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No properties found for this seller.
+                </p>
+              ) : (
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">Property ID</TableHead>
+                        <TableHead className="text-xs">Title</TableHead>
+                        <TableHead className="text-xs">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {properties.map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            {p.id}
+                          </TableCell>
+                          <TableCell className="text-xs">{p.title}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                p.status === "AVAILABLE"
+                                  ? "default"
+                                  : p.status === "SUSPENDED"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
+                              className="text-xs"
+                            >
+                              {p.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </section>
+          )}
+        </div>
+
+        <DrawerFooter className="border-t">
+          <DrawerClose asChild>
+            <Button variant="outline" className="w-full">
+              Close
+            </Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+/* ---------------- ACTION CELL ---------------- */
+
+function ActionCell({
+  user,
+  onToggle,
+}: {
+  user: User;
+  onToggle: (id: string, currentActive: boolean) => Promise<void>;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      await onToggle(user.id, user.isActive);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      size="sm"
+      variant={user.isActive ? "destructive" : "outline"}
+      disabled={loading}
+      onClick={handleClick}
+    >
+      {loading ? "Updating…" : user.isActive ? "Deactivate" : "Activate"}
+    </Button>
+  );
 }
 
 /* ---------------- PAGE ---------------- */
 
 export default function Users() {
-  const { users, loading, error } = useUsers();
+  const { users, loading, error, setUsers } = useUsers();
 
   const [search, setSearch] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -76,14 +260,42 @@ export default function Users() {
     pageSize: 10,
   });
 
-  const columns = useMemo(() => buildColumns(), []);
+  const handleToggle = async (id: string, currentActive: boolean) => {
+    if (currentActive) {
+      await api.put(`/admin/users/${id}/deactivate`);
+    } else {
+      await api.put(`/admin/users/${id}/activate`);
+    }
+    setUsers((prev) =>
+      prev.map((u) => (u.id === id ? { ...u, isActive: !currentActive } : u))
+    );
+  };
 
-  /* Search filtering */
+  const columns = useMemo<ColumnDef<User>[]>(
+    () => [
+      { accessorKey: "name", header: "Name" },
+      { accessorKey: "email", header: "Email" },
+      { accessorKey: "role", header: "Role" },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <ActionCell user={row.original} onToggle={handleToggle} />
+        ),
+      },
+      {
+        id: "more",
+        header: "",
+        cell: ({ row }) => <MoreOptionsDrawer user={row.original} />,
+      },
+    ],
+    [users]
+  );
+
   const filteredData = useMemo(() => {
     if (!users) return [];
-
     return users.filter((u) =>
-      [u.name, u.email, u.role, u.status]
+      [u.name, u.email, u.role]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
@@ -91,27 +303,19 @@ export default function Users() {
     );
   }, [users, search]);
 
-  /* Table instance */
   const table = useReactTable({
     data: filteredData,
     columns,
     state: { sorting, pagination },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  /* Loading / Error */
-  if (loading) {
-    return <div className="p-8">Loading users…</div>;
-  }
-
-  if (error) {
-    return <div className="p-8 text-red-500">{error}</div>;
-  }
+  if (loading) return <div className="p-8">Loading users…</div>;
+  if (error) return <div className="p-8 text-red-500">{error}</div>;
 
   return (
     <div className="px-8 space-y-6">
@@ -120,10 +324,12 @@ export default function Users() {
       <Input
         placeholder="Search users…"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPagination((p) => ({ ...p, pageIndex: 0 }));
+        }}
       />
 
-      {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
           <TableHeader>
@@ -139,6 +345,9 @@ export default function Users() {
                       header.column.columnDef.header,
                       header.getContext()
                     )}
+                    {{ asc: " ↑", desc: " ↓" }[
+                      header.column.getIsSorted() as string
+                    ] ?? ""}
                   </TableHead>
                 ))}
               </TableRow>
@@ -173,7 +382,6 @@ export default function Users() {
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex justify-between items-center">
         <Button
           variant="outline"

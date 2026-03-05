@@ -147,8 +147,8 @@ function ChatDrawer({
             {updatingUser === conversation.sellerId
               ? "Updating…"
               : conversation.sellerActive
-              ? "Deactivate Seller"
-              : "Activate Seller"}
+              ? "Activate Seller"
+              : "Deactivate Seller"}
           </Button>
 
           <Button
@@ -162,8 +162,8 @@ function ChatDrawer({
             {updatingUser === conversation.clientId
               ? "Updating…"
               : conversation.clientActive
-              ? "Deactivate Client"
-              : "Activate Client"}
+              ? "Activate Client"
+              : "Deactivate Client"}
           </Button>
         </div>
 
