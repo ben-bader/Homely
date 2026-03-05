@@ -6,6 +6,8 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/profile/models/profile.dart';
 import 'package:mobile/features/profile/repositories/profile_repository.dart';
 import 'package:mobile/features/seller/providers/seller_providers.dart';
+import 'package:mobile/features/visit_requests/screens/my_visit_requests_screen.dart';
+import 'package:mobile/features/boost/screens/my_boosts_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -32,25 +34,29 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _ProfileContent extends StatelessWidget {
+class _ProfileContent extends ConsumerWidget {
   final Profile profile;
   const _ProfileContent({required this.profile});
+
   Future<void> _logout(BuildContext context) async {
     final AuthService authService = AuthService();
-
     try {
       await authService.logout();
     } catch (e) {
       debugPrint("Logout error: $e");
     }
-
     if (!context.mounted) return;
-
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final listingsAsync = ref.watch(sellerListingsProvider);
+    final isSeller = listingsAsync.maybeWhen(
+      data: (l) => l.isNotEmpty,
+      orElse: () => false,
+    );
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -62,10 +68,10 @@ class _ProfileContent extends StatelessWidget {
                 Text(
                   'Profile',
                   style: GoogleFonts.outfit(
-                   color: AppColors.accent,
-                            letterSpacing: -0.5,
-                            height: 1.1,
-                            fontSize: 30,
+                    color: AppColors.accent,
+                    letterSpacing: -0.5,
+                    height: 1.1,
+                    fontSize: 30,
                   ),
                 ),
                 const Spacer(),
@@ -153,7 +159,6 @@ class _ProfileContent extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -179,7 +184,6 @@ class _ProfileContent extends StatelessWidget {
                       ],
                     ],
                   ),
-
                   const SizedBox(height: 4),
                   Text(
                     profile.email.isNotEmpty ? profile.email : '—',
@@ -189,7 +193,6 @@ class _ProfileContent extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-
                   if (profile.address != null &&
                       profile.address!.isNotEmpty) ...[
                     const SizedBox(height: 8),
@@ -215,7 +218,6 @@ class _ProfileContent extends StatelessWidget {
                       ],
                     ),
                   ],
-
                   if (profile.bio != null && profile.bio!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     Container(
@@ -242,6 +244,38 @@ class _ProfileContent extends StatelessWidget {
                 ],
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            _SectionTitle(title: 'My Activity'),
+            const SizedBox(height: 12),
+
+            _NavTile(
+              icon: Icons.calendar_today_outlined,
+              iconColor: AppColors.primary,
+              label: 'My Visit Requests',
+              subtitle: 'Track your scheduled visits',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MyVisitRequestsScreen(),
+                ),
+              ),
+            ),
+
+            if (isSeller) ...[
+              const SizedBox(height: 8),
+              _NavTile(
+                icon: Icons.rocket_launch_rounded,
+                iconColor: const Color(0xFFFF9800),
+                label: 'My Boosts',
+                subtitle: 'Manage your property boosts',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyBoostsScreen()),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 24),
 
@@ -286,7 +320,6 @@ class _ProfileContent extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Seller Listings Section (only for sellers)
             _SellerListingsSection(userEmail: profile.email),
 
             if (profile.bio != null && profile.bio!.isNotEmpty) ...[
@@ -454,6 +487,81 @@ class _ProfileContent extends StatelessWidget {
   }
 }
 
+class _NavTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+  const _NavTile({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: iconColor),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: AppColors.textTertiary,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class EditProfileScreen extends ConsumerStatefulWidget {
   final Profile profile;
   const EditProfileScreen({super.key, required this.profile});
@@ -489,18 +597,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
     final request = ProfileUpdateRequest(
       name: _name.text.trim(),
       phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       bio: _bio.text.trim().isEmpty ? null : _bio.text.trim(),
       address: _address.text.trim().isEmpty ? null : _address.text.trim(),
     );
-
     await ref.read(profileNotifierProvider.notifier).saveProfile(request);
-
     if (!mounted) return;
-
     final resultState = ref.read(profileNotifierProvider);
     if (resultState.hasError) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -537,7 +641,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isSaving = ref.watch(profileNotifierProvider).isLoading;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -636,12 +739,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 28),
-
               const _SectionTitle(title: 'Personal Info'),
               const SizedBox(height: 12),
-
               _FormField(
                 controller: _name,
                 label: 'Full Name',
@@ -664,19 +764,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 icon: Icons.info_outline_rounded,
                 maxLines: 3,
               ),
-
               const SizedBox(height: 24),
               const _SectionTitle(title: 'Location'),
               const SizedBox(height: 12),
-
               _FormField(
                 controller: _address,
                 label: 'Address',
                 icon: Icons.location_on_outlined,
               ),
-
               const SizedBox(height: 32),
-
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -722,7 +818,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 class _SectionTitle extends StatelessWidget {
   final String title;
   const _SectionTitle({required this.title});
-
   @override
   Widget build(BuildContext context) => Text(
     title,
@@ -741,7 +836,6 @@ class _InfoTile extends StatelessWidget {
   final String value;
   final bool isLast;
   final bool isFirst;
-
   const _InfoTile({
     required this.icon,
     required this.label,
@@ -828,7 +922,6 @@ class _FormField extends StatelessWidget {
   final int maxLines;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
-
   const _FormField({
     required this.controller,
     required this.label,
@@ -945,7 +1038,6 @@ class _ErrorView extends StatelessWidget {
   );
 }
 
-// ── Seller Listings Section ───────────────────────────────────────────────────
 class _SellerListingsSection extends ConsumerWidget {
   final String userEmail;
   const _SellerListingsSection({required this.userEmail});
@@ -969,10 +1061,9 @@ class _SellerListingsSection extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, __) => SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
       data: (listings) {
         if (listings.isEmpty) return const SizedBox.shrink();
-
         return Column(
           children: [
             const _SectionTitle(title: 'My Listings'),
@@ -1023,8 +1114,7 @@ class _SellerListingsSection extends ConsumerWidget {
                                       height: 60,
                                       decoration: BoxDecoration(
                                         color: AppColors.subtleBackground,
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Icon(
                                         Icons.home_outlined,
@@ -1049,8 +1139,7 @@ class _SellerListingsSection extends ConsumerWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       property.title,

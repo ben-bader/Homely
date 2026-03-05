@@ -1,5 +1,3 @@
-// lib/features/seller/screens/seller_listings_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +6,8 @@ import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/seller/screens/edit_property_screen.dart';
 import 'package:mobile/features/seller/providers/seller_providers.dart';
 import 'package:mobile/features/seller/screens/create_property_screen.dart';
+import 'package:mobile/features/boost/widgets/boost_sheet.dart';
+import 'package:mobile/features/visit_requests/screens/seller_visit_requests_screen.dart';
 
 class SellerListingsScreen extends ConsumerWidget {
   const SellerListingsScreen({super.key});
@@ -90,13 +90,12 @@ class SellerListingsScreen extends ConsumerWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                          EditPropertyScreen(property: listings[i]),
+                            EditPropertyScreen(property: listings[i]),
                       ),
                     ),
                   ),
                 ),
               ),
-              // Bottom padding for nav bar
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           );
@@ -125,15 +124,11 @@ class SellerListingsScreen extends ConsumerWidget {
   }
 }
 
-// ── Listing Card ──────────────────────────────────────────────────────────────
 class _ListingCard extends ConsumerWidget {
   final Property property;
   final VoidCallback onTap;
 
-  const _ListingCard({
-    required this.property,
-    required this.onTap,
-  });
+  const _ListingCard({required this.property, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -156,7 +151,6 @@ class _ListingCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
@@ -173,13 +167,11 @@ class _ListingCard extends ConsumerWidget {
                     : _imagePlaceholder(),
               ),
             ),
-            // Content
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title and price
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +200,6 @@ class _ListingCard extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // Location
                   Row(
                     children: [
                       const Icon(
@@ -230,7 +221,6 @@ class _ListingCard extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  // Status badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -249,6 +239,58 @@ class _ListingCard extends ConsumerWidget {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, color: AppColors.borderLight),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _CardBtn(
+                          icon: Icons.calendar_today_outlined,
+                          label: 'Visits',
+                          color: AppColors.primary,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SellerVisitRequestsScreen(
+                                propertyId: property.id,
+                                propertyTitle: property.title,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _CardBtn(
+                          icon: Icons.rocket_launch_rounded,
+                          label: 'Boost',
+                          color: const Color(0xFFFF9800),
+                          onTap: () => BoostSheet.show(
+                            context,
+                            propertyId: property.id,
+                            propertyTitle: property.title,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _CardBtn(
+                          icon: Icons.edit_outlined,
+                          label: 'Edit',
+                          color: AppColors.accent,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  EditPropertyScreen(property: property),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -262,11 +304,7 @@ class _ListingCard extends ConsumerWidget {
     height: 150,
     color: const Color(0xFFF0E9E3),
     child: const Center(
-      child: Icon(
-        Icons.home_outlined,
-        size: 40,
-        color: AppColors.textTertiary,
-      ),
+      child: Icon(Icons.home_outlined, size: 40, color: AppColors.textTertiary),
     ),
   );
 
@@ -292,16 +330,54 @@ class _ListingCard extends ConsumerWidget {
   }
 }
 
-// ── Empty State ───────────────────────────────────────────────────────────────
+class _CardBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _CardBtn({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAddProperty;
-
   const _EmptyState({required this.onAddProperty});
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -333,9 +409,7 @@ class _EmptyState extends StatelessWidget {
             child: Text(
               'Start by creating your first property listing',
               textAlign: TextAlign.center,
-              style: tt.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(height: 24),
@@ -346,10 +420,7 @@ class _EmptyState extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 28,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -361,20 +432,14 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ── Error View ────────────────────────────────────────────────────────────────
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-
-  const _ErrorView({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorView({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -406,9 +471,7 @@ class _ErrorView extends StatelessWidget {
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style: tt.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: tt.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(height: 20),
@@ -417,10 +480,7 @@ class _ErrorView extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
