@@ -1,20 +1,18 @@
 "use client";
 
-import * as React from "react";
+import React, { useMemo, useState } from "react";
+import { useUsers } from "@/hooks/useUsers";
+
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   flexRender,
   type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
-  type VisibilityState,
 } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import {
   Table,
   TableBody,
@@ -23,191 +21,139 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type User = {
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+/* ---------------- TYPES ---------------- */
+
+export type User = {
   id: string;
   name: string;
   email: string;
   role: string;
-  active: boolean;
+  status: string;
 };
 
+/* ---------------- COLUMNS ---------------- */
+
+function buildColumns(): ColumnDef<User>[] {
+  return [
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "role",
+      header: "Role",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {row.original.status || "UNKNOWN"}
+        </Badge>
+      ),
+    },
+  ];
+}
+
+/* ---------------- PAGE ---------------- */
+
 export default function Users() {
-  const [users, setUsers] = React.useState<User[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [search, setSearch] = React.useState("");
+  const { users, loading, error } = useUsers();
 
-  // Fetch users from API
-  const fetchUsers = async () => {
-    try {
-      const res = await api.get<User[]>("/admin/users");
-      setUsers(res.data || []);
-    } catch (err) {
-      console.error("Failed to load users", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const toggleActive = async (user: User) => {
-    try {
-      if (user.active) {
-        await api.put(`/admin/users/${user.id}/deactivate`);
-      } else {
-        await api.put(`/admin/users/${user.id}/activate`);
-      }
-      fetchUsers();
-    } catch (err) {
-      console.error("Failed to update user status", err);
-    }
-  };
-
-  // --- Metrics cards ---
-  const totalUsers = users.length;
-  const totalActive = users.filter((u) => u.active).length;
-  const totalDeactivated = users.filter((u) => !u.active).length;
-
-  // Columns definition
-  const columns = React.useMemo<ColumnDef<User>[]>(
-    () => [
-      { accessorKey: "name", header: "Name" },
-      { accessorKey: "email", header: "Email" },
-      { accessorKey: "role", header: "Role" },
-      {
-        accessorKey: "active",
-        header: "Status",
-        cell: ({ row }) => (row.original.active ? "ACTIVE" : "DEACTIVATED"),
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <Button size="sm" onClick={() => toggleActive(row.original)}>
-            {row.original.active ? "Deactivate" : "Activate"}
-          </Button>
-        ),
-      },
-    ],
-    [],
-  );
-
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [pagination, setPagination] = React.useState({
+  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
 
-  // React Table instance
-  const table = useReactTable({
-    data: users.filter((u) =>
-      [u.name, u.email, u.role]
+  const columns = useMemo(() => buildColumns(), []);
+
+  /* Search filtering */
+  const filteredData = useMemo(() => {
+    if (!users) return [];
+
+    return users.filter((u) =>
+      [u.name, u.email, u.role, u.status]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase()
-        .includes(search.toLowerCase()),
-    ),
+        .includes(search.toLowerCase())
+    );
+  }, [users, search]);
+
+  /* Table instance */
+  const table = useReactTable({
+    data: filteredData,
     columns,
-    state: { columnFilters, sorting, columnVisibility, pagination },
-    onColumnFiltersChange: setColumnFilters,
+    state: { sorting, pagination },
     onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
+
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  if (loading) return <div>Loading users…</div>;
+  /* Loading / Error */
+  if (loading) {
+    return <div className="p-8">Loading users…</div>;
+  }
+
+  if (error) {
+    return <div className="p-8 text-red-500">{error}</div>;
+  }
 
   return (
     <div className="px-8 space-y-6">
       <h2 className="text-xl font-semibold">Users</h2>
 
-      {/* --- Metrics Cards --- */}
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
-          <CardHeader className="">
-            <CardTitle className="text-sm text-muted-foreground">
-              Total Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalUsers}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
-          <CardHeader className="">
-            <CardTitle className="text-sm text-muted-foreground">
-              Active Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalActive}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-linear-to-b from-neutral-950/5 to-transparent">
-          <CardHeader className="">
-            <CardTitle className="text-sm text-muted-foreground">
-              Deactivated Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{totalDeactivated}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* --- Search Bar --- */}
-      <h2 className="text-md pt-6 font-semibold">Search in users</h2>
       <Input
         placeholder="Search users…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mb-4 w-full "
       />
 
-      {/* --- Users Table --- */}
+      {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader className="bg-muted sticky top-0 z-10">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                  <TableHead
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="cursor-pointer select-none"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
-            {table.getRowModel().rows.length ? (
+            {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}
@@ -217,39 +163,38 @@ export default function Users() {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center h-24"
+                  className="text-center py-10"
                 >
-                  No users.
+                  No users found
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {/* Pagination controls */}
-        <div className="flex items-center justify-between px-4 py-2 border-t text-sm text-muted-foreground">
-          <span>
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount() || 1}
-          </span>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+
+        <span>
+          Page {pagination.pageIndex + 1} of{" "}
+          {Math.max(table.getPageCount(), 1)}
+        </span>
+
+        <Button
+          variant="outline"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

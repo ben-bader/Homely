@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useChats } from "@/hooks/useChats";
+
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,24 +11,23 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import {
-  Drawer,
-  DrawerTrigger,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerClose,
-} from "@/components/ui/drawer";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
+import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { api } from "@/lib/api";
 
 /* -----------------------------
    Types
 ----------------------------- */
+
 interface ChatMessageResponse {
   id: string;
   conversationId: string;
@@ -49,8 +50,9 @@ interface Conversation {
 }
 
 /* -----------------------------
-   Chat Drawer Component
+   Chat Drawer (unchanged)
 ----------------------------- */
+
 function ChatDrawer({
   conversation,
   setConversations,
@@ -62,42 +64,49 @@ function ChatDrawer({
   const [loading, setLoading] = useState(false);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
 
-  /* Fetch messages for this conversation */
   const fetchMessages = async (open: boolean) => {
-    if (!open) return;
-    if (messages.length > 0) return; // already loaded
+    if (!open || messages.length > 0) return;
+
     try {
       setLoading(true);
-      const res = await api.get<ChatMessageResponse[]>(`/chat/messages?conversationId=${conversation.id}`);
+
+      const res = await api.get<ChatMessageResponse[]>(
+        `/chat/messages?conversationId=${conversation.id}`
+      );
+
       const newMessages = res.data;
       setMessages(newMessages);
 
-      // Update conversation with messages
       setConversations((prev) =>
-        prev.map((c) => (c.id === conversation.id ? { ...c, messages: newMessages } : c))
+        prev.map((c) =>
+          c.id === conversation.id ? { ...c, messages: newMessages } : c
+        )
       );
     } finally {
       setLoading(false);
     }
   };
 
-  /* Toggle user (seller/client) active status */
   const toggleUser = async (userId: string, active: boolean) => {
     try {
       setUpdatingUser(userId);
+
       if (active) {
         await api.put(`/admin/users/${userId}/deactivate`);
       } else {
         await api.put(`/admin/users/${userId}/activate`);
       }
-      // Update local conversation state
+
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== conversation.id) return c;
+
           return {
             ...c,
-            sellerActive: c.sellerId === userId ? !active : c.sellerActive,
-            clientActive: c.clientId === userId ? !active : c.clientActive,
+            sellerActive:
+              c.sellerId === userId ? !active : c.sellerActive,
+            clientActive:
+              c.clientId === userId ? !active : c.clientActive,
           };
         })
       );
@@ -113,97 +122,69 @@ function ChatDrawer({
       </DrawerTrigger>
 
       <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>Conversation</DrawerTitle>
-          <DrawerDescription>
-            Conversation about property ID {conversation.propertyId}
-          </DrawerDescription>
-        </DrawerHeader>
+        <div className="p-4 space-y-4">
+          <h2 className="text-lg font-semibold">Conversation</h2>
 
-        {/* Users controls */}
-        <div className="flex gap-4 px-4 pb-4">
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold">{conversation.sellerName} (Seller)</span>
+          <div className="flex gap-4">
             <Button
               size="sm"
               variant="outline"
-              onClick={() => toggleUser(conversation.sellerId, conversation.sellerActive)}
-              disabled={updatingUser === conversation.sellerId}
+              onClick={() =>
+                toggleUser(conversation.sellerId, conversation.sellerActive)
+              }
             >
-              {conversation.sellerActive ? "Deactivate" : "Activate"}
+              {conversation.sellerActive ? "Deactivate Seller" : "Activate Seller"}
             </Button>
-          </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold">{conversation.clientName} (Client)</span>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => toggleUser(conversation.clientId, conversation.clientActive)}
-              disabled={updatingUser === conversation.clientId}
+              onClick={() =>
+                toggleUser(conversation.clientId, conversation.clientActive)
+              }
             >
-              {conversation.clientActive ? "Deactivate" : "Activate"}
+              {conversation.clientActive ? "Deactivate Client" : "Activate Client"}
             </Button>
           </div>
-        </div>
 
-        {/* Messages */}
-        <div className="flex flex-col gap-2 p-4 max-h-[60vh] overflow-y-auto border-t">
-          {loading ? (
-            <p>Loading messages…</p>
-          ) : messages.length > 0 ? (
-            messages.map((msg) => (
-              <div key={msg.id} className="flex flex-col border-b pb-2">
-                <span className="font-semibold">{msg.senderName}</span>
-                <span>{msg.body}</span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(msg.createdAt).toLocaleString()}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p>No messages</p>
-          )}
-        </div>
+          <div className="max-h-[60vh] overflow-y-auto border-t pt-4">
+            {loading ? (
+              <p>Loading messages...</p>
+            ) : messages.length > 0 ? (
+              messages.map((msg) => (
+                <div key={msg.id} className="border-b py-2">
+                  <p className="font-semibold">{msg.senderName}</p>
+                  <p>{msg.body}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(msg.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p>No messages</p>
+            )}
+          </div>
 
-        <div className="p-4 mt-auto border-t text-center text-sm text-muted-foreground">
-          Conversation about property ID {conversation.propertyId}
+          <Button variant="outline" className="w-full">
+            Close
+          </Button>
         </div>
-
-        <DrawerFooter>
-          <DrawerClose asChild>
-            <Button variant="outline">Close</Button>
-          </DrawerClose>
-        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
 }
 
 /* -----------------------------
-   Main Table Component
+   Page Component
 ----------------------------- */
-export default function Chat() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
-  /* Fetch conversations */
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get<Conversation[]>("/chat/conversations");
-        setConversations(res.data);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch conversations");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchConversations();
-  }, []);
+export default function ChatPage() {
+  const { conversations, loading, error, setConversations } = useChats();
+
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   const columns = useMemo<ColumnDef<Conversation>[]>(
     () => [
@@ -213,10 +194,15 @@ export default function Chat() {
       {
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => <ChatDrawer conversation={row.original} setConversations={setConversations} />,
+        cell: ({ row }) => (
+          <ChatDrawer
+            conversation={row.original}
+            setConversations={setConversations}
+          />
+        ),
       },
     ],
-    []
+    [setConversations]
   );
 
   const table = useReactTable({
@@ -238,11 +224,14 @@ export default function Chat() {
       <div className="overflow-auto rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id}>
+                {hg.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -254,7 +243,10 @@ export default function Chat() {
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -263,14 +255,24 @@ export default function Chat() {
         </Table>
       </div>
 
-      <div className="flex justify-between items-center mt-4">
-        <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
           Previous
         </Button>
+
         <span>
-          Page {pagination.pageIndex + 1} of {table.getPageCount()}
+          Page {pagination.pageIndex + 1} of {table.getPageCount() || 1}
         </span>
-        <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+
+        <Button
+          variant="outline"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
           Next
         </Button>
       </div>
