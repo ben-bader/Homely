@@ -50,7 +50,8 @@ The repository is organized as follows:
 homely/
  ├── backend/        # Spring Boot application -  Bennani Bader
  ├── mobile/         # Flutter mobile app - El Amraoui Mohammed 
- ├── admin-web/      # React admin dashboard - Bichou Farouk       
+ ├── modelization    # Application modelization    
+ ├── web/            # React admin dashboard - Bichou Farouk       
  └── README.md
 ```
 
@@ -62,7 +63,7 @@ Each part is developed **independently** but follows the same API contract.
 
 ### Backend
 
-* Java 17
+* Java 25
 * Spring Boot
 * Spring Security (JWT)
 * Spring Data JPA
@@ -101,7 +102,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ### User Roles:
 
-* **CLIENT**: Browse & search properties, chat with sellers
+* **CLIENT**: Browse & search properties, chat with sellers , request property visits, send feedbacks
 * **SELLER**: List properties, upload media, boost listings
 * **ADMIN**: Monitor platform, manage users, review reports
 
@@ -133,7 +134,7 @@ GET /api/admin/reports
 * Entities include:
 
   * User
-  * Property
+  * Property(apartment,house,villa,studio,land,commercial)
   * Media
   * Conversation
   * Message
@@ -141,6 +142,9 @@ GET /api/admin/reports
   * BoostPurchase
   * Notification
   * AuditLog
+  * PropertyView
+  * Feedback
+  * Profile
 
 The database schema is based on a **UML Class Diagram** designed for this project.
 
@@ -181,9 +185,9 @@ Example:
 ```bash
 git checkout develop
 git pull origin develop
-git checkout -b feature/property-api
+git checkout -b feature-property-api
 git commit -m "Add property CRUD"
-git push origin feature/property-api
+git push origin feature-property-api
 ```
 
 ---
