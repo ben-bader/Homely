@@ -1,63 +1,89 @@
-// lib/features/property/repositories/property_repository.dart
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/network/api_client.dart';
-import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/features/property/models/property.dart';
 
-// ── Provider ──────────────────────────────────────────────────────────────────
-
-final propertyRepositoryProvider =
-    Provider<PropertyRepository>((ref) => PropertyRepository());
-
-// ── Repository ────────────────────────────────────────────────────────────────
+final propertyRepositoryProvider = Provider<PropertyRepository>(
+  (ref) => PropertyRepository(),
+);
 
 class PropertyRepository {
-  // GET /api/properties
   Future<List<Property>> getAll() async {
-    final data = await ApiClient.get(Endpoints.properties) as List<dynamic>;
-    return data.map((e) => Property.fromJson(e as Map<String, dynamic>)).toList();
+    final data = await ApiClient.get('/properties') as List<dynamic>;
+    return data
+        .map((e) => Property.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  // GET /api/properties/{id}
   Future<Property> getById(String id) async {
-    final data = await ApiClient.get(Endpoints.propertyById(id)) as Map<String, dynamic>;
+    final data = await ApiClient.get('/properties/$id') as Map<String, dynamic>;
     return Property.fromJson(data);
   }
 
-  // GET /api/properties/search?keyword=...
-  Future<List<Property>> search(String keyword) async {
-    final data = await ApiClient.get(
-      Endpoints.searchProperties,
-      queryParams: {'keyword': keyword},
-    ) as List<dynamic>;
-    return data.map((e) => Property.fromJson(e as Map<String, dynamic>)).toList();
-  }
-
-  // GET /api/properties/filter?listingType=...&propertyType=...&city=...&minPrice=...&maxPrice=...
   Future<List<Property>> filter({
-    String? listingType,
-    String? propertyType,
-    String? city,
+    ListingType? listingType,
+    PropertyType? propertyType,
     double? minPrice,
     double? maxPrice,
+    String? city,
   }) async {
-    final data = await ApiClient.get(
-      Endpoints.filterProperties,
-      queryParams: {
-        if (listingType != null) 'listingType': listingType,
-        if (propertyType != null) 'propertyType': propertyType,
-        if (city != null) 'city': city,
-        if (minPrice != null) 'minPrice': minPrice.toString(),
-        if (maxPrice != null) 'maxPrice': maxPrice.toString(),
-      },
-    ) as List<dynamic>;
-    return data.map((e) => Property.fromJson(e as Map<String, dynamic>)).toList();
+    final params = <String, String>{};
+    if (listingType != null) params['listingType'] = listingType.toJson();
+    if (propertyType != null) params['propertyType'] = propertyType.toJson();
+    if (minPrice != null) params['minPrice'] = minPrice.toString();
+    if (maxPrice != null) params['maxPrice'] = maxPrice.toString();
+    if (city != null && city.isNotEmpty) params['city'] = city;
+
+    final data =
+        await ApiClient.get('/properties/filter', queryParams: params)
+            as List<dynamic>;
+    return data
+        .map((e) => Property.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  // GET /api/properties/my-listed (seller's properties)
-  Future<List<Property>> getSellerListings() async {
-    final data = await ApiClient.get(Endpoints.sellerListings) as List<dynamic>;
-    return data.map((e) => Property.fromJson(e as Map<String, dynamic>)).toList();
+  Future<List<Property>> search(String keyword) async {
+    final data =
+        await ApiClient.get(
+              '/properties/search',
+              queryParams: {'keyword': keyword},
+            )
+            as List<dynamic>;
+    return data
+        .map((e) => Property.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<Property>> getMyListedProperties() async {
+    final data = await ApiClient.get('/properties/my-listed') as List<dynamic>;
+    return data
+        .map((e) => Property.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Property> create(Map<String, dynamic> body) async {
+    final data =
+        await ApiClient.post('/properties', body: body) as Map<String, dynamic>;
+    return Property.fromJson(data);
+  }
+
+  Future<Property> update(String id, Map<String, dynamic> body) async {
+    final data =
+        await ApiClient.put('/properties/$id', body: body)
+            as Map<String, dynamic>;
+    return Property.fromJson(data);
+  }
+
+  Future<Property> updateStatus(String id, PropertyStatus status) async {
+    final data =
+        await ApiClient.patch(
+              '/properties/$id/status',
+              queryParams: {'status': status.toJson()},
+            )
+            as Map<String, dynamic>;
+    return Property.fromJson(data);
+  }
+
+  Future<void> delete(String id) async {
+    await ApiClient.delete('/properties/$id');
   }
 }

@@ -1,52 +1,134 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/features/property/models/property_subtypes.dart';
 
-import 'property_subtypes.dart';
+enum ListingType { rent, sell }
+
+extension ListingTypeX on ListingType {
+  String toJson() => name.toUpperCase();
+
+  static ListingType fromJson(String raw) => ListingType.values.firstWhere(
+    (e) => e.name.toUpperCase() == raw.toUpperCase(),
+    orElse: () => ListingType.sell,
+  );
+
+  String get label => name[0].toUpperCase() + name.substring(1);
+}
+
+enum PropertyType { apartment, house, villa, studio, commercial, land }
+
+extension PropertyTypeX on PropertyType {
+  String toJson() => name.toUpperCase();
+
+  static PropertyType fromJson(String raw) => PropertyType.values.firstWhere(
+    (e) => e.name.toUpperCase() == raw.toUpperCase(),
+    orElse: () => PropertyType.apartment,
+  );
+
+  String get label => name[0].toUpperCase() + name.substring(1);
+
+  IconData get icon {
+    switch (this) {
+      case PropertyType.apartment:
+        return Icons.apartment_outlined;
+      case PropertyType.house:
+        return Icons.house_outlined;
+      case PropertyType.villa:
+        return Icons.villa_outlined;
+      case PropertyType.studio:
+        return Icons.chair_outlined;
+      case PropertyType.commercial:
+        return Icons.business_outlined;
+      case PropertyType.land:
+        return Icons.landscape_outlined;
+    }
+  }
+}
+
+enum PropertyStatus { draft, active, inactive, sold, rented }
+
+extension PropertyStatusX on PropertyStatus {
+  String toJson() => name.toUpperCase();
+
+  static PropertyStatus fromJson(String raw) =>
+      PropertyStatus.values.firstWhere(
+        (e) => e.name.toUpperCase() == raw.toUpperCase(),
+        orElse: () => PropertyStatus.draft,
+      );
+
+  String get label => name[0].toUpperCase() + name.substring(1);
+
+  Color get color {
+    switch (this) {
+      case PropertyStatus.active:
+        return const Color(0xFF4CAF50);
+      case PropertyStatus.inactive:
+        return const Color(0xFFFF9800);
+      case PropertyStatus.sold:
+        return const Color(0xFFF44336);
+      case PropertyStatus.rented:
+        return const Color(0xFF2196F3);
+      case PropertyStatus.draft:
+        return const Color(0xFF9E9E9E);
+    }
+  }
+}
+
+class PropertyChip {
+  final IconData icon;
+  final String label;
+  const PropertyChip({required this.icon, required this.label});
+}
 
 class Property {
   final String id;
+
+  final String? sellerId;
+  final String sellerName;
+  final String? sellerAgency;
+  final String? sellerAvatar;
+
   final String title;
   final String description;
-  final String location;
   final double price;
   final String currency;
-  final String type;       // propertyType
-  final String listingType; // RENT | BUY
-  final String status;
+  final ListingType listingType;
+  final PropertyType propertyType;
+  final PropertyStatus status;
+  final String address;
+  final double? latitude;
+  final double? longitude;
+
   final List<String> images;
-  final String sellerId;
-  final String sellerName;
-  final String sellerAgency;
-  final String? sellerAvatar;
-  final double? lat;
-  final double? lng;
-  bool isFavorite;
 
-  // Subtypes
-  final ApartmentDto? apartment;
-  final HouseDto? house;
-  final VillaDto? villa;
-  final StudioDto? studio;
-  final CommercialDto? commercial;
-  final LandDto? land;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
-  Property({
+  final ApartmentData? apartment;
+  final HouseData? house;
+  final VillaData? villa;
+  final StudioData? studio;
+  final CommercialData? commercial;
+  final LandData? land;
+
+  const Property({
     required this.id,
+    this.sellerId,
+    this.sellerName = '',
+    this.sellerAgency,
+    this.sellerAvatar,
     required this.title,
     this.description = '',
-    required this.location,
     required this.price,
     this.currency = 'USD',
-    required this.type,
-    this.listingType = 'BUY',
+    required this.listingType,
+    required this.propertyType,
     required this.status,
-    required this.images,
-    required this.sellerId,
-    this.sellerName = '',
-    this.sellerAgency = '',
-    this.sellerAvatar,
-    this.lat,
-    this.lng,
-    this.isFavorite = false,
+    this.address = '',
+    this.latitude,
+    this.longitude,
+    this.images = const [],
+    this.createdAt,
+    this.updatedAt,
     this.apartment,
     this.house,
     this.villa,
@@ -55,180 +137,154 @@ class Property {
     this.land,
   });
 
-  // ── Computed attributes based on subtype ──────────────────
-  int get beds {
-    if (apartment != null) return apartment!.bedrooms;
-    if (house != null) return house!.bedrooms;
-    if (villa != null) return villa!.bedrooms;
-    return 0;
-  }
+  String get location => address;
 
-  int get baths {
-    if (apartment != null) return apartment!.bathrooms;
-    if (house != null) return house!.bathrooms;
-    if (villa != null) return villa!.bathrooms;
-    return 0;
-  }
-
-  int get garages => house?.garages ?? 0;
-
-  double get sqm {
-    if (house != null) return house!.landAreaSqm ?? 0;
-    if (villa != null) return villa!.landAreaSqm ?? 0;
-    if (commercial != null) return commercial!.areaSqm ?? 0;
-    if (land != null) return land!.areaSqm ?? 0;
-    return 0;
-  }
-
-  int get floor => apartment?.floor ?? 0;
-  bool get hasElevator => apartment?.hasElevator ?? false;
-  bool get hasPool => villa?.hasPool ?? false;
-  bool get hasGarage => house?.hasGarage ?? false;
-  bool get furnished => studio?.furnished ?? false;
-  bool get constructible => land?.constructible ?? false;
-  String get businessType => commercial?.businessType ?? '';
-
-  // ── Chips to show per type ────────────────────────────────
-  List<_PropertyChipData> get chips {
-    final t = type.toUpperCase();
-    switch (t) {
-      case 'APARTMENT':
-        return [
-          _PropertyChipData(icon: Icons.bed_outlined, label: '$beds Beds'),
-          _PropertyChipData(icon: Icons.bathtub_outlined, label: '$baths Baths'),
-          _PropertyChipData(icon: Icons.layers_outlined, label: 'Floor $floor'),
-        ];
-      case 'HOUSE':
-        return [
-          _PropertyChipData(icon: Icons.bed_outlined, label: '$beds Beds'),
-          _PropertyChipData(icon: Icons.bathtub_outlined, label: '$baths Baths'),
-          _PropertyChipData(icon: Icons.garage_outlined, label: hasGarage ? 'Garage' : 'No Garage'),
-        ];
-      case 'VILLA':
-        return [
-          _PropertyChipData(icon: Icons.bed_outlined, label: '$beds Beds'),
-          _PropertyChipData(icon: Icons.bathtub_outlined, label: '$baths Baths'),
-          _PropertyChipData(icon: Icons.pool_outlined, label: hasPool ? 'Pool' : 'No Pool'),
-        ];
-      case 'STUDIO':
-        return [
-          _PropertyChipData(icon: Icons.chair_outlined, label: furnished ? 'Furnished' : 'Unfurnished'),
-          _PropertyChipData(icon: Icons.apartment_outlined, label: 'Studio'),
-        ];
-      case 'COMMERCIAL':
-        return [
-          _PropertyChipData(icon: Icons.store_outlined, label: businessType),
-          _PropertyChipData(icon: Icons.square_foot_outlined, label: '${sqm.toInt()} sqm'),
-        ];
-      case 'LAND':
-        return [
-          _PropertyChipData(icon: Icons.landscape_outlined, label: '${sqm.toInt()} sqm'),
-          _PropertyChipData(icon: Icons.build_outlined, label: constructible ? 'Constructible' : 'Non-constructible'),
-        ];
-      default:
-        return [
-          _PropertyChipData(icon: Icons.home_outlined, label: type),
-        ];
+  List<PropertyChip> get chips {
+    final r = <PropertyChip>[];
+    if (apartment != null) {
+      r.add(
+        PropertyChip(
+          icon: Icons.bed_outlined,
+          label: '${apartment!.bedrooms} Beds',
+        ),
+      );
+      r.add(
+        PropertyChip(
+          icon: Icons.bathtub_outlined,
+          label: '${apartment!.bathrooms} Baths',
+        ),
+      );
+      r.add(
+        PropertyChip(
+          icon: Icons.layers_outlined,
+          label: 'Floor ${apartment!.floor}',
+        ),
+      );
+      if (apartment!.hasElevator)
+        r.add(PropertyChip(icon: Icons.elevator_outlined, label: 'Elevator'));
+    } else if (house != null) {
+      r.add(
+        PropertyChip(
+          icon: Icons.bed_outlined,
+          label: '${house!.bedrooms} Beds',
+        ),
+      );
+      r.add(
+        PropertyChip(
+          icon: Icons.bathtub_outlined,
+          label: '${house!.bathrooms} Baths',
+        ),
+      );
+      if (house!.landAreaSqm != null)
+        r.add(
+          PropertyChip(
+            icon: Icons.square_foot_outlined,
+            label: '${house!.landAreaSqm!.toStringAsFixed(0)} m²',
+          ),
+        );
+    } else if (villa != null) {
+      r.add(
+        PropertyChip(
+          icon: Icons.bed_outlined,
+          label: '${villa!.bedrooms} Beds',
+        ),
+      );
+      r.add(
+        PropertyChip(
+          icon: Icons.bathtub_outlined,
+          label: '${villa!.bathrooms} Baths',
+        ),
+      );
+      r.add(
+        PropertyChip(
+          icon: Icons.pool_outlined,
+          label: villa!.hasPool ? 'Pool' : 'No Pool',
+        ),
+      );
+    } else if (studio != null) {
+      r.add(
+        PropertyChip(
+          icon: Icons.chair_outlined,
+          label: studio!.furnished ? 'Furnished' : 'Unfurnished',
+        ),
+      );
+    } else if (commercial != null) {
+      if (commercial!.areaSqm != null)
+        r.add(
+          PropertyChip(
+            icon: Icons.square_foot_outlined,
+            label: '${commercial!.areaSqm!.toStringAsFixed(0)} m²',
+          ),
+        );
+      if (commercial!.businessType != null)
+        r.add(
+          PropertyChip(
+            icon: Icons.business_outlined,
+            label: commercial!.businessType!,
+          ),
+        );
+    } else if (land != null) {
+      if (land!.areaSqm != null)
+        r.add(
+          PropertyChip(
+            icon: Icons.square_foot_outlined,
+            label: '${land!.areaSqm!.toStringAsFixed(0)} m²',
+          ),
+        );
+      r.add(
+        PropertyChip(
+          icon: Icons.construction_outlined,
+          label: land!.constructible ? 'Constructible' : 'Non-constructible',
+        ),
+      );
     }
+    return r;
   }
 
-  factory Property.fromJson(Map<String, dynamic> json) {
-    ApartmentDto? apartment;
-    HouseDto? house;
-    VillaDto? villa;
-    StudioDto? studio;
-    CommercialDto? commercial;
-    LandDto? land;
-
-    if (json['apartment'] != null) apartment = ApartmentDto.fromJson(json['apartment']);
-    if (json['house'] != null) house = HouseDto.fromJson(json['house']);
-    if (json['villa'] != null) villa = VillaDto.fromJson(json['villa']);
-    if (json['studio'] != null) studio = StudioDto.fromJson(json['studio']);
-    if (json['commercial'] != null) commercial = CommercialDto.fromJson(json['commercial']);
-    if (json['land'] != null) land = LandDto.fromJson(json['land']);
-
-    return Property(
-      id: json['id']?.toString() ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      location: json['address'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      currency: json['currency'] ?? 'USD',
-      type: json['propertyType']?.toString() ?? 'HOUSE',
-      listingType: json['listingType']?.toString() ?? 'BUY',
-      status: json['status']?.toString() ?? 'AVAILABLE',
-      images: List<String>.from(json['images'] ?? []),
-      sellerId: json['sellerId']?.toString() ?? '',
-      sellerName: json['sellerName'] ?? '',
-      sellerAgency: json['sellerAgency'] ?? '',
-      sellerAvatar: json['sellerAvatar'],
-      lat: json['latitude']?.toDouble(),
-      lng: json['longitude']?.toDouble(),
-      isFavorite: json['isFavorite'] ?? false,
-      apartment: apartment,
-      house: house,
-      villa: villa,
-      studio: studio,
-      commercial: commercial,
-      land: land,
-    );
-  }
-  Property copyWith({
-  String? id,
-  String? title,
-  String? description,
-  String? location,
-  double? price,
-  String? currency,
-  String? type,
-  String? listingType,
-  String? status,
-  List<String>? images,
-  String? sellerId,
-  String? sellerName,
-  String? sellerAgency,
-  String? sellerAvatar,
-  double? lat,
-  double? lng,
-  bool? isFavorite,
-  ApartmentDto? apartment,
-  HouseDto? house,
-  VillaDto? villa,
-  StudioDto? studio,
-  CommercialDto? commercial,
-  LandDto? land,
-}) {
-  return Property(
-    id: id ?? this.id,
-    title: title ?? this.title,
-    description: description ?? this.description,
-    location: location ?? this.location,
-    price: price ?? this.price,
-    currency: currency ?? this.currency,
-    type: type ?? this.type,
-    listingType: listingType ?? this.listingType,
-    status: status ?? this.status,
-    images: images ?? this.images,
-    sellerId: sellerId ?? this.sellerId,
-    sellerName: sellerName ?? this.sellerName,
-    sellerAgency: sellerAgency ?? this.sellerAgency,
-    sellerAvatar: sellerAvatar ?? this.sellerAvatar,
-    lat: lat ?? this.lat,
-    lng: lng ?? this.lng,
-    isFavorite: isFavorite ?? this.isFavorite,
-    apartment: apartment ?? this.apartment,
-    house: house ?? this.house,
-    villa: villa ?? this.villa,
-    studio: studio ?? this.studio,
-    commercial: commercial ?? this.commercial,
-    land: land ?? this.land,
+  factory Property.fromJson(Map<String, dynamic> j) => Property(
+    id: j['id']?.toString() ?? '',
+    sellerId: j['sellerId']?.toString(),
+    sellerName: j['sellerName']?.toString() ?? '',
+    sellerAgency: j['sellerAgency']?.toString(),
+    sellerAvatar: j['sellerAvatar']?.toString(),
+    title: j['title']?.toString() ?? '',
+    description: j['description']?.toString() ?? '',
+    price: (j['price'] as num?)?.toDouble() ?? 0.0,
+    currency: j['currency']?.toString() ?? 'USD',
+    listingType: ListingTypeX.fromJson(j['listingType']?.toString() ?? 'SELL'),
+    propertyType: PropertyTypeX.fromJson(
+      j['propertyType']?.toString() ?? 'APARTMENT',
+    ),
+    status: PropertyStatusX.fromJson(j['status']?.toString() ?? 'DRAFT'),
+    address: j['address']?.toString() ?? '',
+    latitude: (j['latitude'] as num?)?.toDouble(),
+    longitude: (j['longitude'] as num?)?.toDouble(),
+    images:
+        (j['images'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+        [],
+    createdAt: j['createdAt'] != null
+        ? DateTime.tryParse(j['createdAt'].toString())
+        : null,
+    updatedAt: j['updatedAt'] != null
+        ? DateTime.tryParse(j['updatedAt'].toString())
+        : null,
+    apartment: j['apartment'] != null
+        ? ApartmentData.fromJson(j['apartment'] as Map<String, dynamic>)
+        : null,
+    house: j['house'] != null
+        ? HouseData.fromJson(j['house'] as Map<String, dynamic>)
+        : null,
+    villa: j['villa'] != null
+        ? VillaData.fromJson(j['villa'] as Map<String, dynamic>)
+        : null,
+    studio: j['studio'] != null
+        ? StudioData.fromJson(j['studio'] as Map<String, dynamic>)
+        : null,
+    commercial: j['commercial'] != null
+        ? CommercialData.fromJson(j['commercial'] as Map<String, dynamic>)
+        : null,
+    land: j['land'] != null
+        ? LandData.fromJson(j['land'] as Map<String, dynamic>)
+        : null,
   );
-}
-}
-
-// Simple data class for chip rendering
-class _PropertyChipData {
-  final IconData icon;
-  final String label;
-  const _PropertyChipData({required this.icon, required this.label});
 }
