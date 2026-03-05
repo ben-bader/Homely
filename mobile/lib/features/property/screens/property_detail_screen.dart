@@ -329,38 +329,6 @@ class _BodyState extends ConsumerState<_Body> {
                         ),
                       ),
 
-                      if (_isClient) ...[
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _OutlineActionBtn(
-                                icon: Icons.calendar_today_outlined,
-                                label: 'Request Visit',
-                                color: AppColors.primary,
-                                onTap: () => RequestVisitSheet.show(
-                                  context,
-                                  propertyId: p.id,
-                                  propertyTitle: p.title,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _OutlineActionBtn(
-                                icon: Icons.star_outline_rounded,
-                                label: 'Write Review',
-                                color: const Color(0xFFFFC107),
-                                onTap: () => SubmitFeedbackSheet.show(
-                                  context,
-                                  propertyId: p.id,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-
                       if (_isOwner) ...[
                         const SizedBox(height: 20),
                         _OutlineActionBtn(

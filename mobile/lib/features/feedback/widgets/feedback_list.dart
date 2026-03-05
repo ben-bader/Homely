@@ -56,16 +56,30 @@ class FeedbackList extends ConsumerWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: const Color(0xFFFFC107).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Write a Review',
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                  border: Border.all(
+                    color: const Color(0xFFFFC107).withValues(alpha: 0.5),
                   ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.star_outline_rounded,
+                      size: 13,
+                      color: Color(0xFFFFC107),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Write a Review',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFFFC107),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
