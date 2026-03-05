@@ -227,11 +227,15 @@ class _ListingCard extends ConsumerWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(property.status),
+                      // FIX: was property.status.toString() — status is a PropertyStatus enum,
+                      // use .toJson() to get the uppercase string for the color lookup
+                      color: _getStatusColor(property.status.toJson()),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      property.status.replaceAll('_', ' ').toUpperCase(),
+                      // FIX: was property.status.replaceAll(...).toUpperCase() — status is a
+                      // PropertyStatus enum, not a String. Use .label for display text.
+                      property.status.label.toUpperCase(),
                       style: tt.labelSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -304,7 +308,11 @@ class _ListingCard extends ConsumerWidget {
     height: 150,
     color: const Color(0xFFF0E9E3),
     child: const Center(
-      child: Icon(Icons.home_outlined, size: 40, color: AppColors.textTertiary),
+      child: Icon(
+        Icons.home_outlined,
+        size: 40,
+        color: AppColors.textTertiary,
+      ),
     ),
   );
 

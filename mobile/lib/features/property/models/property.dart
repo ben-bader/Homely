@@ -44,7 +44,9 @@ extension PropertyTypeX on PropertyType {
   }
 }
 
-enum PropertyStatus { draft, active, inactive, sold, rented }
+enum PropertyStatus {available,
+    suspended,
+    draft }
 
 extension PropertyStatusX on PropertyStatus {
   String toJson() => name.toUpperCase();
@@ -59,13 +61,9 @@ extension PropertyStatusX on PropertyStatus {
 
   Color get color {
     switch (this) {
-      case PropertyStatus.active:
-        return const Color(0xFF4CAF50);
-      case PropertyStatus.inactive:
+      case PropertyStatus.available:
         return const Color(0xFFFF9800);
-      case PropertyStatus.sold:
-        return const Color(0xFFF44336);
-      case PropertyStatus.rented:
+      case PropertyStatus.suspended:
         return const Color(0xFF2196F3);
       case PropertyStatus.draft:
         return const Color(0xFF9E9E9E);

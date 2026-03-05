@@ -180,18 +180,19 @@ class _BodyState extends ConsumerState<_Body> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: p.listingType.toUpperCase() == 'RENT'
+                                    // FIX: was p.listingType.toUpperCase() — listingType is an enum, use toJson()
+                                    color: p.listingType.toJson() == 'RENT'
                                         ? const Color(0xFFE8F4FD)
                                         : const Color(0xFFE8F8EE),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    p.listingType.toUpperCase(),
+                                    // FIX: was p.listingType.toUpperCase() — use toJson() for the string value
+                                    p.listingType.toJson(),
                                     style: tt.labelSmall?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.5,
-                                      color:
-                                          p.listingType.toUpperCase() == 'RENT'
+                                      color: p.listingType.toJson() == 'RENT'
                                           ? const Color(0xFF1976D2)
                                           : const Color(0xFF2E7D32),
                                     ),
@@ -297,9 +298,14 @@ class _BodyState extends ConsumerState<_Body> {
                                       color: AppColors.primary,
                                     ),
                                   ),
-                                  if (p.sellerAgency.isNotEmpty) ...[
+                                  // FIX: was p.sellerAgency.isNotEmpty — sellerAgency is String? (nullable)
+                                  if (p.sellerAgency != null &&
+                                      p.sellerAgency!.isNotEmpty) ...[
                                     const SizedBox(height: 2),
-                                    Text(p.sellerAgency, style: tt.bodySmall),
+                                    Text(
+                                      p.sellerAgency!,
+                                      style: tt.bodySmall,
+                                    ),
                                   ],
                                 ],
                               ),

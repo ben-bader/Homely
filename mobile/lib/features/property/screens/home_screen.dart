@@ -187,23 +187,50 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   void _onChipTap(String tapped) {
     final notifier = ref.read(propertyFilterProvider.notifier);
     if (tapped == 'All types') {
-      notifier.update((s) => s.resetFilters());
+      // FIX: was filter.resetFilters() — correct method name is clearFilters()
+      notifier.update((s) => s.clearFilters());
       return;
     }
     final filter = ref.read(propertyFilterProvider);
     if (_listingTypes.contains(tapped)) {
-      final newStatus = filter.status == tapped ? null : tapped;
-      notifier.update((s) => s.copyWith(status: newStatus ?? 'All types'));
+      // FIX: was filter.status — correct field is listingType
+      final mapped = tapped == 'Rent' ? ListingType.rent : ListingType.sell;
+      final isSame = filter.listingType == mapped;
+      notifier.update(
+        (s) => s.copyWith(
+          clearListingType: isSame,
+          listingType: isSame ? null : mapped,
+        ),
+      );
     } else {
-      final newType = filter.type == tapped ? null : tapped;
-      notifier.update((s) => s.copyWith(type: newType ?? 'Any type'));
+      // FIX: was filter.type — correct field is propertyType
+      final mapped = PropertyType.values.firstWhere(
+        (e) => e.label == tapped,
+        orElse: () => PropertyType.apartment,
+      );
+      final isSame = filter.propertyType == mapped;
+      notifier.update(
+        (s) => s.copyWith(
+          clearPropertyType: isSame,
+          propertyType: isSame ? null : mapped,
+        ),
+      );
     }
   }
 
   bool _isChipSelected(String chip, PropertyFilter filter) {
     if (chip == 'All types') return !filter.isFiltering;
-    if (_listingTypes.contains(chip)) return filter.status == chip;
-    return filter.type == chip;
+    if (_listingTypes.contains(chip)) {
+      // FIX: was filter.status — correct field is listingType
+      final mapped = chip == 'Rent' ? ListingType.rent : ListingType.sell;
+      return filter.listingType == mapped;
+    }
+    // FIX: was filter.type — correct field is propertyType
+    final mapped = PropertyType.values.firstWhere(
+      (e) => e.label == chip,
+      orElse: () => PropertyType.apartment,
+    );
+    return filter.propertyType == mapped;
   }
 
   @override
@@ -480,9 +507,10 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                   ),
                   if (filter.isFiltering)
                     GestureDetector(
+                      // FIX: was s.resetFilters() — correct method name is clearFilters()
                       onTap: () => ref
                           .read(propertyFilterProvider.notifier)
-                          .update((s) => s.resetFilters()),
+                          .update((s) => s.clearFilters()),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -713,13 +741,8 @@ class _FeaturedCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    property.type
-                        .toLowerCase()
-                        .splitMapJoin("")
-                        .replaceAllMapped(
-                          RegExp(r'^\w'),
-                          (m) => m[0]!.toUpperCase(),
-                        ),
+                    // FIX: was property.type — correct is property.propertyType.label
+                    property.propertyType.label,
                     style: tt.labelSmall?.copyWith(
                       color: AppColors.accent,
                       fontWeight: FontWeight.w700,
@@ -885,8 +908,9 @@ class _FilterSheet extends ConsumerStatefulWidget {
 }
 
 class _FilterSheetState extends ConsumerState<_FilterSheet> {
-  late String? _status;
-  late String? _propertyType;
+  // FIX: was String? _status / String? _propertyType — now use proper enum types
+  late ListingType? _listingType;
+  late PropertyType? _propertyType;
   late TextEditingController _cityController;
   late TextEditingController _minPriceController;
   late TextEditingController _maxPriceController;
@@ -906,8 +930,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   void initState() {
     super.initState();
     final f = ref.read(propertyFilterProvider);
-    _status = f.status ?? 'All';
-    _propertyType = f.type ?? 'Any type';
+    // FIX: was f.status / f.type — correct fields are listingType / propertyType
+    _listingType = f.listingType;
+    _propertyType = f.propertyType;
     _cityController = TextEditingController(text: f.city ?? '');
     _minPriceController = TextEditingController(
       text: f.minPrice != null ? f.minPrice!.toStringAsFixed(0) : '',
@@ -925,6 +950,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     super.dispose();
   }
 
+  // Helper to get the display label for the current listing type selection
+  String get _statusLabel {
+    if (_listingType == null) return 'All';
+    if (_listingType == ListingType.rent) return 'Rent';
+    return 'Buy';
+  }
+
   void _apply() {
     final minText = _minPriceController.text.trim();
     final maxText = _maxPriceController.text.trim();
@@ -932,10 +964,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     ref
         .read(propertyFilterProvider.notifier)
         .update(
+          // FIX: was PropertyFilter(search:, status:, type:, ...) — correct field names
           (f) => PropertyFilter(
             search: f.search,
-            status: _status == 'All' ? null : _status,
-            type: _propertyType == 'Any type' ? null : _propertyType,
+            listingType: _listingType,
+            propertyType: _propertyType,
             city: _cityController.text.trim().isEmpty
                 ? null
                 : _cityController.text.trim(),
@@ -949,8 +982,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   void _reset() {
     setState(() {
-      _status = 'All';
-      _propertyType = 'Any type';
+      _listingType = null;
+      _propertyType = null;
       _cityController.clear();
       _minPriceController.clear();
       _maxPriceController.clear();
@@ -1028,12 +1061,21 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 10),
             Row(
+              // FIX: was comparing _status (String?) to s — now uses _statusLabel helper
               children: _statuses.map((s) {
-                final sel = _status == s;
+                final sel = _statusLabel == s;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
-                    onTap: () => setState(() => _status = s),
+                    onTap: () => setState(() {
+                      if (s == 'All') {
+                        _listingType = null;
+                      } else if (s == 'Rent') {
+                        _listingType = ListingType.rent;
+                      } else {
+                        _listingType = ListingType.sell;
+                      }
+                    }),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.symmetric(
@@ -1073,9 +1115,21 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               spacing: 8,
               runSpacing: 8,
               children: _propertyTypes.map((t) {
-                final sel = _propertyType == t;
+                // FIX: was comparing _propertyType (String?) to t — now uses enum label
+                final sel = t == 'Any type'
+                    ? _propertyType == null
+                    : _propertyType?.label == t;
                 return GestureDetector(
-                  onTap: () => setState(() => _propertyType = t),
+                  onTap: () => setState(() {
+                    if (t == 'Any type') {
+                      _propertyType = null;
+                    } else {
+                      _propertyType = PropertyType.values.firstWhere(
+                        (e) => e.label == t,
+                        orElse: () => PropertyType.apartment,
+                      );
+                    }
+                  }),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.symmetric(
@@ -1113,7 +1167,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             _FilterTextField(
               controller: _cityController,
               hint: 'e.g. Casablanca, Rabat...',
-              
               icon: Icons.location_city_outlined,
             ),
             const SizedBox(height: 24),
@@ -1301,13 +1354,8 @@ class PropertyCard extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(50),
                     ),
                     child: Text(
-                      property.type
-                          .toLowerCase()
-                          .splitMapJoin("")
-                          .replaceAllMapped(
-                            RegExp(r'^\w'),
-                            (m) => m[0]!.toUpperCase(),
-                          ),
+                      // FIX: was property.type — correct is property.propertyType.label
+                      property.propertyType.label,
                       style: tt.labelMedium?.copyWith(
                         color: AppColors.accent,
                         fontWeight: FontWeight.w700,

@@ -5,6 +5,7 @@ import 'package:mobile/features/auth/services/auth_service.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/profile/models/profile.dart';
 import 'package:mobile/features/profile/repositories/profile_repository.dart';
+import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/seller/providers/seller_providers.dart';
 import 'package:mobile/features/visit_requests/screens/my_visit_requests_screen.dart';
 import 'package:mobile/features/boost/screens/my_boosts_screen.dart';
@@ -1168,11 +1169,11 @@ class _SellerListingsSection extends ConsumerWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _getStatusColor(property.status),
+                                  color: _getStatusColor(property.status.toString()),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  property.status.replaceAll('_', ' '),
+                                  property.status.label,
                                   style: tt.labelSmall?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,

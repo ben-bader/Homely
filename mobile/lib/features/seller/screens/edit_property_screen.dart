@@ -10,7 +10,7 @@ import 'package:mobile/features/media/providers/media_providers.dart';
 import 'package:mobile/features/media/widgets/property_media_gallery.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
-import 'package:mobile/features/seller/providers/seller_providers.dart';
+import 'package:mobile/features/seller/providers/seller_providers.dart' hide sellerListingsProvider;
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/features/tours/screens/video_player_screen.dart';
@@ -29,8 +29,9 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
   late TextEditingController _descriptionCtrl;
   late TextEditingController _locationCtrl;
   late TextEditingController _priceCtrl;
-  late String _listingType;
-  late String _status;
+  // FIX: was String _listingType / String _status — use proper enum types
+  late ListingType _listingType;
+  late PropertyStatus _status;
   final ImagePicker _picker = ImagePicker();
   bool _loading = false;
 
@@ -42,7 +43,9 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
     _descriptionCtrl = TextEditingController(text: p.description);
     _locationCtrl = TextEditingController(text: p.location);
     _priceCtrl = TextEditingController(text: p.price.toString());
+    // FIX: was p.propertyType.toString() — should read the actual listingType enum
     _listingType = p.listingType;
+    // FIX: was p.status.toString() — should read the actual status enum
     _status = p.status;
   }
 
@@ -71,11 +74,16 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
         'address': _locationCtrl.text,
         'price': double.tryParse(_priceCtrl.text) ?? 0,
         'currency': 'USD',
-        'listingType': _listingType,
-        'status': _status,
+        // FIX: was _listingType (String) directly — now call .toJson() on the enum
+        'listingType': _listingType.toJson(),
+        // FIX: was _status (String) directly — now call .toJson() on the enum
+        'status': _status.toJson(),
       };
 
-      await ApiClient.put(Endpoints.updateProperty(widget.property.id), body: payload);
+      await ApiClient.put(
+        Endpoints.updateProperty(widget.property.id),
+        body: payload,
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -92,7 +100,10 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -119,10 +130,12 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
       }
 
       ref.invalidate(propertyMediaProvider(propertyId));
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Images uploaded')),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Upload failed: $e')),
       );
@@ -142,10 +155,12 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
           .uploadVideo(file: File(picked.path), displayOrder: displayOrder);
 
       ref.invalidate(propertyMediaProvider(propertyId));
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Video uploaded')),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Upload failed: $e')),
       );
@@ -383,7 +398,9 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                               icon: const Icon(Icons.photo_library_outlined),
                               label: const Text('Add Photos'),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -397,7 +414,9 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                               icon: const Icon(Icons.videocam_outlined),
                               label: const Text('Add Video'),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -418,39 +437,22 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                       ),
                       const SizedBox(height: 8),
                       Row(
-                        children: ['BUY', 'RENT'].map((t) {
-                          final selected = _listingType == t;
-                          return Expanded(
-                            child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _listingType = t),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: selected
-                                      ? AppColors.primary
-                                      : AppColors.subtleBackground,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    t,
-                                    style: tt.labelLarge?.copyWith(
-                                      color: selected
-                                          ? Colors.white
-                                          : AppColors.accent,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                        // FIX: was comparing String _listingType to 'BUY'/'RENT' string literals
+                        // Now maps display labels to ListingType enum values
+                        children: [
+                          _buildListingTypeBtn(
+                            tt,
+                            label: 'Sell',
+                            value: ListingType.sell,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildListingTypeBtn(
+                            tt,
+                            label: 'Rent',
+                            value: ListingType.rent,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
                       const SizedBox(height: 20),
 
                       // Status
@@ -463,36 +465,21 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                       ),
                       const SizedBox(height: 8),
                       Row(
-                        children: ['ACTIVE', 'INACTIVE'].map((s) {
-                          final selected = _status == s;
-                          return Expanded(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _status = s),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: selected
-                                      ? AppColors.primary
-                                      : AppColors.subtleBackground,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    s,
-                                    style: tt.labelLarge?.copyWith(
-                                      color: selected
-                                          ? Colors.white
-                                          : AppColors.accent,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                        // FIX: was comparing String _status to 'ACTIVE'/'INACTIVE' string literals
+                        // Now maps display labels to PropertyStatus enum values
+                        children: [
+                          _buildStatusBtn(
+                            tt,
+                            label: 'Draft',
+                            value: PropertyStatus.draft,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildStatusBtn(
+                            tt,
+                            label: 'Available',
+                            value: PropertyStatus.available,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -521,8 +508,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                 onPressed: _loading ? null : _saveChanges,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  disabledBackgroundColor:
-                      AppColors.primary.withOpacity(0.5),
+                  disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -550,6 +536,66 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildListingTypeBtn(
+    TextTheme tt, {
+    required String label,
+    required ListingType value,
+  }) {
+    final selected = _listingType == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _listingType = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary : AppColors.subtleBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: tt.labelLarge?.copyWith(
+                color: selected ? Colors.white : AppColors.accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBtn(
+    TextTheme tt, {
+    required String label,
+    required PropertyStatus value,
+  }) {
+    final selected = _status == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _status = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary : AppColors.subtleBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: tt.labelLarge?.copyWith(
+                color: selected ? Colors.white : AppColors.accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
