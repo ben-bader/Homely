@@ -646,18 +646,8 @@ class _CircleBtn extends StatelessWidget {
     child: Container(
       width: 40,
       height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Icon(icon, size: 20, color: iconColor),
+    
+      child: Icon(icon, size: 24, color: iconColor),
     ),
   );
 }
