@@ -17,6 +17,9 @@ import com.homely.boost.dto.BoostPurchaseDto;
 import com.homely.boost.entity.BoostPurchase;
 import com.homely.boost.mapper.BoostPurchaseMapper;
 import com.homely.boost.service.BoostService;
+import com.homely.chat.dto.ConversationDto;
+import com.homely.chat.mapper.ConversationMapper;
+import com.homely.chat.service.ChatService;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PurchaseStatus;
 import com.homely.common.enums.ReportStatus;
@@ -61,6 +64,7 @@ public class AdminController {
     private final PropertyService propertyService;
     private final ProfileService profileService;
     private final BoostService boostService;
+    private final ChatService chatService;
     private final PropertyViewService propertyViewService;
     private final FeedbackService feedbackService;
     private final VisitRequestService visitRequestService;
@@ -75,6 +79,7 @@ public class AdminController {
     private final PropertyViewMapper propertyViewMapper;
     private final FeedbackMapper feedbackMapper;
     private final VisitRequestMapper visitRequestMapper;
+    private final ConversationMapper conversationMapper;
 
     @GetMapping("/reports")
     public List<ReportDto> reports() {
@@ -238,4 +243,13 @@ public class AdminController {
                 moderationService.count(),
                 boostService.count());
     }
+
+    @GetMapping("/conversations")
+public List<ConversationDto> getAllConversations() {
+    return chatService.getAllConversations()
+            .stream()
+            .map(conversationMapper::toDto)
+            .toList();
+}
+    
 }

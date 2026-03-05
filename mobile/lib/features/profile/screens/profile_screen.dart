@@ -279,7 +279,7 @@ class _ProfileContent extends StatelessWidget {
             _InfoTile(
               icon: Icons.verified_user_outlined,
               label: 'Verification',
-              value: profile.verified ? 'Verified ✓' : 'Not verified',
+              value: profile.verified ? 'Verified' : 'Not verified',
               isFirst: true,
               isLast: true,
             ),
@@ -768,11 +768,13 @@ class _InfoTile extends StatelessWidget {
         ),
         boxShadow: isFirst
             ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
+          
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+          
               ]
             : null,
       ),
