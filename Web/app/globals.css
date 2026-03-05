@@ -52,33 +52,60 @@
 
   /* ================= BRAND ================= */
   --primary: #3D5A80;
+  --primary-foreground: #FFFFFF;        /* ✅ was missing */
   --primary-light: #5B7FA6;
   --primary-dark: #2C4260;
 
-  --accent: #1C2B3A;
+  /* ================= SECONDARY ================= */
+  --secondary: #EEF2F7;                 /* ✅ was missing */
+  --secondary-foreground: #1C2B3A;      /* ✅ was missing */
+
+  /* ================= ACCENT ================= */
+  --accent: #EEF2F7;                    /* ✅ fixed — was #1C2B3A (too dark, ate text) */
+  --accent-foreground: #1C2B3A;         /* ✅ was missing */
   --accent-light: #2E4057;
+
+  /* ================= MUTED ================= */
+  --muted: #EEF2F7;                     /* ✅ was missing */
+  --muted-foreground: #6B7E92;
+
+  /* ================= POPOVER ================= */
+  --popover: #FFFFFF;                   /* ✅ was missing */
+  --popover-foreground: #1C2B3A;        /* ✅ was missing */
+
+  /* ================= CARD ================= */
+  --card: #FFFFFF;
+  --card-foreground: #1C2B3A;           /* ✅ was missing */
 
   /* ================= BACKGROUNDS ================= */
   --background: #FFFFFF;
-  --card: #FFFFFF;
   --subtle-background: #EEF2F7;
 
   /* ================= TEXT ================= */
   --foreground: #1C2B3A;
-  --muted-foreground: #6B7E92;
   --text-tertiary: #AAB8C6;
   --text-disabled: #CDD5DE;
 
-  /* ================= BORDERS ================= */
+  /* ================= BORDERS & INPUT ================= */
   --border: #E2E8EF;
   --border-medium: #C5D0DC;
   --border-dark: #A8B8C8;
+  --input: #E2E8EF;                     /* ✅ was missing */
+  --ring: #3D5A80;                      /* ✅ was missing */
 
   /* ================= STATUS ================= */
   --success: #2E8B6A;
   --warning: #D4872A;
   --destructive: #CF4A3C;
+  --destructive-foreground: #FFFFFF;    /* ✅ was missing */
   --info: #3D5A80;
+
+  /* ================= CHARTS ================= */
+  --chart-1: #3D5A80;                   /* ✅ was missing */
+  --chart-2: #5B7FA6;                   /* ✅ was missing */
+  --chart-3: #2E8B6A;                   /* ✅ was missing */
+  --chart-4: #D4872A;                   /* ✅ was missing */
+  --chart-5: #CF4A3C;                   /* ✅ was missing */
 
   /* ================= SIDEBAR ================= */
   --sidebar: #EEF2F7;
@@ -96,34 +123,57 @@
   --foreground: #E6EDF5;
 
   --card: #16202B;
+  --card-foreground: #E6EDF5;
+
   --primary: #5B7FA6;
+  --primary-foreground: #FFFFFF;
   --primary-light: #7FA3C8;
   --primary-dark: #3D5A80;
 
-  --accent: #0F1720;
+  --secondary: #1C2B3A;
+  --secondary-foreground: #E6EDF5;
+
+  --accent: #1C2B3A;                    /* dark but not pitch black */
+  --accent-foreground: #E6EDF5;
   --accent-light: #1C2B3A;
 
+  --muted: #1C2B3A;
   --muted-foreground: #94A3B8;
 
+  --popover: #16202B;
+  --popover-foreground: #E6EDF5;
+
   --border: #253444;
+  --input: #253444;
+  --ring: #5B7FA6;
+
+  --destructive: #E07060;
+  --destructive-foreground: #FFFFFF;
+
+  --chart-1: #5B7FA6;
+  --chart-2: #7FA3C8;
+  --chart-3: #3DAF87;
+  --chart-4: #E8A84A;
+  --chart-5: #E07060;
 
   --sidebar: #111827;
   --sidebar-foreground: #E6EDF5;
   --sidebar-primary: #5B7FA6;
+  --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #2C4260;
+  --sidebar-accent-foreground: #E6EDF5;
+  --sidebar-border: #253444;
+  --sidebar-ring: #5B7FA6;
 
   --success: #3DAF87;
   --warning: #E8A84A;
-  --destructive: #E07060;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
     @apply bg-background text-foreground;
   }
 }
