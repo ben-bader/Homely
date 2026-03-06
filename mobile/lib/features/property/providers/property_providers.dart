@@ -5,11 +5,13 @@ import 'package:mobile/features/property/repositories/property_repository.dart';
 
 class PropertyFilter {
   final String? search;
-  final ListingType? listingType; 
-  final PropertyType? propertyType; 
+  final ListingType? listingType;
+  final PropertyType? propertyType;
   final String? city;
   final double? minPrice;
   final double? maxPrice;
+  final DateTime? fromDate;
+  final DateTime? toDate;
 
   const PropertyFilter({
     this.search,
@@ -18,6 +20,8 @@ class PropertyFilter {
     this.city,
     this.minPrice,
     this.maxPrice,
+    this.fromDate,
+    this.toDate,
   });
 
   bool get isFiltering =>
@@ -25,7 +29,9 @@ class PropertyFilter {
       propertyType != null ||
       (city != null && city!.isNotEmpty) ||
       minPrice != null ||
-      maxPrice != null;
+      maxPrice != null ||
+      fromDate != null ||
+      toDate != null;
 
   bool get hasSearch => search != null && search!.isNotEmpty;
 
@@ -36,6 +42,8 @@ class PropertyFilter {
     if (city != null && city!.isNotEmpty) n++;
     if (minPrice != null) n++;
     if (maxPrice != null) n++;
+    if (fromDate != null) n++;
+    if (toDate != null) n++;
     return n;
   }
 
@@ -46,22 +54,29 @@ class PropertyFilter {
     String? city,
     double? minPrice,
     double? maxPrice,
+    DateTime? fromDate,
+    DateTime? toDate,
     bool clearSearch = false,
     bool clearListingType = false,
     bool clearPropertyType = false,
     bool clearCity = false,
     bool clearMinPrice = false,
     bool clearMaxPrice = false,
-  }) => PropertyFilter(
-    search: clearSearch ? null : (search ?? this.search),
-    listingType: clearListingType ? null : (listingType ?? this.listingType),
-    propertyType: clearPropertyType
-        ? null
-        : (propertyType ?? this.propertyType),
-    city: clearCity ? null : (city ?? this.city),
-    minPrice: clearMinPrice ? null : (minPrice ?? this.minPrice),
-    maxPrice: clearMaxPrice ? null : (maxPrice ?? this.maxPrice),
-  );
+    bool clearFromDate = false,
+    bool clearToDate = false,
+  }) =>
+      PropertyFilter(
+        search: clearSearch ? null : (search ?? this.search),
+        listingType:
+            clearListingType ? null : (listingType ?? this.listingType),
+        propertyType:
+            clearPropertyType ? null : (propertyType ?? this.propertyType),
+        city: clearCity ? null : (city ?? this.city),
+        minPrice: clearMinPrice ? null : (minPrice ?? this.minPrice),
+        maxPrice: clearMaxPrice ? null : (maxPrice ?? this.maxPrice),
+        fromDate: clearFromDate ? null : (fromDate ?? this.fromDate),
+        toDate: clearToDate ? null : (toDate ?? this.toDate),
+      );
 
   PropertyFilter clearFilters() => PropertyFilter(search: search);
 }
@@ -91,6 +106,8 @@ class PropertiesNotifier extends AsyncNotifier<List<Property>> {
         minPrice: filter.minPrice,
         maxPrice: filter.maxPrice,
         city: filter.city,
+        fromDate: filter.fromDate,
+        toDate: filter.toDate,
       );
     }
 

@@ -907,13 +907,17 @@ class _FilterSheet extends ConsumerStatefulWidget {
   ConsumerState<_FilterSheet> createState() => _FilterSheetState();
 }
 
+// ── Replace _FilterSheetState entirely with this version ─────────────────────
+// (All other classes in home_screen.dart remain unchanged.)
+
 class _FilterSheetState extends ConsumerState<_FilterSheet> {
-  // FIX: was String? _status / String? _propertyType — now use proper enum types
   late ListingType? _listingType;
   late PropertyType? _propertyType;
   late TextEditingController _cityController;
   late TextEditingController _minPriceController;
   late TextEditingController _maxPriceController;
+  DateTime? _fromDate;
+  DateTime? _toDate;
 
   static const _statuses = ['All', 'Rent', 'Buy'];
   static const _propertyTypes = [
@@ -930,7 +934,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   void initState() {
     super.initState();
     final f = ref.read(propertyFilterProvider);
-    // FIX: was f.status / f.type — correct fields are listingType / propertyType
     _listingType = f.listingType;
     _propertyType = f.propertyType;
     _cityController = TextEditingController(text: f.city ?? '');
@@ -940,6 +943,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     _maxPriceController = TextEditingController(
       text: f.maxPrice != null ? f.maxPrice!.toStringAsFixed(0) : '',
     );
+    _fromDate = f.fromDate;
+    _toDate = f.toDate;
   }
 
   @override
@@ -950,21 +955,61 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     super.dispose();
   }
 
-  // Helper to get the display label for the current listing type selection
   String get _statusLabel {
     if (_listingType == null) return 'All';
     if (_listingType == ListingType.rent) return 'Rent';
     return 'Buy';
   }
 
+  String _formatDate(DateTime? dt) {
+    if (dt == null) return 'Select date';
+    return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+  }
+
+  Future<void> _pickDate({required bool isFrom}) async {
+    final now = DateTime.now();
+    final initial = isFrom
+        ? (_fromDate ?? now)
+        : (_toDate ?? _fromDate ?? now);
+    final first = isFrom ? DateTime(2020) : (_fromDate ?? DateTime(2020));
+    final last = DateTime(now.year + 5);
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: AppColors.primary,
+            onPrimary: Colors.white,
+            surface: AppColors.cardBackground,
+            onSurface: AppColors.accent,
+          ),
+          dialogBackgroundColor: AppColors.cardBackground,
+        ),
+        child: child!,
+      ),
+    );
+
+    if (picked == null) return;
+    setState(() {
+      if (isFrom) {
+        _fromDate = picked;
+        // Clear toDate if it's before the new fromDate
+        if (_toDate != null && _toDate!.isBefore(picked)) _toDate = null;
+      } else {
+        _toDate = picked;
+      }
+    });
+  }
+
   void _apply() {
     final minText = _minPriceController.text.trim();
     final maxText = _maxPriceController.text.trim();
 
-    ref
-        .read(propertyFilterProvider.notifier)
-        .update(
-          // FIX: was PropertyFilter(search:, status:, type:, ...) — correct field names
+    ref.read(propertyFilterProvider.notifier).update(
           (f) => PropertyFilter(
             search: f.search,
             listingType: _listingType,
@@ -974,6 +1019,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 : _cityController.text.trim(),
             minPrice: minText.isEmpty ? null : double.tryParse(minText),
             maxPrice: maxText.isEmpty ? null : double.tryParse(maxText),
+            fromDate: _fromDate,
+            toDate: _toDate,
           ),
         );
 
@@ -987,6 +1034,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
       _cityController.clear();
       _minPriceController.clear();
       _maxPriceController.clear();
+      _fromDate = null;
+      _toDate = null;
     });
   }
 
@@ -1030,10 +1079,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 GestureDetector(
                   onTap: _reset,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.error.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(20),
@@ -1051,7 +1098,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // Status
+            // ── Listing type ────────────────────────────────────
             Text(
               'Listing type',
               style: tt.labelLarge?.copyWith(
@@ -1061,7 +1108,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 10),
             Row(
-              // FIX: was comparing _status (String?) to s — now uses _statusLabel helper
               children: _statuses.map((s) {
                 final sel = _statusLabel == s;
                 return Padding(
@@ -1079,13 +1125,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 11,
-                      ),
+                          horizontal: 22, vertical: 11),
                       decoration: BoxDecoration(
-                        color: sel
-                            ? AppColors.primary
-                            : AppColors.subtleBackground,
+                        color:
+                            sel ? AppColors.primary : AppColors.subtleBackground,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -1102,7 +1145,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // Property type
+            // ── Property type ───────────────────────────────────
             Text(
               'Property type',
               style: tt.labelLarge?.copyWith(
@@ -1115,7 +1158,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               spacing: 8,
               runSpacing: 8,
               children: _propertyTypes.map((t) {
-                // FIX: was comparing _propertyType (String?) to t — now uses enum label
                 final sel = t == 'Any type'
                     ? _propertyType == null
                     : _propertyType?.label == t;
@@ -1133,13 +1175,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
+                        horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: sel
-                          ? AppColors.primary
-                          : AppColors.subtleBackground,
+                      color:
+                          sel ? AppColors.primary : AppColors.subtleBackground,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1155,7 +1194,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // City
+            // ── City ────────────────────────────────────────────
             Text(
               'City',
               style: tt.labelLarge?.copyWith(
@@ -1171,7 +1210,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // Price range
+            // ── Price range ─────────────────────────────────────
             Text(
               'Price range (\$)',
               style: tt.labelLarge?.copyWith(
@@ -1194,9 +1233,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
                     '–',
-                    style: tt.titleMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                    style: tt.titleMedium
+                        ?.copyWith(color: AppColors.textSecondary),
                   ),
                 ),
                 Expanded(
@@ -1209,9 +1247,50 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+
+            // ── Date range ──────────────────────────────────────
+            Text(
+              'Date range',
+              style: tt.labelLarge?.copyWith(
+                color: AppColors.accent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _DatePickerField(
+                    label: 'From',
+                    value: _formatDate(_fromDate),
+                    hasValue: _fromDate != null,
+                    onTap: () => _pickDate(isFrom: true),
+                    onClear: () => setState(() => _fromDate = null),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    '–',
+                    style: tt.titleMedium
+                        ?.copyWith(color: AppColors.textSecondary),
+                  ),
+                ),
+                Expanded(
+                  child: _DatePickerField(
+                    label: 'To',
+                    value: _formatDate(_toDate),
+                    hasValue: _toDate != null,
+                    onTap: () => _pickDate(isFrom: false),
+                    onClear: () => setState(() => _toDate = null),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 32),
 
-            // Apply
+            // ── Apply ───────────────────────────────────────────
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -1233,6 +1312,80 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Date Picker Field ─────────────────────────────────────────────────────────
+class _DatePickerField extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool hasValue;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+
+  const _DatePickerField({
+    required this.label,
+    required this.value,
+    required this.hasValue,
+    required this.onTap,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: hasValue
+              ? AppColors.primary.withOpacity(0.08)
+              : AppColors.subtleBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: hasValue
+              ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 1)
+              : null,
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 10),
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 15,
+              color: hasValue ? AppColors.primary : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                hasValue ? value : label,
+                overflow: TextOverflow.ellipsis,
+                style: tt.bodySmall?.copyWith(
+                  color: hasValue ? AppColors.accent : AppColors.textTertiary,
+                  fontWeight:
+                      hasValue ? FontWeight.w600 : FontWeight.w400,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            if (hasValue)
+              GestureDetector(
+                onTap: onClear,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              )
+            else
+              const SizedBox(width: 8),
           ],
         ),
       ),
