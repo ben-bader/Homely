@@ -9,11 +9,12 @@ export enum ReportStatus {
 
 export enum RoleType {
   ADMIN = "ADMIN",
-  USER = "USER",
+  CLIENT = "CLIENT",
+  SELLER = "SELLER"
 }
 
 export enum ListingType {
-  SALE = "SALE",
+  SELL = "SELL",
   RENT = "RENT",
 }
 
