@@ -45,7 +45,7 @@ export type User = {
   name: string;
   email: string;
   role: string;
-  isActive: boolean;
+  active: boolean;
 };
 
 type PropertySummary = {
@@ -100,7 +100,6 @@ function MoreOptionsDrawer({ user }: { user: User }) {
     try {
       setLoadingProps(true);
       const res = await api.get<PropertySummary[]>("/admin/properties");
-      // Filter properties belonging to this seller
       const sellerProps = res.data.filter(
         (p: any) => p.sellerId === user.id || p.ownerId === user.id
       );
@@ -129,7 +128,6 @@ function MoreOptionsDrawer({ user }: { user: User }) {
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
-          {/* User details section */}
           <section className="space-y-4">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
               User
@@ -138,17 +136,8 @@ function MoreOptionsDrawer({ user }: { user: User }) {
             <InfoRow label="User ID" value={user.id} mono />
             <InfoRow label="Email" value={user.email} />
             <InfoRow label="Role" value={user.role} />
-            <InfoRow
-              label="Status"
-              value={
-                <Badge variant={user.isActive ? "default" : "secondary"}>
-                  {user.isActive ? "Active" : "Inactive"}
-                </Badge>
-              }
-            />
           </section>
 
-          {/* Properties section — only for sellers */}
           {isSeller && (
             <section className="space-y-4">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
@@ -230,7 +219,7 @@ function ActionCell({
   const handleClick = async () => {
     setLoading(true);
     try {
-      await onToggle(user.id, user.isActive);
+      await onToggle(user.id, user.active);
     } finally {
       setLoading(false);
     }
@@ -239,11 +228,11 @@ function ActionCell({
   return (
     <Button
       size="sm"
-      variant={user.isActive ? "destructive" : "outline"}
+      variant={user.active ? "destructive" : "outline"}
       disabled={loading}
       onClick={handleClick}
     >
-      {loading ? "Updating…" : user.isActive ? "Deactivate" : "Activate"}
+      {loading ? "Updating…" : user.active ? "Deactivate" : "Activate"}
     </Button>
   );
 }
@@ -267,7 +256,7 @@ export default function Users() {
       await api.put(`/admin/users/${id}/activate`);
     }
     setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, isActive: !currentActive } : u))
+      prev.map((u) => (u.id === id ? { ...u, active: !currentActive } : u))
     );
   };
 

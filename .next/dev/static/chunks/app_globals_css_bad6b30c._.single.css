@@ -850,10 +850,6 @@
     max-height: var(--radix-select-content-available-height);
   }
 
-  .max-h-\[60vh\] {
-    max-height: 60vh;
-  }
-
   .max-h-\[70vh\] {
     max-height: 70vh;
   }
@@ -1422,10 +1418,6 @@
     .bg-black\/50 {
       background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
     }
-  }
-
-  .bg-blue-500 {
-    background-color: var(--color-blue-500);
   }
 
   .bg-blue-500\/20 {
