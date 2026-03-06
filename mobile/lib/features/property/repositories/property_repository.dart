@@ -15,7 +15,8 @@ class PropertyRepository {
   }
 
   Future<Property> getById(String id) async {
-    final data = await ApiClient.get('/properties/$id') as Map<String, dynamic>;
+    final data =
+        await ApiClient.get('/properties/$id') as Map<String, dynamic>;
     return Property.fromJson(data);
   }
 
@@ -25,6 +26,8 @@ class PropertyRepository {
     double? minPrice,
     double? maxPrice,
     String? city,
+    DateTime? fromDate,
+    DateTime? toDate,
   }) async {
     final params = <String, String>{};
     if (listingType != null) params['listingType'] = listingType.toJson();
@@ -32,6 +35,8 @@ class PropertyRepository {
     if (minPrice != null) params['minPrice'] = minPrice.toString();
     if (maxPrice != null) params['maxPrice'] = maxPrice.toString();
     if (city != null && city.isNotEmpty) params['city'] = city;
+    if (fromDate != null) params['fromDate'] = fromDate.toUtc().toIso8601String();
+    if (toDate != null) params['toDate'] = toDate.toUtc().toIso8601String();
 
     final data =
         await ApiClient.get('/properties/filter', queryParams: params)
@@ -54,7 +59,8 @@ class PropertyRepository {
   }
 
   Future<List<Property>> getMyListedProperties() async {
-    final data = await ApiClient.get('/properties/my-listed') as List<dynamic>;
+    final data =
+        await ApiClient.get('/properties/my-listed') as List<dynamic>;
     return data
         .map((e) => Property.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -62,7 +68,8 @@ class PropertyRepository {
 
   Future<Property> create(Map<String, dynamic> body) async {
     final data =
-        await ApiClient.post('/properties', body: body) as Map<String, dynamic>;
+        await ApiClient.post('/properties', body: body)
+            as Map<String, dynamic>;
     return Property.fromJson(data);
   }
 
