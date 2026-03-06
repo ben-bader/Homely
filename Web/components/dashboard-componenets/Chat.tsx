@@ -2,6 +2,8 @@
 
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import { useChats } from "@/hooks/useChats";
+import { api } from "@/lib/api";
+import { DialogTitle } from "@/components/ui/dialog";
 
 import {
   useReactTable,
@@ -20,13 +22,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { api } from "@/lib/api";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+  DrawerClose,
+} from "@/components/ui/drawer";
 
-/* -----------------------------
-   Types
------------------------------ */
+import { Button } from "@/components/ui/button";
+
+/* ---------------- TYPES ---------------- */
 
 interface ChatMessageResponse {
   id: string;
@@ -49,9 +54,7 @@ interface Conversation {
   messages?: ChatMessageResponse[];
 }
 
-/* -----------------------------
-   Chat Drawer
------------------------------ */
+/* ---------------- CHAT DRAWER ---------------- */
 
 function ChatDrawer({
   conversation,
@@ -62,11 +65,9 @@ function ChatDrawer({
 }) {
   const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [updatingUser, setUpdatingUser] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom whenever messages load
   useEffect(() => {
     if (messages.length > 0) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,16 +75,19 @@ function ChatDrawer({
   }, [messages]);
 
   const fetchMessages = async (isOpen: boolean) => {
-    setOpen(isOpen);
     if (!isOpen || messages.length > 0) return;
 
     try {
       setLoading(true);
+
       const res = await api.get<ChatMessageResponse[]>(
         `/chat/messages?conversationId=${conversation.id}`
       );
+
       const newMessages = res.data;
+
       setMessages(newMessages);
+
       setConversations((prev) =>
         prev.map((c) =>
           c.id === conversation.id ? { ...c, messages: newMessages } : c
@@ -94,80 +98,50 @@ function ChatDrawer({
     }
   };
 
-  const toggleUser = async (userId: string, active: boolean) => {
-    try {
-      setUpdatingUser(userId);
-      if (active) {
-        await api.put(`/admin/users/${userId}/deactivate`);
-      } else {
-        await api.put(`/admin/users/${userId}/activate`);
-      }
-      setConversations((prev) =>
-        prev.map((c) => {
-          if (c.id !== conversation.id) return c;
-          return {
-            ...c,
-            sellerActive: c.sellerId === userId ? !active : c.sellerActive,
-            clientActive: c.clientId === userId ? !active : c.clientActive,
-          };
-        })
-      );
-    } finally {
-      setUpdatingUser(null);
-    }
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
   };
 
   return (
-    <Drawer direction="right" open={open} onOpenChange={fetchMessages}>
+    <Drawer direction="right" onOpenChange={fetchMessages}>
       <DrawerTrigger asChild>
         <Button variant="outline">Show Conversation</Button>
       </DrawerTrigger>
 
       <DrawerContent className="flex flex-col h-full max-w-md ml-auto">
+        <DialogTitle className="hidden">Conversation Drawer</DialogTitle>
+
         {/* Header */}
         <div className="px-4 py-3 border-b bg-white">
           <h2 className="text-base font-semibold">
-            {conversation.sellerName} &amp; {conversation.clientName}
+            {conversation.sellerName} & {conversation.clientName}
           </h2>
+
           <p className="text-xs text-muted-foreground">
             Property: {conversation.propertyId}
           </p>
         </div>
 
-        {/* User controls */}
+        {/* COPY ID ACTIONS */}
         <div className="flex gap-2 px-4 py-2 border-b bg-gray-50">
           <Button
             size="sm"
-            variant={conversation.sellerActive ? "destructive" : "outline"}
-            disabled={updatingUser === conversation.sellerId}
-            onClick={() =>
-              toggleUser(conversation.sellerId, conversation.sellerActive)
-            }
+            variant="outline"
+            onClick={() => copyToClipboard(conversation.sellerId)}
           >
-            {updatingUser === conversation.sellerId
-              ? "Updating…"
-              : conversation.sellerActive
-              ? "Activate Seller"
-              : "Deactivate Seller"}
+            Copy Seller ID
           </Button>
 
           <Button
             size="sm"
-            variant={conversation.clientActive ? "destructive" : "outline"}
-            disabled={updatingUser === conversation.clientId}
-            onClick={() =>
-              toggleUser(conversation.clientId, conversation.clientActive)
-            }
+            variant="outline"
+            onClick={() => copyToClipboard(conversation.clientId)}
           >
-            {updatingUser === conversation.clientId
-              ? "Updating…"
-              : conversation.clientActive
-              ? "Activate Client"
-              : "Deactivate Client"}
+            Copy Client ID
           </Button>
         </div>
 
-        {/* Messages — messenger style */}
+        {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 bg-gray-100">
           {loading ? (
             <p className="text-center text-sm text-muted-foreground">
@@ -180,14 +154,18 @@ function ChatDrawer({
           ) : (
             messages.map((msg) => {
               const isSeller = msg.senderId === conversation.sellerId;
+
               return (
                 <div
                   key={msg.id}
-                  className={`flex flex-col ${isSeller ? "items-end" : "items-start"}`}
+                  className={`flex flex-col ${
+                    isSeller ? "items-end" : "items-start"
+                  }`}
                 >
                   <span className="text-[10px] text-muted-foreground mb-0.5 px-1">
                     {msg.senderName}
                   </span>
+
                   <div
                     className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-snug shadow-sm ${
                       isSeller
@@ -197,6 +175,7 @@ function ChatDrawer({
                   >
                     {msg.body}
                   </div>
+
                   <span className="text-[10px] text-muted-foreground mt-0.5 px-1">
                     {new Date(msg.createdAt).toLocaleString()}
                   </span>
@@ -204,27 +183,24 @@ function ChatDrawer({
               );
             })
           )}
+
           <div ref={bottomRef} />
         </div>
 
-        {/* Footer close */}
+        {/* FOOTER */}
         <div className="px-4 py-3 border-t bg-white">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setOpen(false)}
-          >
-            Close
-          </Button>
+          <DrawerClose asChild>
+            <Button variant="outline" className="w-full">
+              Close
+            </Button>
+          </DrawerClose>
         </div>
       </DrawerContent>
     </Drawer>
   );
 }
 
-/* -----------------------------
-   Page Component
------------------------------ */
+/* ---------------- PAGE ---------------- */
 
 export default function ChatPage() {
   const { conversations, loading, error, setConversations } = useChats();
@@ -291,7 +267,10 @@ export default function ChatPage() {
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    {flexRender(
+                      cell.column.columnDef.cell,
+                      cell.getContext()
+                    )}
                   </TableCell>
                 ))}
               </TableRow>

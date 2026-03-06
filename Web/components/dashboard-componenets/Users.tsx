@@ -262,6 +262,15 @@ export default function Users() {
 
   const columns = useMemo<ColumnDef<User>[]>(
     () => [
+      {
+        accessorKey: "id",
+        header: "User ID",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs text-muted-foreground">
+            {row.original.id}
+          </span>
+        ),
+      },
       { accessorKey: "name", header: "Name" },
       { accessorKey: "email", header: "Email" },
       { accessorKey: "role", header: "Role" },
@@ -282,15 +291,15 @@ export default function Users() {
   );
 
   const filteredData = useMemo(() => {
-    if (!users) return [];
-    return users.filter((u) =>
-      [u.name, u.email, u.role]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  }, [users, search]);
+  if (!users) return [];
+  return users.filter((u) =>
+    [u.id, u.name, u.email, u.role] // include the ID here
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+}, [users, search]);
 
   const table = useReactTable({
     data: filteredData,
