@@ -1,5 +1,6 @@
 package com.homely.user.controller;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -92,6 +93,17 @@ public class UserController {
         User updatedUser = userService.updateBasicInfo(id, request);
 
         return ResponseEntity.ok(userMapper.toDto(updatedUser));
+    }
+
+    ////////////////////////////////////////////////////////////
+    // ✅ UPDATE FCM TOKEN FOR PUSH NOTIFICATIONS
+    ////////////////////////////////////////////////////////////
+
+    @PostMapping("/{id}/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(@PathVariable UUID id, @RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        userService.updateFcmToken(id, token);
+        return ResponseEntity.ok().build();
     }
 
     ////////////////////////////////////////////////////////////

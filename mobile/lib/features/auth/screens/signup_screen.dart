@@ -47,11 +47,11 @@ class _SignupScreenState extends State<SignupScreen> {
         phone: _phoneController.text.trim(),
         role: _selectedRole,
       );
-      final response = await _authService.register(request);
+      await _authService.register(request);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-              'Account created successfully, ${response.name}!',
+              'Account created successfully! Please check your email to verify your account.',
               style: GoogleFonts.outfit()),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,

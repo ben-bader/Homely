@@ -64,8 +64,8 @@ class AuthService {
   // PASSWORD + AUTH HELPERS
   // ─────────────────────────────────────────
 
-  Future forgotPassword(String email) async {
-    return await _api.forgotPassword(email: email);
+  Future requestPasswordReset(String email) async {
+    return await _api.requestPasswordReset(email: email);
   }
 
   Future resetPassword(String token, String newPassword) async {

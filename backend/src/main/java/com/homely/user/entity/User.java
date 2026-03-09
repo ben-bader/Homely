@@ -40,6 +40,16 @@ public class User extends BaseEntity implements UserDetails {
     private RoleType role;
 
     private boolean isActive = true;
+    
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+    
+    private String verificationToken;
+    private String resetToken;
+    private java.time.Instant resetTokenExpiry;
+    
+    @Column(name = "fcm_token")
+    private String fcmToken;
 
     @OneToMany(mappedBy="sender", cascade = CascadeType.ALL)
     private List<Message> messages;

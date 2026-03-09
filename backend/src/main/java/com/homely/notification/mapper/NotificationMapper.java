@@ -12,6 +12,8 @@ public interface NotificationMapper {
 
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "read", source = "read")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     NotificationDto toDto(Notification entity);
 
     @Mapping(target = "id", ignore = true)

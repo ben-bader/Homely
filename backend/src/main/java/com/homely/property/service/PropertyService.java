@@ -8,9 +8,12 @@ import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homely.common.enums.ListingType;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
+import com.homely.notification.dto.NotificationCreateRequest;
+import com.homely.notification.service.NotificationService;
 import com.homely.property.dto.PropertyCreateRequest;
 import com.homely.property.dto.PropertyDto;
 import com.homely.property.dto.PropertyUpdateRequest;
@@ -33,9 +36,11 @@ import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PropertyService {
 
     private final PropertyRepository propertyRepository;
@@ -47,6 +52,8 @@ public class PropertyService {
     private final StudioMapper studioMapper;
     private final CommercialMapper commercialMapper;
     private final LandMapper landMapper;
+    private final NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
     // ================= CREATE =================
     public PropertyDto create(PropertyCreateRequest request, String userEmail) {
@@ -62,8 +69,13 @@ public class PropertyService {
         property.setStatus(PropertyStatus.DRAFT);
 
         attachSubtype(property, request);
+        
+        Property saved = propertyRepository.save(property);
+        
+        // Send notification to seller confirming property creation
+        sendPropertyCreatedNotification(seller, saved);
 
-        return propertyMapper.toDto(propertyRepository.save(property));
+        return propertyMapper.toDto(saved);
     }
 
     private void attachSubtype(Property property, PropertyCreateRequest request) {
@@ -225,9 +237,33 @@ Specification<Property> spec = (root, query, cb) -> null;
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
+        PropertyStatus oldStatus = property.getStatus();
         property.setStatus(status);
+        
+        Property saved = propertyRepository.save(property);
+        
+        // Send notification to seller about property status change
+        try {
+            String payload = objectMapper.writeValueAsString(new java.util.HashMap<String, Object>() {{
+                put("propertyTitle", property.getTitle());
+                put("propertyId", saved.getId().toString());
+                put("oldStatus", oldStatus.name());
+                put("newStatus", status.name());
+                put("message", "Your property '" + property.getTitle() + "' status has changed from " + 
+                    oldStatus.name() + " to " + status.name());
+            }});
+            
+            NotificationCreateRequest notificationRequest = new NotificationCreateRequest();
+            notificationRequest.setUserId(property.getSeller().getId());
+            notificationRequest.setType("PROPERTY_STATUS_CHANGED");
+            notificationRequest.setPayload(payload);
+            notificationService.create(notificationRequest);
+        } catch (Exception e) {
+            // Log but don't fail if notification fails
+            System.err.println("Failed to send property status notification: " + e.getMessage());
+        }
 
-        return propertyMapper.toDto(propertyRepository.save(property));
+        return propertyMapper.toDto(saved);
     }
 
     // ================= UPDATE PROPERTY =================
@@ -342,5 +378,50 @@ Specification<Property> spec = (root, query, cb) -> null;
 }
 public long count(){
         return propertyRepository.count();
+    }
+    
+    private void sendPropertyCreatedNotification(User seller, Property property) {
+        try {
+            String payload = objectMapper.writeValueAsString(new java.util.HashMap<String, Object>() {{
+                put("propertyTitle", property.getTitle());
+                put("propertyId", property.getId().toString());
+                put("propertyType", property.getPropertyType().name());
+                put("status", PropertyStatus.DRAFT.name());
+                put("message", "Your property '" + property.getTitle() + "' has been created as a draft.");
+            }});
+            
+            NotificationCreateRequest notificationRequest = new NotificationCreateRequest();
+            notificationRequest.setUserId(seller.getId());
+            notificationRequest.setType("PROPERTY_CREATED");
+            notificationRequest.setPayload(payload);
+            notificationService.create(notificationRequest);
+            
+            log.info("Property created notification sent to seller: {}", seller.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send property creation notification: {}", e.getMessage(), e);
+        }
+    }
+    
+    private void sendPropertyStatusChangedNotification(Property property, PropertyStatus oldStatus, PropertyStatus newStatus) {
+        try {
+            String payload = objectMapper.writeValueAsString(new java.util.HashMap<String, Object>() {{
+                put("propertyTitle", property.getTitle());
+                put("propertyId", property.getId().toString());
+                put("oldStatus", oldStatus.name());
+                put("newStatus", newStatus.name());
+                put("message", "Your property '" + property.getTitle() + "' status has changed from " + 
+                    oldStatus.name() + " to " + newStatus.name());
+            }});
+            
+            NotificationCreateRequest notificationRequest = new NotificationCreateRequest();
+            notificationRequest.setUserId(property.getSeller().getId());
+            notificationRequest.setType("PROPERTY_STATUS_CHANGED");
+            notificationRequest.setPayload(payload);
+            notificationService.create(notificationRequest);
+            
+            log.info("Property status changed notification sent to seller: {}", property.getSeller().getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send property status notification: {}", e.getMessage(), e);
+        }
     }
 }

@@ -121,8 +121,6 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                     ),
                     error: (e, _) => Center(child: Text("Error: $e")),
                     data: (profile) {
-                      if (profile == null) return const _EmptyState();
-
                       final currentUserId = profile.userId;
                       final filtered = _filter(convs, currentUserId);
 

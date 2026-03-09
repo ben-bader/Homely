@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
-    final response = await _authService.login(request);
+    await _authService.login(request);
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
                           style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               minimumSize: Size.zero,

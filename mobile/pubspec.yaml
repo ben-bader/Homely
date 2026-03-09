@@ -48,6 +48,7 @@ dependencies:
   
   # Navigation
   go_router: ^13.0.0
+  app_links: ^7.0.0
   
 
   # UI Components
@@ -62,10 +63,10 @@ dependencies:
   # Utilities
   permission_handler: ^11.2.0
   
-  # Firebase (optional, if yol_launcher: ^6.2.4 patu use it)
-  # firebase_core: ^2.24.2
-  # firebase_messaging: ^14.7.10
-  # firebase_analytics: ^10.8.0
+  # Firebase
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+  firebase_analytics: ^10.8.0
   
   # Chat & Real-time
   socket_io_client: ^2.0.3

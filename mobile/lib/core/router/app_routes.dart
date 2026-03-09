@@ -60,9 +60,8 @@ class AppRoutes {
   /// Main route generator function
   /// Handles navigation and passes arguments between screens
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    // Extract route name and arguments
+    // Extract route name
     final String? routeName = settings.name;
-    final Object? arguments = settings.arguments;
 
     // Route selection
     switch (routeName) {

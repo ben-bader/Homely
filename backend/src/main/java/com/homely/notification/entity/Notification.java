@@ -19,7 +19,7 @@ public class Notification extends BaseEntity {
 
     private String type;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "TEXT")
     private String payload;
 
     private boolean read;

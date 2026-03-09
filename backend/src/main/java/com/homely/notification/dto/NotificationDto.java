@@ -1,6 +1,8 @@
 package com.homely.notification.dto;
 
+import java.time.Instant;
 import java.util.UUID;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,4 +14,6 @@ public class NotificationDto {
     private String type;
     private String payload;
     private boolean read;
+    private Instant createdAt;
+    private Instant updatedAt;
 }

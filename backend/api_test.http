@@ -31,8 +31,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "benbader1231@gmail.com",
-  "password": "Bader12345"
+  "email": "elamraouimohamed323@gmail.com",
+  "password": "Med12345"
 }
 
 ###
@@ -327,7 +327,7 @@ Authorization: Bearer {{token}}
   "description": "800 sqm land suitable for residential construction.",
   "price": 180000,
   "address": "Near City Center, Casablanca, Morocco",
-  "listingType": "SALE",
+  "listingType": "SELL",
   "longitude": -7.610000,
   "latitude": 33.570000,
   "propertyType": "LAND",

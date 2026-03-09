@@ -65,15 +65,15 @@ class AuthApi {
     );
   }
 
-  // ==================== FORGOT PASSWORD ====================
+  // ==================== REQUEST PASSWORD RESET ====================
 
   /// Request password reset
-  /// POST /api/auth/forgot-password
-  Future<dynamic> forgotPassword({
+  /// POST /api/auth/request-password-reset
+  Future<dynamic> requestPasswordReset({
     required String email,
   }) async {
     return await ApiClient.post(
-      Endpoints.forgotPassword,
+      Endpoints.requestPasswordReset,
       body: {'email': email},
       auth: false,
     );
@@ -88,8 +88,8 @@ class AuthApi {
     required String newPassword,
   }) async {
     return await ApiClient.post(
-      Endpoints.resetPassword,
-      body: {'token': token, 'newPassword': newPassword},
+      '${Endpoints.resetPassword}?token=$token',
+      body: {'newPassword': newPassword},
       auth: false,
     );
   }

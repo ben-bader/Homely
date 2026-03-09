@@ -39,7 +39,7 @@ public class Message {
     private String body;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "TEXT")
     private Map<String, Object> attachments;
 
     private Instant readAt;

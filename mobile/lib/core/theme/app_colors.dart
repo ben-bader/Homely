@@ -13,6 +13,7 @@ class AppColors {
 
   // ==================== BACKGROUNDS ====================
   static const Color background = Color(0xFFFFFFFF);    // Slightly blue-tinted off-white
+  static const Color surface = Color(0xFFF8FAFC);       // Surface color for cards/forms
   static const Color cardBackground = Color(0xFFFFFFFF);
   static const Color subtleBackground = Color(0xFFEEF2F7); // Blue-tinted subtle bg
   static const Color glassOverlay = Color(0x70FFFFFF);

@@ -29,8 +29,8 @@ class Endpoints {
   /// POST - Refresh token endpoint
   static const String refreshToken = '/auth/refresh';
 
-  /// POST - Forgot password endpoint
-  static const String forgotPassword = '/auth/forgot-password';
+  /// POST - Request password reset endpoint
+  static const String requestPasswordReset = '/auth/request-password-reset';
 
   /// POST - Reset password endpoint
   static const String resetPassword = '/auth/reset-password';

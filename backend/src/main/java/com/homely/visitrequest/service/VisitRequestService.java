@@ -5,7 +5,10 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homely.common.enums.VisitStatus;
+import com.homely.notification.dto.NotificationCreateRequest;
+import com.homely.notification.service.NotificationService;
 import com.homely.property.entity.Property;
 import com.homely.property.repository.PropertyRepository;
 import com.homely.user.entity.User;
@@ -18,9 +21,11 @@ import com.homely.visitrequest.mapper.VisitRequestMapper;
 import com.homely.visitrequest.repository.VisitRequestRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VisitRequestService {
 
     private final VisitRequestRepository visitRequestRepository;
@@ -28,6 +33,8 @@ public class VisitRequestService {
     private final UserService userService;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
 
     public VisitRequestDto create(VisitRequestCreateRequest request, String userEmail) {
@@ -40,6 +47,10 @@ public class VisitRequestService {
         entity.setProperty(property);
         entity.setStatus(VisitStatus.PENDING);
         VisitRequest saved = visitRequestRepository.save(entity);
+        
+        // Send notification to property seller
+        sendVisitRequestNotification(user, property, saved, request.getRequestedDate());
+        
         return visitRequestMapper.toDto(saved);
     }
 
@@ -68,7 +79,56 @@ public class VisitRequestService {
         VisitRequest request = get(id);
         request.setStatus(status);
         VisitRequest saved = visitRequestRepository.save(request);
+        
+        // Send notification to the user who created the visit request
+        sendVisitRequestStatusNotification(request, status);
+        
         return visitRequestMapper.toDto(saved);
+    }
+    
+    private void sendVisitRequestNotification(User user, Property property, VisitRequest visitRequest, java.time.LocalDateTime requestedDate) {
+        try {
+            String payload = objectMapper.writeValueAsString(new java.util.HashMap<String, Object>() {{
+                put("visitorName", user.getName());
+                put("visitorEmail", user.getEmail());
+                put("propertyTitle", property.getTitle());
+                put("propertyId", property.getId().toString());
+                put("visitRequestId", visitRequest.getId().toString());
+                put("requestedDate", requestedDate);
+            }});
+            
+            NotificationCreateRequest notificationRequest = new NotificationCreateRequest();
+            notificationRequest.setUserId(property.getSeller().getId());
+            notificationRequest.setType("VISIT_REQUEST_CREATED");
+            notificationRequest.setPayload(payload);
+            
+            notificationService.create(notificationRequest);
+            log.info("Visit request notification sent to seller: {}", property.getSeller().getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send visit request notification: {}", e.getMessage(), e);
+        }
+    }
+    
+    private void sendVisitRequestStatusNotification(VisitRequest visitRequest, VisitStatus status) {
+        try {
+            String payload = objectMapper.writeValueAsString(new java.util.HashMap<String, Object>() {{
+                put("propertyTitle", visitRequest.getProperty().getTitle());
+                put("propertyId", visitRequest.getProperty().getId().toString());
+                put("visitRequestId", visitRequest.getId().toString());
+                put("newStatus", status.name());
+                put("message", "Your visit request for " + visitRequest.getProperty().getTitle() + " has been " + status.name().toLowerCase());
+            }});
+            
+            NotificationCreateRequest notificationRequest = new NotificationCreateRequest();
+            notificationRequest.setUserId(visitRequest.getUser().getId());
+            notificationRequest.setType("VISIT_REQUEST_" + status.name());
+            notificationRequest.setPayload(payload);
+            
+            notificationService.create(notificationRequest);
+            log.info("Visit request status notification sent to user: {}", visitRequest.getUser().getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send visit request status notification: {}", e.getMessage(), e);
+        }
     }
         public List<VisitRequest> getByUserEmail(String email) {
         User user = userRepository.findByEmail(email)

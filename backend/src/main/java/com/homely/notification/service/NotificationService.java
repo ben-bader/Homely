@@ -1,51 +1,151 @@
 package com.homely.notification.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.homely.notification.dto.NotificationCreateRequest;
 import com.homely.notification.dto.NotificationDto;
 import com.homely.notification.entity.Notification;
 import com.homely.notification.mapper.NotificationMapper;
 import com.homely.notification.repository.NotificationRepository;
+import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
     private final UserService userService;
+    private final FirebaseMessagingService firebaseMessagingService;
 
+    @Transactional
     public NotificationDto create(NotificationCreateRequest request) {
-        var user = userService.getById(request.getUserId());
-        Notification entity = notificationMapper.toEntity(request);
-        entity.setUser(user);
-        entity.setRead(false);
-        Notification saved = notificationRepository.save(entity);
-        return notificationMapper.toDto(saved);
+        try {
+            // Validate user exists
+            User user = userService.getById(request.getUserId());
+            if (user == null) {
+                log.error("User not found with ID: {}", request.getUserId());
+                throw new EntityNotFoundException("User not found with ID: " + request.getUserId());
+            }
+            
+            // Create and set notification properties
+            Notification entity = new Notification();
+            entity.setUser(user);
+            entity.setType(request.getType());
+            entity.setPayload(request.getPayload());
+            entity.setRead(false);
+            
+            // Save notification to database first
+            Notification saved = notificationRepository.save(entity);
+            
+            log.info("Notification created successfully - ID: {}, Type: {}, User: {}", 
+                saved.getId(), request.getType(), user.getEmail());
+            
+            // Send push notification if user has FCM token
+            if (user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
+                sendPushNotification(user, request.getType(), request.getPayload());
+            } else {
+                log.debug("User {} has no FCM token, push notification not sent", user.getEmail());
+            }
+            
+            return notificationMapper.toDto(saved);
+        } catch (Exception e) {
+            log.error("Error creating notification: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void sendPushNotification(User user, String notificationType, String payload) {
+        try {
+            String title = getTitleForType(notificationType);
+            
+            // Parse payload as JSON to get relevant info
+            Map<String, String> data = Map.of(
+                "type", notificationType,
+                "payload", payload
+            );
+            
+            firebaseMessagingService.sendNotification(
+                user.getFcmToken(),
+                title,
+                payload != null ? payload : "New notification",
+                data
+            );
+            
+            log.info("Push notification sent to user: {} for type: {}", user.getEmail(), notificationType);
+        } catch (Exception e) {
+            log.error("Failed to send push notification to user {}: {}", user.getEmail(), e.getMessage(), e);
+            // Don't fail the notification creation if push fails
+        }
+    }
+
+    private String getTitleForType(String type) {
+        return switch (type) {
+            case "NEW_CHAT_MESSAGE" -> "💬 New Message";
+            case "CONVERSATION_CREATED" -> "💬 New Conversation";
+            case "VISIT_REQUEST_CREATED" -> "👁️ Visit Request";
+            case "VISIT_REQUEST_STATUS_CHANGED" -> "👁️ Visit Request Updated";
+            case "PROPERTY_CREATED" -> "🏠 New Property";
+            case "PROPERTY_STATUS_CHANGED" -> "🏠 Property Updated";
+            case "BOOST_PURCHASED" -> "⚡ Boost Purchased";
+            case "BOOST_STATUS_CHANGED" -> "⚡ Boost Updated";
+            case "FEEDBACK_RECEIVED" -> "⭐ New Feedback";
+            default -> "📬 Notification";
+        };
     }
 
     public List<Notification> getUnreadNotifications(UUID userId) {
         return notificationRepository.findByUserIdAndReadFalse(userId);
     }
+    
+    @Transactional
     public NotificationDto markAsRead(UUID notificationId) {
-    Notification notification = notificationRepository.findById(notificationId)
-            .orElseThrow(() -> new EntityNotFoundException("Notification not found: " + notificationId));
-    notification.setRead(true);
-    return notificationMapper.toDto(notificationRepository.save(notification));
-}
+        try {
+            Notification notification = notificationRepository.findById(notificationId)
+                    .orElseThrow(() -> new EntityNotFoundException("Notification not found: " + notificationId));
+            notification.setRead(true);
+            Notification saved = notificationRepository.save(notification);
+            
+            log.info("Notification marked as read - ID: {}", notificationId);
+            
+            return notificationMapper.toDto(saved);
+        } catch (Exception e) {
+            log.error("Error marking notification as read: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
 
     public List<Notification> getAllByEmail(String email) {
-        return notificationRepository.findByUserEmail(email);
+        try {
+            List<Notification> notifications = notificationRepository.findByUserEmail(email);
+            log.debug("Retrieved {} notifications for user: {}", notifications.size(), email);
+            return notifications;
+        } catch (Exception e) {
+            log.error("Error getting notifications for email {}: {}", email, e.getMessage(), e);
+            return List.of();
+        }
     }
+    
     public List<Notification> getUnreadByEmail(String email) {
-        return notificationRepository.findByUserEmailAndReadFalse(email);
+        try {
+            List<Notification> notifications = notificationRepository.findByUserEmailAndReadFalse(email);
+            log.debug("Retrieved {} unread notifications for user: {}", notifications.size(), email);
+            return notifications;
+        } catch (Exception e) {
+            log.error("Error getting unread notifications for email {}: {}", email, e.getMessage(), e);
+            return List.of();
+        }
     }
 }
+

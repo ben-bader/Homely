@@ -1,10 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/features/auth/screens/reset_password_screen.dart';
 import 'package:mobile/features/notifications/services/notification_service.dart';
+import 'package:app_links/app_links.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/email_verification_screen.dart';
+import 'features/auth/screens/forgot_password_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/property/screens/home_screen.dart';
 import 'features/auth/services/auth_service.dart';
@@ -16,16 +23,34 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   await NotificationService().init();
+
+  // Handle initial deep link
+  final appLinks = AppLinks();
+  String? initialLink;
+  try {
+    initialLink = (await appLinks.getInitialLink())?.toString();
+  } catch (e) {
+    // Handle error
+  }
+
   runApp(
-    const ProviderScope(
-      child: HomelyApp(),
+    ProviderScope(
+      child: HomelyApp(initialLink: initialLink),
     ),
   );
 }
 
 class HomelyApp extends StatelessWidget {
-  const HomelyApp({super.key});
+  final String? initialLink;
+
+  const HomelyApp({super.key, this.initialLink});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +58,13 @@ class HomelyApp extends StatelessWidget {
       title: 'Homely',
       debugShowCheckedModeBanner: false,
       theme: _buildTheme(),
-      home: const SplashScreen(),
+      home: SplashScreen(initialLink: initialLink),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/email-verification': (context) => const EmailVerificationScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
+      },
     );
   }
 
@@ -54,7 +85,9 @@ class HomelyApp extends StatelessWidget {
 }
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final String? initialLink;
+
+  const SplashScreen({super.key, this.initialLink});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -65,6 +98,8 @@ class _SplashScreenState extends State<SplashScreen>
   final _authService = AuthService();
   late final AnimationController _controller;
   late final Animation<double> _pulseAnimation;
+  StreamSubscription? _linkSubscription;
+  final AppLinks _appLinks = AppLinks();
 
   @override
   void initState() {
@@ -82,6 +117,13 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
+    // Listen for incoming deep links
+    _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
+      if (uri != null) {
+        _handleDeepLink(uri.toString());
+      }
+    });
+
     _checkAuthStatus();
   }
 
@@ -89,6 +131,12 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
+
+    // Check for initial deep link
+    if (widget.initialLink != null) {
+      _handleDeepLink(widget.initialLink!);
+      return;
+    }
 
     final isLoggedIn = await _authService.isLoggedIn();
 
@@ -100,6 +148,35 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
     NotificationService().startPolling(_authService);
+  }
+
+  void _handleDeepLink(String link) {
+    final uri = Uri.parse(link);
+
+    if (uri.pathSegments.contains('verify-email')) {
+      final token = uri.queryParameters['token'];
+      if (token != null) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/email-verification',
+          arguments: token,
+        );
+        return;
+      }
+    } else if (uri.pathSegments.contains('reset-password')) {
+      final token = uri.queryParameters['token'];
+      if (token != null) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/reset-password',
+          arguments: token,
+        );
+        return;
+      }
+    }
+
+    // If no valid deep link, proceed with normal auth check
+    _checkAuthStatus();
   }
 
   @override
@@ -174,6 +251,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _controller.dispose();
+    _linkSubscription?.cancel();
     super.dispose();
   }
 }
