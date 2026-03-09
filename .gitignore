@@ -1,2 +1,3 @@
 # ignore reserved device file accidentally created
 nul
+backend/src/main/resources/firebase-credentials.json
