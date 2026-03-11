@@ -51,20 +51,12 @@ class HomeScreen extends ConsumerWidget {
         final isSeller = userRole == 'SELLER';
         final tabs = isSeller ? _buildSellerTabs() : _buildClientTabs();
 
-        // Debug print
-        print('=== HomeScreen Debug ===');
-        print('User Role: $userRole');
-        print('Is Seller: $isSeller');
-        print('Num Tabs: ${tabs.length}');
-        print('=======================');
-
         return Scaffold(
           backgroundColor: AppColors.background,
           extendBody: true,
           body: Stack(
             children: [
               IndexedStack(index: idx, children: tabs),
-              // Debug indicator
             ],
           ),
           bottomNavigationBar: _BottomNav(isSeller: isSeller),
@@ -84,12 +76,12 @@ class HomeScreen extends ConsumerWidget {
   }
 
   List<Widget> _buildSellerTabs() {
-    // Seller tabs: Explore, Inbox, Create (+), Listings, Profile
+    // CHANGED: Listings first (0), Inbox (1), Create (2), Explore (3), Profile (4)
     return [
-      const _ExploreTab(),
-      const ConversationsScreen(),
-      const _CreatePropertyPlaceholder(), // Placeholder for center + button
       const _SellerListingsTab(),
+      const ConversationsScreen(),
+      const _CreatePropertyPlaceholder(),
+      const _ExploreTab(),
       const ProfileScreen(),
     ];
   }
@@ -187,13 +179,11 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   void _onChipTap(String tapped) {
     final notifier = ref.read(propertyFilterProvider.notifier);
     if (tapped == 'All types') {
-      // FIX: was filter.resetFilters() — correct method name is clearFilters()
       notifier.update((s) => s.clearFilters());
       return;
     }
     final filter = ref.read(propertyFilterProvider);
     if (_listingTypes.contains(tapped)) {
-      // FIX: was filter.status — correct field is listingType
       final mapped = tapped == 'Rent' ? ListingType.rent : ListingType.sell;
       final isSame = filter.listingType == mapped;
       notifier.update(
@@ -203,7 +193,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
         ),
       );
     } else {
-      // FIX: was filter.type — correct field is propertyType
       final mapped = PropertyType.values.firstWhere(
         (e) => e.label == tapped,
         orElse: () => PropertyType.apartment,
@@ -221,11 +210,9 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   bool _isChipSelected(String chip, PropertyFilter filter) {
     if (chip == 'All types') return !filter.isFiltering;
     if (_listingTypes.contains(chip)) {
-      // FIX: was filter.status — correct field is listingType
       final mapped = chip == 'Rent' ? ListingType.rent : ListingType.sell;
       return filter.listingType == mapped;
     }
-    // FIX: was filter.type — correct field is propertyType
     final mapped = PropertyType.values.firstWhere(
       (e) => e.label == chip,
       orElse: () => PropertyType.apartment,
@@ -268,11 +255,9 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                       ],
                     ),
                   ),
-                  // AFTER:
                   _NotifBtn(
                     onTap: () async {
                       if (_userId == null) {
-                        // userId not loaded yet, try loading again
                         await _loadUserId();
                       }
                       if (_userId == null || !mounted) return;
@@ -282,7 +267,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                           builder: (_) => NotificationsScreen(userId: _userId!),
                         ),
                       );
-                      // refresh bell count after returning
                       setState(() {});
                     },
                   ),
@@ -305,7 +289,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                   decoration: BoxDecoration(
                     color: AppColors.subtleBackground,
                     borderRadius: BorderRadius.circular(50),
-
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
@@ -507,7 +490,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                   ),
                   if (filter.isFiltering)
                     GestureDetector(
-                      // FIX: was s.resetFilters() — correct method name is clearFilters()
                       onTap: () => ref
                           .read(propertyFilterProvider.notifier)
                           .update((s) => s.clearFilters()),
@@ -661,7 +643,6 @@ class _FeaturedCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Image
               property.images.isNotEmpty
                   ? Image.network(
                       property.images.first,
@@ -683,7 +664,6 @@ class _FeaturedCard extends StatelessWidget {
                         color: AppColors.textTertiary,
                       ),
                     ),
-              // Gradient overlay
               DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -697,7 +677,6 @@ class _FeaturedCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // Content
               Positioned(
                 left: 14,
                 right: 14,
@@ -727,7 +706,6 @@ class _FeaturedCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Type badge
               Positioned(
                 top: 12,
                 left: 12,
@@ -741,7 +719,6 @@ class _FeaturedCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
-                    // FIX: was property.type — correct is property.propertyType.label
                     property.propertyType.label,
                     style: tt.labelSmall?.copyWith(
                       color: AppColors.accent,
@@ -907,9 +884,6 @@ class _FilterSheet extends ConsumerStatefulWidget {
   ConsumerState<_FilterSheet> createState() => _FilterSheetState();
 }
 
-// ── Replace _FilterSheetState entirely with this version ─────────────────────
-// (All other classes in home_screen.dart remain unchanged.)
-
 class _FilterSheetState extends ConsumerState<_FilterSheet> {
   late ListingType? _listingType;
   late PropertyType? _propertyType;
@@ -997,7 +971,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     setState(() {
       if (isFrom) {
         _fromDate = picked;
-        // Clear toDate if it's before the new fromDate
         if (_toDate != null && _toDate!.isBefore(picked)) _toDate = null;
       } else {
         _toDate = picked;
@@ -1098,7 +1071,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // ── Listing type ────────────────────────────────────
             Text(
               'Listing type',
               style: tt.labelLarge?.copyWith(
@@ -1145,7 +1117,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // ── Property type ───────────────────────────────────
             Text(
               'Property type',
               style: tt.labelLarge?.copyWith(
@@ -1194,7 +1165,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // ── City ────────────────────────────────────────────
             Text(
               'City',
               style: tt.labelLarge?.copyWith(
@@ -1210,7 +1180,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // ── Price range ─────────────────────────────────────
             Text(
               'Price range (\$)',
               style: tt.labelLarge?.copyWith(
@@ -1249,7 +1218,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 24),
 
-            // ── Date range ──────────────────────────────────────
             Text(
               'Date range',
               style: tt.labelLarge?.copyWith(
@@ -1290,7 +1258,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             ),
             const SizedBox(height: 32),
 
-            // ── Apply ───────────────────────────────────────────
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -1366,8 +1333,7 @@ class _DatePickerField extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: tt.bodySmall?.copyWith(
                   color: hasValue ? AppColors.accent : AppColors.textTertiary,
-                  fontWeight:
-                      hasValue ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                   fontSize: 12,
                 ),
               ),
@@ -1474,7 +1440,6 @@ class PropertyCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Image with overlaid badges ──────────────
             Stack(
               children: [
                 ClipRRect(
@@ -1493,7 +1458,6 @@ class PropertyCard extends ConsumerWidget {
                         : _placeholder(),
                   ),
                 ),
-                // Type badge — top left
                 Positioned(
                   top: 14,
                   left: 14,
@@ -1507,7 +1471,6 @@ class PropertyCard extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(50),
                     ),
                     child: Text(
-                      // FIX: was property.type — correct is property.propertyType.label
                       property.propertyType.label,
                       style: tt.labelMedium?.copyWith(
                         color: AppColors.accent,
@@ -1517,7 +1480,6 @@ class PropertyCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // Favorite button — top right
                 Positioned(
                   top: 10,
                   right: 10,
@@ -1537,14 +1499,11 @@ class PropertyCard extends ConsumerWidget {
                 ),
               ],
             ),
-
-            // ── Content ─────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title + price row
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1573,7 +1532,6 @@ class PropertyCard extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // Location
                   Row(
                     children: [
                       const Icon(
@@ -1595,7 +1553,6 @@ class PropertyCard extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Chips
                   Row(
                     children: property.chips
                         .take(3)
@@ -1766,65 +1723,25 @@ class _AvatarBtn extends StatelessWidget {
 }
 
 // ── Bottom Nav ────────────────────────────────────────────────────────────────
-
 class _BottomNav extends ConsumerWidget {
   final bool isSeller;
   const _BottomNav({this.isSeller = false});
 
   static const _clientItems = [
-    (
-      icon: Icons.search_rounded,
-      outlinedIcon: Icons.search_rounded,
-      label: 'Explore',
-    ),
-    (
-      icon: Icons.slow_motion_video_rounded,
-      outlinedIcon: Icons.slow_motion_video_rounded,
-      label: 'Tours',
-    ),
-    (
-      icon: Icons.chat_bubble_rounded,
-      outlinedIcon: Icons.chat_bubble_outline_rounded,
-      label: 'Inbox',
-    ),
-    (
-      icon: Icons.favorite_rounded,
-      outlinedIcon: Icons.favorite_border_rounded,
-      label: 'Wishlists',
-    ),
-    (
-      icon: Icons.person_rounded,
-      outlinedIcon: Icons.person_outline_rounded,
-      label: 'Profile',
-    ),
+    (icon: Icons.search_rounded,            outlinedIcon: Icons.search_rounded,             label: 'Explore'),
+    (icon: Icons.slow_motion_video_rounded, outlinedIcon: Icons.slow_motion_video_rounded,  label: 'Tours'),
+    (icon: Icons.chat_bubble_rounded,       outlinedIcon: Icons.chat_bubble_outline_rounded, label: 'Inbox'),
+    (icon: Icons.favorite_rounded,          outlinedIcon: Icons.favorite_border_rounded,     label: 'Wishlists'),
+    (icon: Icons.person_rounded,            outlinedIcon: Icons.person_outline_rounded,      label: 'Profile'),
   ];
 
+  // CHANGED: Listings first, Explore moved to index 3
   static const _sellerItems = [
-    (
-      icon: Icons.search_rounded,
-      outlinedIcon: Icons.search_rounded,
-      label: 'Explore',
-    ),
-    (
-      icon: Icons.chat_bubble_rounded,
-      outlinedIcon: Icons.chat_bubble_outline_rounded,
-      label: 'Inbox',
-    ),
-    (
-      icon: Icons.add_rounded,
-      outlinedIcon: Icons.add_rounded,
-      label: 'Create',
-    ),
-    (
-      icon: Icons.home_rounded,
-      outlinedIcon: Icons.home_outlined,
-      label: 'Listings',
-    ),
-    (
-      icon: Icons.person_rounded,
-      outlinedIcon: Icons.person_outline_rounded,
-      label: 'Profile',
-    ),
+    (icon: Icons.home_rounded,        outlinedIcon: Icons.home_outlined,              label: 'Listings'),
+    (icon: Icons.chat_bubble_rounded, outlinedIcon: Icons.chat_bubble_outline_rounded, label: 'Inbox'),
+    (icon: Icons.add_rounded,         outlinedIcon: Icons.add_rounded,                label: 'Create'),
+    (icon: Icons.search_rounded,      outlinedIcon: Icons.search_rounded,             label: 'Explore'),
+    (icon: Icons.person_rounded,      outlinedIcon: Icons.person_outline_rounded,     label: 'Profile'),
   ];
 
   @override
@@ -1854,7 +1771,6 @@ class _BottomNav extends ConsumerWidget {
                   final active = i == idx;
                   final item = items[i];
 
-                  // Special handling for seller's create button (index 2)
                   if (isSeller && i == 2) {
                     return Expanded(
                       child: GestureDetector(
