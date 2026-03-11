@@ -1,5 +1,6 @@
 package com.homely.user.dto;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import com.homely.common.enums.RoleType;
@@ -17,4 +18,7 @@ public class UserDto {
     private String phone;
     private RoleType role;
     private boolean isActive;
+
+    private Instant createdAt;
+    private Instant updatedAt;
 }

@@ -47,4 +47,7 @@ public class Message {
     @CreationTimestamp
     @Column(updatable = false)
     private Instant createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    private Instant updatedAt;
 }

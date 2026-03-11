@@ -17,4 +17,5 @@ public class MessageDto {
     private Map<String, Object> attachments;
     private Instant readAt;
     private Instant createdAt; // Timestamp when message was sent
+    private Instant updatedAt;
 }

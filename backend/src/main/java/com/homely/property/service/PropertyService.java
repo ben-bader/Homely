@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.homely.boost.repository.BoostPurchaseRepository;
 import com.homely.common.enums.ListingType;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
@@ -44,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PropertyService {
 
     private final PropertyRepository propertyRepository;
+    private final BoostPurchaseRepository boostPurchaseRepository;
     private final UserService userService;
     private final PropertyMapper propertyMapper;
     private final ApartmentMapper apartmentMapper;
@@ -75,7 +77,7 @@ public class PropertyService {
         // Send notification to seller confirming property creation
         sendPropertyCreatedNotification(seller, saved);
 
-        return propertyMapper.toDto(saved);
+        return enrichWithBoostInfo(propertyMapper.toDto(saved));
     }
 
     private void attachSubtype(Property property, PropertyCreateRequest request) {
@@ -143,20 +145,20 @@ public class PropertyService {
         if (property.getStudio() != null) property.getStudio().getPropertyId();
         if (property.getCommercial() != null) property.getCommercial().getPropertyId();
         if (property.getLand() != null) property.getLand().getPropertyId();
-        return propertyMapper.toDto(property);
+        return enrichWithBoostInfo(propertyMapper.toDto(property));
     }
 
     // ================= HOMEPAGE =================
     public List<PropertyDto> getAll() {
-        return propertyRepository.findAllByOrderByCreatedAtDesc()
+        return enrichWithBoostInfo(propertyRepository.findAllOrderByBoostThenCreatedAt(java.time.Instant.now())
                 .stream()
                 .map(propertyMapper::toDto)
-                .toList();
+                .toList());
     }
     public PropertyDto getById(UUID id) {
     Property property = propertyRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Property not found"));
-    return propertyMapper.toDto(property);
+    return enrichWithBoostInfo(propertyMapper.toDto(property));
 }
 
     // ================= FILTER =================
@@ -208,10 +210,20 @@ Specification<Property> spec = (root, query, cb) -> null;
                 cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
     }
 
-    return propertyRepository.findAll(spec)
+    // ✅ Sort by boost status then creation date
+    return enrichWithBoostInfo(propertyRepository.findAll(spec)
             .stream()
+            .sorted((p1, p2) -> {
+                boolean p1IsBoosted = isBoosted(p1.getId());
+                boolean p2IsBoosted = isBoosted(p2.getId());
+                
+                if (p1IsBoosted && !p2IsBoosted) return -1;
+                if (!p1IsBoosted && p2IsBoosted) return 1;
+                
+                return p2.getCreatedAt().compareTo(p1.getCreatedAt());
+            })
             .map(propertyMapper::toDto)
-            .toList();
+            .toList());
 }
 
 
@@ -219,6 +231,15 @@ Specification<Property> spec = (root, query, cb) -> null;
     public List<PropertyDto> search(String keyword) {
         return propertyRepository.globalSearch(keyword)
                 .stream()
+                .sorted((p1, p2) -> {
+                    boolean p1IsBoosted = isBoosted(p1.getId());
+                    boolean p2IsBoosted = isBoosted(p2.getId());
+                    
+                    if (p1IsBoosted && !p2IsBoosted) return -1;
+                    if (!p1IsBoosted && p2IsBoosted) return 1;
+                    
+                    return p2.getCreatedAt().compareTo(p1.getCreatedAt());
+                })
                 .map(propertyMapper::toDto)
                 .toList();
     }
@@ -227,6 +248,15 @@ Specification<Property> spec = (root, query, cb) -> null;
     public List<PropertyDto> getBySellerEmail(String email) {
         return propertyRepository.findBySellerEmail(email)
                 .stream()
+                .sorted((p1, p2) -> {
+                    boolean p1IsBoosted = isBoosted(p1.getId());
+                    boolean p2IsBoosted = isBoosted(p2.getId());
+                    
+                    if (p1IsBoosted && !p2IsBoosted) return -1;
+                    if (!p1IsBoosted && p2IsBoosted) return 1;
+                    
+                    return p2.getCreatedAt().compareTo(p1.getCreatedAt());
+                })
                 .map(propertyMapper::toDto)
                 .toList();
     }
@@ -263,7 +293,7 @@ Specification<Property> spec = (root, query, cb) -> null;
             System.err.println("Failed to send property status notification: " + e.getMessage());
         }
 
-        return propertyMapper.toDto(saved);
+        return enrichWithBoostInfo(propertyMapper.toDto(saved));
     }
 
     // ================= UPDATE PROPERTY =================
@@ -365,7 +395,7 @@ Specification<Property> spec = (root, query, cb) -> null;
         }
 
         Property saved = propertyRepository.save(property);
-        return propertyMapper.toDto(saved);
+        return enrichWithBoostInfo(propertyMapper.toDto(saved));
     }
 
     // ================= DELETE =================
@@ -423,5 +453,45 @@ public long count(){
         } catch (Exception e) {
             log.error("Failed to send property status notification: {}", e.getMessage(), e);
         }
+    }
+    
+    // ✅ Helper method to check if a property is currently boosted
+    private boolean isBoosted(UUID propertyId) {
+        Instant now = Instant.now();
+        return boostPurchaseRepository.findActiveBoostByProperty(propertyId, now) != null;
+    }
+    
+    // ✅ Helper method to enrich PropertyDto with boost information
+    private PropertyDto enrichWithBoostInfo(PropertyDto dto) {
+        Instant now = Instant.now();
+        var activeBoost = boostPurchaseRepository.findActiveBoostByProperty(dto.getId(), now);
+        
+        if (activeBoost != null) {
+            dto.setIsBoosted(true);
+            dto.setBoostExpiryAt(activeBoost.getExpiryAt());
+            dto.setBoostId(activeBoost.getId());
+        } else {
+            dto.setIsBoosted(false);
+        }
+        
+        return dto;
+    }
+    
+    // ✅ Helper method to enrich list of PropertyDtos with boost information
+    private List<PropertyDto> enrichWithBoostInfo(List<PropertyDto> dtos) {
+        Instant now = Instant.now();
+        return dtos.stream().map(dto -> {
+            var activeBoost = boostPurchaseRepository.findActiveBoostByProperty(dto.getId(), now);
+            
+            if (activeBoost != null) {
+                dto.setIsBoosted(true);
+                dto.setBoostExpiryAt(activeBoost.getExpiryAt());
+                dto.setBoostId(activeBoost.getId());
+            } else {
+                dto.setIsBoosted(false);
+            }
+            
+            return dto;
+        }).toList();
     }
 }

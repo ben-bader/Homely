@@ -1,6 +1,7 @@
 package com.homely.boost.entity;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 import com.homely.common.base.BaseEntity;
 import com.homely.common.enums.PurchaseStatus;
@@ -33,4 +34,7 @@ public class BoostPurchase extends BaseEntity {
     private PurchaseStatus status;
 
     private String paymentProviderRef;
+    
+    // ✅ Boost expiry timestamp
+    private Instant expiryAt;
 }

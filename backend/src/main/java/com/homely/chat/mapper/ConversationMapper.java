@@ -25,6 +25,8 @@ public interface ConversationMapper {
     @Mapping(target = "lastMessage", ignore = true)
     @Mapping(target = "lastMessageAt", ignore = true)
     @Mapping(target = "unreadCount", ignore = true)
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     ConversationDto toDto(Conversation entity);
 
     @AfterMapping

@@ -20,6 +20,16 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
 
     // ✅ Homepage scroll
     List<Property> findAllByOrderByCreatedAtDesc();
+    
+    // ✅ Homepage scroll with boost sorting (boosted properties appear first)
+    @Query("""
+        SELECT p FROM Property p
+        LEFT JOIN BoostPurchase b ON b.property.id = p.id AND b.status = 'APPROVED' AND b.expiryAt > :now
+        ORDER BY CASE WHEN b.id IS NOT NULL THEN 0 ELSE 1 END ASC,
+                 b.createdAt DESC,
+                 p.createdAt DESC
+    """)
+    List<Property> findAllOrderByBoostThenCreatedAt(@Param("now") Instant now);
 
     // ✅ Seller properties
     List<Property> findBySellerEmail(String email);

@@ -27,11 +27,12 @@ public class AuthService {
     private final AppConfig appConfig;
 
     public AuthResponse register(RegisterRequest request){
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new RuntimeException("Email already exists");
         }
         User user = new User();
-        user.setEmail(request.getEmail());
+        user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
         user.setPhone(request.getPhone());
@@ -54,7 +55,8 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request){
-        User user = userRepository.findByEmail(request.getEmail())
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
                     .orElseThrow(()-> new RuntimeException("User not found"));
         if(!passwordEncoder.matches(request.getPassword(), user.getPasswordHash()))   {
             throw  new RuntimeException("Invalid credentials");
@@ -85,7 +87,8 @@ public class AuthService {
     }
 
     public void requestPasswordReset(String email) {
-        User user = userRepository.findByEmail(email)
+        String normalizedEmail = email.trim().toLowerCase();
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setResetToken(UUID.randomUUID().toString());
         user.setResetTokenExpiry(java.time.Instant.now().plusSeconds(3600)); // 1 hour expiry

@@ -12,6 +12,8 @@ public interface FeedbackMapper {
 
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "propertyId", source = "property.id")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     FeedbackDto toDto(Feedback entity);
 
     @Mapping(target = "id", ignore = true)

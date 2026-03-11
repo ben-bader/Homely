@@ -1,5 +1,6 @@
 package com.homely.boost.service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,6 +43,10 @@ public class BoostService {
         entity.setSeller(seller);
         entity.setProperty(property);
         entity.setStatus(PurchaseStatus.PENDING);
+        
+        // ✅ Calculate and set expiry date (durationDays from now)
+        Instant expiryAt = Instant.now().plusSeconds(request.getDurationDays() * 86400L);
+        entity.setExpiryAt(expiryAt);
 
         BoostPurchase saved = boostPurchaseRepository.save(entity);
         
@@ -90,6 +95,7 @@ public class BoostService {
     public List<BoostPurchase> getAll(){
         return boostPurchaseRepository.findAll();
     }
+    
     public BoostPurchaseDto updateStatus(UUID boostId, PurchaseStatus newStatus) {
 
     BoostPurchase boost = boostPurchaseRepository.findById(boostId)
@@ -123,7 +129,24 @@ public class BoostService {
 
     return boostPurchaseMapper.toDto(saved);
 }
-public long count(){
+
+    public long count(){
         return boostPurchaseRepository.count();
+    }
+    
+    // ✅ Helper method to check if a boost is currently active
+    public boolean isBoostActive(UUID propertyId) {
+        Instant now = Instant.now();
+        return boostPurchaseRepository.findActiveBoostByProperty(propertyId, now) != null;
+    }
+    
+    // ✅ Get active boost for a property
+    public BoostPurchase getActiveBoost(UUID propertyId, Instant now) {
+        return boostPurchaseRepository.findActiveBoostByProperty(propertyId, now);
+    }
+    
+    // ✅ Get all active boosts (for admin/analytics)
+    public List<BoostPurchase> getAllActiveBoosts() {
+        return boostPurchaseRepository.findAllActiveBoosts(Instant.now());
     }
 }

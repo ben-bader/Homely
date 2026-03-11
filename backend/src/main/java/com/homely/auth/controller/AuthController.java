@@ -202,8 +202,8 @@ public class AuthController {
     }
 
     @PostMapping("/request-password-reset")
-    public String requestPasswordReset(@RequestBody String email) {
-        authService.requestPasswordReset(email);
+    public String requestPasswordReset(@RequestBody com.homely.auth.dto.PasswordResetRequest request) {
+        authService.requestPasswordReset(request.getEmail());
         return "Password reset email sent";
     }
 

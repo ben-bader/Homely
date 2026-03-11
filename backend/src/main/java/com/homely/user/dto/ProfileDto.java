@@ -1,5 +1,6 @@
 package com.homely.user.dto;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -22,4 +23,7 @@ public class ProfileDto {
     private boolean verified;
     private String avtarUrl;
     private String idDocumentUrl;
+
+    private Instant createdAt;
+    private Instant updatedAt;
 }

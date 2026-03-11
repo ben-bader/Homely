@@ -15,6 +15,8 @@ public interface ProfileMapper {
     @Mapping(target = "name", source = "user.name")
     @Mapping(target = "email", source = "user.email")
     @Mapping(target = "phone", source = "user.phone")
+    @Mapping(target = "createdAt", source = "user.createdAt")
+    @Mapping(target = "updatedAt", source = "user.updatedAt")
     ProfileDto toDto(Profile entity);
 
     @Mapping(target = "userId", ignore = true)

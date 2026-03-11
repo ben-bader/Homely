@@ -1,5 +1,6 @@
 package com.homely.media.dto;
 
+import java.time.Instant;
 import java.util.UUID;
 import com.homely.common.enums.MediaType;
 import lombok.Getter;
@@ -15,4 +16,7 @@ public class PropertyMediaDto {
     private String thumbnailUrl;
     private int displayOrder;
     private int durationSeconds;
+
+    private Instant createdAt;
+    private Instant updatedAt;
 }

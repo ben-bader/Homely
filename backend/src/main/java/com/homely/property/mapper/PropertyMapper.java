@@ -28,5 +28,9 @@ public interface PropertyMapper {
 
     @Mapping(target = "sellerId", expression = "java(entity.getSeller() != null ? entity.getSeller().getId() : null)")
     @Mapping(target = "sellerName", expression = "java(entity.getSeller() != null ? entity.getSeller().getName() : null)")
+    // ✅ Ignore boost fields - will be populated manually in service
+    @Mapping(target = "isBoosted", ignore = true)
+    @Mapping(target = "boostExpiryAt", ignore = true)
+    @Mapping(target = "boostId", ignore = true)
     PropertyDto toDto(Property entity);
 }

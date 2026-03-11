@@ -11,6 +11,8 @@ import com.homely.media.entity.PropertyMedia;
 public interface PropertyMediaMapper {
 
     @Mapping(target = "propertyId", source = "property.id")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     PropertyMediaDto toDto(PropertyMedia entity);
 
     @Mapping(target = "id", ignore = true)

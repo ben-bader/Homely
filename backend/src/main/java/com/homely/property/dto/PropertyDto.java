@@ -43,6 +43,11 @@ public class PropertyDto {
     private StudioDto studio;
     private CommercialDto commercial;
     private LandDto land;
+    
+    // ✅ Boost status indicators
+    private Boolean isBoosted;
+    private Instant boostExpiryAt;
+    private UUID boostId;
 
     /**
      * Projection constructor used by {@link com.homely.property.repository.PropertyRepository#findPropertyDtoById}.

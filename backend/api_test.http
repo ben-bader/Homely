@@ -31,8 +31,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "elamraouimohamed323@gmail.com",
-  "password": "Med12345"
+  "email": "faroukbichou1@gmail.com",
+  "password": "Farouk123"
 }
 
 ###
@@ -41,18 +41,10 @@ Content-Type: application/json
 @token = {{auth.response.body.token}}
 
 ###
-POST {{baseUrl}}/users/reports
+GET {{baseUrl}}/admin/users
 Content-Type: application/json
 Authorization: Bearer  {{token}}
 
-{
-  "reporterId": "06dde16f-482d-4965-be69-8b852934c685",
-  "reportedUserId": "1cc506d3-8e96-4ee6-9d6a-547111cca005",
-  "reportedPropertyId": "12372705-7110-432e-b150-1ed11712a3d7",
-  "reason": "Suspesious listing",
-  "status": "OPEN",
-  "reviewedByAdminId": null
-}
 ###
 GET {{baseUrl}}/test/whoami
 Authorization: Bearer  {{token}}

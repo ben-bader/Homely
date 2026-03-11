@@ -12,6 +12,8 @@ public interface PropertyViewMapper {
 
     @Mapping(target = "userId", expression = "java(entity.getUser() != null ? entity.getUser().getId() : null)")
     @Mapping(target = "propertyId", source = "property.id")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     PropertyViewDto toDto(PropertyView entity);
 
     @Mapping(target = "id", ignore = true)

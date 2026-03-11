@@ -1,5 +1,6 @@
 package com.homely.visitrequest.dto;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -19,4 +20,7 @@ public class VisitRequestDto {
     private String propertyTitle;     // Added
     private LocalDateTime requestedDate;
     private VisitStatus status;
+
+    private Instant createdAt;
+    private Instant updatedAt;
 }

@@ -15,6 +15,8 @@ public interface BoostPurchaseMapper {
     @Mapping(target = "propertyTitle", source = "property.title")
     @Mapping(target = "userName", source = "seller.name")
     @Mapping(target = "userEmail", source = "seller.email")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     BoostPurchaseDto toDto(BoostPurchase entity);
 
     @Mapping(target = "id", ignore = true)
@@ -23,5 +25,7 @@ public interface BoostPurchaseMapper {
     @Mapping(target = "seller", ignore = true)
     @Mapping(target = "property", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "expiryAt", ignore = true)
+    @Mapping(target = "paymentProviderRef", ignore = true)
     BoostPurchase toEntity(BoostPurchaseCreateRequest request);
 }

@@ -1,6 +1,7 @@
 package com.homely.boost.dto;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
 import com.homely.common.enums.PurchaseStatus;
@@ -26,4 +27,8 @@ public class BoostPurchaseDto {
     private int durationDays;
 
     private PurchaseStatus status;
+
+    // timestamps
+    private Instant createdAt;
+    private Instant updatedAt;
 }

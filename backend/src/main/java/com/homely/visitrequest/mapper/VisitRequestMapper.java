@@ -15,6 +15,8 @@ public interface VisitRequestMapper {
     @Mapping(source = "user.name", target = "userName")
     @Mapping(source = "user.email", target = "userEmail")
     @Mapping(source = "property.title", target = "propertyTitle")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
     VisitRequestDto toDto(VisitRequest entity);
 
     @Mapping(target = "id", ignore = true)

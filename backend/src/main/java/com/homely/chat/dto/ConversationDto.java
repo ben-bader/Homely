@@ -23,4 +23,7 @@ public class ConversationDto {
     private String lastMessage;
     private Instant lastMessageAt;
     private int unreadCount;
+
+    private Instant createdAt;
+    private Instant updatedAt;
 }
