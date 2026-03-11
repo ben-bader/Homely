@@ -77,7 +77,8 @@ export default function ReportDetail({
         <CardContent className="space-y-4">
           <div>
             <h4 className="text-sm text-muted-foreground">Reason</h4>
-            <p className="font-medium">{report.reason}</p>
+            {/* Show available reasons from backend for admin to change (if needed) */}
+            <ReportReasonSelect currentReason={report.reason} />
           </div>
 
           <div>

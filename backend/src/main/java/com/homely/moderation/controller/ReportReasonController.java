@@ -1,6 +1,7 @@
 package com.homely.moderation.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +33,7 @@ public class ReportReasonController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteReason(@PathVariable Long id) {
+    public void deleteReason(@PathVariable UUID id) {
         reportReasonService.deleteReason(id);
     }
 }

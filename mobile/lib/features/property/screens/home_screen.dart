@@ -573,63 +573,70 @@ class _FeaturedSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
     final propertiesAsync = ref.watch(propertiesProvider);
+    final featuredCountAsync = ref.watch(featuredCountProvider);
 
-    return propertiesAsync.maybeWhen(
-      data: (props) {
-        if (props.isEmpty)
-          return const SliverToBoxAdapter(child: SizedBox.shrink());
-        final featured = props.take(5).toList();
-        return SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 14),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Featured',
-                      style: tt.titleLarge?.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
-                      ),
+    return featuredCountAsync.when(
+      data: (count) {
+        return propertiesAsync.maybeWhen(
+          data: (props) {
+            if (props.isEmpty)
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            final featured = props.take(count).toList();
+            return SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 14),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Featured',
+                          style: tt.titleLarge?.copyWith(
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        Text(
+                          'See all',
+                          style: tt.labelMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      'See all',
-                      style: tt.labelMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 220,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
-                  itemCount: featured.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (ctx, i) => _FeaturedCard(
-                    property: featured[i],
-                    onTap: () => Navigator.push(
-                      ctx,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            PropertyDetailScreen(propertyId: featured[i].id),
+                  ),
+                  SizedBox(
+                    height: 220,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+                      itemCount: featured.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 14),
+                      itemBuilder: (ctx, i) => _FeaturedCard(
+                        property: featured[i],
+                        onTap: () => Navigator.push(
+                          ctx,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                PropertyDetailScreen(propertyId: featured[i].id),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
+          orElse: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
         );
       },
-      orElse: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+      loading: () => const SliverToBoxAdapter(child: SizedBox(height: 220, child: Center(child: CircularProgressIndicator()))),
+      error: (e, _) => const SliverToBoxAdapter(child: SizedBox(height: 220, child: Center(child: Text('Failed to load featured count')))),
     );
   }
 }
