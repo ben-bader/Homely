@@ -26,6 +26,39 @@ final userRoleProvider = FutureProvider<String>((ref) async {
   return authService.getUserRoleFromStorage();
 });
 
+// ── Unread notification counts per tab ────────────────────────────────────────
+
+class _NavBadges {
+  final int inbox; // NEW_CHAT_MESSAGE, CONVERSATION_CREATED
+  final int
+  listings; // VISIT_REQUEST_CREATED, BOOST_STATUS_CHANGED, FEEDBACK_RECEIVED
+
+  const _NavBadges({this.inbox = 0, this.listings = 0});
+}
+
+final navBadgesProvider = FutureProvider.autoDispose<_NavBadges>((ref) async {
+  final authService = AuthService();
+  final userId = await authService.getCurrentUserId();
+  if (userId == null) return const _NavBadges();
+
+  final notifications = await NotificationService().fetchUnread(userId);
+  final unread = notifications.where((n) => !n.read).toList();
+
+  const inboxTypes = {'NEW_CHAT_MESSAGE', 'CONVERSATION_CREATED'};
+  const listingsTypes = {
+    'VISIT_REQUEST_CREATED',
+    'VISIT_REQUEST_STATUS_CHANGED',
+    'BOOST_STATUS_CHANGED',
+    'BOOST_PURCHASED',
+    'FEEDBACK_RECEIVED',
+  };
+
+  final inbox = unread.where((n) => inboxTypes.contains(n.type)).length;
+  final listings = unread.where((n) => listingsTypes.contains(n.type)).length;
+
+  return _NavBadges(inbox: inbox, listings: listings);
+});
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -52,13 +85,16 @@ class HomeScreen extends ConsumerWidget {
         final isSeller = userRole == 'SELLER';
         final tabs = isSeller ? _buildSellerTabs() : _buildClientTabs();
 
+        // Refresh badge counts every time a tab is tapped
+        ref.listen(navIndexProvider, (_, __) {
+          ref.invalidate(navBadgesProvider);
+        });
+
         return Scaffold(
           backgroundColor: AppColors.background,
           extendBody: true,
           body: Stack(
-            children: [
-              IndexedStack(index: idx, children: tabs),
-            ],
+            children: [IndexedStack(index: idx, children: tabs)],
           ),
           bottomNavigationBar: _BottomNav(isSeller: isSeller),
         );
@@ -556,70 +592,63 @@ class _FeaturedSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
     final propertiesAsync = ref.watch(propertiesProvider);
-    final featuredCountAsync = ref.watch(featuredCountProvider);
 
-    return featuredCountAsync.when(
-      data: (count) {
-        return propertiesAsync.maybeWhen(
-          data: (props) {
-            if (props.isEmpty)
-              return const SliverToBoxAdapter(child: SizedBox.shrink());
-            final featured = props.take(count).toList();
-            return SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 14),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Featured',
-                          style: tt.titleLarge?.copyWith(
-                            color: AppColors.accent,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.4,
-                          ),
-                        ),
-                        Text(
-                          'See all',
-                          style: tt.labelMedium?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+    return propertiesAsync.maybeWhen(
+      data: (props) {
+        if (props.isEmpty)
+          return const SliverToBoxAdapter(child: SizedBox.shrink());
+        final featured = props.take(5).toList();
+        return SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Featured',
+                      style: tt.titleLarge?.copyWith(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    height: 220,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
-                      itemCount: featured.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 14),
-                      itemBuilder: (ctx, i) => _FeaturedCard(
-                        property: featured[i],
-                        onTap: () => Navigator.push(
-                          ctx,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                PropertyDetailScreen(propertyId: featured[i].id),
-                          ),
-                        ),
+                    Text(
+                      'See all',
+                      style: tt.labelMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 220,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+                  itemCount: featured.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (ctx, i) => _FeaturedCard(
+                    property: featured[i],
+                    onTap: () => Navigator.push(
+                      ctx,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            PropertyDetailScreen(propertyId: featured[i].id),
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            );
-          },
-          orElse: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+            ],
+          ),
         );
       },
-      loading: () => const SliverToBoxAdapter(child: SizedBox(height: 220, child: Center(child: CircularProgressIndicator()))),
-      error: (e, _) => const SliverToBoxAdapter(child: SizedBox(height: 220, child: Center(child: Text('Failed to load featured count')))),
+      orElse: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
     );
   }
 }
@@ -950,9 +979,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   Future<void> _pickDate({required bool isFrom}) async {
     final now = DateTime.now();
-    final initial = isFrom
-        ? (_fromDate ?? now)
-        : (_toDate ?? _fromDate ?? now);
+    final initial = isFrom ? (_fromDate ?? now) : (_toDate ?? _fromDate ?? now);
     final first = isFrom ? DateTime(2020) : (_fromDate ?? DateTime(2020));
     final last = DateTime(now.year + 5);
 
@@ -990,7 +1017,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     final minText = _minPriceController.text.trim();
     final maxText = _maxPriceController.text.trim();
 
-    ref.read(propertyFilterProvider.notifier).update(
+    ref
+        .read(propertyFilterProvider.notifier)
+        .update(
           (f) => PropertyFilter(
             search: f.search,
             listingType: _listingType,
@@ -1060,8 +1089,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 GestureDetector(
                   onTap: _reset,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.error.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(20),
@@ -1105,10 +1136,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 22, vertical: 11),
+                        horizontal: 22,
+                        vertical: 11,
+                      ),
                       decoration: BoxDecoration(
-                        color:
-                            sel ? AppColors.primary : AppColors.subtleBackground,
+                        color: sel
+                            ? AppColors.primary
+                            : AppColors.subtleBackground,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -1154,10 +1188,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
-                      color:
-                          sel ? AppColors.primary : AppColors.subtleBackground,
+                      color: sel
+                          ? AppColors.primary
+                          : AppColors.subtleBackground,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1210,8 +1247,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
                     '–',
-                    style: tt.titleMedium
-                        ?.copyWith(color: AppColors.textSecondary),
+                    style: tt.titleMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -1249,8 +1287,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
                     '–',
-                    style: tt.titleMedium
-                        ?.copyWith(color: AppColors.textSecondary),
+                    style: tt.titleMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -1736,26 +1775,78 @@ class _BottomNav extends ConsumerWidget {
   const _BottomNav({this.isSeller = false});
 
   static const _clientItems = [
-    (icon: Icons.search_rounded,            outlinedIcon: Icons.search_rounded,             label: 'Explore'),
-    (icon: Icons.slow_motion_video_rounded, outlinedIcon: Icons.slow_motion_video_rounded,  label: 'Tours'),
-    (icon: Icons.chat_bubble_rounded,       outlinedIcon: Icons.chat_bubble_outline_rounded, label: 'Inbox'),
-    (icon: Icons.favorite_rounded,          outlinedIcon: Icons.favorite_border_rounded,     label: 'Wishlists'),
-    (icon: Icons.person_rounded,            outlinedIcon: Icons.person_outline_rounded,      label: 'Profile'),
+    (
+      icon: Icons.search_rounded,
+      outlinedIcon: Icons.search_rounded,
+      label: 'Explore',
+    ),
+    (
+      icon: Icons.slow_motion_video_rounded,
+      outlinedIcon: Icons.slow_motion_video_rounded,
+      label: 'Tours',
+    ),
+    (
+      icon: Icons.chat_bubble_rounded,
+      outlinedIcon: Icons.chat_bubble_outline_rounded,
+      label: 'Inbox',
+    ),
+    (
+      icon: Icons.favorite_rounded,
+      outlinedIcon: Icons.favorite_border_rounded,
+      label: 'Wishlists',
+    ),
+    (
+      icon: Icons.person_rounded,
+      outlinedIcon: Icons.person_outline_rounded,
+      label: 'Profile',
+    ),
   ];
 
   // CHANGED: Listings first, Explore moved to index 3
   static const _sellerItems = [
-    (icon: Icons.home_rounded,        outlinedIcon: Icons.home_outlined,              label: 'Listings'),
-    (icon: Icons.chat_bubble_rounded, outlinedIcon: Icons.chat_bubble_outline_rounded, label: 'Inbox'),
-    (icon: Icons.add_rounded,         outlinedIcon: Icons.add_rounded,                label: 'Create'),
-    (icon: Icons.search_rounded,      outlinedIcon: Icons.search_rounded,             label: 'Explore'),
-    (icon: Icons.person_rounded,      outlinedIcon: Icons.person_outline_rounded,     label: 'Profile'),
+    (
+      icon: Icons.home_rounded,
+      outlinedIcon: Icons.home_outlined,
+      label: 'Listings',
+    ),
+    (
+      icon: Icons.chat_bubble_rounded,
+      outlinedIcon: Icons.chat_bubble_outline_rounded,
+      label: 'Inbox',
+    ),
+    (icon: Icons.add_rounded, outlinedIcon: Icons.add_rounded, label: 'Create'),
+    (
+      icon: Icons.search_rounded,
+      outlinedIcon: Icons.search_rounded,
+      label: 'Explore',
+    ),
+    (
+      icon: Icons.person_rounded,
+      outlinedIcon: Icons.person_outline_rounded,
+      label: 'Profile',
+    ),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final idx = ref.watch(navIndexProvider);
     final items = isSeller ? _sellerItems : _clientItems;
+    // Watch badges — silently zero if loading/error
+    final badges = ref
+        .watch(navBadgesProvider)
+        .maybeWhen(data: (b) => b, orElse: () => const _NavBadges());
+
+    // Map label → badge count
+    int _badgeFor(String label) {
+      switch (label) {
+        case 'Inbox':
+          return badges.inbox;
+        case 'Listings':
+          return badges.listings;
+        default:
+          return 0;
+      }
+    }
 
     return ClipRect(
       child: BackdropFilter(
@@ -1778,7 +1869,9 @@ class _BottomNav extends ConsumerWidget {
                 children: List.generate(items.length, (i) {
                   final active = i == idx;
                   final item = items[i];
+                  final badgeCount = _badgeFor(item.label);
 
+                  // Centre + button for sellers
                   if (isSeller && i == 2) {
                     return Expanded(
                       child: GestureDetector(
@@ -1824,18 +1917,58 @@ class _BottomNav extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              transitionBuilder: (child, anim) =>
-                                  ScaleTransition(scale: anim, child: child),
-                              child: Icon(
-                                active ? item.icon : item.outlinedIcon,
-                                key: ValueKey(active),
-                                size: 26,
-                                color: active
-                                    ? AppColors.primary
-                                    : AppColors.accent.withAlpha(120),
-                              ),
+                            // Icon with optional red dot badge
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 200),
+                                  transitionBuilder: (child, anim) =>
+                                      ScaleTransition(
+                                        scale: anim,
+                                        child: child,
+                                      ),
+                                  child: Icon(
+                                    active ? item.icon : item.outlinedIcon,
+                                    key: ValueKey(active),
+                                    size: 26,
+                                    color: active
+                                        ? AppColors.primary
+                                        : AppColors.accent.withAlpha(120),
+                                  ),
+                                ),
+                                if (badgeCount > 0)
+                                  Positioned(
+                                    top: -4,
+                                    right: -6,
+                                    child: Container(
+                                      constraints: const BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                      ),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.error,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          badgeCount > 99
+                                              ? '99+'
+                                              : '$badgeCount',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w700,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 2),
                             AnimatedDefaultTextStyle(
