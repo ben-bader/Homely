@@ -139,6 +139,15 @@ export type Boost = {
   durationDays: number
   status: BoostStatus
 }
+
+export type BoostPackage = {
+  id: number
+  name: string
+  description: string
+  durationDays: number
+  price: number
+}
+
 export interface Apartment {
   propertyId: string;
   bedrooms: number;

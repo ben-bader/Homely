@@ -2,6 +2,7 @@ package com.homely.media.service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -34,11 +35,26 @@ public class MediaService {
     public void delete(UUID id) {
         mediaRepository.deleteById(id);
     }
-    public List<PropertyMediaDto> findByPropertyId(UUID id){
-       return mediaRepository.findByPropertyId(id)
-           .stream()
-           .map(propertyMediaMapper::toDto)
-           .toList();
+
+    public List<PropertyMediaDto> findByPropertyId(UUID id) {
+        return mediaRepository.findByPropertyId(id)
+                .stream()
+                .map(propertyMediaMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+     public PropertyMediaDto toDto(PropertyMedia media) {
+        return propertyMediaMapper.toDto(media);
+    }
+
+   public void save(PropertyMedia media) {
+        mediaRepository.save(media);
+    }
+
+  public List<PropertyMediaDto> toDtoList(List<PropertyMedia> mediaList) {
+        return mediaList.stream()
+                .map(propertyMediaMapper::toDto)
+                .collect(Collectors.toList());
     }
 }
 
