@@ -20,8 +20,8 @@ import com.homely.media.dto.PropertyMediaCreateRequest;
 import com.homely.media.dto.PropertyMediaDto;
 import com.homely.media.entity.PropertyMedia;
 import com.homely.media.repository.PropertyMediaRepository;
+import com.homely.media.service.FirebaseStorageService;
 import com.homely.media.service.MediaService;
-import com.homely.media.service.SupabaseStorageService;
 import com.homely.property.entity.Property;
 import com.homely.property.repository.PropertyRepository;
 
@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class MediaController {
 
         private final MediaService mediaService;
-        private final SupabaseStorageService storageService;
+        private final FirebaseStorageService storageService;
         private final PropertyRepository propertyRepository;
         private final PropertyMediaRepository mediaRepository;
 
@@ -75,5 +75,22 @@ public class MediaController {
                 mediaRepository.save(media);
 
                 return ResponseEntity.ok(videoUrl);
+        }
+
+        @PostMapping("/upload/image")
+        public ResponseEntity<?> uploadImage(
+                @RequestParam UUID propertyId,
+                @RequestParam MultipartFile file,
+                @RequestParam int displayOrder) throws IOException {
+
+                String imageUrl = storageService.uploadImage(file, propertyId);
+
+                PropertyMedia media = new PropertyMedia();
+                media.setMediaType(MediaType.IMAGE);
+                media.setUrl(imageUrl);
+                media.setDisplayOrder(displayOrder);
+
+                mediaRepository.save(media);
+                return ResponseEntity.ok(imageUrl);
         }
 }

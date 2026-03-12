@@ -14,6 +14,7 @@ import 'package:mobile/features/feedback/widgets/feedback_list.dart';
 import 'package:mobile/features/feedback/widgets/submit_feedback_sheet.dart';
 import 'package:mobile/features/reports/widgets/report_sheet.dart';
 import 'package:mobile/features/boost/widgets/boost_sheet.dart';
+import 'package:mobile/features/media/models/property_media.dart';
 
 class PropertyDetailScreen extends ConsumerWidget {
   final String propertyId;
@@ -54,11 +55,13 @@ class _BodyState extends ConsumerState<_Body> {
   final _pageCtrl = PageController();
   String? _currentUserId;
   String? _userRole;
+  List<PropertyMedia> _media = [];
 
   @override
   void initState() {
     super.initState();
     _loadCurrentUserId();
+    _fetchMedia();
   }
 
   Future<void> _loadCurrentUserId() async {
@@ -70,6 +73,15 @@ class _BodyState extends ConsumerState<_Body> {
         _currentUserId = userId;
         _userRole = role;
       });
+  }
+
+  Future<void> _fetchMedia() async {
+    final media = await PropertyRepository().getPropertyMedia(widget.property.id);
+    if (mounted) {
+      setState(() {
+        _media = media;
+      });
+    }
   }
 
   @override
@@ -428,6 +440,13 @@ class _BodyState extends ConsumerState<_Body> {
                     ),
                   ),
                 ),
+                // Media display section
+                if (_media.isNotEmpty) ...[
+                  const SizedBox(height: 32),
+                  Text('Media', style: tt.titleSmall),
+                  const SizedBox(height: 10),
+                  _MediaDisplaySection(media: _media),
+                ],
               ]),
             ),
           ),
@@ -649,4 +668,23 @@ class _CircleBtn extends StatelessWidget {
       child: Icon(icon, size: 24, color: iconColor),
     ),
   );
+}
+
+class _MediaDisplaySection extends StatelessWidget {
+  final List<PropertyMedia> media;
+
+  const _MediaDisplaySection({required this.media});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: media.map((m) {
+        if (m.mediaType == MediaType.IMAGE) {
+          return Image.network(m.url, fit: BoxFit.cover);
+        } else {
+          return Text('Video: ${m.url}'); // Replace with a video player widget.
+        }
+      }).toList(),
+    );
+  }
 }

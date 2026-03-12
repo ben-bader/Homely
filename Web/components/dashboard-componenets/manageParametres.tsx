@@ -55,14 +55,14 @@ const ManageParameters = () => {
       />
       <Button onClick={addReportReason}>Add Reason</Button>
       </div>
-      <Card className="w-[50%] my-4 p-4 rounded-md">
+      <div className="flex flex-col w-[50%] my-4 gap-2 ">
         {reasons.map((reason) => (
-          <li key={reason.id} className="flex gap-4 justify-between">
+          <li key={reason.id} className="flex gap-4 justify-between items-center rounded-md border border-muted p-2 shadow-xs">
             {reason.reason}
             <Button onClick={() => deleteReportReason(reason.id)}>Delete</Button>
           </li>
         ))}
-      </Card>
+      </div>
      
     </div>
   );
