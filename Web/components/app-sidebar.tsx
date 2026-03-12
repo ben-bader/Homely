@@ -90,8 +90,8 @@ const data = {
       icon: IconMessageCircle,
     },
     {
-      title: "Manage Report Reasons",
-      url: "/dashboard/manage-report-reasons",
+      title: "Manage Parameters",
+      url: "/dashboard/manage-parameters",
       icon: IconFileAi,
     },
   ],
