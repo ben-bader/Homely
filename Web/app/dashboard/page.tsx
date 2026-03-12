@@ -14,7 +14,7 @@ import AdminDashboardWrapper from "@/components/dashboard-componenets/AdminDashb
 import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
 import Profile from "@/components/dashboard-componenets/profile"
 import Chat from "@/components/dashboard-componenets/Chat";
-import ManageReportReasons from "@/components/dashboard-componenets/ManageParametres";
+import Notifications from "@/components/dashboard-componenets/Notifications"
 import ManageParameters from "@/components/dashboard-componenets/ManageParametres"
 
 export default function Page() {
@@ -31,6 +31,8 @@ export default function Page() {
   profile: <Profile />,
   chats: <Chat />,
   "manage parameters": <ManageParameters />,
+  notifications: <Notifications />,
+
 };
   
   
