@@ -29,23 +29,15 @@ import {
   DrawerFooter,
   DrawerClose,
 } from "@/components/ui/drawer";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { api } from "@/lib/api";
-import type { Boost, BoostStatus } from "@/types/dashboard-types";
+import type { Boost, BoostStatus, BoostPackage } from "@/types/dashboard-types";
 import { FaEye } from "react-icons/fa";
-
-/* ---------------- TYPES ---------------- */
-
-type DateSort = "" | "newest" | "oldest";
+import useBoostPackages from "@/hooks/useBoostPackages";
 
 /* ---------------- HELPERS ---------------- */
 
@@ -76,121 +68,9 @@ function statusVariant(status: BoostStatus): "default" | "secondary" | "destruct
   }
 }
 
-/* ---------------- SUMMARY CARDS ---------------- */
-
-function SummaryCards({ boosts }: { boosts: Boost[] }) {
-  const total = boosts.length;
-  const pending = boosts.filter((b) => b.status === "PENDING").length;
-  const completed = boosts.filter((b) => b.status === "COMPLETED").length;
-  const revenue = boosts
-    .filter((b) => b.status === "COMPLETED")
-    .reduce((sum, b) => sum + (b.amount ?? 0), 0);
-
-  const cards = [
-    {
-      label: "Total Boosts",
-      value: total,
-      icon: (
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
-      colorClass: "text-foreground",
-      bgClass: "bg-muted/50",
-      display: String(total),
-    },
-    {
-      label: "Pending",
-      value: pending,
-      icon: (
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      colorClass: "text-yellow-600 dark:text-yellow-400",
-      bgClass: "bg-yellow-50 dark:bg-yellow-950/30",
-      display: String(pending),
-    },
-    {
-      label: "Completed",
-      value: completed,
-      icon: (
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      colorClass: "text-green-600",
-      bgClass: "bg-green-50 dark:bg-green-950/30",
-      display: String(completed),
-    },
-    {
-      label: "Revenue",
-      value: revenue,
-      icon: (
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      colorClass: "text-primary",
-      bgClass: "bg-primary/5",
-      display: `$${revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    },
-  ];
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {cards.map((card) => (
-        <div key={card.label} className={`rounded-lg border p-4 flex items-center gap-3 ${card.bgClass}`}>
-          <div className={`shrink-0 ${card.colorClass}`}>{card.icon}</div>
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-              {card.label}
-            </p>
-            <p className={`text-2xl font-bold ${card.colorClass}`}>{card.display}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ---------------- STATUS SELECT ---------------- */
-
-function StatusSelect({
-  boost,
-  onUpdate,
-}: {
-  boost: Boost;
-  onUpdate: (id: string, status: BoostStatus) => Promise<void>;
-}) {
-  return (
-    <Select
-      value={boost.status}
-      onValueChange={(value: string) => onUpdate(boost.id, value as BoostStatus)}
-    >
-      <SelectTrigger className="w-32">
-        <SelectValue placeholder="Select status" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="PENDING">PENDING</SelectItem>
-        <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-        <SelectItem value="FAILED">FAILED</SelectItem>
-      </SelectContent>
-    </Select>
-  );
-}
-
 /* ---------------- INFO ROW ---------------- */
 
-function InfoRow({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: React.ReactNode;
-  mono?: boolean;
-}) {
+function InfoRow({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</span>
@@ -205,119 +85,9 @@ function InfoRow({
   );
 }
 
-/* ---------------- FILTER PANEL ---------------- */
-
-function FilterPanel({
-  filterStatus, setFilterStatus,
-  createdAfter, setCreatedAfter,
-  createdBefore, setCreatedBefore,
-  dateSort, setDateSort,
-  onClear,
-}: {
-  filterStatus: BoostStatus | "ALL"; setFilterStatus: (v: BoostStatus | "ALL") => void;
-  createdAfter: string; setCreatedAfter: (v: string) => void;
-  createdBefore: string; setCreatedBefore: (v: string) => void;
-  dateSort: DateSort; setDateSort: (v: DateSort) => void;
-  onClear: () => void;
-}) {
-  const statuses: (BoostStatus | "ALL")[] = ["ALL", "PENDING", "COMPLETED", "FAILED"];
-  const dateSortOptions: { value: DateSort; label: string; icon: string }[] = [
-    { value: "newest", label: "Newest first", icon: "↓" },
-    { value: "oldest", label: "Oldest first", icon: "↑" },
-  ];
-
-  const activeCount = [
-    filterStatus !== "ALL",
-    createdAfter !== "",
-    createdBefore !== "",
-    dateSort !== "",
-  ].filter(Boolean).length;
-
-  return (
-    <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
-        <div className="flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-          </svg>
-          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">Filters</span>
-          {activeCount > 0 && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {activeCount}
-            </span>
-          )}
-        </div>
-        {activeCount > 0 && (
-          <button onClick={onClear} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium">
-            Clear all
-          </button>
-        )}
-      </div>
-
-      <div className="p-4 space-y-5">
-        {/* Status */}
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Status</label>
-          <div className="flex flex-wrap gap-1.5">
-            {statuses.map((s) => (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s)}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                  filterStatus === s
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Sort by Date */}
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Sort by Date</label>
-          <div className="flex gap-1.5">
-            {dateSortOptions.map(({ value, label, icon }) => (
-              <button
-                key={value}
-                onClick={() => setDateSort(dateSort === value ? "" : value)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                  dateSort === value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                }`}
-              >
-                <span>{icon}</span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Date Range */}
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Created Between</label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">After</span>
-              <Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">Before</span>
-              <Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ---------------- BOOST DRAWER ---------------- */
 
-function BoostDrawer({ boost }: { boost: Boost }) {
+function BoostDrawer({ boost, packageName }: { boost: Boost; packageName?: string }) {
   return (
     <Drawer direction="right">
       <DrawerTrigger asChild>
@@ -336,11 +106,7 @@ function BoostDrawer({ boost }: { boost: Boost }) {
           <section className="space-y-4">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">Boost</p>
             <InfoRow label="Status" value={<Badge variant={statusVariant(boost.status)}>{boost.status}</Badge>} />
-            <InfoRow
-              label="Amount"
-              value={`${boost.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? "—"} ${boost.currency ?? ""}`}
-            />
-            <InfoRow label="Duration" value={boost.durationDays ? `${boost.durationDays} days` : "—"} />
+            <InfoRow label="Package Name" value={packageName ?? "—"} />
           </section>
 
           <section className="space-y-4">
@@ -373,18 +139,37 @@ function BoostDrawer({ boost }: { boost: Boost }) {
   );
 }
 
+/* ---------------- STATUS SELECT ---------------- */
+
+function StatusSelect({ boost, onUpdate }: { boost: Boost; onUpdate: (id: string, status: BoostStatus) => Promise<void> }) {
+  return (
+    <Select value={boost.status} onValueChange={(value: string) => onUpdate(boost.id, value as BoostStatus)}>
+      <SelectTrigger className="w-32">
+        <SelectValue placeholder="Select status" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="PENDING">PENDING</SelectItem>
+        <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+        <SelectItem value="FAILED">FAILED</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
 /* ---------------- COLUMNS ---------------- */
 
 function buildColumns(
-  onUpdate: (id: string, status: BoostStatus) => Promise<void>
+  onUpdate: (id: string, status: BoostStatus) => Promise<void>,
+  boostPackages: BoostPackage[]
 ): ColumnDef<Boost>[] {
+  // Map durationDays -> package name
+  const durationToName = Object.fromEntries(boostPackages.map(p => [p.durationDays, p.name]));
+
   return [
     {
       accessorKey: "propertyTitle",
       header: "Property",
-      cell: ({ row }) => (
-        <p className="text-sm font-medium">{row.original.propertyTitle}</p>
-      ),
+      cell: ({ row }) => <p className="text-sm font-medium">{row.original.propertyTitle}</p>,
     },
     {
       accessorKey: "userName",
@@ -397,28 +182,9 @@ function buildColumns(
       ),
     },
     {
-      accessorKey: "amount",
-      header: "Amount",
-      cell: ({ row }) => (
-        <span className="text-sm font-medium">
-          {row.original.amount != null
-            ? `$${row.original.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            : "—"}
-          {row.original.currency ? (
-            <span className="ml-1 text-xs text-muted-foreground">{row.original.currency}</span>
-          ) : null}
-        </span>
-      ),
-    },
-    {
       accessorKey: "durationDays",
-      header: "Duration",
-      cell: ({ row }) =>
-        row.original.durationDays ? (
-          <span className="text-sm">{row.original.durationDays}d</span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
+      header: "Package Name",
+      cell: ({ row }) => <span className="text-sm">{durationToName[row.original.durationDays] ?? "—"}</span>,
     },
     {
       accessorKey: "createdAt",
@@ -433,11 +199,10 @@ function buildColumns(
     {
       id: "seeMore",
       header: "",
-      cell: ({ row }) => <BoostDrawer boost={row.original} />,
+      cell: ({ row }) => <BoostDrawer boost={row.original} packageName={durationToName[row.original.durationDays]} />,
     },
   ];
 }
-
 /* ---------------- MAIN PAGE ---------------- */
 
 export default function Boosts() {
@@ -450,8 +215,10 @@ export default function Boosts() {
   const [filterStatus, setFilterStatus] = useState<BoostStatus | "ALL">("ALL");
   const [createdAfter, setCreatedAfter] = useState("");
   const [createdBefore, setCreatedBefore] = useState("");
-  const [dateSort, setDateSort] = useState<DateSort>("");
+  const [dateSort, setDateSort] = useState<"" | "newest" | "oldest">("");
   const [filterOpen, setFilterOpen] = useState(false);
+
+  const { packages: boostPackages, loading: loadingPackages } = useBoostPackages();
 
   useEffect(() => {
     api
@@ -460,6 +227,14 @@ export default function Boosts() {
       .catch(() => setError("Failed to load boosts"))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleStatusUpdate = useCallback(
+    async (id: string, status: BoostStatus) => {
+      await api.put(`/admin/boosts/${id}/status`, null, { params: { status } });
+      setBoosts((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+    },
+    []
+  );
 
   const clearFilters = () => {
     setFilterStatus("ALL");
@@ -475,44 +250,25 @@ export default function Boosts() {
     dateSort !== "",
   ].filter(Boolean).length;
 
-  const handleStatusUpdate = useCallback(
-    async (id: string, status: BoostStatus) => {
-      await api.put(`/admin/boosts/${id}/status`, null, { params: { status } });
-      setBoosts((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
-    },
-    []
-  );
-
-  const columns = useMemo(() => buildColumns(handleStatusUpdate), [handleStatusUpdate]);
+  const columns = useMemo(() => buildColumns(handleStatusUpdate, boostPackages), [handleStatusUpdate, boostPackages]);
 
   const filteredData = useMemo(() => {
-    const filtered = boosts.filter((b) => {
-      const textMatch = [b.propertyTitle, b.userName, b.userEmail, b.id, b.amount?.toString()]
+    return boosts.filter(b => {
+      const textMatch = [b.propertyTitle, b.userName, b.userEmail, b.id]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(search.toLowerCase());
-
       const statusMatch = filterStatus === "ALL" || b.status === filterStatus;
-
       const created = parseDate(b.createdAt)?.getTime() ?? null;
-      const afterMatch =
-        !createdAfter ||
-        (created !== null && created >= new Date(createdAfter + "T00:00:00Z").getTime());
-      const beforeMatch =
-        !createdBefore ||
-        (created !== null && created <= new Date(createdBefore + "T23:59:59Z").getTime());
-
+      const afterMatch = !createdAfter || (created !== null && created >= new Date(createdAfter + "T00:00:00Z").getTime());
+      const beforeMatch = !createdBefore || (created !== null && created <= new Date(createdBefore + "T23:59:59Z").getTime());
       return textMatch && statusMatch && afterMatch && beforeMatch;
+    }).sort((a, b) => {
+      if (dateSort === "newest") return (parseDate(b.createdAt)?.getTime() ?? 0) - (parseDate(a.createdAt)?.getTime() ?? 0);
+      if (dateSort === "oldest") return (parseDate(a.createdAt)?.getTime() ?? 0) - (parseDate(b.createdAt)?.getTime() ?? 0);
+      return 0;
     });
-
-    if (dateSort === "newest") {
-      filtered.sort((a, b) => (parseDate(b.createdAt)?.getTime() ?? 0) - (parseDate(a.createdAt)?.getTime() ?? 0));
-    } else if (dateSort === "oldest") {
-      filtered.sort((a, b) => (parseDate(a.createdAt)?.getTime() ?? 0) - (parseDate(b.createdAt)?.getTime() ?? 0));
-    }
-
-    return filtered;
   }, [boosts, search, filterStatus, createdAfter, createdBefore, dateSort]);
 
   const table = useReactTable({
@@ -525,28 +281,17 @@ export default function Boosts() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  if (loading) return <div className="p-8">Loading boosts…</div>;
+  if (loading || loadingPackages) return <div className="p-8">Loading boosts…</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
 
   return (
     <div className="px-8 space-y-6">
       <h2 className="text-xl font-semibold">Boosts</h2>
 
-      {/* Summary Cards */}
-      <SummaryCards boosts={boosts} />
-
       {/* Search + Filter toggle */}
       <div className="flex gap-2">
-        <Input
-          placeholder="Search by property, seller, amount…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <Button
-          variant="outline"
-          onClick={() => setFilterOpen((v) => !v)}
-          className="relative"
-        >
+        <Input placeholder="Search by property, seller…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Button variant="outline" onClick={() => setFilterOpen(v => !v)} className="relative">
           Filter
           {activeFilterCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
@@ -556,6 +301,7 @@ export default function Boosts() {
         </Button>
       </div>
 
+      {/* Filter panel */}
       {filterOpen && (
         <FilterPanel
           filterStatus={filterStatus} setFilterStatus={setFilterStatus}
@@ -566,21 +312,13 @@ export default function Boosts() {
         />
       )}
 
-      {/* Results count */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
-          {filteredData.length} boost{filteredData.length !== 1 ? "s" : ""}
-          {activeFilterCount > 0 && " (filtered)"}
-        </span>
-      </div>
-
       {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
+            {table.getHeaderGroups().map(hg => (
               <TableRow key={hg.id}>
-                {hg.headers.map((header) => (
+                {hg.headers.map(header => (
                   <TableHead key={header.id}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
@@ -596,12 +334,10 @@ export default function Boosts() {
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map(row => (
                 <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
               ))
@@ -611,15 +347,29 @@ export default function Boosts() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center">
-        <Button variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Previous
-        </Button>
-        <span>Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}</span>
-        <Button variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Next
-        </Button>
-      </div>
+      <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => table.previousPage()}
+    disabled={!table.getCanPreviousPage()}
+  >
+    Previous
+  </Button>
+
+  <span>
+    Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
+  </span>
+
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => table.nextPage()}
+    disabled={!table.getCanNextPage()}
+  >
+    Next
+  </Button>
+</div>
     </div>
   );
 }

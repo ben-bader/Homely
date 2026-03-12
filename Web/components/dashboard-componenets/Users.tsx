@@ -493,15 +493,29 @@ export default function Users() {
         </Table>
       </div>
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Previous
-        </Button>
-        <span>Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}</span>
-        <Button variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Next
-        </Button>
-      </div>
+      <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => table.previousPage()}
+    disabled={!table.getCanPreviousPage()}
+  >
+    Previous
+  </Button>
+
+  <span>
+    Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
+  </span>
+
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => table.nextPage()}
+    disabled={!table.getCanNextPage()}
+  >
+    Next
+  </Button>
+</div>
     </div>
   );
 }
