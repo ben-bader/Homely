@@ -15,7 +15,7 @@ import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
 import Profile from "@/components/dashboard-componenets/profile"
 import Chat from "@/components/dashboard-componenets/Chat";
 import ManageReportReasons from "@/components/dashboard-componenets/manageParametres";
-import ManageParameters from "@/components/dashboard-componenets/manageParametres"
+import ManageParameters from "@/components/dashboard-componenets/ManageParametres"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")

@@ -51,4 +51,4 @@ const useBoostPackages = () => {
   }
 }
 
-export default useBoostPackages
+export default useBoostPackages;

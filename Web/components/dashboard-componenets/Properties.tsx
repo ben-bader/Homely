@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/hooks/useProperties";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
-
+import { FaEye } from "react-icons/fa";
 /* ---------------- TYPES ---------------- */
 
 type DateSort = "" | "newest" | "oldest";
@@ -259,7 +259,7 @@ function PropertyDrawer({
       onOpenChange={(open) => { if (open) fetchDetail(property.id); }}
     >
       <DrawerTrigger asChild>
-        <Button variant="ghost" size="icon">👁</Button>
+        <Button variant="ghost" size="icon"><FaEye /></Button>
       </DrawerTrigger>
 
       <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
@@ -361,7 +361,7 @@ function buildColumns(
       ),
     },
     {
-      id: "seeMore", header: "",
+      id: "seeMore", header: "See More",
       cell: ({ row }) => (
         <PropertyDrawer
           property={row.original}

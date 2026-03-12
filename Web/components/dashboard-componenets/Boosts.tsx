@@ -41,6 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { Boost, BoostStatus } from "@/types/dashboard-types";
+import { FaEye } from "react-icons/fa";
 
 /* ---------------- TYPES ---------------- */
 
@@ -75,22 +76,12 @@ function statusVariant(status: BoostStatus): "default" | "secondary" | "destruct
   }
 }
 
-function statusDot(status: BoostStatus) {
-  switch (status) {
-    case "COMPLETED": return "bg-green-500";
-    case "PENDING": return "bg-yellow-400";
-    case "FAILED": return "bg-destructive";
-    default: return "bg-muted-foreground";
-  }
-}
-
 /* ---------------- SUMMARY CARDS ---------------- */
 
 function SummaryCards({ boosts }: { boosts: Boost[] }) {
   const total = boosts.length;
   const pending = boosts.filter((b) => b.status === "PENDING").length;
   const completed = boosts.filter((b) => b.status === "COMPLETED").length;
-  const failed = boosts.filter((b) => b.status === "FAILED").length;
   const revenue = boosts
     .filter((b) => b.status === "COMPLETED")
     .reduce((sum, b) => sum + (b.amount ?? 0), 0);
@@ -163,79 +154,7 @@ function SummaryCards({ boosts }: { boosts: Boost[] }) {
   );
 }
 
-
-    // Handle adding new package
-    const handleAddPackage = async () => {
-      if (!newPackage.name || !newPackage.price || !newPackage.durationDays) {
-        alert('Please fill in all fields');
-        return;
-      }
-      
-      setSavingPackage(true);
-      try {
-        await addPackage({
-          name: newPackage.name,
-          description: newPackage.description,
-          durationDays: parseInt(newPackage.durationDays),
-          price: parseFloat(newPackage.price),
-        });
-        setNewPackage({ name: '', description: '', durationDays: '', price: '' });
-        setShowAddPackageForm(false);
-      } catch (err) {
-        console.error('Failed to add package', err);
-        alert('Failed to add package');
-      } finally {
-        setSavingPackage(false);
-      }
-    };
-
-    // Handle deleting package
-    const handleDeletePackage = async (packageId: number) => {
-      if (!confirm('Are you sure you want to delete this package?')) return;
-      try {
-        await deletePackage(packageId);
-      } catch (err) {
-        console.error('Failed to delete package', err);
-        alert('Failed to delete package');
-      }
-    };
-
-    // Columns
-    const columns = React.useMemo<ColumnDef<Boost>[]>(
-      () => [
-        {
-          accessorKey: "propertyTitle",
-          header: "Property Title",
-          cell: ({ row }) => <BoostDrawer boost={row.original} onStatusChange={updateStatus} />,
-        },
-        { accessorKey: "userName", header: "Seller Name" },
-        { accessorKey: "userEmail", header: "Seller Email" },
-        { accessorKey: "amount", header: "Amount" },
-        {
-          id: "status",
-          header: "Status",
-          cell: ({ row }) => {
-            const currentStatus = row.original.status;
-            return (
-              <Select
-                value={currentStatus}
-                onValueChange={(value: string) => updateStatus(row.original.id, value as BoostStatus)}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PENDING">PENDING</SelectItem>
-                  <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-                  <SelectItem value="FAILED">FAILED</SelectItem>
-                </SelectContent>
-              </Select>
-            );
-          },
-        },
-      ],
-      [updateStatus]
-    );
+/* ---------------- STATUS SELECT ---------------- */
 
 function StatusSelect({
   boost,
@@ -244,32 +163,22 @@ function StatusSelect({
   boost: Boost;
   onUpdate: (id: string, status: BoostStatus) => Promise<void>;
 }) {
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = async (value: string) => {
-    setLoading(true);
-    try {
-      await onUpdate(boost.id, value as BoostStatus);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-
-    const table = useReactTable({
-      data: filteredBoosts,
-      columns,
-      state: { columnFilters, sorting, columnVisibility, pagination },
-      onColumnFiltersChange: setColumnFilters,
-      onSortingChange: setSorting,
-      onColumnVisibilityChange: setColumnVisibility,
-      onPaginationChange: setPagination,
-      getCoreRowModel: getCoreRowModel(),
-      getSortedRowModel: getSortedRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      getPaginationRowModel: getPaginationRowModel(),
-    });
+  return (
+    <Select
+      value={boost.status}
+      onValueChange={(value: string) => onUpdate(boost.id, value as BoostStatus)}
+    >
+      <SelectTrigger className="w-32">
+        <SelectValue placeholder="Select status" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="PENDING">PENDING</SelectItem>
+        <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+        <SelectItem value="FAILED">FAILED</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
 
 /* ---------------- INFO ROW ---------------- */
 
@@ -412,7 +321,7 @@ function BoostDrawer({ boost }: { boost: Boost }) {
   return (
     <Drawer direction="right">
       <DrawerTrigger asChild>
-        <Button variant="ghost" size="icon">👁</Button>
+        <Button variant="ghost" size="icon"><FaEye /></Button>
       </DrawerTrigger>
 
       <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
@@ -713,4 +622,4 @@ export default function Boosts() {
       </div>
     </div>
   );
-}}
+}

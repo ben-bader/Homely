@@ -35,6 +35,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { FaEye } from "react-icons/fa";
 
 /* ---------------- TYPES ---------------- */
 
@@ -227,7 +228,7 @@ function ChatDrawer({
   return (
     <Drawer direction="right" onOpenChange={fetchMessages}>
       <DrawerTrigger asChild>
-        <Button variant="ghost" size="icon">👁</Button>
+        <Button variant="ghost" size="icon"><FaEye /></Button>
       </DrawerTrigger>
 
       <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
