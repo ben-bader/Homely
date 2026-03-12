@@ -34,12 +34,6 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -57,28 +51,17 @@ export type User = {
 
 /* ---------------- PARSE DATE ---------------- */
 
-function parseDate(value: string | number): Date {
-  if (!value) return new Date(0);
+function parseDate(value: string | number | null | undefined): Date | null {
+  if (!value) return null;
   if (typeof value === "number") return new Date(value);
-  if (
-    typeof value === "string" &&
-    !value.endsWith("Z") &&
-    !value.includes("+")
-  ) {
+  if (typeof value === "string" && !value.endsWith("Z") && !value.includes("+"))
     return new Date(value + "Z");
-  }
   return new Date(value);
 }
 
 /* ---------------- INFO ROW ---------------- */
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span className="text-[11px] uppercase tracking-widest text-muted-foreground">
@@ -89,15 +72,121 @@ function InfoRow({
   );
 }
 
+/* ---------------- FILTER PANEL ---------------- */
+
+function FilterPanel({
+  roles,
+  roleFilter, setRoleFilter,
+  statusFilter, setStatusFilter,
+  createdAfter, setCreatedAfter,
+  createdBefore, setCreatedBefore,
+  onClear,
+}: {
+  roles: string[];
+  roleFilter: string; setRoleFilter: (v: string) => void;
+  statusFilter: string; setStatusFilter: (v: string) => void;
+  createdAfter: string; setCreatedAfter: (v: string) => void;
+  createdBefore: string; setCreatedBefore: (v: string) => void;
+  onClear: () => void;
+}) {
+  const activeCount = [
+    roleFilter !== "",
+    statusFilter !== "",
+    createdAfter !== "",
+    createdBefore !== "",
+  ].filter(Boolean).length;
+
+  const statuses = ["active", "inactive"];
+
+  return (
+    <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
+        <div className="flex items-center gap-2">
+          <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          </svg>
+          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">Filters</span>
+          {activeCount > 0 && (
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              {activeCount}
+            </span>
+          )}
+        </div>
+        {activeCount > 0 && (
+          <button onClick={onClear} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium">
+            Clear all
+          </button>
+        )}
+      </div>
+
+      <div className="p-4 space-y-5">
+        {/* Role pills — dynamic from actual data */}
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Role</label>
+          <div className="flex flex-wrap gap-1.5">
+            {["", ...roles].map((r) => (
+              <button
+                key={r || "ALL"}
+                onClick={() => setRoleFilter(r)}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                  roleFilter === r
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                {r || "ALL"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Status pills */}
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Status</label>
+          <div className="flex gap-1.5">
+            {["", ...statuses].map((s) => (
+              <button
+                key={s || "ALL"}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                  statusFilter === s
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                {s === "" ? "ALL" : s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date Range */}
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Joined Between</label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <span className="text-[10px] text-muted-foreground">After</span>
+              <Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] text-muted-foreground">Before</span>
+              <Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- USER DETAILS DRAWER ---------------- */
 
 function MoreOptionsDrawer({ user }: { user: User }) {
   return (
     <Drawer direction="right">
       <DrawerTrigger asChild>
-        <Button variant="ghost" size="icon">
-          👁
-        </Button>
+        <Button variant="ghost" size="icon">👁</Button>
       </DrawerTrigger>
 
       <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
@@ -112,7 +201,7 @@ function MoreOptionsDrawer({ user }: { user: User }) {
           <InfoRow label="Role" value={user.role} />
           <InfoRow
             label="Created"
-            value={parseDate(user.createdAt).toLocaleString()}
+            value={parseDate(user.createdAt)?.toLocaleString() ?? "—"}
           />
           <InfoRow label="Active" value={user.active ? "Yes" : "No"} />
         </div>
@@ -164,6 +253,27 @@ export default function Users() {
   const [statusFilter, setStatusFilter] = useState("");
   const [createdBefore, setCreatedBefore] = useState("");
   const [createdAfter, setCreatedAfter] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  // Derive unique roles from actual data for dynamic pills
+  const roles = useMemo(() => {
+    const set = new Set(users.map((u) => u.role).filter(Boolean));
+    return Array.from(set).sort();
+  }, [users]);
+
+  const clearFilters = () => {
+    setRoleFilter("");
+    setStatusFilter("");
+    setCreatedAfter("");
+    setCreatedBefore("");
+  };
+
+  const activeFilterCount = [
+    roleFilter !== "",
+    statusFilter !== "",
+    createdAfter !== "",
+    createdBefore !== "",
+  ].filter(Boolean).length;
 
   const handleToggle = useCallback(
     async (id: string, currentActive: boolean) => {
@@ -172,7 +282,6 @@ export default function Users() {
       } else {
         await api.put(`/admin/users/${id}/activate`);
       }
-
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, active: !currentActive } : u))
       );
@@ -189,7 +298,7 @@ export default function Users() {
         accessorKey: "createdAt",
         header: "Created",
         cell: ({ row }) =>
-          parseDate(row.original.createdAt).toLocaleDateString(),
+          parseDate(row.original.createdAt)?.toLocaleDateString() ?? "—",
       },
       {
         id: "status",
@@ -217,22 +326,22 @@ export default function Users() {
         .includes(search.toLowerCase());
 
       const roleMatch =
-        !roleFilter || u.role.toLowerCase().includes(roleFilter.toLowerCase());
+        !roleFilter || u.role.toLowerCase() === roleFilter.toLowerCase();
 
       const statusMatch =
         !statusFilter ||
         (statusFilter === "active" && u.active) ||
         (statusFilter === "inactive" && !u.active);
 
-      const created = parseDate(u.createdAt).getTime();
+      const created = parseDate(u.createdAt)?.getTime() ?? null;
 
       const beforeMatch =
         !createdBefore ||
-        created <= new Date(createdBefore + "T23:59:59Z").getTime();
+        (created !== null && created <= new Date(createdBefore + "T23:59:59Z").getTime());
 
       const afterMatch =
         !createdAfter ||
-        created >= new Date(createdAfter + "T00:00:00Z").getTime();
+        (created !== null && created >= new Date(createdAfter + "T00:00:00Z").getTime());
 
       return textMatch && roleMatch && statusMatch && beforeMatch && afterMatch;
     });
@@ -262,35 +371,37 @@ export default function Users() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        <Button
+          variant="outline"
+          onClick={() => setFilterOpen((v) => !v)}
+          className="relative"
+        >
+          Filter
+          {activeFilterCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              {activeFilterCount}
+            </span>
+          )}
+        </Button>
+      </div>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline">Filter</Button>
-          </PopoverTrigger>
+      {filterOpen && (
+        <FilterPanel
+          roles={roles}
+          roleFilter={roleFilter} setRoleFilter={setRoleFilter}
+          statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+          createdAfter={createdAfter} setCreatedAfter={setCreatedAfter}
+          createdBefore={createdBefore} setCreatedBefore={setCreatedBefore}
+          onClear={clearFilters}
+        />
+      )}
 
-          <PopoverContent className="w-72 space-y-3">
-            <Input
-              placeholder="Role"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-            />
-            <Input
-              placeholder="Status (active/inactive)"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            />
-            <Input
-              type="date"
-              value={createdAfter}
-              onChange={(e) => setCreatedAfter(e.target.value)}
-            />
-            <Input
-              type="date"
-              value={createdBefore}
-              onChange={(e) => setCreatedBefore(e.target.value)}
-            />
-          </PopoverContent>
-        </Popover>
+      {/* Results count */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">
+          {filteredData.length} user{filteredData.length !== 1 ? "s" : ""}
+          {activeFilterCount > 0 && " (filtered)"}
+        </span>
       </div>
 
       <div className="overflow-auto rounded-lg border">
@@ -300,10 +411,7 @@ export default function Users() {
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -311,37 +419,33 @@ export default function Users() {
           </TableHeader>
 
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+            {table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-12 text-sm">
+                  No users match your filters
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
+        <Button variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
           Previous
         </Button>
-
-        <span>
-          Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
-        </span>
-
-        <Button
-          variant="outline"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
+        <span>Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}</span>
+        <Button variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
           Next
         </Button>
       </div>
