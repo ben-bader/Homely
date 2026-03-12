@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useFeaturedCount } from "../../hooks/useFeaturedCount";
 
 import {
   useReactTable,
@@ -436,6 +437,29 @@ export default function Properties() {
     loadingDetail,
   } = useProperties();
 
+  const {
+    count: featuredCount,
+    loading: featuredLoading,
+    error: featuredError,
+    updating: featuredUpdating,
+    updateError: featuredUpdateError,
+    updateCount,
+  } = useFeaturedCount();
+
+  const [editCount, setEditCount] = useState<number>(featuredCount);
+
+  // keep editCount in sync with fetched value
+  useEffect(() => {
+    setEditCount(featuredCount);
+  }, [featuredCount]);
+
+  const saveFeatured = async () => {
+    if (editCount !== featuredCount) {
+      await updateCount(editCount);
+    }
+  };
+
+
   const [search, setSearch] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({
@@ -482,6 +506,32 @@ export default function Properties() {
   return (
     <div className="px-8 space-y-6">
       <h2 className="text-xl font-semibold">Properties</h2>
+
+      {/* featured count editor */}
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium">Featured properties:</label>
+        <Input
+          type="number"
+          min={1}
+          value={editCount}
+          onChange={(e) => setEditCount(Number(e.target.value))}
+          disabled={featuredLoading || featuredUpdating}
+          className="w-24"
+        />
+        <Button
+          size="sm"
+          onClick={saveFeatured}
+          disabled={featuredLoading || featuredUpdating || editCount === featuredCount}
+        >
+          {featuredUpdating ? "Saving…" : "Save"}
+        </Button>
+        {featuredError && (
+          <span className="text-red-500 text-sm">{featuredError}</span>
+        )}
+        {featuredUpdateError && (
+          <span className="text-red-500 text-sm">{featuredUpdateError}</span>
+        )}
+      </div>
 
       <Input
         placeholder="Search properties…"

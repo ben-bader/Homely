@@ -40,10 +40,11 @@ public class NotificationService {
             }
 
             // Check if a similar notification has already been sent
-            boolean alreadySent = notificationRepository.existsByUserAndTypeAndSentTrue(user, request.getType());
-            if (alreadySent) {
-                log.info("Notification of type '{}' already sent to user '{}'. Skipping.", request.getType(), user.getEmail());
-                return null; // Or throw an exception if needed
+            java.util.Optional<Notification> existingOpt = notificationRepository
+                    .findFirstByUserAndTypeAndSentTrue(user, request.getType());
+            if (existingOpt.isPresent()) {
+                log.info("Notification of type '{}' already sent to user '{}'. Returning existing.", request.getType(), user.getEmail());
+                return notificationMapper.toDto(existingOpt.get());
             }
 
             // Create and set notification properties
