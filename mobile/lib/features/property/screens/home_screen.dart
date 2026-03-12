@@ -112,7 +112,6 @@ class HomeScreen extends ConsumerWidget {
   }
 
   List<Widget> _buildSellerTabs() {
-    // CHANGED: Listings first (0), Inbox (1), Create (2), Explore (3), Profile (4)
     return [
       const _SellerListingsTab(),
       const ConversationsScreen(),
@@ -161,6 +160,11 @@ class _ExploreTab extends ConsumerStatefulWidget {
 class _ExploreTabState extends ConsumerState<_ExploreTab> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
+  // ── Search suggestion overlay ──────────────────────────────────────────────
+  final _layerLink = LayerLink();
+  final _focusNode = FocusNode();
+  OverlayEntry? _suggestionEntry;
+  // ──────────────────────────────────────────────────────────────────────────
   Timer? _debounce;
   bool _searchFocused = false;
 
@@ -176,13 +180,81 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
 
   @override
   void dispose() {
+    _hideSuggestion();
     _searchController.dispose();
     _scrollController.dispose();
+    _focusNode.dispose();
     _debounce?.cancel();
     super.dispose();
   }
 
+  // ── Overlay helpers ────────────────────────────────────────────────────────
+  void _showSuggestion(String text) {
+    _hideSuggestion();
+    if (text.trim().isEmpty) return;
+
+    _suggestionEntry = OverlayEntry(
+      builder: (_) => Positioned(
+        width: MediaQuery.of(context).size.width - 48,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 56),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.10),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                leading: const Icon(
+                  Icons.search_rounded,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+                title: Text(
+                  text,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                onTap: () {
+                  _hideSuggestion();
+                  _focusNode.unfocus();
+                  _onSearchSubmitted(text);
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_suggestionEntry!);
+  }
+
+  void _hideSuggestion() {
+    _suggestionEntry?.remove();
+    _suggestionEntry = null;
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   void _onSearchChanged(String value) {
+    if (value.trim().isEmpty) {
+      _hideSuggestion();
+    } else {
+      _showSuggestion(value.trim());
+    }
+
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
       ref
@@ -206,6 +278,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
   }
 
   void _onSearchSubmitted(String value) {
+    _hideSuggestion();
     _debounce?.cancel();
     ref
         .read(propertyFilterProvider.notifier)
@@ -317,122 +390,133 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-              child: Focus(
-                onFocusChange: (v) => setState(() => _searchFocused = v),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.subtleBackground,
-                    borderRadius: BorderRadius.circular(50),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(1, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.search_rounded,
-                        color: _searchFocused
-                            ? AppColors.primary
-                            : AppColors.textTertiary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: _onSearchChanged,
-                          onSubmitted: _onSearchSubmitted,
-                          style: tt.bodyLarge?.copyWith(
-                            color: AppColors.primary,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'City, neighborhood, address...',
-                            hintStyle: tt.bodySmall?.copyWith(
-                              color: AppColors.textTertiary,
+              child: CompositedTransformTarget(
+                link: _layerLink,
+                child: Focus(
+                  onFocusChange: (v) {
+                    setState(() => _searchFocused = v);
+                    if (!v) _hideSuggestion();
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: AppColors.subtleBackground,
+                      borderRadius: BorderRadius.circular(50),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(1, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 16),
+                        Icon(
+                          Icons.search_rounded,
+                          color: _searchFocused
+                              ? AppColors.primary
+                              : AppColors.textTertiary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            focusNode: _focusNode,
+                            onChanged: _onSearchChanged,
+                            onSubmitted: (v) {
+                              _hideSuggestion();
+                              _onSearchSubmitted(v);
+                            },
+                            style: tt.bodyLarge?.copyWith(
+                              color: AppColors.primary,
                             ),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
+                            decoration: InputDecoration(
+                              hintText: 'City, neighborhood, address...',
+                              hintStyle: tt.bodySmall?.copyWith(
+                                color: AppColors.textTertiary,
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
                           ),
                         ),
-                      ),
-                      ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: _searchController,
-                        builder: (_, value, __) => value.text.isNotEmpty
-                            ? GestureDetector(
-                                onTap: () {
-                                  _searchController.clear();
-                                  ref
-                                      .read(propertyFilterProvider.notifier)
-                                      .update(
-                                        (s) => s.copyWith(clearSearch: true),
-                                      );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Icon(
-                                    Icons.close_rounded,
-                                    color: AppColors.textTertiary,
-                                    size: 18,
-                                  ),
-                                ),
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-                      Container(
-                        width: 1,
-                        height: 20,
-                        color: AppColors.borderLight,
-                      ),
-                      GestureDetector(
-                        onTap: () => _showFilterSheet(context),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Icon(
-                                Icons.tune_rounded,
-                                color: AppColors.primary,
-                                size: 20,
-                              ),
-                              if (badgeCount > 0)
-                                Positioned(
-                                  top: -5,
-                                  right: -7,
-                                  child: Container(
-                                    width: 15,
-                                    height: 15,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.error,
-                                      shape: BoxShape.circle,
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _searchController,
+                          builder: (_, value, __) => value.text.isNotEmpty
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _hideSuggestion();
+                                    _searchController.clear();
+                                    ref
+                                        .read(propertyFilterProvider.notifier)
+                                        .update(
+                                          (s) => s.copyWith(clearSearch: true),
+                                        );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        '$badgeCount',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
+                                    child: Icon(
+                                      Icons.close_rounded,
+                                      color: AppColors.textTertiary,
+                                      size: 18,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 20,
+                          color: AppColors.borderLight,
+                        ),
+                        GestureDetector(
+                          onTap: () => _showFilterSheet(context),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                                if (badgeCount > 0)
+                                  Positioned(
+                                    top: -5,
+                                    right: -7,
+                                    child: Container(
+                                      width: 15,
+                                      height: 15,
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.error,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '$badgeCount',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1801,7 +1885,6 @@ class _BottomNav extends ConsumerWidget {
     ),
   ];
 
-  // CHANGED: Listings first, Explore moved to index 3
   static const _sellerItems = [
     (
       icon: Icons.home_rounded,
@@ -1830,12 +1913,10 @@ class _BottomNav extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final idx = ref.watch(navIndexProvider);
     final items = isSeller ? _sellerItems : _clientItems;
-    // Watch badges — silently zero if loading/error
     final badges = ref
         .watch(navBadgesProvider)
         .maybeWhen(data: (b) => b, orElse: () => const _NavBadges());
 
-    // Map label → badge count
     int _badgeFor(String label) {
       switch (label) {
         case 'Inbox':
@@ -1870,7 +1951,6 @@ class _BottomNav extends ConsumerWidget {
                   final item = items[i];
                   final badgeCount = _badgeFor(item.label);
 
-                  // Centre + button for sellers
                   if (isSeller && i == 2) {
                     return Expanded(
                       child: GestureDetector(
@@ -1916,7 +1996,6 @@ class _BottomNav extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Icon with optional red dot badge
                             Stack(
                               clipBehavior: Clip.none,
                               children: [
