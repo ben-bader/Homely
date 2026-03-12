@@ -224,9 +224,9 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                 title: Text(
                   text,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 onTap: () {
                   _hideSuggestion();
