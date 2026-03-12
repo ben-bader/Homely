@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/features/boost/models/boost_purchase.dart';
+import 'package:mobile/features/boost/models/boost_package.dart';
 
 final boostRepositoryProvider = Provider<BoostRepository>(
   (ref) => BoostRepository(),
@@ -37,5 +38,12 @@ class BoostRepository {
   Future<BoostPurchase> getById(String id) async {
     final data = await ApiClient.get('/boost/$id') as Map<String, dynamic>;
     return BoostPurchase.fromJson(data);
+  }
+
+  Future<List<BoostPackage>> getBoostPackages() async {
+    final data = await ApiClient.get('/boost/packages') as List<dynamic>;
+    return data
+        .map((e) => BoostPackage.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

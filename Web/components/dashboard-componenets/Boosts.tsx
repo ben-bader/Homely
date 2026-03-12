@@ -19,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   Drawer,
   DrawerTrigger,
@@ -30,7 +29,6 @@ import {
   DrawerFooter,
   DrawerClose,
 } from "@/components/ui/drawer";
-
 import {
   Select,
   SelectContent,
@@ -165,7 +163,79 @@ function SummaryCards({ boosts }: { boosts: Boost[] }) {
   );
 }
 
-/* ---------------- STATUS SELECT ---------------- */
+
+    // Handle adding new package
+    const handleAddPackage = async () => {
+      if (!newPackage.name || !newPackage.price || !newPackage.durationDays) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      setSavingPackage(true);
+      try {
+        await addPackage({
+          name: newPackage.name,
+          description: newPackage.description,
+          durationDays: parseInt(newPackage.durationDays),
+          price: parseFloat(newPackage.price),
+        });
+        setNewPackage({ name: '', description: '', durationDays: '', price: '' });
+        setShowAddPackageForm(false);
+      } catch (err) {
+        console.error('Failed to add package', err);
+        alert('Failed to add package');
+      } finally {
+        setSavingPackage(false);
+      }
+    };
+
+    // Handle deleting package
+    const handleDeletePackage = async (packageId: number) => {
+      if (!confirm('Are you sure you want to delete this package?')) return;
+      try {
+        await deletePackage(packageId);
+      } catch (err) {
+        console.error('Failed to delete package', err);
+        alert('Failed to delete package');
+      }
+    };
+
+    // Columns
+    const columns = React.useMemo<ColumnDef<Boost>[]>(
+      () => [
+        {
+          accessorKey: "propertyTitle",
+          header: "Property Title",
+          cell: ({ row }) => <BoostDrawer boost={row.original} onStatusChange={updateStatus} />,
+        },
+        { accessorKey: "userName", header: "Seller Name" },
+        { accessorKey: "userEmail", header: "Seller Email" },
+        { accessorKey: "amount", header: "Amount" },
+        {
+          id: "status",
+          header: "Status",
+          cell: ({ row }) => {
+            const currentStatus = row.original.status;
+            return (
+              <Select
+                value={currentStatus}
+                onValueChange={(value: string) => updateStatus(row.original.id, value as BoostStatus)}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PENDING">PENDING</SelectItem>
+                  <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                  <SelectItem value="FAILED">FAILED</SelectItem>
+                </SelectContent>
+              </Select>
+            );
+          },
+        },
+      ],
+      [updateStatus]
+    );
 
 function StatusSelect({
   boost,
@@ -185,24 +255,21 @@ function StatusSelect({
     }
   };
 
-  return (
-    <Select value={boost.status} onValueChange={handleChange} disabled={loading}>
-      <SelectTrigger className="h-7 w-[130px] text-xs">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {(["PENDING", "COMPLETED", "FAILED"] as BoostStatus[]).map((s) => (
-          <SelectItem key={s} value={s}>
-            <span className="flex items-center gap-1.5 text-xs">
-              <span className={`w-1.5 h-1.5 rounded-full inline-block ${statusDot(s)}`} />
-              {s}
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
+
+
+    const table = useReactTable({
+      data: filteredBoosts,
+      columns,
+      state: { columnFilters, sorting, columnVisibility, pagination },
+      onColumnFiltersChange: setColumnFilters,
+      onSortingChange: setSorting,
+      onColumnVisibilityChange: setColumnVisibility,
+      onPaginationChange: setPagination,
+      getCoreRowModel: getCoreRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+    });
 
 /* ---------------- INFO ROW ---------------- */
 
@@ -646,4 +713,4 @@ export default function Boosts() {
       </div>
     </div>
   );
-}
+}}

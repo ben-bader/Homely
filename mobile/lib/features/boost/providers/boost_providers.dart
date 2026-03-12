@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/boost/models/boost_purchase.dart';
+import 'package:mobile/features/boost/models/boost_package.dart';
 import 'package:mobile/features/boost/repositories/boost_repository.dart';
 
 final myBoostsProvider =
@@ -35,6 +36,12 @@ class MyBoostsNotifier extends AsyncNotifier<List<BoostPurchase>> {
     }
   }
 }
+
+// Boost Packages Provider
+final boostPackagesProvider =
+    FutureProvider<List<BoostPackage>>((ref) async {
+  return ref.read(boostRepositoryProvider).getBoostPackages();
+});
 
 class BoostPlan {
   final String label;
