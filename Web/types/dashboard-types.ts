@@ -39,35 +39,39 @@ export enum PropertyStatus {
 }
 // User DTO
 export interface User {
-  id: string
-  email: string
-  name: string
-  phone: string
-  role: RoleType
-  isActive: boolean
+  id: string,
+  email: string,
+  name: string,
+  phone: string,
+  role: RoleType,
+  isActive: boolean,
+  createdAt: string;
 }
 
 // Property 
 export interface Property {
-  id: string
-  sellerId: string
-  sellerName?: string | null
-  title: string
-  description: string
-  price: number
-  currency: string
-  listingType: ListingType
-  propertyType: PropertyType
-  status:PropertyStatus
-  address: string
-  latitude: number | null
-  longitude: number | null
-   apartment?: Apartment;
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  listingType: ListingType;
+  propertyType: PropertyType;
+  status: PropertyStatus;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  apartment?: Apartment;
   house?: House;
   commercial?: Commercial;
   land?: Land;
   studio?: Studio;
   villa?: Villa;
+  isBoosted: boolean;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
 }
 
 // Report (backend returns names in DTO)
