@@ -10,13 +10,13 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        isCoreLibraryDesugaringEnabled = true   // ← was coreLibraryDesugaringEnabled
-        sourceCompatibility = JavaVersion.VERSION_17  // ← 21 may not be supported, use 17
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "17"   // ← plain string, not JavaVersion.VERSION_21.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -39,4 +39,5 @@ flutter {
 }
 
 dependencies {
- coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")}
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4") // ← 2.0.4 → 2.1.4
+}
