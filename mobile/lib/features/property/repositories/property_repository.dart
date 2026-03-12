@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/features/property/models/property.dart';
+import 'package:mobile/features/media/models/property_media.dart';
 
 final propertyRepositoryProvider = Provider<PropertyRepository>(
   (ref) => PropertyRepository(),
@@ -88,6 +89,11 @@ class PropertyRepository {
             )
             as Map<String, dynamic>;
     return Property.fromJson(data);
+  }
+
+  Future<List<PropertyMedia>> getPropertyMedia(String propertyId) async {
+    final data = await ApiClient.get('/properties/$propertyId/media') as List<dynamic>;
+    return data.map((e) => PropertyMedia.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<void> delete(String id) async {
