@@ -23,4 +23,7 @@ public class Notification extends BaseEntity {
     private String payload;
 
     private boolean read;
+
+    // New attribute to track if the notification has been sent
+    private boolean sent;
 }

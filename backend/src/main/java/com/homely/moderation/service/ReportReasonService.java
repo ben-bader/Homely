@@ -19,9 +19,9 @@ public class ReportReasonService {
         return reportReasonRepository.findAll();
     }
 
-    public ReportReason addReason(String reason) {
+    public ReportReason addReason(ReportReason reason) {
         ReportReason rr = new ReportReason();
-        rr.setReason(reason);
+        rr.setReason(reason.getReason());
         return reportReasonRepository.save(rr);
     }
 

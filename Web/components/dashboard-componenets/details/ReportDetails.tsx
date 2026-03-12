@@ -78,7 +78,7 @@ export default function ReportDetail({
           <div>
             <h4 className="text-sm text-muted-foreground">Reason</h4>
             {/* Show available reasons from backend for admin to change (if needed) */}
-            <ReportReasonSelect currentReason={report.reason} />
+            <p>{report.reason}</p>
           </div>
 
           <div>

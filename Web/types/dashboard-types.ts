@@ -51,6 +51,7 @@ export interface User {
 export interface Property {
   id: string
   sellerId: string
+  sellerName?: string | null
   title: string
   description: string
   price: number
@@ -104,7 +105,9 @@ export enum VisitStatus {
     PENDING="PENDING",
     APPROVED="APPROVED",
     REJECTED="REJECTED",
-    COMPLETED="COMPLETED"
+    COMPLETED="COMPLETED",
+    CONFIRMED="CONFIRMED",
+    CANCELLED="CANCELLED"
 
 }
 
@@ -171,4 +174,8 @@ export interface Villa {
   bathrooms: number;
   landAreaSqm: number;
   hasPool: boolean;
+}
+export interface ReportReason {
+  id: string;
+  reason: string;
 }

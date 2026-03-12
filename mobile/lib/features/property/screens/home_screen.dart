@@ -9,6 +9,7 @@ import 'package:mobile/features/chat/screens/conversation_screen.dart';
 import 'package:mobile/features/notifications/screens/notifications_screen.dart';
 import 'package:mobile/features/notifications/services/notification_service.dart';
 import 'package:mobile/features/property/models/property.dart';
+import 'package:mobile/features/property/providers/featured_count_provider.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
 import 'package:mobile/features/profile/screens/profile_screen.dart';
 import 'package:mobile/core/theme/app_colors.dart';

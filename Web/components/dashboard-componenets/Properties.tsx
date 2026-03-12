@@ -319,12 +319,12 @@ function MoreOptionsDrawer({
                 </p>
                 <InfoRow
                   label="Seller Name"
-                  value={(p as any).sellerName ?? "—"}
+                  value={(p as Property).sellerName ?? "—"}
                 />
                 <InfoRow
                   label="Seller ID"
                   value={
-                    <CopyField value={(p as any).sellerId ?? "—"} />
+                    <CopyField value={(p as Property).sellerId ?? "—"} />
                   }
                 />
               </section>
