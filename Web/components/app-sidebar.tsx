@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/sidebar";
 import Logo from "./logo/Logo";
 import { BetweenVerticalStartIcon, PlusSquareIcon } from "lucide-react";
+import Link from "next/link";
 
 const data = {
   user: {
@@ -84,10 +85,15 @@ const data = {
       icon: IconHistory,
     },
     {
-  title: "chats",
-  url: "/chat",
-  icon: IconMessageCircle,
-}
+      title: "chats",
+      url: "/chat",
+      icon: IconMessageCircle,
+    },
+    {
+      title: "Manage Parameters",
+      url: "/dashboard/manage-parameters",
+      icon: IconFileAi,
+    },
   ],
 };
 function AppSidebar(

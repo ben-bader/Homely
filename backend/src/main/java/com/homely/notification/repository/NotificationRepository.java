@@ -20,4 +20,10 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     
     @Query("SELECT n FROM Notification n WHERE n.user.id = :userId ORDER BY n.createdAt DESC")
     List<Notification> findByUserId(@Param("userId") UUID userId);
+    
+    @Query("SELECT COUNT(n) > 0 FROM Notification n WHERE n.user = :user AND n.type = :type AND n.sent = true")
+    boolean existsByUserAndTypeAndSentTrue(@Param("user") com.homely.user.entity.User user, @Param("type") String type);
+
+    @Query("SELECT n FROM Notification n WHERE n.user = :user AND n.type = :type AND n.sent = true ORDER BY n.createdAt DESC")
+    java.util.Optional<Notification> findFirstByUserAndTypeAndSentTrue(@Param("user") com.homely.user.entity.User user, @Param("type") String type);
 }

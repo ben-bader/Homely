@@ -1,14 +1,14 @@
 import 'dart:io';
 enum MediaType {
-  image,
-  video;
+  IMAGE,
+  VIDEO;
 
   String toJson() => name.toUpperCase();
 
   static MediaType fromJson(String raw) {
     return MediaType.values.firstWhere(
       (e) => e.name.toUpperCase() == raw.toUpperCase(),
-      orElse: () => MediaType.image,
+      orElse: () => MediaType.IMAGE,
     );
   }
 }
@@ -32,8 +32,8 @@ class PropertyMedia {
     required this.durationSeconds,
   });
 
-  bool get isVideo => mediaType == MediaType.video;
-  bool get isImage => mediaType == MediaType.image;
+  bool get isVideo => mediaType == MediaType.VIDEO;
+  bool get isImage => mediaType == MediaType.IMAGE;
 
   factory PropertyMedia.fromJson(Map<String, dynamic> json) => PropertyMedia(
         id: json['id']?.toString() ?? '',

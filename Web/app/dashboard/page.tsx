@@ -14,6 +14,8 @@ import AdminDashboardWrapper from "@/components/dashboard-componenets/AdminDashb
 import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
 import Profile from "@/components/dashboard-componenets/profile"
 import Chat from "@/components/dashboard-componenets/Chat";
+import ManageReportReasons from "@/components/dashboard-componenets/manageParametres";
+import ManageParameters from "@/components/dashboard-componenets/manageParametres"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")
@@ -27,7 +29,8 @@ export default function Page() {
   dashboard: <Dashboard />,
   "audit logs": <AuditLogs />,
   profile: <Profile />,
-  chats: <Chat />, // <-- add your new chat table here
+  chats: <Chat />,
+  "manage parameters": <ManageParameters />,
 };
   
   

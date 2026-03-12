@@ -46,7 +46,7 @@ Content-Type: application/json
 Authorization: Bearer  {{token}}
 
 ###
-GET {{baseUrl}}/test/whoami
+GET {{baseUrl}}/report-reasons
 Authorization: Bearer  {{token}}
 
 ###

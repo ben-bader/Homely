@@ -10,7 +10,11 @@ export interface ChatMessageResponse {
 export interface Conversation {
   id: string;
   sellerName: string;
+  sellerId: string;
+  sellerActive: boolean;
   clientName: string;
+  clientId: string;
+  clientActive: boolean;
   propertyId: string;
   messages?: ChatMessageResponse[]; // optional, will load lazily
   loadingMessages?: boolean;

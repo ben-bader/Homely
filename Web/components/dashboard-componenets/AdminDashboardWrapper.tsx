@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getUserFromToken, isAdmin } from "@/lib/auth"
+import { SidebarMenuItem } from "../ui/sidebar"
 
 export default function AdminDashboardWrapper({
   children,
@@ -25,5 +26,10 @@ export default function AdminDashboardWrapper({
 
   if (loading) return <p>Checking permissions...</p>
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+
+    </>
+  )
 }

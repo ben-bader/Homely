@@ -38,27 +38,38 @@ public class NotificationService {
                 log.error("User not found with ID: {}", request.getUserId());
                 throw new EntityNotFoundException("User not found with ID: " + request.getUserId());
             }
-            
+
+            // Check if a similar notification has already been sent
+            java.util.Optional<Notification> existingOpt = notificationRepository
+                    .findFirstByUserAndTypeAndSentTrue(user, request.getType());
+            if (existingOpt.isPresent()) {
+                log.info("Notification of type '{}' already sent to user '{}'. Returning existing.", request.getType(), user.getEmail());
+                return notificationMapper.toDto(existingOpt.get());
+            }
+
             // Create and set notification properties
             Notification entity = new Notification();
             entity.setUser(user);
             entity.setType(request.getType());
             entity.setPayload(request.getPayload());
             entity.setRead(false);
-            
+            entity.setSent(false); // Initially mark as not sent
+
             // Save notification to database first
             Notification saved = notificationRepository.save(entity);
-            
+
             log.info("Notification created successfully - ID: {}, Type: {}, User: {}", 
                 saved.getId(), request.getType(), user.getEmail());
-            
+
             // Send push notification if user has FCM token
             if (user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
                 sendPushNotification(user, request.getType(), request.getPayload());
+                saved.setSent(true); // Mark as sent after successful push
+                notificationRepository.save(saved); // Update the notification
             } else {
                 log.debug("User {} has no FCM token, push notification not sent", user.getEmail());
             }
-            
+
             return notificationMapper.toDto(saved);
         } catch (Exception e) {
             log.error("Error creating notification: {}", e.getMessage(), e);
@@ -69,20 +80,20 @@ public class NotificationService {
     private void sendPushNotification(User user, String notificationType, String payload) {
         try {
             String title = getTitleForType(notificationType);
-            
+
             // Parse payload as JSON to get relevant info
             Map<String, String> data = Map.of(
                 "type", notificationType,
                 "payload", payload
             );
-            
+
             firebaseMessagingService.sendNotification(
                 user.getFcmToken(),
                 title,
                 payload != null ? payload : "New notification",
                 data
             );
-            
+
             log.info("Push notification sent to user: {} for type: {}", user.getEmail(), notificationType);
         } catch (Exception e) {
             log.error("Failed to send push notification to user {}: {}", user.getEmail(), e.getMessage(), e);
@@ -108,7 +119,7 @@ public class NotificationService {
     public List<Notification> getUnreadNotifications(UUID userId) {
         return notificationRepository.findByUserIdAndReadFalse(userId);
     }
-    
+
     @Transactional
     public NotificationDto markAsRead(UUID notificationId) {
         try {
@@ -116,9 +127,9 @@ public class NotificationService {
                     .orElseThrow(() -> new EntityNotFoundException("Notification not found: " + notificationId));
             notification.setRead(true);
             Notification saved = notificationRepository.save(notification);
-            
+
             log.info("Notification marked as read - ID: {}", notificationId);
-            
+
             return notificationMapper.toDto(saved);
         } catch (Exception e) {
             log.error("Error marking notification as read: {}", e.getMessage(), e);
@@ -136,7 +147,7 @@ public class NotificationService {
             return List.of();
         }
     }
-    
+
     public List<Notification> getUnreadByEmail(String email) {
         try {
             List<Notification> notifications = notificationRepository.findByUserEmailAndReadFalse(email);
