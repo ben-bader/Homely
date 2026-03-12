@@ -49,6 +49,8 @@ export type User = {
   createdAt: string | number;
 };
 
+type DateSort = "" | "newest" | "oldest";
+
 /* ---------------- PARSE DATE ---------------- */
 
 function parseDate(value: string | number | null | undefined): Date | null {
@@ -80,6 +82,7 @@ function FilterPanel({
   statusFilter, setStatusFilter,
   createdAfter, setCreatedAfter,
   createdBefore, setCreatedBefore,
+  dateSort, setDateSort,
   onClear,
 }: {
   roles: string[];
@@ -87,6 +90,7 @@ function FilterPanel({
   statusFilter: string; setStatusFilter: (v: string) => void;
   createdAfter: string; setCreatedAfter: (v: string) => void;
   createdBefore: string; setCreatedBefore: (v: string) => void;
+  dateSort: DateSort; setDateSort: (v: DateSort) => void;
   onClear: () => void;
 }) {
   const activeCount = [
@@ -94,9 +98,15 @@ function FilterPanel({
     statusFilter !== "",
     createdAfter !== "",
     createdBefore !== "",
+    dateSort !== "",
   ].filter(Boolean).length;
 
   const statuses = ["active", "inactive"];
+
+  const dateSortOptions: { value: DateSort; label: string; icon: string }[] = [
+    { value: "newest", label: "Newest first", icon: "↓" },
+    { value: "oldest", label: "Oldest first", icon: "↑" },
+  ];
 
   return (
     <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
@@ -156,6 +166,27 @@ function FilterPanel({
                 }`}
               >
                 {s === "" ? "ALL" : s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date Sort */}
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Sort by Date</label>
+          <div className="flex gap-1.5">
+            {dateSortOptions.map(({ value, label, icon }) => (
+              <button
+                key={value}
+                onClick={() => setDateSort(dateSort === value ? "" : value)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                  dateSort === value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                <span>{icon}</span>
+                {label}
               </button>
             ))}
           </div>
@@ -253,6 +284,7 @@ export default function Users() {
   const [statusFilter, setStatusFilter] = useState("");
   const [createdBefore, setCreatedBefore] = useState("");
   const [createdAfter, setCreatedAfter] = useState("");
+  const [dateSort, setDateSort] = useState<DateSort>("");
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Derive unique roles from actual data for dynamic pills
@@ -266,6 +298,7 @@ export default function Users() {
     setStatusFilter("");
     setCreatedAfter("");
     setCreatedBefore("");
+    setDateSort("");
   };
 
   const activeFilterCount = [
@@ -273,6 +306,7 @@ export default function Users() {
     statusFilter !== "",
     createdAfter !== "",
     createdBefore !== "",
+    dateSort !== "",
   ].filter(Boolean).length;
 
   const handleToggle = useCallback(
@@ -301,8 +335,8 @@ export default function Users() {
           parseDate(row.original.createdAt)?.toLocaleDateString() ?? "—",
       },
       {
-        id: "status",
-        header: "Status",
+        id: "action",
+        header: "Action",
         cell: ({ row }) => (
           <StatusSwitch user={row.original} onToggle={handleToggle} />
         ),
@@ -319,7 +353,7 @@ export default function Users() {
   const filteredData = useMemo(() => {
     if (!users) return [];
 
-    return users.filter((u) => {
+    const filtered = users.filter((u) => {
       const textMatch = [u.name, u.email, u.role]
         .join(" ")
         .toLowerCase()
@@ -345,7 +379,24 @@ export default function Users() {
 
       return textMatch && roleMatch && statusMatch && beforeMatch && afterMatch;
     });
-  }, [users, search, roleFilter, statusFilter, createdBefore, createdAfter]);
+
+    // Apply date sort if set
+    if (dateSort === "newest") {
+      filtered.sort((a, b) => {
+        const aTime = parseDate(a.createdAt)?.getTime() ?? 0;
+        const bTime = parseDate(b.createdAt)?.getTime() ?? 0;
+        return bTime - aTime;
+      });
+    } else if (dateSort === "oldest") {
+      filtered.sort((a, b) => {
+        const aTime = parseDate(a.createdAt)?.getTime() ?? 0;
+        const bTime = parseDate(b.createdAt)?.getTime() ?? 0;
+        return aTime - bTime;
+      });
+    }
+
+    return filtered;
+  }, [users, search, roleFilter, statusFilter, createdBefore, createdAfter, dateSort]);
 
   const table = useReactTable({
     data: filteredData,
@@ -392,6 +443,7 @@ export default function Users() {
           statusFilter={statusFilter} setStatusFilter={setStatusFilter}
           createdAfter={createdAfter} setCreatedAfter={setCreatedAfter}
           createdBefore={createdBefore} setCreatedBefore={setCreatedBefore}
+          dateSort={dateSort} setDateSort={setDateSort}
           onClear={clearFilters}
         />
       )}

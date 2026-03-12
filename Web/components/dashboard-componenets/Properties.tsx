@@ -36,6 +36,10 @@ import { Button } from "@/components/ui/button";
 import { useProperties } from "@/hooks/useProperties";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
 
+/* ---------------- TYPES ---------------- */
+
+type DateSort = "" | "newest" | "oldest";
+
 /* ---------------- HELPERS ---------------- */
 
 function parseDate(v: string | number | null | undefined): Date | null {
@@ -82,6 +86,7 @@ function FilterPanel({
   city, setCity,
   createdAfter, setCreatedAfter,
   createdBefore, setCreatedBefore,
+  dateSort, setDateSort,
   onClear,
 }: {
   filterStatus: PropertyStatus | "ALL"; setFilterStatus: (v: PropertyStatus | "ALL") => void;
@@ -90,13 +95,20 @@ function FilterPanel({
   city: string; setCity: (v: string) => void;
   createdAfter: string; setCreatedAfter: (v: string) => void;
   createdBefore: string; setCreatedBefore: (v: string) => void;
+  dateSort: DateSort; setDateSort: (v: DateSort) => void;
   onClear: () => void;
 }) {
   const statuses: (PropertyStatus | "ALL")[] = ["ALL", "AVAILABLE", "SUSPENDED", "DRAFT"];
   const activeCount = [
     filterStatus !== "ALL", minPrice !== "", maxPrice !== "",
     city !== "", createdAfter !== "", createdBefore !== "",
+    dateSort !== "",
   ].filter(Boolean).length;
+
+  const dateSortOptions: { value: DateSort; label: string; icon: string }[] = [
+    { value: "newest", label: "Newest first", icon: "↓" },
+    { value: "oldest", label: "Oldest first", icon: "↑" },
+  ];
 
   return (
     <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
@@ -183,6 +195,27 @@ function FilterPanel({
               onChange={(e) => setCity(e.target.value)}
               className="pl-7"
             />
+          </div>
+        </div>
+
+        {/* Sort by Date */}
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Sort by Date</label>
+          <div className="flex gap-1.5">
+            {dateSortOptions.map(({ value, label, icon }) => (
+              <button
+                key={value}
+                onClick={() => setDateSort(dateSort === value ? "" : value)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                  dateSort === value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                <span>{icon}</span>
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -290,7 +323,6 @@ function PropertyDrawer({
                   <InfoRow label="Updated At" value={fmtFull(p.updatedAt)} />
                 </div>
               </section>
-
             </>
           ) : (
             <p className="text-sm text-muted-foreground">No details available.</p>
@@ -350,29 +382,6 @@ export default function Properties() {
     fetchPropertyDetail, selectedProperty, loadingDetail,
   } = useProperties();
 
-  const {
-    count: featuredCount,
-    loading: featuredLoading,
-    error: featuredError,
-    updating: featuredUpdating,
-    updateError: featuredUpdateError,
-    updateCount,
-  } = useFeaturedCount();
-
-  const [editCount, setEditCount] = useState<number>(featuredCount);
-
-  // keep editCount in sync with fetched value
-  useEffect(() => {
-    setEditCount(featuredCount);
-  }, [featuredCount]);
-
-  const saveFeatured = async () => {
-    if (editCount !== featuredCount) {
-      await updateCount(editCount);
-    }
-  };
-
-
   const [search, setSearch] = useState("");
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [filterStatus, setFilterStatus] = useState<PropertyStatus | "ALL">("ALL");
@@ -381,6 +390,7 @@ export default function Properties() {
   const [city, setCity] = useState("");
   const [createdAfter, setCreatedAfter] = useState("");
   const [createdBefore, setCreatedBefore] = useState("");
+  const [dateSort, setDateSort] = useState<DateSort>("");
   const [filterOpen, setFilterOpen] = useState(false);
 
   const clearFilters = () => {
@@ -390,11 +400,13 @@ export default function Properties() {
     setCity("");
     setCreatedAfter("");
     setCreatedBefore("");
+    setDateSort("");
   };
 
   const activeFilterCount = [
     filterStatus !== "ALL", minPrice !== "", maxPrice !== "",
     city !== "", createdAfter !== "", createdBefore !== "",
+    dateSort !== "",
   ].filter(Boolean).length;
 
   const columns = useMemo(
@@ -403,13 +415,12 @@ export default function Properties() {
   );
 
   const filteredData = useMemo(() => {
-    return properties.filter((p) => {
+    const filtered = properties.filter((p) => {
       const textMatch = [p.title, p.address, p.sellerName]
         .join(" ").toLowerCase().includes(search.toLowerCase());
 
       const statusMatch = filterStatus === "ALL" || p.status === filterStatus;
 
-      // ✅ Fixed price range
       const price = Number(p.price);
       const minPriceMatch = minPrice === "" || price >= Number(minPrice);
       const maxPriceMatch = maxPrice === "" || price <= Number(maxPrice);
@@ -422,7 +433,24 @@ export default function Properties() {
 
       return textMatch && statusMatch && minPriceMatch && maxPriceMatch && cityMatch && afterMatch && beforeMatch;
     });
-  }, [properties, search, filterStatus, minPrice, maxPrice, city, createdAfter, createdBefore]);
+
+    // Apply date sort if set
+    if (dateSort === "newest") {
+      filtered.sort((a, b) => {
+        const aTime = parseDate(a.createdAt)?.getTime() ?? 0;
+        const bTime = parseDate(b.createdAt)?.getTime() ?? 0;
+        return bTime - aTime;
+      });
+    } else if (dateSort === "oldest") {
+      filtered.sort((a, b) => {
+        const aTime = parseDate(a.createdAt)?.getTime() ?? 0;
+        const bTime = parseDate(b.createdAt)?.getTime() ?? 0;
+        return aTime - bTime;
+      });
+    }
+
+    return filtered;
+  }, [properties, search, filterStatus, minPrice, maxPrice, city, createdAfter, createdBefore, dateSort]);
 
   const table = useReactTable({
     data: filteredData,
@@ -471,6 +499,7 @@ export default function Properties() {
           city={city} setCity={setCity}
           createdAfter={createdAfter} setCreatedAfter={setCreatedAfter}
           createdBefore={createdBefore} setCreatedBefore={setCreatedBefore}
+          dateSort={dateSort} setDateSort={setDateSort}
           onClear={clearFilters}
         />
       )}

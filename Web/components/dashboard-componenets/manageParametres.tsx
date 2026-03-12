@@ -8,7 +8,7 @@ import { Card } from "../ui/card";
 
 
 
-const ManageReportReasons = () => {
+const ManageParameters = () => {
   const { reasons, loading, error, refetch } = useReportReasons();
   const [newReason, setNewReason] = useState("");
 
@@ -68,4 +68,4 @@ const ManageReportReasons = () => {
   );
 }
 
-export default ManageReportReasons;
+export default ManageParameters;

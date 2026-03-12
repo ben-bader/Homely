@@ -14,7 +14,8 @@ import AdminDashboardWrapper from "@/components/dashboard-componenets/AdminDashb
 import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
 import Profile from "@/components/dashboard-componenets/profile"
 import Chat from "@/components/dashboard-componenets/Chat";
-import ManageReportReasons from "@/components/dashboard-componenets/ManageReportReasons";
+import ManageReportReasons from "@/components/dashboard-componenets/manageParametres";
+import ManageParameters from "@/components/dashboard-componenets/manageParametres"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")
@@ -29,7 +30,7 @@ export default function Page() {
   "audit logs": <AuditLogs />,
   profile: <Profile />,
   chats: <Chat />,
-  "manage report reasons": <ManageReportReasons />,
+  "manage parameters": <ManageParameters />,
 };
   
   
