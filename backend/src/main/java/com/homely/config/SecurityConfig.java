@@ -75,6 +75,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
+                "http://localhost:8082",
                 "https://unparrying-christene-reductively.ngrok-free.dev"));
 
         config.setAllowedMethods(List.of(
