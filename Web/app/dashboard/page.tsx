@@ -5,7 +5,7 @@ import Boosts from "@/components/dashboard-componenets/Boosts"
 import Dashboard from "@/components/dashboard-componenets/Dashboard"
 import Properties from "@/components/dashboard-componenets/Properties"
 import Reports from "@/components/dashboard-componenets/Reports"
-import AuditLogs from "@/components/dashboard-componenets/AuditLogs"
+import ActivityMonitoring from "@/components/dashboard-componenets/ActivityMonitoring"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import Users from "@/components/dashboard-componenets/Users"
@@ -27,7 +27,7 @@ export default function Page() {
   boosts: <Boosts />,
   "visit requests": <VisitRequests />,
   dashboard: <Dashboard />,
-  "audit logs": <AuditLogs />,
+  "Activity Monitoring": <ActivityMonitoring />,
   profile: <Profile />,
   chats: <Chat />,
   "manage parameters": <ManageParameters />,

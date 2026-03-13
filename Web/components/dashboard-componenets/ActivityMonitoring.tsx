@@ -24,7 +24,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 
-export default function AuditLogs() {
+export default function ActivityMonitoring() {
   const { logs, loading, error } = useAuditLogs();
   const [selectedDetails, setSelectedDetails] = useState<any>(null);
 
@@ -42,9 +42,9 @@ export default function AuditLogs() {
 
   return (
     <div className="p-6">
-      <h2 className="text-lg font-semibold mb-4">Audit Log</h2>
+      <h2 className="text-lg font-semibold mb-4">Activity Monitoring</h2>
       <p className="text-muted-foreground text-sm mb-4">
-        All admin actions (e.g. report status changes) are recorded here.
+        All actions (e.g. report status changes) are recorded here.
       </p>
 
       <div className="rounded-lg border overflow-auto">
