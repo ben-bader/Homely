@@ -80,7 +80,7 @@ const data = {
       icon: PlusSquareIcon,
     },
     {
-      title: "Audit Logs",
+      title: "Activity Monitoring",
       url: "#",
       icon: IconHistory,
     },

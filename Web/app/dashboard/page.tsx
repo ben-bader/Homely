@@ -5,7 +5,7 @@ import Boosts from "@/components/dashboard-componenets/Boosts"
 import Dashboard from "@/components/dashboard-componenets/Dashboard"
 import Properties from "@/components/dashboard-componenets/Properties"
 import Reports from "@/components/dashboard-componenets/Reports"
-import AuditLogs from "@/components/dashboard-componenets/AuditLogs"
+import ActivityMonitoring from "@/components/dashboard-componenets/ActivityMonitoring"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import Users from "@/components/dashboard-componenets/Users"
@@ -14,7 +14,7 @@ import AdminDashboardWrapper from "@/components/dashboard-componenets/AdminDashb
 import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
 import Profile from "@/components/dashboard-componenets/profile"
 import Chat from "@/components/dashboard-componenets/Chat";
-import ManageReportReasons from "@/components/dashboard-componenets/manageParametres";
+import Notifications from "@/components/dashboard-componenets/Notifications"
 import ManageParameters from "@/components/dashboard-componenets/ManageParametres"
 
 export default function Page() {
@@ -27,10 +27,12 @@ export default function Page() {
   boosts: <Boosts />,
   "visit requests": <VisitRequests />,
   dashboard: <Dashboard />,
-  "audit logs": <AuditLogs />,
+  "Activity Monitoring": <ActivityMonitoring />,
   profile: <Profile />,
   chats: <Chat />,
   "manage parameters": <ManageParameters />,
+  notifications: <Notifications />,
+
 };
   
   

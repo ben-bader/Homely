@@ -447,7 +447,7 @@ export default function ChatPage() {
       {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-blue-900 text-white">
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
@@ -481,15 +481,30 @@ export default function ChatPage() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center">
-        <Button variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Previous
-        </Button>
-        <span>Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}</span>
-        <Button variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Next
-        </Button>
-      </div>
+      
+    <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => table.previousPage()}
+    disabled={!table.getCanPreviousPage()}
+  >
+    Previous
+  </Button>
+
+  <span>
+    Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
+  </span>
+
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => table.nextPage()}
+    disabled={!table.getCanNextPage()}
+  >
+    Next
+  </Button>
+</div>
     </div>
   );
 }
