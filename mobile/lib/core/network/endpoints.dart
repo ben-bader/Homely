@@ -7,10 +7,10 @@ class Endpoints {
 
   /// Base URL for the backend API
   /// Update this based on your environment
-  static const String devBaseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev/api';
+  static const String baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev/api';
 
   /// Base URL for development
-  static const String baseUrl = 'http://localhost:8082/api';
+  static const String devBaseUrl = 'http://localhost:8082/api';
 
   /// Base URL for production
   static const String prodBaseUrl = 'https://api.homely.com/api';

@@ -1,10 +1,10 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:8082/api",
+  baseURL: "https://unparrying-christene-reductively.ngrok-free.dev/api",
   //withCredentials: true, // optional but fine
   headers: {
-    "ngrok-skip-browser-warning": "true", // 👈 this bypasses the ngrok interstitial
+    "ngrok-skip-browser-warning": "true", 
   },
 });
 
