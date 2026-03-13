@@ -72,10 +72,10 @@ class HomelyApp extends StatelessWidget {
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.grey,
+        seedColor: const Color(0xFF0F172A),  // Midnight Navy
         brightness: Brightness.light,
       ),
-      scaffoldBackgroundColor: const Color(0xFFF7F7F7),
+      scaffoldBackgroundColor: const Color(0xFFFAFAFA),  // Off White
     );
 
     return base.copyWith(
