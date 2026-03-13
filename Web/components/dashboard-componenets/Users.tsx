@@ -459,7 +459,7 @@ export default function Users() {
 
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-blue-900 text-white">
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (

@@ -49,7 +49,7 @@ export default function AuditLogs() {
 
       <div className="rounded-lg border overflow-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-blue-900 text-white">
             <TableRow>
               <TableHead>Time</TableHead>
               <TableHead>Admin</TableHead>
