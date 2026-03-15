@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/notifications/services/notification_service.dart';
 import 'package:mobile/features/notifications/models/notifications.dart';
 import 'package:mobile/features/notifications/widgets/notification_card.dart';
+import 'package:mobile/features/chat/screens/conversation_screen.dart';
+import 'package:mobile/features/visit_requests/screens/seller_visit_requests_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   final String userId;
@@ -86,6 +89,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
   }
 
+  // ── Navigation on tap ──────────────────────────────────────────────────────
+  void _handleTap(NotificationModel n) {
+    // Mark as read first
+    if (!n.read) _markRead(n);
+
+    switch (n.type) {
+      // ── Chat → open conversations list ────────────────────────────────────
+      case 'NEW_CHAT_MESSAGE':
+      case 'CONVERSATION_CREATED':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ConversationsScreen()),
+        );
+        break;
+
+      // ── Visit request → open seller visit requests ────────────────────────
+      case 'VISIT_REQUEST_CREATED':
+      case 'VISIT_REQUEST_STATUS_CHANGED':
+        try {
+          final data = jsonDecode(n.payload) as Map<String, dynamic>;
+          final propertyId = data['propertyId'] as String?;
+          final propertyTitle = data['propertyTitle'] as String? ?? 'Property';
+          if (propertyId != null && mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SellerVisitRequestsScreen(
+                  propertyId: propertyId,
+                  propertyTitle: propertyTitle,
+                ),
+              ),
+            );
+          }
+        } catch (_) {}
+        break;
+
+      // ── All others — stay on notifications ────────────────────────────────
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,7 +182,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: Column(
         children: [
-          // ── Tab row ─────────────────────────────────────
+          // ── Tabs ──────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
             child: Row(
@@ -160,7 +205,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ),
 
-          // ── Content ──────────────────────────────────────
+          // ── List ──────────────────────────────────────────
           Expanded(
             child: _loading
                 ? const Center(
@@ -237,29 +282,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
     );
-  }
-
-  void _handleTap(NotificationModel n) {
-    if (!n.read) _markRead(n);
-    switch (n.type) {
-      case 'NEW_CHAT_MESSAGE':
-      case 'CONVERSATION_CREATED':
-        debugPrint('Navigate to conversation');
-        break;
-      case 'VISIT_REQUEST_CREATED':
-      case 'VISIT_REQUEST_STATUS_CHANGED':
-        debugPrint('Navigate to visit requests');
-        break;
-      case 'PROPERTY_CREATED':
-      case 'PROPERTY_STATUS_CHANGED':
-        debugPrint('Navigate to property');
-        break;
-      case 'FEEDBACK_RECEIVED':
-        debugPrint('Navigate to feedback');
-        break;
-      default:
-        break;
-    }
   }
 }
 
