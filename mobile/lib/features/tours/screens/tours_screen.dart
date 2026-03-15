@@ -1,101 +1,139 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/features/chat/repositories/chat_repository.dart';
+import 'package:mobile/features/chat/screens/chat_screen.dart';
+import 'package:mobile/features/chat/providers/chat_providers.dart';
 import 'package:mobile/features/media/models/property_media.dart';
 import 'package:mobile/features/media/repositories/media_repository.dart';
+import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
-import 'package:mobile/features/property/repositories/property_repository.dart';
+import 'package:mobile/features/tours/widgets/tours_widgets.dart';
 import 'package:video_player/video_player.dart';
 
-// Provider to get all videos from all properties
+// ── Provider ───────────────────────────────────────────────────────────────────
+
 final allVideosProvider = FutureProvider<List<PropertyMedia>>((ref) async {
   final properties = await ref.watch(propertiesProvider.future);
   final mediaRepo = ref.watch(mediaRepositoryProvider);
-
   final allVideos = <PropertyMedia>[];
 
-  for (var property in properties) {
+  for (final property in properties) {
     try {
       final media = await mediaRepo.getByPropertyId(property.id);
       allVideos.addAll(media.where((m) => m.isVideo));
     } catch (e) {
-      debugPrint('Error loading media for property ${property.id}: $e');
+      debugPrint('[Tours] Media load error for ${property.id}: $e');
     }
   }
 
-  // Sort by display order (newest first)
   allVideos.sort((a, b) => b.displayOrder.compareTo(a.displayOrder));
-
   return allVideos;
 });
 
-class ToursScreen extends ConsumerWidget {
+// ═══════════════════════════════════════════════════════════════════════════════
+// TOURS SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class ToursScreen extends ConsumerStatefulWidget {
   const ToursScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ToursScreen> createState() => _ToursScreenState();
+}
+
+class _ToursScreenState extends ConsumerState<ToursScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final allVideosAsync = ref.watch(allVideosProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
       body: allVideosAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.primary,
-          ),
-        ),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        loading: () => const ReelLoadingScreen(),
+        error: (e, _) => const ReelErrorScreen(),
+        data: (videos) {
+          if (videos.isEmpty) return const ReelEmptyScreen();
+
+          return Stack(
             children: [
-              const Icon(Icons.error_outline_rounded,
-                  size: 48, color: AppColors.textSecondary),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load tours',
-                style: GoogleFonts.outfit(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
+              PageView.builder(
+                controller: _pageController,
+                scrollDirection: Axis.vertical,
+                itemCount: videos.length,
+                onPageChanged: (i) => setState(() => _currentPage = i),
+                itemBuilder: (_, i) => _ReelItem(
+                  video: videos[i],
+                  isActive: i == _currentPage,
+                ),
+              ),
+              // Top bar
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Tours',
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                            shadows: const [
+                              Shadow(color: Colors.black54, blurRadius: 8)
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${_currentPage + 1} / ${videos.length}',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white70,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
-          ),
-        ),
-        data: (allVideos) {
-          if (allVideos.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.slow_motion_video_rounded,
-                    size: 64,
-                    color: AppColors.textSecondary.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No property tours yet',
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          // Shorts-style page view
-          return PageView.builder(
-            scrollDirection: Axis.vertical,
-            itemCount: allVideos.length,
-            itemBuilder: (context, index) => ShortsVideoPlayer(
-              video: allVideos[index],
-              propertyId: allVideos[index].propertyId,
-            ),
           );
         },
       ),
@@ -103,397 +141,401 @@ class ToursScreen extends ConsumerWidget {
   }
 }
 
-class ShortsVideoPlayer extends ConsumerStatefulWidget {
-  final PropertyMedia video;
-  final String propertyId;
+// ═══════════════════════════════════════════════════════════════════════════════
+// REEL ITEM
+// ═══════════════════════════════════════════════════════════════════════════════
 
-  const ShortsVideoPlayer({
-    super.key,
-    required this.video,
-    required this.propertyId,
-  });
+class _ReelItem extends ConsumerStatefulWidget {
+  final PropertyMedia video;
+  final bool isActive;
+  const _ReelItem({required this.video, required this.isActive});
 
   @override
-  ConsumerState<ShortsVideoPlayer> createState() => _ShortsVideoPlayerState();
+  ConsumerState<_ReelItem> createState() => _ReelItemState();
 }
 
-class _ShortsVideoPlayerState extends ConsumerState<ShortsVideoPlayer>
-    with WidgetsBindingObserver {
-  late VideoPlayerController _controller;
-  bool _isPlaying = false;
-  bool _error = false;
+class _ReelItemState extends ConsumerState<_ReelItem>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  VideoPlayerController? _ctrl;
+  bool _initialized = false;
+  bool _hasError = false;
+  bool _showControls = false;
+  bool _isMuted = false;
+  bool _liked = false;
+  bool _saved = false;
+
+  Timer? _hideTimer;
+  late AnimationController _heartAnim;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializeVideo();
+    _heartAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    if (widget.isActive) _initVideo();
   }
 
-  void _initializeVideo() {
-    _error = false;
-    try {
-      _controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.video.url),
-        videoPlayerOptions: VideoPlayerOptions(
-          mixWithOthers: true,
-          allowBackgroundPlayback: false,
-        ),
-      );
-
-      _controller.initialize().timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          debugPrint('Video initialization timeout');
-          if (mounted) {
-            setState(() {
-              _error = true;
-            });
-          }
-          throw 'Video load timeout';
-        },
-      ).then((_) {
-        if (mounted && !_error) {
-          setState(() {});
-          _controller.play();
-          _isPlaying = true;
-        }
-      }).catchError((error) {
-        debugPrint('Error initializing video: $error');
-        if (mounted) {
-          setState(() {
-            _error = true;
-          });
-        }
-      });
-
-      _controller.addListener(_videoListener);
-    } catch (e) {
-      debugPrint('Error creating video controller: $e');
-      if (mounted) {
-        setState(() {
-          _error = true;
-        });
-      }
-    }
-  }
-
-  void _videoListener() {
-    if (!mounted || _error) return;
-    if (_controller.value.isPlaying != _isPlaying) {
-      setState(() {
-        _isPlaying = _controller.value.isPlaying;
-      });
+  @override
+  void didUpdateWidget(_ReelItem old) {
+    super.didUpdateWidget(old);
+    if (widget.isActive && !old.isActive) {
+      _initialized ? _ctrl?.play() : _initVideo();
+    } else if (!widget.isActive && old.isActive) {
+      _ctrl?.pause();
     }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      if (mounted && _isPlaying && !_error) {
-        _controller.play();
-      }
-    } else if (state == AppLifecycleState.paused) {
-      if (mounted) {
-        _controller.pause();
-      }
+    if (!widget.isActive) return;
+    if (state == AppLifecycleState.paused) _ctrl?.pause();
+    if (state == AppLifecycleState.resumed && _initialized) _ctrl?.play();
+  }
+
+  Future<void> _initVideo() async {
+    if (_hasError || _initialized) return;
+    try {
+      final url = widget.video.url;
+      if (url.isEmpty) throw Exception('Empty URL');
+
+      _ctrl = VideoPlayerController.networkUrl(
+        Uri.parse(url),
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      );
+      await _ctrl!.initialize().timeout(const Duration(seconds: 30));
+      _ctrl!.setLooping(true);
+      _ctrl!.addListener(_onTick);
+      _ctrl!.play();
+
+      if (mounted) setState(() => _initialized = true);
+    } catch (e) {
+      debugPrint('[Tours] Error: $e');
+      if (mounted) setState(() => _hasError = true);
+    }
+  }
+
+  void _onTick() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  void _tapScreen() {
+    _hideTimer?.cancel();
+    if (_showControls) {
+      setState(() => _showControls = false);
+    } else {
+      _togglePlayPause();
+      setState(() => _showControls = true);
+      _hideTimer = Timer(const Duration(seconds: 3),
+          () => setState(() => _showControls = false));
+    }
+  }
+
+  void _togglePlayPause() {
+    if (!_initialized) return;
+    setState(() {
+      _ctrl!.value.isPlaying ? _ctrl!.pause() : _ctrl!.play();
+    });
+  }
+
+  void _toggleMute() {
+    setState(() {
+      _isMuted = !_isMuted;
+      _ctrl?.setVolume(_isMuted ? 0 : 1);
+    });
+  }
+
+  void _doubleTap() {
+    if (!_liked) {
+      setState(() => _liked = true);
+      _heartAnim.forward(from: 0);
+    }
+  }
+
+  Future<void> _openChat(Property property) async {
+    try {
+      final repo = ref.read(chatRepositoryProvider);
+      final conv = await repo.createConversation(property.id);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            conversationId: conv.id,
+            currentUserId: conv.clientId,
+            chatTitle: property.sellerName,
+            chatSubtitle: property.title,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open chat: $e'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
     }
   }
 
   @override
   void dispose() {
+    _hideTimer?.cancel();
+    _heartAnim.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    _controller.removeListener(_videoListener);
-    _controller.dispose();
+    _ctrl?.removeListener(_onTick);
+    _ctrl?.dispose();
     super.dispose();
-  }
-
-  void _togglePlayPause() {
-    if (_error) return;
-    setState(() {
-      if (_isPlaying) {
-        _controller.pause();
-      } else {
-        _controller.play();
-      }
-      _isPlaying = !_isPlaying;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final propertyAsync =
-        ref.watch(propertyDetailProvider(widget.propertyId));
+        ref.watch(propertyDetailProvider(widget.video.propertyId));
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Video background
-        if (!_error && _controller.value.isInitialized)
-          Center(
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: GestureDetector(
-                onTap: _togglePlayPause,
-                child: VideoPlayer(_controller),
-              ),
-            ),
-          )
-        else
-          Container(
-            color: Colors.black,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _error ? Icons.error_outline : Icons.videocam_outlined,
-                    color: Colors.white54,
-                    size: 64,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _error ? 'Unable to load video' : 'Loading video...',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white54,
-                      fontSize: 16,
-                    ),
-                  ),
-                  if (_error)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          try {
-                            _controller.removeListener(_videoListener);
-                            _controller.dispose();
-                          } catch (e) {
-                            debugPrint('Error disposing controller: $e');
-                          }
-                          _initializeVideo();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-        // Dark gradient overlay
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withOpacity(0.2),
-                Colors.transparent,
-                Colors.black.withOpacity(0.4),
-              ],
-            ),
-          ),
-        ),
-
-        // Top app bar
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Tours',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // Bottom property info
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: SafeArea(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.8),
-                  ],
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(16, 32, 80, 24),
-              child: propertyAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (property) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      property.title,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_rounded,
-                            color: Colors.white70, size: 16),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            property.location ?? 'Location not available',
-                            style: GoogleFonts.outfit(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '\$${property.price.toStringAsFixed(0)}${property.listingType == 'RENT' ? '/month' : ''}',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // Right side actions
-        Positioned(
-          right: 12,
-          bottom: 120,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ActionButton(
-                icon: Icons.favorite_border_rounded,
-                label: '0',
-                onTap: () {},
-              ),
-              const SizedBox(height: 24),
-              _ActionButton(
-                icon: Icons.chat_bubble_outline_rounded,
-                label: '0',
-                onTap: () {},
-              ),
-              const SizedBox(height: 24),
-              _ActionButton(
-                icon: Icons.share_rounded,
-                label: 'Share',
-                onTap: () {},
-              ),
-              const SizedBox(height: 24),
-              // Play/pause button
-              if (!_error)
-                GestureDetector(
-                  onTap: _togglePlayPause,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.95),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _isPlaying
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
-                      color: AppColors.primary,
-                      size: 28,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      onTap: _tapScreen,
+      onDoubleTap: _doubleTap,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            child: Icon(icon, color: Colors.white, size: 28),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+          _buildVideoLayer(),
+          const ReelGradients(),
+
+          // Play/pause overlay
+          AnimatedOpacity(
+            opacity: _showControls ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: ReelPlayPauseOverlay(
+              isPlaying: _initialized && _ctrl!.value.isPlaying,
+              onTap: _togglePlayPause,
             ),
           ),
+
+          // Double-tap heart
+          ReelHeartAnimation(animation: _heartAnim),
+
+          // Bottom overlay
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildBottomOverlay(propertyAsync),
+          ),
+
+          // Side actions
+          Positioned(
+            right: 10,
+            bottom: 150,
+            child: _buildSideActions(propertyAsync),
+          ),
+
+          // Mute button (when controls visible)
+          if (_showControls)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 60,
+              left: 16,
+              child: ReelCircleBtn(
+                icon: _isMuted
+                    ? Icons.volume_off_rounded
+                    : Icons.volume_up_rounded,
+                onTap: _toggleMute,
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  Widget _buildVideoLayer() {
+    if (_hasError) {
+      return Container(
+        color: const Color(0xFF0A0A0A),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.videocam_off_outlined,
+                  color: Colors.white24, size: 52),
+              const SizedBox(height: 12),
+              Text('Video unavailable',
+                  style: GoogleFonts.outfit(
+                      color: Colors.white38, fontSize: 14)),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _hasError = false;
+                    _initialized = false;
+                  });
+                  _initVideo();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white24),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('Retry',
+                      style: GoogleFonts.outfit(
+                          color: Colors.white54, fontSize: 13)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (!_initialized) {
+      return const ColoredBox(
+        color: Colors.black,
+        child: Center(
+          child: CircularProgressIndicator(
+              strokeWidth: 2, color: Colors.white24),
+        ),
+      );
+    }
+    return Center(
+      child: AspectRatio(
+        aspectRatio: _ctrl!.value.aspectRatio,
+        child: VideoPlayer(_ctrl!),
+      ),
+    );
+  }
+
+  Widget _buildSideActions(AsyncValue<Property> propertyAsync) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ReelSideBtn(
+            icon: Icons.favorite_border_rounded,
+            activeIcon: Icons.favorite_rounded,
+            label: 'Like',
+            active: _liked,
+            activeColor: Colors.red,
+            onTap: () => setState(() => _liked = !_liked),
+          ),
+          const SizedBox(height: 22),
+          // ✅ Chat — opens conversation with seller
+          ReelSideBtn(
+            icon: Icons.chat_bubble_outline_rounded,
+            label: 'Chat',
+            onTap: () => propertyAsync.whenData(_openChat),
+          ),
+          const SizedBox(height: 22),
+          ReelSideBtn(
+            icon: Icons.bookmark_border_rounded,
+            activeIcon: Icons.bookmark_rounded,
+            label: 'Save',
+            active: _saved,
+            activeColor: AppColors.primary,
+            onTap: () => setState(() => _saved = !_saved),
+          ),
+          const SizedBox(height: 22),
+          ReelSideBtn(
+            icon: Icons.share_rounded,
+            label: 'Share',
+            onTap: () {},
+          ),
+        ],
+      );
+
+  Widget _buildBottomOverlay(AsyncValue<Property> propertyAsync) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          80,
+          MediaQuery.of(context).padding.bottom + 16,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            propertyAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (property) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      ReelBadge(
+                        text: property.propertyType.toJson(),
+                        color: AppColors.primary.withOpacity(0.85),
+                      ),
+                      const SizedBox(width: 6),
+                      ReelBadge(
+                        text: property.listingType.toJson(),
+                        color: Colors.white.withOpacity(0.15),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    property.title,
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                      shadows: [
+                        Shadow(
+                            color: Colors.black.withOpacity(0.5),
+                            blurRadius: 8)
+                      ],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          color: Colors.white60, size: 13),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          property.location,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white60,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        '${property.currency} ${_fmtPrice(property.price)}',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (_initialized) ReelProgressBar(controller: _ctrl!),
+          ],
+        ),
+      );
+
+  String _fmtPrice(double p) {
+    if (p >= 1000000) return '${(p / 1000000).toStringAsFixed(1)}M';
+    if (p >= 1000) return '${(p / 1000).toStringAsFixed(0)}K';
+    return p.toStringAsFixed(0);
   }
 }

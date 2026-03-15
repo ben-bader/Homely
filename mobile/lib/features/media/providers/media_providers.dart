@@ -61,7 +61,33 @@ class PropertyMediaNotifier
       ref.read(videoUploadLoadingProvider.notifier).state = false;
     }
   }
+  Future<String> uploadImage({
+  required File file,
+  required int displayOrder,
+}) async {
+  ref.read(videoUploadLoadingProvider.notifier).state = true;
+  ref.read(videoUploadErrorProvider.notifier).state = null;
+
+  try {
+    final repo = ref.read(mediaRepositoryProvider);
+    final url = await repo.uploadImage(
+      ImageUploadRequest(
+        propertyId: arg,
+        file: file,
+        displayOrder: displayOrder,
+      ),
+    );
+    state = await AsyncValue.guard(() => repo.getByPropertyId(arg));
+    return url;
+  } catch (e) {
+    ref.read(videoUploadErrorProvider.notifier).state = e.toString();
+    rethrow;
+  } finally {
+    ref.read(videoUploadLoadingProvider.notifier).state = false;
+  }
 }
+}
+
 final videoUploadLoadingProvider = StateProvider<bool>((ref) => false);
 final videoUploadErrorProvider = StateProvider<String?>((ref) => null);
 final propertyImagesProvider = Provider.family<List<PropertyMedia>, String>((

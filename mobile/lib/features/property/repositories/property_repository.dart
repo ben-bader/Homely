@@ -91,10 +91,12 @@ class PropertyRepository {
     return Property.fromJson(data);
   }
 
-  Future<List<PropertyMedia>> getPropertyMedia(String propertyId) async {
-    final data = await ApiClient.get('/properties/$propertyId/media') as List<dynamic>;
-    return data.map((e) => PropertyMedia.fromJson(e as Map<String, dynamic>)).toList();
-  }
+ Future<List<PropertyMedia>> getPropertyMedia(String propertyId) async {
+  final data = await ApiClient.get('/media/$propertyId') as List<dynamic>;
+  return data
+      .map((e) => PropertyMedia.fromJson(e as Map<String, dynamic>))
+      .toList();
+}
 
   Future<void> delete(String id) async {
     await ApiClient.delete('/properties/$id');

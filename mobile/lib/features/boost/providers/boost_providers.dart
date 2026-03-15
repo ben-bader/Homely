@@ -60,29 +60,3 @@ class BoostPlan {
     this.badge = '',
   });
 }
-
-const boostPlans = [
-  BoostPlan(
-    label: '3 Days',
-    description: 'Get noticed for a short burst',
-    amount: 4.99,
-    currency: 'USD',
-    durationDays: 3,
-  ),
-  BoostPlan(
-    label: '7 Days',
-    description: 'A week of top visibility',
-    amount: 9.99,
-    currency: 'USD',
-    durationDays: 7,
-    badge: 'Popular',
-  ),
-  BoostPlan(
-    label: '30 Days',
-    description: 'Maximum exposure for a month',
-    amount: 29.99,
-    currency: 'USD',
-    durationDays: 30,
-    badge: 'Best Value',
-  ),
-];
