@@ -5,13 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
-import 'package:mobile/features/chat/repositories/chat_repository.dart';
 import 'package:mobile/features/chat/screens/chat_screen.dart';
 import 'package:mobile/features/chat/providers/chat_providers.dart';
 import 'package:mobile/features/media/models/property_media.dart';
 import 'package:mobile/features/media/repositories/media_repository.dart';
 import 'package:mobile/features/property/models/property.dart';
+import 'package:mobile/features/favorites/providers/favorite_providers.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
+import 'package:mobile/features/property/screens/property_detail_screen.dart';
 import 'package:mobile/features/tours/widgets/tours_widgets.dart';
 import 'package:video_player/video_player.dart';
 
@@ -102,10 +103,11 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                         Text(
                           'Tours',
                           style: GoogleFonts.outfit(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
+                            color: AppColors.background,
+                        letterSpacing: -0.5,
+                        height: 1.1,
+                        fontSize: 30,
+                        
                             shadows: const [
                               Shadow(color: Colors.black54, blurRadius: 8)
                             ],
@@ -161,7 +163,6 @@ class _ReelItemState extends ConsumerState<_ReelItem>
   bool _hasError = false;
   bool _showControls = false;
   bool _isMuted = false;
-  bool _liked = false;
   bool _saved = false;
 
   Timer? _hideTimer;
@@ -248,10 +249,15 @@ class _ReelItemState extends ConsumerState<_ReelItem>
     });
   }
 
-  void _doubleTap() {
-    if (!_liked) {
-      setState(() => _liked = true);
-      _heartAnim.forward(from: 0);
+  void _doubleTap() async {
+    try {
+      final isFavorited = await ref.read(isPropertyFavoritedProvider(widget.video.propertyId).future);
+      if (!isFavorited) {
+        await ref.read(favoritesProvider.notifier).addFavorite(widget.video.propertyId);
+        _heartAnim.forward(from: 0);
+      }
+    } catch (error) {
+      debugPrint('Error toggling favorite: $error');
     }
   }
 
@@ -338,6 +344,15 @@ class _ReelItemState extends ConsumerState<_ReelItem>
             child: _buildSideActions(propertyAsync),
           ),
 
+          // Progress bar at bottom (Instagram Reels style)
+          if (_initialized)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: ReelProgressBar(controller: _ctrl!),
+            ),
+
           // Mute button (when controls visible)
           if (_showControls)
             Positioned(
@@ -404,9 +419,11 @@ class _ReelItemState extends ConsumerState<_ReelItem>
         ),
       );
     }
-    return Center(
-      child: AspectRatio(
-        aspectRatio: _ctrl!.value.aspectRatio,
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: _ctrl!.value.size.width,
+        height: _ctrl!.value.size.height,
         child: VideoPlayer(_ctrl!),
       ),
     );
@@ -415,13 +432,36 @@ class _ReelItemState extends ConsumerState<_ReelItem>
   Widget _buildSideActions(AsyncValue<Property> propertyAsync) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ReelSideBtn(
-            icon: Icons.favorite_border_rounded,
-            activeIcon: Icons.favorite_rounded,
-            label: 'Like',
-            active: _liked,
-            activeColor: Colors.red,
-            onTap: () => setState(() => _liked = !_liked),
+          propertyAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (property) => Consumer(
+              builder: (context, ref, child) {
+                final isFavoritedAsync = ref.watch(isPropertyFavoritedProvider(property.id));
+                return ReelSideBtn(
+                  icon: Icons.favorite_border_rounded,
+                  activeIcon: Icons.favorite_rounded,
+                  label: 'Like',
+                  active: isFavoritedAsync.maybeWhen(
+                    data: (isFavorited) => isFavorited,
+                    orElse: () => false,
+                  ),
+                  activeColor: Colors.red,
+                  onTap: () async {
+                    try {
+                      final isFavorited = await ref.read(isPropertyFavoritedProvider(property.id).future);
+                      if (isFavorited) {
+                        await ref.read(favoritesProvider.notifier).removeFavorite(property.id);
+                      } else {
+                        await ref.read(favoritesProvider.notifier).addFavorite(property.id);
+                      }
+                    } catch (error) {
+                      debugPrint('Error toggling favorite: $error');
+                    }
+                  },
+                );
+              },
+            ),
           ),
           const SizedBox(height: 22),
           // ✅ Chat — opens conversation with seller
@@ -480,23 +520,39 @@ class _ReelItemState extends ConsumerState<_ReelItem>
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    property.title,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                      shadows: [
-                        Shadow(
-                            color: Colors.black.withOpacity(0.5),
-                            blurRadius: 8)
-                      ],
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PropertyDetailScreen(propertyId: property.id),
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    child: Text(
+                      property.title,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        shadows: [
+                          Shadow(
+                              color: Colors.black.withOpacity(0.5),
+                              blurRadius: 8)
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   const SizedBox(height: 6),
+                  Text(
+                    '${_fmtPrice(property.price)} ${property.currency}',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
                   Row(
                     children: [
                       const Icon(Icons.location_on_outlined,
@@ -507,19 +563,11 @@ class _ReelItemState extends ConsumerState<_ReelItem>
                           property.location,
                           style: GoogleFonts.outfit(
                             color: Colors.white60,
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        '${property.currency} ${_fmtPrice(property.price)}',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
@@ -527,8 +575,6 @@ class _ReelItemState extends ConsumerState<_ReelItem>
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            if (_initialized) ReelProgressBar(controller: _ctrl!),
           ],
         ),
       );

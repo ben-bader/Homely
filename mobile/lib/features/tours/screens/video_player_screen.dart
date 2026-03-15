@@ -11,6 +11,7 @@ import 'package:mobile/features/chat/screens/chat_screen.dart';
 import 'package:mobile/features/media/models/property_media.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
+import 'package:mobile/features/property/screens/property_detail_screen.dart';
 import 'package:mobile/features/tours/widgets/tours_widgets.dart';
 import 'package:video_player/video_player.dart';
 
@@ -330,21 +331,29 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen>
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    property.title,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                      shadows: [
-                        Shadow(
-                            color: Colors.black.withOpacity(0.6),
-                            blurRadius: 8)
-                      ],
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PropertyDetailScreen(propertyId: property.id),
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    child: Text(
+                      property.title,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        shadows: [
+                          Shadow(
+                              color: Colors.black.withOpacity(0.6),
+                              blurRadius: 8)
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(

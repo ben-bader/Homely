@@ -16,6 +16,7 @@ import 'package:mobile/features/feedback/widgets/submit_feedback_sheet.dart';
 import 'package:mobile/features/reports/widgets/report_sheet.dart';
 import 'package:mobile/features/boost/widgets/boost_sheet.dart';
 import 'package:mobile/features/media/models/property_media.dart';
+import 'package:mobile/features/favorites/providers/favorite_providers.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 class PropertyDetailScreen extends ConsumerWidget {
@@ -120,39 +121,57 @@ class _BodyState extends ConsumerState<_Body> {
             // Back + title + flag float over the image
             title: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _CircleBtn(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Property Detail',
-                      textAlign: TextAlign.center,
-                      style: tt.titleLarge?.copyWith(
-                        color: AppColors.accent,
-                        letterSpacing: -0.5,
-                        height: 1.1,
-                        fontSize: 25,
-                  
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final isFavoritedAsync = ref.watch(isPropertyFavoritedProvider(p.id));
+                  return Row(
+                    children: [
+                      _CircleBtn(
+                        icon: Icons.arrow_back_ios_new_rounded,
+                        onTap: () => Navigator.pop(context),
                       ),
-                    ),
-                  ),
-                  if (!_isOwner)
-                    _CircleBtn(
-                      icon: Icons.flag_outlined,
-                      iconColor: AppColors.error,
-                      onTap: () => ReportSheet.show(
-                        context,
-                        targetType: ReportTargetType.property,
-                        targetId: p.id,
-                        targetTitle: p.title,
+                      Expanded(
+                        child: Text(
+                          'Property Detail',
+                          textAlign: TextAlign.center,
+                          style: tt.titleLarge?.copyWith(
+                            color: AppColors.accent,
+                            letterSpacing: -0.5,
+                            height: 1.1,
+                            fontSize: 25,
+                          ),
+                        ),
                       ),
-                    )
-                  else
-                    const SizedBox(width: 40),
-                ],
+                      if (!_isOwner) ...[
+                        _FavoriteBtn(
+                          propertyId: p.id,
+                          isFavorited: isFavoritedAsync.maybeWhen(
+                            data: (isFav) => isFav,
+                            orElse: () => false,
+                          ),
+                          onToggle: (isFav) {
+                            if (isFav) {
+                              ref.read(favoritesProvider.notifier).addFavorite(p.id);
+                            } else {
+                              ref.read(favoritesProvider.notifier).removeFavorite(p.id);
+                            }
+                          },
+                        ),
+                        _CircleBtn(
+                          icon: Icons.flag_outlined,
+                          iconColor: AppColors.error,
+                          onTap: () => ReportSheet.show(
+                            context,
+                            targetType: ReportTargetType.property,
+                            targetId: p.id,
+                            targetTitle: p.title,
+                          ),
+                        ),
+                      ] else
+                        const SizedBox(width: 80),
+                    ],
+                  );
+                },
               ),
             ),
             // The image fills the flexible space
@@ -668,6 +687,32 @@ class _CircleBtn extends StatelessWidget {
       width: 40,
       height: 40,
       child: Icon(icon, size: 24, color: iconColor),
+    ),
+  );
+}
+
+class _FavoriteBtn extends StatelessWidget {
+  final String propertyId;
+  final bool isFavorited;
+  final Function(bool) onToggle;
+
+  const _FavoriteBtn({
+    required this.propertyId,
+    required this.isFavorited,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: () => onToggle(!isFavorited),
+    child: Container(
+      width: 40,
+      height: 40,
+      child: Icon(
+        isFavorited ? Icons.favorite : Icons.favorite_border,
+        size: 24,
+        color: isFavorited ? Colors.red : AppColors.accent,
+      ),
     ),
   );
 }

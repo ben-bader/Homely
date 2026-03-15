@@ -13,13 +13,15 @@ import 'package:mobile/features/property/providers/property_providers.dart'
     hide sellerListingsProvider;
 import 'package:mobile/features/profile/screens/profile_screen.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/features/property/screens/property_detail_screen.dart';
 import 'package:mobile/features/seller/screens/create_property_screen.dart';
 import 'package:mobile/features/seller/screens/edit_property_screen.dart';
 import 'package:mobile/features/seller/providers/seller_providers.dart';
 import 'package:mobile/features/boost/widgets/boost_sheet.dart';
-import 'package:mobile/features/visit_requests/screens/seller_visit_requests_screen.dart';
+import 'package:mobile/features/favorites/screens/favorites_screen.dart';
+import 'package:mobile/features/favorites/providers/favorite_providers.dart';
 import 'package:mobile/features/tours/screens/tours_screen.dart';
-import 'property_detail_screen.dart';
+import 'package:mobile/features/visit_requests/screens/seller_visit_requests_screen.dart';
 
 final navIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -138,7 +140,7 @@ class HomeScreen extends ConsumerWidget {
     const _ExploreTab(),
     const ToursScreen(),
     const ConversationsScreen(),
-    const _PlaceholderTab(label: 'Favorites'),
+    const FavoritesScreen(),
     const ProfileScreen(),
   ];
 
@@ -1193,7 +1195,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
           // ── Header ────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -1575,14 +1577,20 @@ class _FeaturedSection extends ConsumerWidget {
   }
 }
 
-class _FeaturedCard extends StatelessWidget {
+class _FeaturedCard extends ConsumerWidget {
   final Property property;
   final VoidCallback onTap;
   const _FeaturedCard({required this.property, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final isFavoritedAsync = ref.watch(isPropertyFavoritedProvider(property.id));
+    final isFavorited = isFavoritedAsync.maybeWhen(
+      data: (fav) => fav,
+      orElse: () => false,
+    );
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1683,6 +1691,32 @@ class _FeaturedCard extends StatelessWidget {
                       color: AppColors.accent,
                       fontWeight: FontWeight.w700,
                       fontSize: 10,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 12,
+                right: 12,
+                child: GestureDetector(
+                  onTap: () {
+                    if (isFavorited) {
+                      ref.read(favoritesProvider.notifier).removeFavorite(property.id);
+                    } else {
+                      ref.read(favoritesProvider.notifier).addFavorite(property.id);
+                    }
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.92),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isFavorited ? Icons.favorite : Icons.favorite_border,
+                      size: 16,
+                      color: isFavorited ? Colors.red : AppColors.accent,
                     ),
                   ),
                 ),
@@ -2387,6 +2421,12 @@ class PropertyCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final isFavoritedAsync = ref.watch(isPropertyFavoritedProvider(property.id));
+    final isFavorited = isFavoritedAsync.maybeWhen(
+      data: (fav) => fav,
+      orElse: () => false,
+    );
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -2447,17 +2487,26 @@ class PropertyCard extends ConsumerWidget {
                 Positioned(
                   top: 10,
                   right: 10,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBackground,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border_rounded,
-                      size: 18,
-                      color: AppColors.accent,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (isFavorited) {
+                        ref.read(favoritesProvider.notifier).removeFavorite(property.id);
+                      } else {
+                        ref.read(favoritesProvider.notifier).addFavorite(property.id);
+                      }
+                    },
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFavorited ? Icons.favorite : Icons.favorite_border,
+                        size: 18,
+                        color: isFavorited ? Colors.red : AppColors.accent,
+                      ),
                     ),
                   ),
                 ),

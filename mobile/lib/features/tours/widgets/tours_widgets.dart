@@ -41,13 +41,13 @@ class ReelProgressBar extends StatelessWidget {
         controller.seekTo(duration * ratio);
       },
       child: SizedBox(
-        height: 22,
+        height: 6,
         child: Stack(
           alignment: Alignment.centerLeft,
           children: [
             // Track
             Container(
-              height: 2.5,
+              height: 2,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(2),
@@ -57,7 +57,7 @@ class ReelProgressBar extends StatelessWidget {
             FractionallySizedBox(
               widthFactor: buffered,
               child: Container(
-                height: 2.5,
+                height: 2,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.35),
                   borderRadius: BorderRadius.circular(2),
@@ -68,31 +68,10 @@ class ReelProgressBar extends StatelessWidget {
             FractionallySizedBox(
               widthFactor: progress,
               child: Container(
-                height: 2.5,
+                height: 2,
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            // Thumb
-            FractionallySizedBox(
-              widthFactor: progress,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black38,
-                          blurRadius: 4,
-                          spreadRadius: 1)
-                    ],
-                  ),
                 ),
               ),
             ),

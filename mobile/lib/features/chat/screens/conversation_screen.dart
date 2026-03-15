@@ -56,7 +56,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
           children: [
             /// HEADER
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 8, 8),
+              padding: const EdgeInsets.fromLTRB(20, 12, 8, 8),
               child: Row(
                 children: [
                   Expanded(
