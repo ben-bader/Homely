@@ -1,4 +1,7 @@
 import 'dart:io';
+
+// ── Media type ─────────────────────────────────────────────────────────────
+
 enum MediaType {
   IMAGE,
   VIDEO;
@@ -12,6 +15,8 @@ enum MediaType {
     );
   }
 }
+
+// ── Property media ─────────────────────────────────────────────────────────
 
 class PropertyMedia {
   final String id;
@@ -56,6 +61,8 @@ class PropertyMedia {
       };
 }
 
+// ── Request models ─────────────────────────────────────────────────────────
+
 class PropertyMediaCreateRequest {
   final String propertyId;
   final MediaType mediaType;
@@ -81,6 +88,18 @@ class PropertyMediaCreateRequest {
         'displayOrder': displayOrder,
         'durationSeconds': durationSeconds,
       };
+}
+
+class ImageUploadRequest {
+  final String propertyId;
+  final File file;
+  final int displayOrder;
+
+  const ImageUploadRequest({
+    required this.propertyId,
+    required this.file,
+    required this.displayOrder,
+  });
 }
 
 class VideoUploadRequest {

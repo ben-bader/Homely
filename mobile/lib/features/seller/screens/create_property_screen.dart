@@ -36,9 +36,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
   String _location = '';
   double _price = 0;
 
-  String _listingType = 'BUY';
+  String _listingType = 'SELL';
   String _propertyType = 'HOUSE';
-  final String _status = 'ACTIVE';
+  final String _status = 'DRAFT';
 
   // Specs
   int bedrooms = 0;
@@ -105,55 +105,56 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   Future<void> _submitProperty() async {
-    try {
-      setState(() => _loading = true);
+  setState(() => _loading = true);
 
-      final payload = {
-        'title': _title,
-        'description': _description,
-        'location': _location,
-        'price': _price,
-        'listingType': _listingType,
-        'propertyType': _propertyType,
-        'status': _status,
-        'bedrooms': bedrooms,
-        'bathrooms': bathrooms,
-        'floor': floor,
-        'hasElevator': hasElevator,
-        'hasGarage': hasGarage,
-        'hasPool': hasPool,
-        'furnished': furnished,
-        'businessType': businessType,
-        'areaSqm': area,
-        'constructible': constructible,
-      };
+  try {
+    final payload = {
+      'title': _title,
+      'description': _description,
+      'location': _location,
+      'price': _price,
+      'listingType': _listingType,
+      'propertyType': _propertyType,
+      'status': _status,
+      'bedrooms': bedrooms,
+      'bathrooms': bathrooms,
+      'floor': floor,
+      'hasElevator': hasElevator,
+      'hasGarage': hasGarage,
+      'hasPool': hasPool,
+      'furnished': furnished,
+      'businessType': businessType,
+      'areaSqm': area,
+      'constructible': constructible,
+    };
 
-      final property = await ApiClient.post(
-        Endpoints.createProperty,
-        body: payload,
-      );
+    final property = await ApiClient.post(
+      Endpoints.createProperty,
+      body: payload,
+    );
 
-      final propertyId = property['id'];
+    final propertyId = property['id'].toString();
 
-      for (int i = 0; i < _images.length; i++) {
-        ref
-            .read(propertyMediaProvider(propertyId.toString()).notifier)
-            .uploadVideo(file: _images[i], displayOrder: i);
-      }
-
-      ref.invalidate(sellerListingsProvider);
-
-      if (!mounted) return;
-      _showSuccessAndPop();
-    } catch (e) {
-      debugPrint(e.toString());
-      if (mounted) {
-        _showError(e.toString());
-      }
+    // ✅ await each upload and use uploadImage, not uploadVideo
+    for (int i = 0; i < _images.length; i++) {
+      await ref
+          .read(propertyMediaProvider(propertyId).notifier)
+          .uploadImage(file: _images[i], displayOrder: i);
     }
 
+    // ✅ invalidate after uploads complete
+    ref.invalidate(sellerListingsProvider);
+
+    if (!mounted) return;
+    _showSuccessAndPop();
+  } catch (e) {
+    debugPrint(e.toString());
+    if (mounted) _showError(e.toString());
+  } finally {
+    // ✅ use finally so loading always resets, even if uploadImage throws
     if (mounted) setState(() => _loading = false);
   }
+}
 
   void _showSuccessAndPop() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -342,18 +343,22 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
                           ),
                         ),
                         const SizedBox(width: 7),
-                        Text(
-                          _steps[i],
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: isActive || isDone
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isActive
-                                ? Colors.white
-                                : isDone
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                        Flexible(
+                          // ← add this
+                          child: Text(
+                            _steps[i],
+                            overflow: TextOverflow.ellipsis, // ← and this
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: isActive || isDone
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isActive
+                                  ? Colors.white
+                                  : isDone
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ],
@@ -530,10 +535,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
 
           _sectionLabel('Listing Type'),
           _chipSelector(
-            options: ['BUY', 'RENT'],
+            options: ['SELL', 'RENT'],
             selected: _listingType,
             onSelect: (v) => setState(() => _listingType = v),
-            labels: {'BUY': 'For Sale', 'RENT': 'For Rent'},
+            labels: {'SELL': 'For Sale', 'RENT': 'For Rent'},
           ),
 
           _sectionLabel('Property Type'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/features/boost/models/boost_package.dart';
 import 'package:mobile/features/boost/providers/boost_providers.dart';
 
 class BoostSheet extends ConsumerStatefulWidget {
@@ -36,20 +37,26 @@ class BoostSheet extends ConsumerStatefulWidget {
 }
 
 class _BoostSheetState extends ConsumerState<BoostSheet> {
-  int _selectedPlanIndex = 1;
+  int _selectedPlanIndex = 0;
   bool _loading = false;
 
-  Future<void> _purchase() async {
-    setState(() => _loading = true);
-    final plan = boostPlans[_selectedPlanIndex];
+  /// Derives a badge label based on position in the sorted list.
+  /// Middle plan → "Popular", last plan → "Best Value".
+  String _badgeFor(List<BoostPackage> packages, int index) {
+    if (packages.length == 1) return '';
+    if (packages.length == 2) return index == 1 ? 'Best Value' : '';
+    if (index == packages.length ~/ 2) return 'Popular';
+    if (index == packages.length - 1) return 'Best Value';
+    return '';
+  }
 
+  Future<void> _purchase(BoostPackage plan) async {
+    setState(() => _loading = true);
     try {
-      await ref
-          .read(myBoostsProvider.notifier)
-          .purchase(
+      await ref.read(myBoostsProvider.notifier).purchase(
             propertyId: widget.propertyId,
-            amount: plan.amount,
-            currency: plan.currency,
+            amount: plan.price,
+            currency: 'USD',
             durationDays: plan.durationDays,
           );
 
@@ -88,7 +95,7 @@ class _BoostSheetState extends ConsumerState<BoostSheet> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    final selectedPlan = boostPlans[_selectedPlanIndex];
+    final packagesAsync = ref.watch(boostPackagesProvider);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -101,6 +108,7 @@ class _BoostSheetState extends ConsumerState<BoostSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Handle bar ──────────────────────────────────────────────
           Center(
             child: Container(
               width: 36,
@@ -113,6 +121,7 @@ class _BoostSheetState extends ConsumerState<BoostSheet> {
           ),
           const SizedBox(height: 20),
 
+          // ── Header ──────────────────────────────────────────────────
           Row(
             children: [
               Container(
@@ -158,6 +167,7 @@ class _BoostSheetState extends ConsumerState<BoostSheet> {
           ),
           const SizedBox(height: 8),
 
+          // ── Info banner ──────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -196,167 +206,217 @@ class _BoostSheetState extends ConsumerState<BoostSheet> {
           ),
           const SizedBox(height: 12),
 
-          ...List.generate(boostPlans.length, (i) {
-            final plan = boostPlans[i];
-            final selected = _selectedPlanIndex == i;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedPlanIndex = i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.primary.withValues(alpha: 0.07)
-                      : AppColors.subtleBackground,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: selected ? AppColors.primary : AppColors.borderLight,
-                    width: 1.8,
+          // ── Package list (async) ─────────────────────────────────────
+          packagesAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                children: [
+                  Text(
+                    'Failed to load packages.',
+                    style: GoogleFonts.outfit(color: AppColors.error),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: selected
-                            ? AppColors.primary
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.borderMedium,
-                          width: 2,
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () =>
+                        ref.invalidate(boostPackagesProvider),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+            data: (packages) {
+              // Guard: reset index if packages count changed
+              final safeIndex =
+                  _selectedPlanIndex.clamp(0, packages.length - 1);
+              final selectedPlan = packages[safeIndex];
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Plan tiles
+                  ...List.generate(packages.length, (i) {
+                    final plan = packages[i];
+                    final selected = safeIndex == i;
+                    final badge = _badgeFor(packages, i);
+
+                    return GestureDetector(
+                      onTap: () =>
+                          setState(() => _selectedPlanIndex = i),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
                         ),
-                      ),
-                      child: selected
-                          ? const Icon(
-                              Icons.check_rounded,
-                              size: 12,
-                              color: Colors.white,
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                plan.label,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? AppColors.primary.withValues(alpha: 0.07)
+                              : AppColors.subtleBackground,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: selected
+                                ? AppColors.primary
+                                : AppColors.borderLight,
+                            width: 1.8,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: selected
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                                border: Border.all(
                                   color: selected
                                       ? AppColors.primary
-                                      : AppColors.accent,
+                                      : AppColors.borderMedium,
+                                  width: 2,
                                 ),
                               ),
-                              if (plan.badge.isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: plan.badge == 'Popular'
-                                        ? AppColors.primary
-                                        : const Color(0xFF4CAF50),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    plan.badge,
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
+                              child: selected
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      size: 12,
                                       color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        plan.name,
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          color: selected
+                                              ? AppColors.primary
+                                              : AppColors.accent,
+                                        ),
+                                      ),
+                                      if (badge.isNotEmpty) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: badge == 'Popular'
+                                                ? AppColors.primary
+                                                : const Color(0xFF4CAF50),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            badge,
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  Text(
+                                    plan.description,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
                                     ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '\$${plan.price.toStringAsFixed(2)}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: selected
+                                    ? AppColors.primary
+                                    : AppColors.accent,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 8),
+
+                  // CTA button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed:
+                          _loading ? null : () => _purchase(selectedPlan),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF9800),
+                        disabledBackgroundColor:
+                            const Color(0xFFFF9800).withValues(alpha: 0.5),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: _loading
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white),
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.rocket_launch_rounded,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Boost for \$${selectedPlan.price.toStringAsFixed(2)}',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ],
-                            ],
-                          ),
-                          Text(
-                            plan.description,
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
                             ),
-                          ),
-                        ],
-                      ),
                     ),
-                    Text(
-                      '\$${plan.amount.toStringAsFixed(2)}',
-                      style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: selected ? AppColors.primary : AppColors.accent,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-
-          const SizedBox(height: 8),
-
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton(
-              onPressed: _loading ? null : _purchase,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF9800),
-                disabledBackgroundColor: const Color(
-                  0xFFFF9800,
-                ).withValues(alpha: 0.5),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              child: _loading
-                  ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.rocket_launch_rounded,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Boost for \$${selectedPlan.amount.toStringAsFixed(2)}',
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),

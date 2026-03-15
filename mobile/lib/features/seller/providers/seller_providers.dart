@@ -13,6 +13,9 @@ final sellerListingsProvider =
   return repo.getMyListedProperties();
 });
 
+// lib/features/seller/providers/seller_providers.dart
+
+
 // FIX: removed refreshSellerListingsProvider — invalidate(sellerListingsProvider) returns
 // void, not a Future, so wrapping it in FutureProvider caused a type mismatch.
 // Call ref.invalidate(sellerListingsProvider) directly wherever a refresh is needed.

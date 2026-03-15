@@ -59,26 +59,20 @@ Future<void> init() async {
 
     // Handle foreground Firebase messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint(
-        '[NotificationService] 📬 Foreground message: ${message.messageId}',
-      );
+     
       _handleRemoteMessage(message);
     });
 
     // Handle notification tap from background
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint(
-        '[NotificationService] 👆 Opened from background: ${message.messageId}',
-      );
+
       _handleMessageTap(message);
     });
 
     // Handle notification tap from terminated state
     final initialMessage = await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
-      debugPrint(
-        '[NotificationService] 🚀 Opened from terminated: ${initialMessage.messageId}',
-      );
+
       _handleMessageTap(initialMessage);
     }
   }

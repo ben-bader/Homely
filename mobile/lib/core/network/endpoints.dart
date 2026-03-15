@@ -90,7 +90,7 @@ class Endpoints {
 
   /// GET - Get media by property ID (media service endpoint)
   static String getMediaByPropertyId(String propertyId) =>
-      '/media/$propertyId/media';
+      '/media/$propertyId';
 
   /// POST - Create media entry
   static const String createMedia = '/media';

@@ -1,9 +1,7 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart' as http_parser;
-import 'package:mobile/core/network/api_client.dart';
+import 'package:mobile/core/network/api_client.dart';  // ← correct import
 import 'package:mobile/core/network/endpoints.dart';
+import 'package:mobile/core/services/cloudinary_service.dart';
 import 'package:mobile/core/storage/secure_storage.dart';
 import 'package:mobile/features/media/models/property_media.dart';
 
@@ -13,6 +11,9 @@ final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
 
 class MediaRepository {
   final _storage = SecureStorage();
+  final _cloudinary = CloudinaryService();
+
+  // ── GET ───────────────────────────────────────────────────────────
   Future<List<PropertyMedia>> getByPropertyId(String propertyId) async {
     final data = await ApiClient.get(Endpoints.getMediaByPropertyId(propertyId));
     final list = data as List<dynamic>;
@@ -21,65 +22,54 @@ class MediaRepository {
         .toList()
       ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
   }
+
+  // ── CREATE ────────────────────────────────────────────────────────
   Future<PropertyMedia> create(PropertyMediaCreateRequest request) async {
-    final data = await ApiClient.post(Endpoints.createMedia, body: request.toJson());
+    final data = await ApiClient.post(
+      Endpoints.createMedia,
+      body: request.toJson(),
+    );
     return PropertyMedia.fromJson(data as Map<String, dynamic>);
   }
+
+  // ── DELETE ────────────────────────────────────────────────────────
   Future<void> delete(String id) async {
     await ApiClient.delete(Endpoints.deleteMediaById(id));
   }
-  Future<String> uploadVideo(VideoUploadRequest request) async {
-    final uri = Uri.parse('${ApiClient.baseUrl}${Endpoints.uploadVideo}').replace(
-      queryParameters: {
-        'propertyId': request.propertyId,
-        'displayOrder': request.displayOrder.toString(),
-      },
-    );
 
-    final multipartRequest = http.MultipartRequest('POST', uri);
+  // ── UPLOAD IMAGE ──────────────────────────────────────────────────
+ Future<String> uploadImage(ImageUploadRequest request) async {
+  final result = await _cloudinary.upload(
+    file: request.file,
+    propertyId: request.propertyId,
+    displayOrder: request.displayOrder,
+  );
 
-    final token = await _storage.getToken();
-    if (token != null) {
-      multipartRequest.headers['Authorization'] = 'Bearer $token';
-    }
-    final multipartFile = await http.MultipartFile.fromPath(
-      'file',
-      request.file.path,
-      contentType: http_parser.MediaType('video', 'mp4'),
-    );
-    multipartRequest.files.add(multipartFile);
+  await create(PropertyMediaCreateRequest(
+    propertyId: request.propertyId,
+    mediaType: MediaType.IMAGE,
+    url: result.url,
+    displayOrder: request.displayOrder,
+  ));
 
-    final streamed = await multipartRequest.send().timeout(
-      const Duration(seconds: 120),
-    );
-    final response = await http.Response.fromStream(streamed);
+  return result.url;
+}
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return response.body.replaceAll('"', '').trim();
-    }
-    final message = response.body.isNotEmpty
-        ? response.body
-        : 'Upload failed (${response.statusCode})';
+Future<String> uploadVideo(VideoUploadRequest request) async {
+  final result = await _cloudinary.upload(
+    file: request.file,
+    propertyId: request.propertyId,
+    displayOrder: request.displayOrder,
+  );
 
-    switch (response.statusCode) {
-      case 400:
-        throw ApiException('Invalid upload data: $message', 400);
-      case 401:
-        throw ApiException('Unauthorized. Please log in again.', 401);
-      case 403:
-        throw ApiException('Access denied.', 403);
-      case 413:
-        throw ApiException(
-          'File too large. Please choose a smaller video.',
-          413,
-        );
-      case 500:
-        throw ApiException(
-          'Server error during upload. Please try again.',
-          500,
-        );
-      default:
-        throw ApiException(message, response.statusCode);
-    }
-  }
+  await create(PropertyMediaCreateRequest(
+    propertyId: request.propertyId,
+    mediaType: MediaType.VIDEO,
+    url: result.url,
+    thumbnailUrl: result.thumbnailUrl,
+    displayOrder: request.displayOrder,
+  ));
+
+  return result.url;
+}
 }

@@ -5,16 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mobile/features/media/models/property_media.dart';
 import 'package:mobile/features/media/providers/media_providers.dart';
 import 'package:mobile/features/media/widgets/property_media_gallery.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
-import 'package:mobile/features/seller/providers/seller_providers.dart' hide sellerListingsProvider;
+import 'package:mobile/features/seller/providers/seller_providers.dart'
+
+    hide sellerListingsProvider;
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/features/tours/screens/video_player_screen.dart';
-
 class EditPropertyScreen extends ConsumerStatefulWidget {
   final Property property;
   const EditPropertyScreen({super.key, required this.property});
@@ -29,7 +29,6 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
   late TextEditingController _descriptionCtrl;
   late TextEditingController _locationCtrl;
   late TextEditingController _priceCtrl;
-  // FIX: was String _listingType / String _status — use proper enum types
   late ListingType _listingType;
   late PropertyStatus _status;
   final ImagePicker _picker = ImagePicker();
@@ -43,9 +42,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
     _descriptionCtrl = TextEditingController(text: p.description);
     _locationCtrl = TextEditingController(text: p.location);
     _priceCtrl = TextEditingController(text: p.price.toString());
-    // FIX: was p.propertyType.toString() — should read the actual listingType enum
     _listingType = p.listingType;
-    // FIX: was p.status.toString() — should read the actual status enum
     _status = p.status;
   }
 
@@ -57,6 +54,8 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
     _priceCtrl.dispose();
     super.dispose();
   }
+
+  // ── Save ──────────────────────────────────────────────────────────────────
 
   Future<void> _saveChanges() async {
     if (_titleCtrl.text.isEmpty || _locationCtrl.text.isEmpty) {
@@ -74,9 +73,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
         'address': _locationCtrl.text,
         'price': double.tryParse(_priceCtrl.text) ?? 0,
         'currency': 'USD',
-        // FIX: was _listingType (String) directly — now call .toJson() on the enum
         'listingType': _listingType.toJson(),
-        // FIX: was _status (String) directly — now call .toJson() on the enum
         'status': _status.toJson(),
       };
 
@@ -93,26 +90,20 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
         ),
       );
 
-      // Invalidate cache to fetch updated data
       ref.invalidate(propertyDetailProvider(widget.property.id));
       ref.invalidate(sellerListingsProvider);
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: AppColors.error,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  // =========================================================
-  // MEDIA PICKERS / UPLOAD
-  // =========================================================
+  // ── Media ─────────────────────────────────────────────────────────────────
 
   Future<void> _pickImages() async {
     try {
@@ -123,10 +114,12 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
       final startIndex = ref.read(propertyMediaCountProvider(propertyId));
 
       for (int i = 0; i < files.length; i++) {
-        final file = File(files[i].path);
         await ref
             .read(propertyMediaProvider(propertyId).notifier)
-            .uploadVideo(file: file, displayOrder: startIndex + i);
+            .uploadImage(                        // ✅ uploadImage for photos
+              file: File(files[i].path),
+              displayOrder: startIndex + i,
+            );
       }
 
       ref.invalidate(propertyMediaProvider(propertyId));
@@ -152,7 +145,10 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
 
       await ref
           .read(propertyMediaProvider(propertyId).notifier)
-          .uploadVideo(file: File(picked.path), displayOrder: displayOrder);
+          .uploadVideo(                          // ✅ uploadVideo for videos
+            file: File(picked.path),
+            displayOrder: displayOrder,
+          );
 
       ref.invalidate(propertyMediaProvider(propertyId));
       if (!mounted) return;
@@ -166,6 +162,10 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
       );
     }
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BUILD
+  // ═══════════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +193,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Hero image (read-only) ─────────────────
+                // ── Hero image ─────────────────────────────
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(28),
@@ -206,176 +206,51 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                         ? Image.network(
                             p.images.first,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: const Color(0xFFF0E9E3),
-                              child: const Icon(
-                                Icons.home_outlined,
-                                size: 48,
-                                color: AppColors.textTertiary,
-                              ),
-                            ),
+                            errorBuilder: (_, __, ___) => _heroPlaceholder(),
                           )
-                        : Container(
-                            color: const Color(0xFFF0E9E3),
-                            child: const Icon(
-                              Icons.home_outlined,
-                              size: 48,
-                              color: AppColors.textTertiary,
-                            ),
-                          ),
+                        : _heroPlaceholder(),
                   ),
                 ),
 
-                // ── Edit Form ──────────────────────────────
+                // ── Form ───────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title
-                      Text(
-                        'Title',
-                        style: tt.labelLarge?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
+                      _label(tt, 'Title'),
+                      _textField(
                         controller: _titleCtrl,
-                        style: tt.bodyMedium?.copyWith(
-                          color: AppColors.accent,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Property title',
-                          hintStyle: tt.bodyMedium?.copyWith(
-                            color: AppColors.textTertiary,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.subtleBackground,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
+                        hint: 'Property title',
                       ),
                       const SizedBox(height: 20),
 
-                      // Price
-                      Text(
-                        'Price (\$)',
-                        style: tt.labelLarge?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
+                      _label(tt, 'Price (\$)'),
+                      _textField(
                         controller: _priceCtrl,
+                        hint: 'Enter price',
                         keyboardType: TextInputType.number,
-                        style: tt.bodyMedium?.copyWith(
-                          color: AppColors.accent,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Enter price',
-                          hintStyle: tt.bodyMedium?.copyWith(
-                            color: AppColors.textTertiary,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.subtleBackground,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 20),
 
-                      // Location
-                      Text(
-                        'Location',
-                        style: tt.labelLarge?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
+                      _label(tt, 'Location'),
+                      _textField(
                         controller: _locationCtrl,
-                        style: tt.bodyMedium?.copyWith(
-                          color: AppColors.accent,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Enter location',
-                          hintStyle: tt.bodyMedium?.copyWith(
-                            color: AppColors.textTertiary,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.subtleBackground,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
+                        hint: 'Enter location',
                       ),
                       const SizedBox(height: 20),
 
-                      // Description
-                      Text(
-                        'Description',
-                        style: tt.labelLarge?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
+                      _label(tt, 'Description'),
+                      _textField(
                         controller: _descriptionCtrl,
+                        hint: 'Enter property description',
                         maxLines: 4,
-                        style: tt.bodyMedium?.copyWith(
-                          color: AppColors.accent,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Enter property description',
-                          hintStyle: tt.bodyMedium?.copyWith(
-                            color: AppColors.textTertiary,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.subtleBackground,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 20),
 
-                      // Media
-                      Text(
-                        'Media',
-                        style: tt.labelLarge?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      // ── Media ───────────────────────────
+                      _label(tt, 'Media'),
                       const SizedBox(height: 12),
-                      // Editable gallery
                       PropertyMediaGallery(
                         propertyId: p.id,
                         editable: true,
@@ -427,57 +302,50 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Listing Type
-                      Text(
-                        'Listing Type',
-                        style: tt.labelLarge?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      // ── Listing type ────────────────────
+                      _label(tt, 'Listing Type'),
                       const SizedBox(height: 8),
                       Row(
-                        // FIX: was comparing String _listingType to 'BUY'/'RENT' string literals
-                        // Now maps display labels to ListingType enum values
                         children: [
-                          _buildListingTypeBtn(
+                          _choiceBtn(
                             tt,
                             label: 'Sell',
-                            value: ListingType.sell,
+                            selected: _listingType == ListingType.sell,
+                            onTap: () =>
+                                setState(() => _listingType = ListingType.sell),
                           ),
                           const SizedBox(width: 12),
-                          _buildListingTypeBtn(
+                          _choiceBtn(
                             tt,
                             label: 'Rent',
-                            value: ListingType.rent,
+                            selected: _listingType == ListingType.rent,
+                            onTap: () =>
+                                setState(() => _listingType = ListingType.rent),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
 
-                      // Status
-                      Text(
-                        'Status',
-                        style: tt.labelLarge?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      // ── Status ──────────────────────────
+                      _label(tt, 'Status'),
                       const SizedBox(height: 8),
                       Row(
-                        // FIX: was comparing String _status to 'ACTIVE'/'INACTIVE' string literals
-                        // Now maps display labels to PropertyStatus enum values
                         children: [
-                          _buildStatusBtn(
+                          _choiceBtn(
                             tt,
                             label: 'Draft',
-                            value: PropertyStatus.draft,
+                            selected: _status == PropertyStatus.draft,
+                            onTap: () =>
+                                setState(() => _status = PropertyStatus.draft),
                           ),
                           const SizedBox(width: 12),
-                          _buildStatusBtn(
+                          _choiceBtn(
                             tt,
                             label: 'Available',
-                            value: PropertyStatus.available,
+                            selected: _status == PropertyStatus.available,
+                            onTap: () => setState(
+                              () => _status = PropertyStatus.available,
+                            ),
                           ),
                         ],
                       ),
@@ -488,13 +356,18 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
             ),
           ),
 
-          // ── Bottom Save Button ─────────────────────────────
+          // ── Bottom save button ─────────────────────────
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                MediaQuery.of(context).padding.bottom + 16,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.background,
                 border: Border(
@@ -508,7 +381,9 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                 onPressed: _loading ? null : _saveChanges,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+                  disabledBackgroundColor:
+                      AppColors.primary.withOpacity(0.5),
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -520,16 +395,16 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : Text(
                         'Save Changes',
-                        style: tt.labelLarge?.copyWith(
+                        style: GoogleFonts.outfit(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
+                          fontSize: 15,
                         ),
                       ),
               ),
@@ -540,63 +415,91 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
     );
   }
 
-  Widget _buildListingTypeBtn(
-    TextTheme tt, {
-    required String label,
-    required ListingType value,
-  }) {
-    final selected = _listingType == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _listingType = value),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.primary : AppColors.subtleBackground,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: tt.labelLarge?.copyWith(
-                color: selected ? Colors.white : AppColors.accent,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHARED WIDGETS
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _buildStatusBtn(
+  Widget _heroPlaceholder() => Container(
+        color: const Color(0xFFF0E9E3),
+        child: const Icon(
+          Icons.home_outlined,
+          size: 48,
+          color: AppColors.textTertiary,
+        ),
+      );
+
+  Widget _label(TextTheme tt, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          text,
+          style: tt.labelLarge?.copyWith(
+            color: AppColors.accent,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+
+  Widget _textField({
+    required TextEditingController controller,
+    required String hint,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) =>
+      TextField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        style: GoogleFonts.outfit(
+          fontSize: 14,
+          color: AppColors.accent,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.outfit(
+            color: AppColors.textTertiary,
+            fontSize: 14,
+          ),
+          filled: true,
+          fillColor: AppColors.subtleBackground,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+      );
+
+  Widget _choiceBtn(
     TextTheme tt, {
     required String label,
-    required PropertyStatus value,
-  }) {
-    final selected = _status == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _status = value),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.primary : AppColors.subtleBackground,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: tt.labelLarge?.copyWith(
-                color: selected ? Colors.white : AppColors.accent,
-                fontWeight: FontWeight.w700,
+    required bool selected,
+    required VoidCallback onTap,
+  }) =>
+      Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color:
+                  selected ? AppColors.primary : AppColors.subtleBackground,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                style: tt.labelLarge?.copyWith(
+                  color: selected ? Colors.white : AppColors.accent,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
 }
