@@ -116,16 +116,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
       'listingType': _listingType,
       'propertyType': _propertyType,
       'status': _status,
-      'bedrooms': bedrooms,
-      'bathrooms': bathrooms,
-      'floor': floor,
-      'hasElevator': hasElevator,
-      'hasGarage': hasGarage,
-      'hasPool': hasPool,
-      'furnished': furnished,
-      'businessType': businessType,
-      'areaSqm': area,
-      'constructible': constructible,
+      // Add the nested property type data
+      ..._buildPropertyTypeData(),
     };
 
     final property = await ApiClient.post(
@@ -155,6 +147,58 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
     if (mounted) setState(() => _loading = false);
   }
 }
+
+  Map<String, dynamic> _buildPropertyTypeData() {
+    switch (_propertyType) {
+      case 'APARTMENT':
+        return {
+          'apartment': {
+            'bedrooms': bedrooms,
+            'bathrooms': bathrooms,
+            'floor': floor,
+            'hasElevator': hasElevator,
+          }
+        };
+      case 'HOUSE':
+        return {
+          'house': {
+            'bedrooms': bedrooms,
+            'bathrooms': bathrooms,
+            'hasGarage': hasGarage,
+          }
+        };
+      case 'VILLA':
+        return {
+          'villa': {
+            'bedrooms': bedrooms,
+            'bathrooms': bathrooms,
+            'hasPool': hasPool,
+          }
+        };
+      case 'STUDIO':
+        return {
+          'studio': {
+            'furnished': furnished,
+          }
+        };
+      case 'COMMERCIAL':
+        return {
+          'commercial': {
+            'businessType': businessType,
+            'areaSqm': area,
+          }
+        };
+      case 'LAND':
+        return {
+          'land': {
+            'areaSqm': area,
+            'constructible': constructible,
+          }
+        };
+      default:
+        return {};
+    }
+  }
 
   void _showSuccessAndPop() {
     ScaffoldMessenger.of(context).showSnackBar(

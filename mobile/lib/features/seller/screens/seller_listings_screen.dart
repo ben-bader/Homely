@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/property/models/property.dart';
+import 'package:mobile/features/property/repositories/property_repository.dart';
 import 'package:mobile/features/seller/screens/edit_property_screen.dart';
 import 'package:mobile/features/seller/providers/seller_providers.dart';
 import 'package:mobile/features/seller/screens/create_property_screen.dart';
@@ -26,7 +27,6 @@ class SellerListingsScreen extends ConsumerWidget {
           'My Listings',
           style: tt.headlineSmall?.copyWith(
             color: AppColors.accent,
-            fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
           ),
         ),
@@ -158,13 +158,42 @@ class _ListingCard extends ConsumerWidget {
               child: SizedBox(
                 height: 150,
                 width: double.infinity,
-                child: property.images.isNotEmpty
-                    ? Image.network(
-                        property.images.first,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _imagePlaceholder(),
-                      )
-                    : _imagePlaceholder(),
+                child: Stack(
+                  children: [
+                    // Image
+                    SizedBox(
+                      height: 150,
+                      width: double.infinity,
+                      child: property.images.isNotEmpty
+                          ? Image.network(
+                              property.images.first,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                            )
+                          : _imagePlaceholder(),
+                    ),
+                    // Delete button overlay
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () => _showDeleteConfirmation(context, ref),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Padding(
@@ -293,6 +322,15 @@ class _ListingCard extends ConsumerWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _CardBtn(
+                          icon: Icons.delete_outline,
+                          label: 'Delete',
+                          color: Colors.red,
+                          onTap: () => _showDeleteConfirmation(context, ref),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -302,6 +340,118 @@ class _ListingCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Delete Property',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w600,
+            color: AppColors.accent,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${property.title}"? This action cannot be undone.',
+          style: GoogleFonts.outfit(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.outfit(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              await _deleteProperty(context, ref);
+            },
+            child: Text(
+              'Delete',
+              style: GoogleFonts.outfit(
+                color: Colors.red,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteProperty(BuildContext context, WidgetRef ref) async {
+    try {
+      final repo = ref.read(propertyRepositoryProvider);
+      await repo.delete(property.id);
+
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Property deleted successfully',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          ),
+        );
+      }
+
+      // Refresh the listings
+      ref.invalidate(sellerListingsProvider);
+    } catch (e) {
+      debugPrint('Error deleting property: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Failed to delete property: ${e.toString()}',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          ),
+        );
+      }
+    }
   }
 
   Widget _imagePlaceholder() => Container(

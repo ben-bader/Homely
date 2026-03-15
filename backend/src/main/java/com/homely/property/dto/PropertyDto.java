@@ -2,6 +2,7 @@ package com.homely.property.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -36,6 +37,8 @@ public class PropertyDto {
     private Double longitude;
     private Instant createdAt;
     private Instant updatedAt;
+
+    private List<String> images;
 
     private ApartmentDto apartment;
     private HouseDto house;

@@ -13,7 +13,6 @@ class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   Timer? _pollTimer;
-  final List<String> _seenIds = [];
 
   // ─────────────────────────────────────────────────────────────
   // init — call once at app start
@@ -148,14 +147,10 @@ Future<void> init() async {
       try {
         final notifications = await fetchUnread(userId);
         debugPrint(
-          '[NotificationService] 📬 Fetched ${notifications.length} notifications',
+          '[NotificationService] 📬 Fetched ${notifications.length} unread notifications',
         );
-        for (final n in notifications) {
-          if (!_seenIds.contains(n.id)) {
-            _seenIds.add(n.id);
-            _showLocalNotification(n);
-          }
-        }
+        // Removed duplicate local notification showing - FCM handles push notifications
+        // Only polling to keep notification count updated for UI badge
       } catch (e) {
         debugPrint('[NotificationService] ❌ Polling error: $e');
       }

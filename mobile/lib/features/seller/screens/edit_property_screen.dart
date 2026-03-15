@@ -10,11 +10,11 @@ import 'package:mobile/features/media/widgets/property_media_gallery.dart';
 import 'package:mobile/features/property/models/property.dart';
 import 'package:mobile/features/property/providers/property_providers.dart';
 import 'package:mobile/features/seller/providers/seller_providers.dart'
-
     hide sellerListingsProvider;
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/features/tours/screens/video_player_screen.dart';
+
 class EditPropertyScreen extends ConsumerStatefulWidget {
   final Property property;
   const EditPropertyScreen({super.key, required this.property});
@@ -31,8 +31,12 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
   late TextEditingController _priceCtrl;
   late ListingType _listingType;
   late PropertyStatus _status;
+
   final ImagePicker _picker = ImagePicker();
   bool _loading = false;
+
+  // ✅ Track whether controllers have been seeded from property data
+  bool _seeded = false;
 
   @override
   void initState() {
@@ -96,7 +100,10 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppColors.error,
+        ),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -116,7 +123,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
       for (int i = 0; i < files.length; i++) {
         await ref
             .read(propertyMediaProvider(propertyId).notifier)
-            .uploadImage(                        // ✅ uploadImage for photos
+            .uploadImage(
               file: File(files[i].path),
               displayOrder: startIndex + i,
             );
@@ -145,7 +152,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
 
       await ref
           .read(propertyMediaProvider(propertyId).notifier)
-          .uploadVideo(                          // ✅ uploadVideo for videos
+          .uploadVideo(
             file: File(picked.path),
             displayOrder: displayOrder,
           );
@@ -248,7 +255,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── Media ───────────────────────────
+                      // ── Media ────────────────────────────
                       _label(tt, 'Media'),
                       const SizedBox(height: 12),
                       PropertyMediaGallery(
@@ -270,12 +277,12 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: _pickImages,
-                              icon: const Icon(Icons.photo_library_outlined),
+                              icon: const Icon(
+                                  Icons.photo_library_outlined),
                               label: const Text('Add Photos'),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
+                                    vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -286,12 +293,12 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: _pickVideo,
-                              icon: const Icon(Icons.videocam_outlined),
+                              icon:
+                                  const Icon(Icons.videocam_outlined),
                               label: const Text('Add Video'),
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
+                                    vertical: 14),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -302,7 +309,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ── Listing type ────────────────────
+                      // ── Listing type ─────────────────────
                       _label(tt, 'Listing Type'),
                       const SizedBox(height: 8),
                       Row(
@@ -311,22 +318,22 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                             tt,
                             label: 'Sell',
                             selected: _listingType == ListingType.sell,
-                            onTap: () =>
-                                setState(() => _listingType = ListingType.sell),
+                            onTap: () => setState(
+                                () => _listingType = ListingType.sell),
                           ),
                           const SizedBox(width: 12),
                           _choiceBtn(
                             tt,
                             label: 'Rent',
                             selected: _listingType == ListingType.rent,
-                            onTap: () =>
-                                setState(() => _listingType = ListingType.rent),
+                            onTap: () => setState(
+                                () => _listingType = ListingType.rent),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
 
-                      // ── Status ──────────────────────────
+                      // ── Status ───────────────────────────
                       _label(tt, 'Status'),
                       const SizedBox(height: 8),
                       Row(
@@ -335,17 +342,17 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                             tt,
                             label: 'Draft',
                             selected: _status == PropertyStatus.draft,
-                            onTap: () =>
-                                setState(() => _status = PropertyStatus.draft),
+                            onTap: () => setState(
+                                () => _status = PropertyStatus.draft),
                           ),
                           const SizedBox(width: 12),
                           _choiceBtn(
                             tt,
                             label: 'Available',
-                            selected: _status == PropertyStatus.available,
+                            selected:
+                                _status == PropertyStatus.available,
                             onTap: () => setState(
-                              () => _status = PropertyStatus.available,
-                            ),
+                                () => _status = PropertyStatus.available),
                           ),
                         ],
                       ),
@@ -395,8 +402,8 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white),
                         ),
                       )
                     : Text(
@@ -486,8 +493,9 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color:
-                  selected ? AppColors.primary : AppColors.subtleBackground,
+              color: selected
+                  ? AppColors.primary
+                  : AppColors.subtleBackground,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(

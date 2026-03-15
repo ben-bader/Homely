@@ -7,16 +7,15 @@ import 'package:mobile/features/property/providers/property_providers.dart';
 import 'package:mobile/features/chat/repositories/chat_repository.dart';
 import 'package:mobile/features/chat/screens/chat_screen.dart';
 import 'package:mobile/features/chat/providers/chat_providers.dart';
-import 'package:mobile/features/property/repositories/property_repository.dart';
 import 'package:mobile/features/auth/services/auth_service.dart';
 import 'package:mobile/features/visit_requests/screens/request_visit_sheet.dart';
 import 'package:mobile/features/feedback/widgets/feedback_list.dart';
-import 'package:mobile/features/feedback/widgets/submit_feedback_sheet.dart';
 import 'package:mobile/features/reports/widgets/report_sheet.dart';
 import 'package:mobile/features/boost/widgets/boost_sheet.dart';
 import 'package:mobile/features/media/models/property_media.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
+import 'package:mobile/features/media/providers/media_providers.dart';
+import 'package:mobile/features/tours/screens/video_player_screen.dart';
+
 class PropertyDetailScreen extends ConsumerWidget {
   final String propertyId;
   const PropertyDetailScreen({super.key, required this.propertyId});
@@ -28,10 +27,7 @@ class PropertyDetailScreen extends ConsumerWidget {
       loading: () => const Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.primary,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
         ),
       ),
       error: (e, _) => Scaffold(
@@ -44,9 +40,14 @@ class PropertyDetailScreen extends ConsumerWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// BODY
+// ═══════════════════════════════════════════════════════════════════════════════
+
 class _Body extends ConsumerStatefulWidget {
   final Property property;
   const _Body({required this.property});
+
   @override
   ConsumerState<_Body> createState() => _BodyState();
 }
@@ -56,33 +57,21 @@ class _BodyState extends ConsumerState<_Body> {
   final _pageCtrl = PageController();
   String? _currentUserId;
   String? _userRole;
-  List<PropertyMedia> _media = [];
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentUserId();
-    _fetchMedia();
+    _loadCurrentUser();
   }
 
-  Future<void> _loadCurrentUserId() async {
-    final authService = AuthService();
-    final userId = await authService.getCurrentUserId();
-    final role = await authService.getUserRoleFromStorage();
-    if (mounted)
-      setState(() {
-        _currentUserId = userId;
-        _userRole = role;
-      });
-  }
-
-  Future<void> _fetchMedia() async {
-    final media = await PropertyRepository().getPropertyMedia(widget.property.id);
-    if (mounted) {
-      setState(() {
-        _media = media;
-      });
-    }
+  Future<void> _loadCurrentUser() async {
+    final auth = AuthService();
+    final userId = await auth.getCurrentUserId();
+    final role = await auth.getUserRoleFromStorage();
+    if (mounted) setState(() {
+      _currentUserId = userId;
+      _userRole = role;
+    });
   }
 
   @override
@@ -100,79 +89,60 @@ class _BodyState extends ConsumerState<_Body> {
     final p = widget.property;
     final h = MediaQuery.of(context).size.height;
 
+    // ✅ Single media watch — used for both hero images and media section
+    final mediaAsync = ref.watch(propertyMediaProvider(p.id));
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-          // ── SliverAppBar sits ON TOP of the image, scrolls away with it ──
+          // ── Hero app bar ─────────────────────────────────────────────────
           SliverAppBar(
             pinned: false,
             floating: false,
             snap: false,
-            // expandedHeight = image height so the flexible space IS the image
             expandedHeight: h * 0.42,
             backgroundColor: Colors.transparent,
             elevation: 0,
             scrolledUnderElevation: 0,
             automaticallyImplyLeading: false,
             titleSpacing: 0,
-            // Back + title + flag float over the image
             title: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Consumer(
-                builder: (context, ref, child) {
-                  final isFavoritedAsync = ref.watch(isPropertyFavoritedProvider(p.id));
-                  return Row(
-                    children: [
-                      _CircleBtn(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: () => Navigator.pop(context),
+              child: Row(
+                children: [
+                  _CircleBtn(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Property Detail',
+                      textAlign: TextAlign.center,
+                      style: tt.titleLarge?.copyWith(
+                        color: AppColors.background,
+                        letterSpacing: -0.5,
+                        height: 1.1,
+                        fontSize: 25,
                       ),
-                      Expanded(
-                        child: Text(
-                          'Property Detail',
-                          textAlign: TextAlign.center,
-                          style: tt.titleLarge?.copyWith(
-                            color: AppColors.accent,
-                            letterSpacing: -0.5,
-                            height: 1.1,
-                            fontSize: 25,
-                          ),
-                        ),
+                    ),
+                  ),
+                  if (!_isOwner)
+                    _CircleBtn(
+                      icon: Icons.flag_outlined,
+                      iconColor: AppColors.error,
+                      onTap: () => ReportSheet.show(
+                        context,
+                        targetType: ReportTargetType.property,
+                        targetId: p.id,
+                        targetTitle: p.title,
                       ),
-                      if (!_isOwner) ...[
-                        _FavoriteBtn(
-                          propertyId: p.id,
-                          isFavorited: isFavoritedAsync.maybeWhen(
-                            data: (isFav) => isFav,
-                            orElse: () => false,
-                          ),
-                          onToggle: (isFav) {
-                            if (isFav) {
-                              ref.read(favoritesProvider.notifier).addFavorite(p.id);
-                            } else {
-                              ref.read(favoritesProvider.notifier).removeFavorite(p.id);
-                            }
-                          },
-                        ),
-                        _CircleBtn(
-                          icon: Icons.flag_outlined,
-                          iconColor: AppColors.error,
-                          onTap: () => ReportSheet.show(
-                            context,
-                            targetType: ReportTargetType.property,
-                            targetId: p.id,
-                            targetTitle: p.title,
-                          ),
-                        ),
-                      ] else
-                        const SizedBox(width: 80),
-                    ],
-                  );
-                },
+                    )
+                  else
+                    const SizedBox(width: 40),
+                ],
               ),
             ),
-            // The image fills the flexible space
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
               background: ClipRRect(
@@ -180,53 +150,22 @@ class _BodyState extends ConsumerState<_Body> {
                   bottomLeft: Radius.circular(28),
                   bottomRight: Radius.circular(28),
                 ),
-                child: p.images.isNotEmpty
-                    ? Stack(
-                        children: [
-                          PageView.builder(
-                            controller: _pageCtrl,
-                            itemCount: p.images.length,
-                            onPageChanged: (i) =>
-                                setState(() => _imgIdx = i),
-                            itemBuilder: (_, i) => Image.network(
-                              p.images[i],
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              errorBuilder: (_, __, ___) =>
-                                  _imgPlaceholder(),
-                            ),
-                          ),
-                          if (p.images.length > 1)
-                            Positioned(
-                              bottom: 16,
-                              left: 0,
-                              right: 0,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  p.images.length,
-                                  (i) => AnimatedContainer(
-                                    duration: const Duration(
-                                        milliseconds: 250),
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 3),
-                                    width: _imgIdx == i ? 20 : 7,
-                                    height: 7,
-                                    decoration: BoxDecoration(
-                                      color: _imgIdx == i
-                                          ? Colors.white
-                                          : Colors.white54,
-                                      borderRadius:
-                                          BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      )
-                    : _imgPlaceholder(),
+                // ✅ Hero uses actual Cloudinary images from media provider
+                child: mediaAsync.when(
+                  loading: () => _buildHeroCarousel(p.images),
+                  error: (_, __) => _buildHeroCarousel(p.images),
+                  data: (media) {
+                    final imageUrls = media
+                        .where((m) => m.mediaType == MediaType.IMAGE)
+                        .toList()
+                      ..sort((a, b) =>
+                          a.displayOrder.compareTo(b.displayOrder));
+                    final urls = imageUrls.isNotEmpty
+                        ? imageUrls.map((m) => m.url).toList()
+                        : p.images;
+                    return _buildHeroCarousel(urls);
+                  },
+                ),
               ),
             ),
           ),
@@ -236,7 +175,7 @@ class _BodyState extends ConsumerState<_Body> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Property title + price
+                // Title + price
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -247,15 +186,12 @@ class _BodyState extends ConsumerState<_Body> {
                           Text(
                             p.title,
                             style: tt.headlineSmall?.copyWith(
-                              letterSpacing: -0.5,
-                            ),
+                                letterSpacing: -0.5),
                           ),
                           const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: p.listingType.toJson() == 'RENT'
                                   ? const Color(0xFFE8F4FD)
@@ -294,17 +230,12 @@ class _BodyState extends ConsumerState<_Body> {
                 // Location
                 Row(
                   children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 15,
-                      color: AppColors.textSecondary,
-                    ),
+                    const Icon(Icons.location_on_outlined,
+                        size: 15, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: Text(
-                        p.location,
-                        style: tt.bodySmall?.copyWith(fontSize: 13),
-                      ),
+                      child: Text(p.location,
+                          style: tt.bodySmall?.copyWith(fontSize: 13)),
                     ),
                   ],
                 ),
@@ -312,39 +243,67 @@ class _BodyState extends ConsumerState<_Body> {
                 const SizedBox(height: 24),
 
                 // Spec chips
-                Row(
-                  children: List.generate(
-                    p.chips.length,
-                    (i) => [
+                if (p.chips.isNotEmpty) ...[
+                  Row(
+                    children: List.generate(p.chips.length, (i) => [
                       Expanded(
                         child: _SpecBox(
                           icon: p.chips[i].icon,
                           label: p.chips[i].label,
                         ),
                       ),
-                      if (i < p.chips.length - 1)
-                        const SizedBox(width: 10),
-                    ],
-                  ).expand((e) => e).toList(),
-                ),
+                      if (i < p.chips.length - 1) const SizedBox(width: 10),
+                    ]).expand((e) => e).toList(),
+                  ),
+                  const SizedBox(height: 32),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                          color: AppColors.primary.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(_propertyIcon(p.propertyType.toJson()),
+                            size: 15, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          p.propertyType.toJson()[0] +
+                              p.propertyType
+                                  .toJson()
+                                  .substring(1)
+                                  .toLowerCase(),
+                          style: GoogleFonts.outfit(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
 
                 // Description
                 if (p.description.isNotEmpty) ...[
-                  const SizedBox(height: 32),
                   Text('Description', style: tt.titleSmall),
                   const SizedBox(height: 10),
-                  Text(
-                    p.description,
-                    style: tt.bodyMedium?.copyWith(height: 1.6),
-                  ),
+                  Text(p.description,
+                      style: tt.bodyMedium?.copyWith(height: 1.6)),
+                  const SizedBox(height: 32),
                 ],
 
-                const SizedBox(height: 32),
-
-                // Listing agent — NO padding/margin on the card
+                // Listing agent
                 Text('Listing Agent', style: tt.titleSmall),
                 const SizedBox(height: 12),
                 Container(
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(16),
@@ -358,10 +317,8 @@ class _BodyState extends ConsumerState<_Body> {
                             ? NetworkImage(p.sellerAvatar!)
                             : null,
                         child: p.sellerAvatar == null
-                            ? const Icon(
-                                Icons.person,
-                                color: AppColors.textSecondary,
-                              )
+                            ? const Icon(Icons.person,
+                                color: AppColors.textSecondary)
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -379,10 +336,8 @@ class _BodyState extends ConsumerState<_Body> {
                             if (p.sellerAgency != null &&
                                 p.sellerAgency!.isNotEmpty) ...[
                               const SizedBox(height: 2),
-                              Text(
-                                p.sellerAgency!,
-                                style: tt.bodySmall,
-                              ),
+                              Text(p.sellerAgency!,
+                                  style: tt.bodySmall),
                             ],
                           ],
                         ),
@@ -419,13 +374,10 @@ class _BodyState extends ConsumerState<_Body> {
 
                 const SizedBox(height: 32),
                 FeedbackList(
-                  propertyId: p.id,
-                  currentUserId: _currentUserId,
-                ),
-
+                    propertyId: p.id, currentUserId: _currentUserId),
                 const SizedBox(height: 32),
 
-                // Location map placeholder
+                // Location address
                 Text('Location Address', style: tt.titleSmall),
                 const SizedBox(height: 12),
                 ClipRRect(
@@ -437,11 +389,8 @@ class _BodyState extends ConsumerState<_Body> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.location_on,
-                            color: Colors.red,
-                            size: 32,
-                          ),
+                          const Icon(Icons.location_on,
+                              color: Colors.red, size: 32),
                           const SizedBox(height: 6),
                           Padding(
                             padding: const EdgeInsets.symmetric(
@@ -450,8 +399,7 @@ class _BodyState extends ConsumerState<_Body> {
                               p.location,
                               textAlign: TextAlign.center,
                               style: tt.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                                  fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -459,13 +407,31 @@ class _BodyState extends ConsumerState<_Body> {
                     ),
                   ),
                 ),
-                // Media display section
-                if (_media.isNotEmpty) ...[
-                  const SizedBox(height: 32),
-                  Text('Media', style: tt.titleSmall),
-                  const SizedBox(height: 10),
-                  _MediaDisplaySection(media: _media),
-                ],
+
+                // Media section
+                mediaAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: AppColors.primary),
+                    ),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (media) {
+                    if (media.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 32),
+                        Text('Media', style: tt.titleSmall),
+                        const SizedBox(height: 12),
+                        _MediaSection(
+                            media: media, propertyId: p.id),
+                      ],
+                    );
+                  },
+                ),
               ]),
             ),
           ),
@@ -475,9 +441,7 @@ class _BodyState extends ConsumerState<_Body> {
       bottomNavigationBar: _isClient
           ? Container(
               padding: EdgeInsets.fromLTRB(
-                20,
-                12,
-                20,
+                20, 12, 20,
                 MediaQuery.of(context).padding.bottom + 12,
               ),
               decoration: BoxDecoration(
@@ -496,11 +460,8 @@ class _BodyState extends ConsumerState<_Body> {
                   propertyId: p.id,
                   propertyTitle: p.title,
                 ),
-                icon: const Icon(
-                  Icons.calendar_today_outlined,
-                  size: 18,
-                  color: Colors.white,
-                ),
+                icon: const Icon(Icons.calendar_today_outlined,
+                    size: 18, color: Colors.white),
                 label: Text(
                   'Request a Visit',
                   style: GoogleFonts.outfit(
@@ -523,16 +484,86 @@ class _BodyState extends ConsumerState<_Body> {
     );
   }
 
+  // ── Hero carousel ─────────────────────────────────────────────────────────
+
+  Widget _buildHeroCarousel(List<String> images) {
+    if (images.isEmpty) return _imgPlaceholder();
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _pageCtrl,
+          itemCount: images.length,
+          onPageChanged: (i) => setState(() => _imgIdx = i),
+          itemBuilder: (_, i) => Image.network(
+            images[i],
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            loadingBuilder: (_, child, progress) {
+              if (progress == null) return child;
+              return Container(
+                color: AppColors.borderMedium,
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (_, __, ___) => _imgPlaceholder(),
+          ),
+        ),
+        if (images.length > 1)
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                images.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 3),
+                  width: _imgIdx == i ? 20 : 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: _imgIdx == i
+                        ? Colors.white
+                        : Colors.white54,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  IconData _propertyIcon(String type) {
+    switch (type) {
+      case 'HOUSE': return Icons.house_outlined;
+      case 'APARTMENT': return Icons.apartment_outlined;
+      case 'VILLA': return Icons.villa_outlined;
+      case 'STUDIO': return Icons.chair_outlined;
+      case 'COMMERCIAL': return Icons.business_outlined;
+      case 'LAND': return Icons.landscape_outlined;
+      default: return Icons.home_outlined;
+    }
+  }
+
   Widget _imgPlaceholder() => Container(
-    color: AppColors.borderMedium,
-    child: const Center(
-      child: Icon(
-        Icons.home_outlined,
-        size: 64,
-        color: AppColors.textTertiary,
-      ),
-    ),
-  );
+        color: AppColors.borderMedium,
+        child: const Center(
+          child: Icon(Icons.home_outlined,
+              size: 64, color: AppColors.textTertiary),
+        ),
+      );
 
   String _fmt(double p) {
     if (p >= 1000000) return '${(p / 1000000).toStringAsFixed(2)}M';
@@ -540,6 +571,328 @@ class _BodyState extends ConsumerState<_Body> {
     return p.toStringAsFixed(0);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MEDIA SECTION — tabbed images / videos
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _MediaSection extends StatefulWidget {
+  final List<PropertyMedia> media;
+  final String propertyId;
+  const _MediaSection({required this.media, required this.propertyId});
+
+  @override
+  State<_MediaSection> createState() => _MediaSectionState();
+}
+
+class _MediaSectionState extends State<_MediaSection>
+    with SingleTickerProviderStateMixin {
+  late TabController _tab;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final images = widget.media
+        .where((m) => m.mediaType == MediaType.IMAGE)
+        .toList();
+    final videos = widget.media
+        .where((m) => m.mediaType == MediaType.VIDEO)
+        .toList();
+
+    return Column(
+      children: [
+        TabBar(
+          controller: _tab,
+          indicatorColor: AppColors.primary,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textSecondary,
+          labelStyle: GoogleFonts.outfit(
+              fontWeight: FontWeight.w600, fontSize: 14),
+          tabs: [
+            Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.image_outlined, size: 18),
+                  const SizedBox(width: 6),
+                  Text('Photos (${images.length})'),
+                ],
+              ),
+            ),
+            Tab(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.video_library_outlined, size: 18),
+                  const SizedBox(width: 6),
+                  Text('Reels (${videos.length})'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 400,
+          child: TabBarView(
+            controller: _tab,
+            children: [
+              _MediaGrid(
+                  media: images,
+                  propertyId: widget.propertyId,
+                  isVideo: false),
+              _MediaGrid(
+                  media: videos,
+                  propertyId: widget.propertyId,
+                  isVideo: true),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Media grid ────────────────────────────────────────────────────────────────
+
+class _MediaGrid extends StatelessWidget {
+  final List<PropertyMedia> media;
+  final String propertyId;
+  final bool isVideo;
+  const _MediaGrid({
+    required this.media,
+    required this.propertyId,
+    required this.isVideo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (media.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isVideo
+                  ? Icons.video_library_outlined
+                  : Icons.image_outlined,
+              size: 48,
+              color: AppColors.textTertiary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isVideo ? 'No videos yet' : 'No photos yet',
+              style: GoogleFonts.outfit(
+                  color: AppColors.textSecondary, fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 1,
+      ),
+      itemCount: media.length,
+      itemBuilder: (_, i) => isVideo
+          ? _VideoGridItem(media: media[i], propertyId: propertyId)
+          : _ImageGridItem(media: media[i], isCover: i == 0),
+    );
+  }
+}
+
+// ── Image grid item ───────────────────────────────────────────────────────────
+
+class _ImageGridItem extends StatelessWidget {
+  final PropertyMedia media;
+  final bool isCover;
+  const _ImageGridItem({required this.media, this.isCover = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => _FullscreenImage(url: media.url),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              media.url,
+              fit: BoxFit.cover,
+              loadingBuilder: (_, child, progress) {
+                if (progress == null) return child;
+                return Container(
+                  color: AppColors.subtleBackground,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.primary),
+                  ),
+                );
+              },
+              errorBuilder: (_, __, ___) => Container(
+                color: AppColors.subtleBackground,
+                child: const Center(
+                  child: Icon(Icons.broken_image_outlined,
+                      color: AppColors.textTertiary, size: 32),
+                ),
+              ),
+            ),
+
+            // Cover badge
+            if (isCover)
+              Positioned(
+                bottom: 8,
+                left: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star_rounded,
+                          color: Colors.white, size: 11),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Cover',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Video grid item ───────────────────────────────────────────────────────────
+
+class _VideoGridItem extends StatelessWidget {
+  final PropertyMedia media;
+  final String propertyId;
+  const _VideoGridItem({required this.media, required this.propertyId});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              VideoPlayerScreen(video: media, propertyId: propertyId),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          color: Colors.black87,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (media.thumbnailUrl != null &&
+                  media.thumbnailUrl!.isNotEmpty)
+                Image.network(
+                  media.thumbnailUrl!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (_, __, ___) =>
+                      const SizedBox.shrink(),
+                ),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border:
+                      Border.all(color: Colors.white54, width: 1.5),
+                ),
+                child: const Icon(Icons.play_arrow_rounded,
+                    color: Colors.white, size: 24),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Fullscreen image ──────────────────────────────────────────────────────────
+
+class _FullscreenImage extends StatelessWidget {
+  final String url;
+  const _FullscreenImage({required this.url});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        body: Center(
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 4.0,
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.broken_image_outlined,
+                color: Colors.white54,
+                size: 64,
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHARED WIDGETS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 class _OutlineActionBtn extends StatelessWidget {
   final IconData icon;
@@ -555,31 +908,31 @@ class _OutlineActionBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
-        ],
-      ),
-    ),
-  );
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class _ContactBtn extends ConsumerWidget {
@@ -614,14 +967,14 @@ class _ContactBtn extends ConsumerWidget {
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+                  borderRadius: BorderRadius.circular(12)),
             ),
           );
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(20),
@@ -675,61 +1028,16 @@ class _CircleBtn extends StatelessWidget {
   const _CircleBtn({
     required this.icon,
     required this.onTap,
-    this.iconColor = AppColors.accent,
+    this.iconColor = AppColors.background,
   });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 40,
-      height: 40,
-      child: Icon(icon, size: 24, color: iconColor),
-    ),
-  );
-}
-
-class _FavoriteBtn extends StatelessWidget {
-  final String propertyId;
-  final bool isFavorited;
-  final Function(bool) onToggle;
-
-  const _FavoriteBtn({
-    required this.propertyId,
-    required this.isFavorited,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: () => onToggle(!isFavorited),
-    child: Container(
-      width: 40,
-      height: 40,
-      child: Icon(
-        isFavorited ? Icons.favorite : Icons.favorite_border,
-        size: 24,
-        color: isFavorited ? Colors.red : AppColors.accent,
-      ),
-    ),
-  );
-}
-
-class _MediaDisplaySection extends StatelessWidget {
-  final List<PropertyMedia> media;
-
-  const _MediaDisplaySection({required this.media});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: media.map((m) {
-        if (m.mediaType == MediaType.IMAGE) {
-          return Image.network(m.url, fit: BoxFit.cover);
-        } else {
-          return Text('Video: ${m.url}'); // Replace with a video player widget.
-        }
-      }).toList(),
-    );
-  }
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, size: 24, color: iconColor),
+        ),
+      );
 }

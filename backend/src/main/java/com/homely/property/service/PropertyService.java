@@ -13,6 +13,8 @@ import com.homely.boost.repository.BoostPurchaseRepository;
 import com.homely.common.enums.ListingType;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
+import com.homely.media.repository.PropertyMediaRepository;
+import com.homely.media.service.MediaService;
 import com.homely.notification.dto.NotificationCreateRequest;
 import com.homely.notification.service.NotificationService;
 import com.homely.property.dto.PropertyCreateRequest;
@@ -56,6 +58,8 @@ public class PropertyService {
     private final LandMapper landMapper;
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
+    private final MediaService mediaService;
+    private final PropertyMediaRepository propertyMediaRepository;
 
     // ================= CREATE =================
     public PropertyDto create(PropertyCreateRequest request, String userEmail) {
@@ -77,7 +81,16 @@ public class PropertyService {
         // Send notification to seller confirming property creation
         sendPropertyCreatedNotification(seller, saved);
 
-        return enrichWithBoostInfo(propertyMapper.toDto(saved));
+        PropertyDto dto = propertyMapper.toDto(saved);
+        // Populate images for the property (might be empty for new properties)
+        List<String> imageUrls = propertyMediaRepository.findByPropertyId(saved.getId())
+                .stream()
+                .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                .map(media -> media.getUrl())
+                .toList();
+        dto.setImages(imageUrls);
+        
+        return enrichWithBoostInfo(dto);
     }
 
     private void attachSubtype(Property property, PropertyCreateRequest request) {
@@ -145,14 +158,36 @@ public class PropertyService {
         if (property.getStudio() != null) property.getStudio().getPropertyId();
         if (property.getCommercial() != null) property.getCommercial().getPropertyId();
         if (property.getLand() != null) property.getLand().getPropertyId();
-        return enrichWithBoostInfo(propertyMapper.toDto(property));
+        
+        PropertyDto dto = propertyMapper.toDto(property);
+        
+        // Populate images from PropertyMedia
+        List<String> imageUrls = mediaService.findByPropertyId(id)
+                .stream()
+                .filter(media -> media.getMediaType().equals("IMAGE"))
+                .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                .map(media -> media.getUrl())
+                .toList();
+        dto.setImages(imageUrls);
+        
+        return enrichWithBoostInfo(dto);
     }
 
     // ================= HOMEPAGE =================
     public List<PropertyDto> getAll() {
         return enrichWithBoostInfo(propertyRepository.findAllOrderByBoostThenCreatedAt(java.time.Instant.now())
                 .stream()
-                .map(propertyMapper::toDto)
+                .map(property -> {
+                    PropertyDto dto = propertyMapper.toDto(property);
+                    // Populate images for each property
+                    List<String> imageUrls = propertyMediaRepository.findByPropertyId(property.getId())
+                            .stream()
+                            .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                            .map(media -> media.getUrl())
+                            .toList();
+                    dto.setImages(imageUrls);
+                    return dto;
+                })
                 .toList());
     }
     public PropertyDto getById(UUID id) {
@@ -222,7 +257,17 @@ Specification<Property> spec = (root, query, cb) -> null;
                 
                 return p2.getCreatedAt().compareTo(p1.getCreatedAt());
             })
-            .map(propertyMapper::toDto)
+            .map(property -> {
+                PropertyDto dto = propertyMapper.toDto(property);
+                // Populate images for each property
+                List<String> imageUrls = propertyMediaRepository.findByPropertyId(property.getId())
+                        .stream()
+                        .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                        .map(media -> media.getUrl())
+                        .toList();
+                dto.setImages(imageUrls);
+                return dto;
+            })
             .toList());
 }
 
@@ -240,7 +285,17 @@ Specification<Property> spec = (root, query, cb) -> null;
                     
                     return p2.getCreatedAt().compareTo(p1.getCreatedAt());
                 })
-                .map(propertyMapper::toDto)
+                .map(property -> {
+                    PropertyDto dto = propertyMapper.toDto(property);
+                    // Populate images for each property
+                    List<String> imageUrls = propertyMediaRepository.findByPropertyId(property.getId())
+                            .stream()
+                            .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                            .map(media -> media.getUrl())
+                            .toList();
+                    dto.setImages(imageUrls);
+                    return dto;
+                })
                 .toList();
     }
 
@@ -257,7 +312,17 @@ Specification<Property> spec = (root, query, cb) -> null;
                     
                     return p2.getCreatedAt().compareTo(p1.getCreatedAt());
                 })
-                .map(propertyMapper::toDto)
+                .map(property -> {
+                    PropertyDto dto = propertyMapper.toDto(property);
+                    // Populate images for each property
+                    List<String> imageUrls = propertyMediaRepository.findByPropertyId(property.getId())
+                            .stream()
+                            .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                            .map(media -> media.getUrl())
+                            .toList();
+                    dto.setImages(imageUrls);
+                    return dto;
+                })
                 .toList();
     }
 
@@ -293,7 +358,16 @@ Specification<Property> spec = (root, query, cb) -> null;
             System.err.println("Failed to send property status notification: " + e.getMessage());
         }
 
-        return enrichWithBoostInfo(propertyMapper.toDto(saved));
+        PropertyDto dto = propertyMapper.toDto(saved);
+        // Populate images for the property
+        List<String> imageUrls = propertyMediaRepository.findByPropertyId(saved.getId())
+                .stream()
+                .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                .map(media -> media.getUrl())
+                .toList();
+        dto.setImages(imageUrls);
+        
+        return enrichWithBoostInfo(dto);
     }
 
     // ================= UPDATE PROPERTY =================
@@ -395,7 +469,17 @@ Specification<Property> spec = (root, query, cb) -> null;
         }
 
         Property saved = propertyRepository.save(property);
-        return enrichWithBoostInfo(propertyMapper.toDto(saved));
+        
+        PropertyDto dto = propertyMapper.toDto(saved);
+        // Populate images for the property
+        List<String> imageUrls = propertyMediaRepository.findByPropertyId(saved.getId())
+                .stream()
+                .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                .map(media -> media.getUrl())
+                .toList();
+        dto.setImages(imageUrls);
+        
+        return enrichWithBoostInfo(dto);
     }
 
     // ================= DELETE =================
