@@ -21,9 +21,7 @@ class ProfileScreen extends ConsumerWidget {
       body: profileAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.primary,
-          ),
+              strokeWidth: 2, color: AppColors.primary),
         ),
         error: (e, _) => _ErrorView(
           message: e.toString(),
@@ -35,17 +33,18 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROFILE CONTENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
 class _ProfileContent extends ConsumerWidget {
   final Profile profile;
   const _ProfileContent({required this.profile});
 
   Future<void> _logout(BuildContext context) async {
-    final AuthService authService = AuthService();
     try {
-      await authService.logout();
-    } catch (e) {
-      debugPrint("Logout error: $e");
-    }
+      await AuthService().logout();
+    } catch (_) {}
     if (!context.mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
@@ -60,302 +59,87 @@ class _ProfileContent extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 48),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Text(
-                  'Profile',
-                  style: GoogleFonts.outfit(
-                    color: AppColors.accent,
-                    letterSpacing: -0.5,
-                    height: 1.1,
-                    fontSize: 30,
-                  ),
-                ),
-                const Spacer(),
-                _ActionBtn(
-                  icon: Icons.edit_outlined,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EditProfileScreen(profile: profile),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                _ActionBtn(
-                  icon: Icons.logout_rounded,
-                  onTap: () => _confirmLogout(context),
-                ),
-              ],
+            // ── Top bar — title only ───────────────────────
+            Text(
+              'Profile',
+              style: GoogleFonts.outfit(
+                color: AppColors.accent,
+                letterSpacing: -0.5,
+                height: 1.1,
+                fontSize: 30,
+              ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
 
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
+            // ── Avatar + identity ──────────────────────────
+            Center(
               child: Column(
                 children: [
-                  Stack(
-                    children: [
-                      Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.borderLight,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.10),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                  Container(
+                    width: 82,
+                    height: 82,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.subtleBackground,
+                      border: Border.all(
+                          color: AppColors.borderLight, width: 2),
+                    ),
+                    child: profile.avatarUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              profile.avatarUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _defaultAvatar(),
                             ),
-                          ],
-                        ),
-                        child: profile.avatarUrl != null
-                            ? ClipOval(
-                                child: Image.network(
-                                  profile.avatarUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      _defaultAvatar(),
-                                ),
-                              )
-                            : _defaultAvatar(),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_outlined,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
+                          )
+                        : _defaultAvatar(),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Flexible(
-                        child: Text(
-                          profile.name.isNotEmpty ? profile.name : '—',
-                          style: GoogleFonts.outfit(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
-                            letterSpacing: -0.4,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        profile.name.isNotEmpty ? profile.name : '—',
+                        style: GoogleFonts.outfit(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.accent,
+                          letterSpacing: -0.3,
                         ),
                       ),
                       if (profile.verified) ...[
-                        const SizedBox(width: 6),
-                        const Icon(
-                          Icons.verified_rounded,
-                          size: 18,
-                          color: AppColors.accent,
-                        ),
+                        const SizedBox(width: 5),
+                        const Icon(Icons.verified_rounded,
+                            size: 16, color: AppColors.primary),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     profile.email.isNotEmpty ? profile.email : '—',
                     style: GoogleFonts.outfit(
                       fontSize: 13,
                       color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
-                  if (profile.address != null &&
-                      profile.address!.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            profile.address!,
-                            style: GoogleFonts.outfit(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  if (profile.bio != null && profile.bio!.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        profile.bio!,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            _SectionTitle(title: 'My Activity'),
-            const SizedBox(height: 12),
-
-            _NavTile(
-              icon: Icons.calendar_today_outlined,
-              iconColor: AppColors.primary,
-              label: 'My Visit Requests',
-              subtitle: 'Track your scheduled visits',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const MyVisitRequestsScreen(),
-                ),
-              ),
-            ),
-
-            if (isSeller) ...[
-              const SizedBox(height: 8),
-              _NavTile(
-                icon: Icons.rocket_launch_rounded,
-                iconColor: const Color(0xFFFF9800),
-                label: 'My Boosts',
-                subtitle: 'Manage your property boosts',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyBoostsScreen()),
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 24),
-
-            const _SectionTitle(title: 'Personal Info'),
-            const SizedBox(height: 12),
-
-            _InfoTile(
-              icon: Icons.person_outline_rounded,
-              label: 'Full Name',
-              value: profile.name.isNotEmpty ? profile.name : '—',
-              isFirst: true,
-            ),
-            _InfoTile(
-              icon: Icons.email_outlined,
-              label: 'Email',
-              value: profile.email.isNotEmpty ? profile.email : '—',
-            ),
-            _InfoTile(
-              icon: Icons.phone_outlined,
-              label: 'Phone',
-              value: profile.phone ?? '—',
-            ),
-            _InfoTile(
-              icon: Icons.location_on_outlined,
-              label: 'Address',
-              value: profile.address ?? '—',
-              isLast: true,
-            ),
-
-            const SizedBox(height: 24),
-
-            const _SectionTitle(title: 'Account'),
-            const SizedBox(height: 12),
-
-            _InfoTile(
-              icon: Icons.verified_user_outlined,
-              label: 'Verification',
-              value: profile.verified ? 'Verified' : 'Not verified',
-              isFirst: true,
-              isLast: true,
-            ),
-
-            const SizedBox(height: 24),
-
-            _SellerListingsSection(userEmail: profile.email),
-
-            if (profile.bio != null && profile.bio!.isNotEmpty) ...[
-              const _SectionTitle(title: 'About'),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.cardBackground,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  profile.bio!,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                    height: 1.6,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
+            // ── Edit Profile button ────────────────────────
             SizedBox(
               width: double.infinity,
-              height: 54,
-              child: ElevatedButton.icon(
+              height: 46,
+              child: ElevatedButton(
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -363,26 +147,85 @@ class _ProfileContent extends ConsumerWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.accent,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                label: Text(
+                child: Text(
                   'Edit Profile',
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
                   ),
                 ),
               ),
+            ),
+
+            const SizedBox(height: 28),
+            Divider(color: AppColors.borderLight, height: 1),
+            const SizedBox(height: 28),
+
+            // ── Main menu group ────────────────────────────
+            _MenuGroup(
+              children: [
+                _MenuItem(
+                  icon: Icons.person_outline_rounded,
+                  label: 'Personal Info',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          _PersonalInfoScreen(profile: profile),
+                    ),
+                  ),
+                ),
+                _MenuItem(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'My Visits',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const MyVisitRequestsScreen()),
+                  ),
+                ),
+                if (isSeller)
+                  _MenuItem(
+                    icon: Icons.rocket_launch_outlined,
+                    label: 'My Boosts',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const MyBoostsScreen()),
+                    ),
+                  ),
+                _MenuItem(
+                  icon: Icons.home_outlined,
+                  label: 'My Listings',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const _MyListingsScreen()),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 28),
+            Divider(color: AppColors.borderLight, height: 1),
+            const SizedBox(height: 28),
+
+            // ── Logout group ───────────────────────────────
+            _MenuGroup(
+              children: [
+                _MenuItem(
+                  icon: Icons.logout_rounded,
+                  label: 'Log out',
+                  onTap: () => _confirmLogout(context),
+                  isDestructive: true,
+                ),
+              ],
             ),
           ],
         ),
@@ -390,8 +233,8 @@ class _ProfileContent extends ConsumerWidget {
     );
   }
 
-  Widget _defaultAvatar() =>
-      const Icon(Icons.person, color: AppColors.textSecondary, size: 40);
+  Widget _defaultAvatar() => const Icon(Icons.person,
+      color: AppColors.textTertiary, size: 36);
 
   void _confirmLogout(BuildContext context) {
     showModalBottomSheet(
@@ -400,13 +243,13 @@ class _ProfileContent extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetCtx) => Padding(
+      builder: (ctx) => Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40,
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
                 color: AppColors.borderLight,
@@ -417,17 +260,18 @@ class _ProfileContent extends ConsumerWidget {
             Text(
               'Log Out',
               style: GoogleFonts.outfit(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accent,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               'Are you sure you want to log out?',
               style: GoogleFonts.outfit(
-                fontSize: 14,
+                fontSize: 13,
                 color: AppColors.textSecondary,
+                fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(height: 28),
@@ -435,48 +279,38 @@ class _ProfileContent extends ConsumerWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(sheetCtx),
+                    onPressed: () => Navigator.pop(ctx),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
-                        color: AppColors.borderLight,
-                        width: 1.5,
-                      ),
+                      side: BorderSide(
+                          color: AppColors.borderLight, width: 1.5),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                          borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                     ),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.outfit(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: Text('Cancel',
+                        style: GoogleFonts.outfit(
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.w500)),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(sheetCtx);
+                      Navigator.pop(ctx);
                       _logout(context);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                          borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                     ),
-                    child: Text(
-                      'Log Out',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: Text('Log Out',
+                        style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500)),
                   ),
                 ),
               ],
@@ -488,87 +322,351 @@ class _ProfileContent extends ConsumerWidget {
   }
 }
 
-class _NavTile extends StatelessWidget {
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHARED WIDGETS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _MenuGroup extends StatelessWidget {
+  final List<Widget> children;
+  const _MenuGroup({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _MenuItem extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
   final String label;
-  final String subtitle;
   final VoidCallback onTap;
-  const _NavTile({
+  final bool isDestructive;
+
+  const _MenuItem({
     required this.icon,
-    required this.iconColor,
     required this.label,
-    required this.subtitle,
     required this.onTap,
+    this.isDestructive = false,
   });
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 20, color: iconColor),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.accent,
-                  ),
+  Widget build(BuildContext context) {
+    final color = isDestructive ? AppColors.error : AppColors.accent;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: color),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  color: color,
+                  fontWeight: FontWeight.w400,
                 ),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-          const Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: AppColors.textTertiary,
-          ),
-        ],
+            Icon(Icons.chevron_right_rounded,
+                size: 20, color: AppColors.textTertiary),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERSONAL INFO SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _PersonalInfoScreen extends StatelessWidget {
+  final Profile profile;
+  const _PersonalInfoScreen({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <_InfoData>[
+      _InfoData(label: 'Full Name',
+          value: profile.name.isNotEmpty ? profile.name : '—'),
+      _InfoData(label: 'Email',
+          value: profile.email.isNotEmpty ? profile.email : '—'),
+      _InfoData(label: 'Phone', value: profile.phone ?? '—'),
+      _InfoData(label: 'Address', value: profile.address ?? '—'),
+      _InfoData(
+        label: 'Verification',
+        value: profile.verified ? 'Verified' : 'Not verified',
+        valueColor:
+            profile.verified ? Colors.green : AppColors.textSecondary,
+      ),
+      if (profile.bio != null && profile.bio!.isNotEmpty)
+        _InfoData(label: 'Bio', value: profile.bio!),
+    ];
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        titleSpacing: 0,
+        iconTheme: const IconThemeData(color: AppColors.accent),
+        title: Text('Personal Info',
+            style: GoogleFonts.outfit(
+                fontSize: 30, color: AppColors.accent)),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(items.length, (i) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            items[i].label,
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              color: AppColors.textTertiary,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            items[i].value,
+                            style: GoogleFonts.outfit(
+                              fontSize: 15,
+                              color: items[i].valueColor ??
+                                  AppColors.accent,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (i < items.length - 1)
+                      Divider(
+                        height: 1,
+                        indent: 18,
+                        endIndent: 18,
+                        color: AppColors.borderLight,
+                      ),
+                  ],
+                );
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Plain data class — not a Widget
+class _InfoData {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  const _InfoData({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+}// ═══════════════════════════════════════════════════════════════════════════════
+// MY LISTINGS SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _MyListingsScreen extends ConsumerWidget {
+  const _MyListingsScreen();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final listingsAsync = ref.watch(sellerListingsProvider);
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        titleSpacing: 0,
+        iconTheme: const IconThemeData(color: AppColors.accent),
+        title: Text('My Listings',
+            style: GoogleFonts.outfit(
+                fontSize: 17, color: AppColors.accent)),
+      ),
+      body: listingsAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+              strokeWidth: 2, color: AppColors.primary),
+        ),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (listings) {
+          if (listings.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.home_outlined,
+                      size: 48, color: AppColors.textTertiary),
+                  const SizedBox(height: 12),
+                  Text('No listings yet',
+                      style: GoogleFonts.outfit(
+                          color: AppColors.textSecondary,
+                          fontSize: 14)),
+                ],
+              ),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(20),
+            itemCount: listings.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (_, i) =>
+                _ListingCard(property: listings[i]),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ListingCard extends StatelessWidget {
+  final Property property;
+  const _ListingCard({required this.property});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: property.images.isNotEmpty
+                  ? Image.network(
+                      property.images.first,
+                      width: 52,
+                      height: 52,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _placeholder(),
+                    )
+                  : _placeholder(),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    property.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '\$${_fmt(property.price)}',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: _statusColor(property.status.toString())
+                    .withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                property.status.label,
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  color: _statusColor(property.status.toString()),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _placeholder() => Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.subtleBackground,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(Icons.home_outlined,
+            size: 20, color: AppColors.textTertiary),
+      );
+
+  String _fmt(double p) {
+    if (p >= 1000000) return '${(p / 1000000).toStringAsFixed(1)}M';
+    if (p >= 1000) return '${(p / 1000).toStringAsFixed(0)}K';
+    return p.toStringAsFixed(0);
+  }
+
+  Color _statusColor(String s) {
+    switch (s.toUpperCase()) {
+      case 'ACTIVE': return Colors.green;
+      case 'SOLD': return Colors.red;
+      case 'RENTED': return Colors.blue;
+      default: return Colors.orange;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EDIT PROFILE SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   final Profile profile;
   const EditProfileScreen({super.key, required this.profile});
 
   @override
-  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() =>
+      _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
@@ -584,7 +682,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _name = TextEditingController(text: widget.profile.name);
     _phone = TextEditingController(text: widget.profile.phone ?? '');
     _bio = TextEditingController(text: widget.profile.bio ?? '');
-    _address = TextEditingController(text: widget.profile.address ?? '');
+    _address =
+        TextEditingController(text: widget.profile.address ?? '');
   }
 
   @override
@@ -602,39 +701,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       name: _name.text.trim(),
       phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       bio: _bio.text.trim().isEmpty ? null : _bio.text.trim(),
-      address: _address.text.trim().isEmpty ? null : _address.text.trim(),
+      address: _address.text.trim().isEmpty
+          ? null
+          : _address.text.trim(),
     );
-    await ref.read(profileNotifierProvider.notifier).saveProfile(request);
+    await ref
+        .read(profileNotifierProvider.notifier)
+        .saveProfile(request);
     if (!mounted) return;
-    final resultState = ref.read(profileNotifierProvider);
-    if (resultState.hasError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to save. Please try again.',
-            style: GoogleFonts.outfit(color: Colors.white),
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+    if (ref.read(profileNotifierProvider).hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to save.',
+            style: GoogleFonts.outfit(color: Colors.white)),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
+      ));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Profile updated successfully!',
-            style: GoogleFonts.outfit(color: Colors.white),
-          ),
-          backgroundColor: AppColors.accent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Profile updated',
+            style: GoogleFonts.outfit(color: Colors.white)),
+        backgroundColor: AppColors.accent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
+      ));
       Navigator.pop(context);
     }
   }
@@ -642,167 +734,140 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isSaving = ref.watch(profileNotifierProvider).isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            margin: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.cardBackground,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AppColors.primary,
-              size: 16,
-            ),
-          ),
-        ),
-        title: Text(
-          'Edit Profile',
-          style: GoogleFonts.outfit(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: AppColors.primary,
-            letterSpacing: -0.4,
-          ),
-        ),
+        titleSpacing: 0,
         centerTitle: true,
+        iconTheme: const IconThemeData(color: AppColors.accent),
+        title: Text('Edit Profile',
+            style: GoogleFonts.outfit(
+                fontSize: 17, color: AppColors.accent)),
       ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.borderLight,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.10),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: widget.profile.avatarUrl != null
-                          ? ClipOval(
-                              child: Image.network(
-                                widget.profile.avatarUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.person,
-                                  color: AppColors.textSecondary,
-                                  size: 40,
-                                ),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.person,
-                              color: AppColors.textSecondary,
-                              size: 40,
+              const SizedBox(height: 16),
+
+              // Avatar
+              Stack(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.subtleBackground,
+                      border: Border.all(
+                          color: AppColors.borderLight, width: 2),
+                    ),
+                    child: widget.profile.avatarUrl != null
+                        ? ClipOval(
+                            child: Image.network(
+                              widget.profile.avatarUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  const Icon(Icons.person,
+                                      color: AppColors.textTertiary,
+                                      size: 36),
                             ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_outlined,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
+                          )
+                        : const Icon(Icons.person,
+                            color: AppColors.textTertiary, size: 36),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: AppColors.background, width: 2),
                       ),
+                      child: const Icon(Icons.camera_alt_outlined,
+                          size: 13, color: Colors.white),
                     ),
-                  ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              Text(
+                widget.profile.name.isNotEmpty
+                    ? widget.profile.name
+                    : '—',
+                style: GoogleFonts.outfit(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accent,
                 ),
               ),
+              const SizedBox(height: 2),
+              Text(
+                widget.profile.email,
+                style: GoogleFonts.outfit(
+                    fontSize: 13, color: AppColors.textSecondary),
+              ),
+
               const SizedBox(height: 28),
-              const _SectionTitle(title: 'Personal Info'),
-              const SizedBox(height: 12),
-              _FormField(
+              Divider(color: AppColors.borderLight, height: 1),
+              const SizedBox(height: 20),
+
+              _Field(
                 controller: _name,
-                label: 'Full Name',
-                icon: Icons.person_outline_rounded,
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Full name is required'
-                    : null,
+                label: 'Full name',
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
-              _FormField(
+              _Field(
                 controller: _phone,
-                label: 'Phone',
-                icon: Icons.phone_outlined,
+                label: 'Phone number',
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 12),
-              _FormField(
-                controller: _bio,
-                label: 'Bio',
-                icon: Icons.info_outline_rounded,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              const _SectionTitle(title: 'Location'),
+              _Field(controller: _address, label: 'Address'),
               const SizedBox(height: 12),
-              _FormField(
-                controller: _address,
-                label: 'Address',
-                icon: Icons.location_on_outlined,
-              ),
+              _Field(
+                  controller: _bio, label: 'Bio', maxLines: 3),
+
               const SizedBox(height: 32),
+
               SizedBox(
                 width: double.infinity,
-                height: 54,
+                height: 52,
                 child: ElevatedButton(
                   onPressed: isSaving ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: AppColors.primary.withValues(
-                      alpha: 0.5,
-                    ),
+                    backgroundColor: AppColors.accent,
+                    disabledBackgroundColor:
+                        AppColors.accent.withOpacity(0.4),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   child: isSaving
                       ? const SizedBox(
-                          width: 20,
-                          height: 20,
+                          width: 18,
+                          height: 18,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : Text(
-                          'Save Changes',
+                          'Save',
                           style: GoogleFonts.outfit(
                             color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w500,
                             fontSize: 15,
                           ),
                         ),
@@ -816,119 +881,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  const _SectionTitle({required this.title});
-  @override
-  Widget build(BuildContext context) => Text(
-    title,
-    style: GoogleFonts.outfit(
-      fontSize: 16,
-      fontWeight: FontWeight.w800,
-      color: AppColors.primary,
-      letterSpacing: -0.3,
-    ),
-  );
-}
-
-class _InfoTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final bool isLast;
-  final bool isFirst;
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.isLast = false,
-    this.isFirst = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(isFirst ? 16 : 0),
-          topRight: Radius.circular(isFirst ? 16 : 0),
-          bottomLeft: Radius.circular(isLast ? 16 : 0),
-          bottomRight: Radius.circular(isLast ? 16 : 0),
-        ),
-        border: Border(
-          bottom: isLast
-              ? BorderSide.none
-              : const BorderSide(color: AppColors.borderLight),
-        ),
-        boxShadow: isFirst
-            ? [
-          
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-          
-              ]
-            : null,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 16, color: AppColors.textSecondary),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FormField extends StatelessWidget {
+class _Field extends StatelessWidget {
   final TextEditingController controller;
   final String label;
-  final IconData icon;
   final int maxLines;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
-  const _FormField({
+
+  const _Field({
     required this.controller,
     required this.label,
-    required this.icon,
     this.maxLines = 1,
     this.keyboardType,
     this.validator,
@@ -936,67 +898,49 @@ class _FormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextFormField(
-    controller: controller,
-    maxLines: maxLines,
-    keyboardType: keyboardType,
-    validator: validator,
-    style: GoogleFonts.outfit(fontSize: 14, color: AppColors.primary),
-    decoration: InputDecoration(
-      labelText: label,
-      labelStyle: GoogleFonts.outfit(
-        color: AppColors.textSecondary,
-        fontSize: 13,
-      ),
-      prefixIcon: Icon(icon, size: 18, color: AppColors.textSecondary),
-      filled: true,
-      fillColor: AppColors.cardBackground,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.borderLight),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.borderLight),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.error),
-      ),
-    ),
-  );
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _ActionBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        validator: validator,
+        style: GoogleFonts.outfit(
+            fontSize: 14,
+            color: AppColors.accent,
+            fontWeight: FontWeight.w400),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.outfit(
+            color: AppColors.textTertiary,
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
           ),
-        ],
-      ),
-      child: Icon(icon, color: AppColors.primary, size: 18),
-    ),
-  );
+          filled: true,
+          fillColor: AppColors.cardBackground,
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.borderLight),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.borderLight),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+                BorderSide(color: AppColors.accent, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColors.error),
+          ),
+        ),
+      );
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ERROR VIEW
+// ═══════════════════════════════════════════════════════════════════════════════
 
 class _ErrorView extends StatelessWidget {
   final String message;
@@ -1005,216 +949,28 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.wifi_off_rounded,
-            size: 48,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: onRetry,
-            child: Text(
-              'Retry',
-              style: GoogleFonts.outfit(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w700,
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.wifi_off_rounded,
+                  size: 40, color: AppColors.textTertiary),
+              const SizedBox(height: 12),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(
+                      color: AppColors.textSecondary, fontSize: 13)),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: onRetry,
+                child: Text('Retry',
+                    style: GoogleFonts.outfit(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500)),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _SellerListingsSection extends ConsumerWidget {
-  final String userEmail;
-  const _SellerListingsSection({required this.userEmail});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final listingsAsync = ref.watch(sellerListingsProvider);
-    final tt = Theme.of(context).textTheme;
-
-    return listingsAsync.when(
-      loading: () => Column(
-        children: [
-          const _SectionTitle(title: 'My Listings'),
-          const SizedBox(height: 12),
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (listings) {
-        if (listings.isEmpty) return const SizedBox.shrink();
-        return Column(
-          children: [
-            const _SectionTitle(title: 'My Listings'),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: List.generate(
-                  listings.length > 3 ? 3 : listings.length,
-                  (i) {
-                    final property = listings[i];
-                    return Column(
-                      children: [
-                        if (i > 0)
-                          Divider(
-                            color: AppColors.borderLight,
-                            height: 1,
-                            indent: 16,
-                            endIndent: 16,
-                          ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              if (property.images.isNotEmpty)
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    property.images.first,
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
-                                      width: 60,
-                                      height: 60,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.subtleBackground,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(
-                                        Icons.home_outlined,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              else
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.subtleBackground,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.home_outlined,
-                                    size: 24,
-                                  ),
-                                ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      property.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: tt.labelMedium?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '\$${_formatPrice(property.price)}',
-                                      style: tt.labelSmall?.copyWith(
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(property.status.toString()),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  property.status.label,
-                                  style: tt.labelSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        );
-      },
-    );
-  }
-
-  String _formatPrice(double price) {
-    if (price >= 1000000) return '${(price / 1000000).toStringAsFixed(1)}M';
-    if (price >= 1000) return '${(price / 1000).toStringAsFixed(0)}K';
-    return price.toStringAsFixed(0);
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'ACTIVE':
-        return Colors.green;
-      case 'INACTIVE':
-        return Colors.orange;
-      case 'SOLD':
-        return Colors.red;
-      case 'RENTED':
-        return Colors.blue;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
+        ),
+      );
 }

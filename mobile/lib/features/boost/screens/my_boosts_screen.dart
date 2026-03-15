@@ -17,12 +17,12 @@ class MyBoostsScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
+        titleSpacing: 0,
         iconTheme: const IconThemeData(color: AppColors.accent),
         title: Text(
           'My Boosts',
           style: GoogleFonts.outfit(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
+            fontSize: 30,
             color: AppColors.accent,
             letterSpacing: -0.4,
           ),

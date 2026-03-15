@@ -28,6 +28,8 @@ class SellerListingsScreen extends ConsumerWidget {
           style: tt.headlineSmall?.copyWith(
             color: AppColors.accent,
             letterSpacing: -0.5,
+            height: 1.1,
+            fontSize: 30,
           ),
         ),
         actions: [
@@ -355,9 +357,7 @@ class _ListingCard extends ConsumerWidget {
         ),
         content: Text(
           'Are you sure you want to delete "${property.title}"? This action cannot be undone.',
-          style: GoogleFonts.outfit(
-            color: AppColors.textSecondary,
-          ),
+          style: GoogleFonts.outfit(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -416,7 +416,9 @@ class _ListingCard extends ConsumerWidget {
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
           ),
         );
       }
@@ -430,11 +432,7 @@ class _ListingCard extends ConsumerWidget {
           SnackBar(
             content: Row(
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                const Icon(Icons.error_outline, color: Colors.white, size: 18),
                 const SizedBox(width: 10),
                 Text(
                   'Failed to delete property: ${e.toString()}',
@@ -447,7 +445,9 @@ class _ListingCard extends ConsumerWidget {
             ),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
           ),
         );
       }
@@ -458,11 +458,7 @@ class _ListingCard extends ConsumerWidget {
     height: 150,
     color: const Color(0xFFF0E9E3),
     child: const Center(
-      child: Icon(
-        Icons.home_outlined,
-        size: 40,
-        color: AppColors.textTertiary,
-      ),
+      child: Icon(Icons.home_outlined, size: 40, color: AppColors.textTertiary),
     ),
   );
 

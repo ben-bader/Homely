@@ -14,62 +14,46 @@ class MyVisitRequestsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-              child: Row(
-                children: [
-                  Text(
-                    'My Visits',
-                    style: GoogleFonts.outfit(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accent,
-                      letterSpacing: -0.5,
-                      height: 1.1,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                      color: AppColors.accent,
-                    ),
-                    onPressed: () => ref.invalidate(myVisitRequestsProvider),
-                  ),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: requestsAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.primary,
-                  ),
-                ),
-                error: (e, _) => _ErrorState(
-                  message: e.toString(),
-                  onRetry: () => ref.invalidate(myVisitRequestsProvider),
-                ),
-                data: (requests) {
-                  if (requests.isEmpty) return const _EmptyState();
-
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                    itemCount: requests.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) =>
-                        _VisitRequestCard(request: requests[i]),
-                  );
-                },
-              ),
-            ),
-          ],
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        titleSpacing: 0,
+        iconTheme: const IconThemeData(color: AppColors.accent),
+        title: Text(
+          'My Visits',
+          style: GoogleFonts.outfit(
+            fontSize: 30,
+            color: AppColors.accent,
+            letterSpacing: -0.5,
+          ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.accent),
+            onPressed: () => ref.invalidate(myVisitRequestsProvider),
+          ),
+        ],
+      ),
+      body: requestsAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
+        ),
+        error: (e, _) => _ErrorState(
+          message: e.toString(),
+          onRetry: () => ref.invalidate(myVisitRequestsProvider),
+        ),
+        data: (requests) {
+          if (requests.isEmpty) return const _EmptyState();
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+            itemCount: requests.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (_, i) => _VisitRequestCard(request: requests[i]),
+          );
+        },
       ),
     );
   }
