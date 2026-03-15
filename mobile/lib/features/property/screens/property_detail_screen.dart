@@ -1,4 +1,3 @@
-import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,8 +15,7 @@ import 'package:mobile/features/feedback/widgets/submit_feedback_sheet.dart';
 import 'package:mobile/features/reports/widgets/report_sheet.dart';
 import 'package:mobile/features/boost/widgets/boost_sheet.dart';
 import 'package:mobile/features/media/models/property_media.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:video_player/video_player.dart';
+
 class PropertyDetailScreen extends ConsumerWidget {
   final String propertyId;
   const PropertyDetailScreen({super.key, required this.propertyId});
@@ -674,6 +672,7 @@ class _CircleBtn extends StatelessWidget {
 
 class _MediaDisplaySection extends StatelessWidget {
   final List<PropertyMedia> media;
+
   const _MediaDisplaySection({required this.media});
 
   @override
@@ -681,235 +680,11 @@ class _MediaDisplaySection extends StatelessWidget {
     return Column(
       children: media.map((m) {
         if (m.mediaType == MediaType.IMAGE) {
-          return _ImageCard(media: m);
+          return Image.network(m.url, fit: BoxFit.cover);
         } else {
-          return _VideoCard(media: m);
+          return Text('Video: ${m.url}'); // Replace with a video player widget.
         }
       }).toList(),
-    );
-  }
-}
-
-// ── Image card — tap to fullscreen ────────────────────────────────────────
-
-class _ImageCard extends StatelessWidget {
-  final PropertyMedia media;
-  const _ImageCard({required this.media});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: GestureDetector(
-        onTap: () => _openFullscreen(context),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Image.network(
-            media.url,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: 220,
-            loadingBuilder: (_, child, progress) {
-              if (progress == null) return child;
-              return _placeholder(
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.primary,
-                ),
-              );
-            },
-            errorBuilder: (_, __, ___) => _placeholder(
-              child: const Icon(
-                Icons.broken_image_outlined,
-                color: AppColors.textTertiary,
-                size: 40,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openFullscreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => _FullscreenImageScreen(url: media.url),
-      ),
-    );
-  }
-
-  Widget _placeholder({required Widget child}) => Container(
-        height: 220,
-        decoration: BoxDecoration(
-          color: AppColors.subtleBackground,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Center(child: child),
-      );
-}
-
-// ── Video card — inline player ────────────────────────────────────────────
-
-class _VideoCard extends StatefulWidget {
-  final PropertyMedia media;
-  const _VideoCard({required this.media});
-
-  @override
-  State<_VideoCard> createState() => _VideoCardState();
-}
-
-class _VideoCardState extends State<_VideoCard> {
-  VideoPlayerController? _controller;
-  ChewieController? _chewieController;
-  bool _initialized = false;
-  bool _error = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initPlayer();
-  }
-
-  Future<void> _initPlayer() async {
-    try {
-      final url = widget.media.url;
-      if (url.isEmpty) return;
-
-      _controller = VideoPlayerController.networkUrl(Uri.parse(url));
-      await _controller!.initialize();
-
-      _chewieController = ChewieController(
-        videoPlayerController: _controller!,
-        aspectRatio: _controller!.value.aspectRatio,
-        autoPlay: false,
-        looping: false,
-        allowFullScreen: true,
-        allowMuting: true,
-        showControls: true,
-        materialProgressColors: ChewieProgressColors(
-          playedColor: AppColors.primary,
-          handleColor: AppColors.primary,
-          backgroundColor: AppColors.borderLight,
-          bufferedColor: AppColors.primary.withOpacity(0.3),
-        ),
-        placeholder: Container(color: Colors.black),
-        errorBuilder: (_, msg) => Center(
-          child: Text(msg, style: const TextStyle(color: Colors.white)),
-        ),
-      );
-
-      if (mounted) setState(() => _initialized = true);
-    } catch (e) {
-      if (mounted) setState(() => _error = true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _chewieController?.dispose();
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          height: 220,
-          color: Colors.black,
-          child: _buildContent(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    if (_error) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.videocam_off_outlined, color: Colors.white54, size: 36),
-            SizedBox(height: 8),
-            Text(
-              'Video unavailable',
-              style: TextStyle(color: Colors.white54, fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (!_initialized) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.primary,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Loading video...',
-              style: GoogleFonts.outfit(
-                color: Colors.white54,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Chewie(controller: _chewieController!);
-  }
-}
-
-// ── Fullscreen image viewer ───────────────────────────────────────────────
-
-class _FullscreenImageScreen extends StatelessWidget {
-  final String url;
-  const _FullscreenImageScreen({required this.url});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Center(
-        child: InteractiveViewer(
-          minScale: 0.5,
-          maxScale: 4.0,
-          child: Image.network(
-            url,
-            fit: BoxFit.contain,
-            loadingBuilder: (_, child, progress) {
-              if (progress == null) return child;
-              return const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              );
-            },
-            errorBuilder: (_, __, ___) => const Icon(
-              Icons.broken_image_outlined,
-              color: Colors.white54,
-              size: 64,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
