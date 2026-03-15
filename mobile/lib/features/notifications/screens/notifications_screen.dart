@@ -16,13 +16,11 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final _service = NotificationService();
 
-  // All notifications (for "All" tab)
   List<NotificationModel> _all = [];
-  // Only unread (for "Unread" tab)
   List<NotificationModel> _unread = [];
 
   bool _loading = true;
-  int _tabIndex = 0; // 0 = All, 1 = Unread
+  int _tabIndex = 0;
 
   List<NotificationModel> get _current => _tabIndex == 0 ? _all : _unread;
 
@@ -36,20 +34,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     setState(() => _loading = true);
     try {
       final data = await _service.fetchUnread(widget.userId);
-
-      // Deduplicate by ID
-      final Map<String, NotificationModel> uniqueMap = {};
-      for (final n in data) {
-        uniqueMap[n.id] = n;
-      }
-      final all = uniqueMap.values.toList()
+      final Map<String, NotificationModel> unique = {};
+      for (final n in data) unique[n.id] = n;
+      final all = unique.values.toList()
         ..sort((a, b) {
-          // read ones go to bottom
           if (a.read && !b.read) return 1;
           if (!a.read && b.read) return -1;
           return 0;
         });
-
       setState(() {
         _all = all;
         _unread = all.where((n) => !n.read).toList();
@@ -78,9 +70,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _markAllRead() async {
-    for (final n in _unread) {
-      await _service.markAsRead(n.id);
-    }
+    for (final n in _unread) await _service.markAsRead(n.id);
     setState(() {
       _all = _all
           .map(
@@ -98,8 +88,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -124,9 +112,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           'Notifications',
           style: GoogleFonts.outfit(
             color: AppColors.accent,
-            letterSpacing: -0.5,
             fontSize: 22,
             fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
           ),
         ),
         actions: [
@@ -135,44 +123,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               padding: const EdgeInsets.only(right: 16),
               child: GestureDetector(
                 onTap: _markAllRead,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Text(
-                    'Mark all read',
-                    style: GoogleFonts.outfit(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
+                child: Text(
+                  'Mark all read',
+                  style: GoogleFonts.outfit(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
               ),
             ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      ),
+      body: Column(
+        children: [
+          // ── Tab row ─────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
             child: Row(
               children: [
-                _TabChip(
+                _Tab(
                   label: 'All',
                   count: _all.length,
                   selected: _tabIndex == 0,
                   onTap: () => setState(() => _tabIndex = 0),
                 ),
-                const SizedBox(width: 10),
-                _TabChip(
+                const SizedBox(width: 8),
+                _Tab(
                   label: 'Unread',
                   count: _unread.length,
                   selected: _tabIndex == 1,
@@ -182,77 +159,83 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ],
             ),
           ),
-        ),
+
+          // ── Content ──────────────────────────────────────
+          Expanded(
+            child: _loading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : _current.isEmpty
+                ? _emptyState()
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    backgroundColor: AppColors.cardBackground,
+                    color: AppColors.primary,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+                      itemCount: _current.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) {
+                        final n = _current[i];
+                        return NotificationCard(
+                          notification: n,
+                          onMarkRead: n.read ? null : () => _markRead(n),
+                          onTap: () => _handleTap(n),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+        ],
       ),
-      body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.primary,
-              ),
-            )
-          : _current.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.subtleBackground,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      _tabIndex == 1
-                          ? Icons.mark_email_read_outlined
-                          : Icons.notifications_none_rounded,
-                      size: 40,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _tabIndex == 1
-                        ? 'All caught up! 🎉'
-                        : 'No notifications yet',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accent,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _tabIndex == 1
-                        ? 'No unread notifications'
-                        : 'You\'ll see notifications here',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _load,
-              backgroundColor: AppColors.cardBackground,
-              color: AppColors.primary,
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-                itemCount: _current.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final n = _current[index];
-                  return NotificationCard(
-                    notification: n,
-                    onMarkRead: n.read ? () {} : () => _markRead(n),
-                    onTap: () => _handleTap(n),
-                  );
-                },
-              ),
+    );
+  }
+
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.subtleBackground,
+              shape: BoxShape.circle,
             ),
+            child: Icon(
+              _tabIndex == 1
+                  ? Icons.mark_email_read_outlined
+                  : Icons.notifications_none_rounded,
+              size: 32,
+              color: AppColors.textTertiary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _tabIndex == 1 ? 'All caught up!' : 'No notifications yet',
+            style: GoogleFonts.outfit(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: AppColors.accent,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tabIndex == 1
+                ? 'No unread notifications'
+                : 'You\'ll see notifications here',
+            style: GoogleFonts.outfit(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -281,14 +264,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 }
 
 // ── Tab chip ──────────────────────────────────────────────────────────────────
-class _TabChip extends StatelessWidget {
+class _Tab extends StatelessWidget {
   final String label;
   final int count;
   final bool selected;
   final bool isUnread;
   final VoidCallback onTap;
 
-  const _TabChip({
+  const _Tab({
     required this.label,
     required this.count,
     required this.selected,
@@ -323,14 +306,11 @@ class _TabChip extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  // FIX: use a light tint for the background so text is visible
                   color: selected
                       ? Colors.white.withOpacity(0.25)
                       : (isUnread
-                            ? AppColors.error.withOpacity(
-                                0.15,
-                              ) // ← was AppColors.error (solid)
-                            : AppColors.primary.withOpacity(0.15)),
+                            ? AppColors.error.withOpacity(0.12)
+                            : AppColors.primary.withOpacity(0.12)),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -338,7 +318,6 @@ class _TabChip extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    // FIX: text color now contrasts against the lighter background
                     color: selected
                         ? Colors.white
                         : (isUnread ? AppColors.error : AppColors.primary),

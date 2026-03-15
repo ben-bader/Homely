@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/notifications/models/notifications.dart';
 
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
-  final VoidCallback onMarkRead;
+  final VoidCallback? onMarkRead;
   final VoidCallback? onTap;
 
   const NotificationCard({
@@ -14,136 +15,158 @@ class NotificationCard extends StatelessWidget {
     this.onTap,
   });
 
+  // Map type → icon + color (no emojis)
+  IconData get _icon {
+    switch (notification.type) {
+      case 'NEW_CHAT_MESSAGE':
+      case 'CONVERSATION_CREATED':
+        return Icons.chat_bubble_outline_rounded;
+      case 'VISIT_REQUEST_CREATED':
+      case 'VISIT_REQUEST_STATUS_CHANGED':
+        return Icons.calendar_today_outlined;
+      case 'PROPERTY_CREATED':
+      case 'PROPERTY_STATUS_CHANGED':
+        return Icons.home_outlined;
+      case 'BOOST_PURCHASED':
+      case 'BOOST_STATUS_CHANGED':
+        return Icons.rocket_launch_outlined;
+      case 'FEEDBACK_RECEIVED':
+        return Icons.star_outline_rounded;
+      default:
+        return Icons.notifications_outlined;
+    }
+  }
+
+  Color get _iconColor {
+    switch (notification.type) {
+      case 'NEW_CHAT_MESSAGE':
+      case 'CONVERSATION_CREATED':
+        return AppColors.primary;
+      case 'VISIT_REQUEST_CREATED':
+      case 'VISIT_REQUEST_STATUS_CHANGED':
+        return const Color(0xFF5B4E8A);
+      case 'PROPERTY_CREATED':
+      case 'PROPERTY_STATUS_CHANGED':
+        return AppColors.success;
+      case 'BOOST_PURCHASED':
+      case 'BOOST_STATUS_CHANGED':
+        return AppColors.warning;
+      case 'FEEDBACK_RECEIVED':
+        return const Color(0xFFFFC107);
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final color = Color(int.parse(notification.getColorHex()));
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: color.withOpacity(0.2),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+    final isRead = notification.read;
+    final color = _iconColor;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isRead
+              ? AppColors.background
+              : AppColors.primary.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isRead
+                ? AppColors.borderLight
+                : AppColors.primary.withOpacity(0.12),
+            width: 1,
           ),
-          child: Stack(
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Left accent bar
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: 4,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
-                    ),
-                  ),
+              // ── Icon circle ───────────────────────────
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
+                child: Icon(_icon, size: 19, color: color),
               ),
-              
-              // Content
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+
+              const SizedBox(width: 12),
+
+              // ── Text ──────────────────────────────────
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Icon
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Text(
-                          notification.getIconEmoji(),
-                          style: const TextStyle(fontSize: 28),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    
-                    // Title and message
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             notification.getTitle(),
                             style: GoogleFonts.outfit(
                               fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            notification.getSubtitle(),
-                            style: GoogleFonts.outfit(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey[600],
+                              fontWeight: isRead
+                                  ? FontWeight.w500
+                                  : FontWeight.w700,
+                              color: AppColors.accent,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            notification.getDetailedMessage(),
-                            style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.grey[500],
-                              height: 1.4,
+                        ),
+                        // Unread dot
+                        if (!isRead) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    
-                    // Mark read button
-                    GestureDetector(
-                      onTap: onMarkRead,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.check,
-                            size: 16,
-                            color: color,
-                          ),
-                        ),
+                    const SizedBox(height: 3),
+                    Text(
+                      notification.getDetailedMessage(),
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textSecondary,
+                        height: 1.4,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
+
+              // ── Mark read button (only for unread) ───
+              if (!isRead && onMarkRead != null) ...[
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: onMarkRead,
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.subtleBackground,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      size: 15,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
