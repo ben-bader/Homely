@@ -214,7 +214,7 @@ class _BodyState extends ConsumerState<_Body> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      '${p.currency} ${_fmt(p.price)}',
+                      '${_fmt(p.price)} ${p.currency}',
                       style: tt.titleMedium?.copyWith(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
