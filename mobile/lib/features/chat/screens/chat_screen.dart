@@ -40,20 +40,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _send() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-
     ref.read(chatProvider(widget.conversationId).notifier).send(text);
-
     _controller.clear();
   }
 
+  // ── WhatsApp-style time format ─────────────────────────────────────────────
   String _formatTime(dynamic sentAt) {
-    DateTime date = sentAt is DateTime
+    final DateTime date = sentAt is DateTime
         ? sentAt
         : DateTime.parse(sentAt.toString());
-
-    final t = TimeOfDay.fromDateTime(date);
-    return '${t.hour.toString().padLeft(2, '0')}:'
-        '${t.minute.toString().padLeft(2, '0')}';
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   void _showMessageOptions(
@@ -71,7 +67,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text("Edit"),
+              title: const Text('Edit'),
               onTap: () {
                 Navigator.pop(context);
                 _showEditDialog(messageId, body);
@@ -79,7 +75,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text("Delete", style: TextStyle(color: Colors.red)),
+              title: const Text('Delete', style: TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
                 ref
@@ -95,7 +91,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   void _showEditDialog(String messageId, String oldText) {
     final editController = TextEditingController(text: oldText);
-
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -109,7 +104,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Edit message",
+                  'Edit message',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -117,9 +112,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               TextField(
                 controller: editController,
                 autofocus: true,
@@ -127,22 +120,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.grey.shade100,
-                  hintText: "Edit your message...",
+                  hintText: 'Edit your message...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
-
               Row(
                 children: [
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("Cancel"),
+                      child: const Text('Cancel'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -150,7 +141,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         final newText = editController.text.trim();
-
                         if (newText.isNotEmpty) {
                           ref
                               .read(
@@ -162,14 +152,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 widget.currentUserId,
                               );
                         }
-
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text("Save"),
+                      child: const Text('Save'),
                     ),
                   ),
                 ],
@@ -187,17 +176,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-
       appBar: AppBar(
         backgroundColor: AppColors.cardBackground,
         elevation: 0,
         centerTitle: true,
-
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.accent),
           onPressed: () => Navigator.pop(context),
         ),
-
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -209,7 +195,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: AppColors.accent,
               ),
             ),
-
             Text(
               widget.chatSubtitle,
               style: GoogleFonts.outfit(
@@ -220,38 +205,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         ),
       ),
-
       body: Column(
         children: [
-          /// Messages list
+          // ── Messages list ───────────────────────────────────────────────
           Expanded(
             child: asyncMessages.when(
               loading: () => const Center(
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
-
               error: (e, _) => Center(
                 child: Text(
-                  "Error: $e",
+                  'Error: $e',
                   style: GoogleFonts.outfit(color: AppColors.textSecondary),
                 ),
               ),
-
               data: (messages) {
-                // only attempt to derive name from messages if we don't already
-                // have one; do NOT fall back to our own message which would
-                // overwrite the passed-in chatTitle with the sender's name.
                 if (_otherUserName == null && messages.isNotEmpty) {
-                  final others = messages
-                      .where((m) => m.senderId != widget.currentUserId);
+                  final others = messages.where(
+                    (m) => m.senderId != widget.currentUserId,
+                  );
                   if (others.isNotEmpty) {
                     _otherUserName = others.first.senderName;
                   }
                 }
+
                 if (messages.isEmpty) {
                   return Center(
                     child: Text(
-                      "No messages yet",
+                      'No messages yet',
                       style: GoogleFonts.outfit(color: AppColors.textSecondary),
                     ),
                   );
@@ -260,9 +241,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 WidgetsBinding.instance.addPostFrameCallback(
                   (_) => _scrollToBottom(),
                 );
+
                 return ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   itemCount: messages.length,
                   itemBuilder: (_, i) {
                     final msg = messages[i];
@@ -273,64 +258,79 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           ? Alignment.centerRight
                           : Alignment.centerLeft,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Column(
-                          crossAxisAlignment: isMe
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.start,
-                          children: [
-                            /// Sender name (important fix ⭐)
-                            GestureDetector(
-                              onLongPress: isMe
-                                  ? () => _showMessageOptions(
-                                      context,
-                                      msg.id,
-                                      msg.body,
-                                    )
-                                  : null,
-                              child: Container(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 280,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isMe
-                                      ? AppColors.primary
-                                      : AppColors.accent,
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: const Radius.circular(18),
-                                    topRight: const Radius.circular(18),
-                                    bottomLeft: isMe
-                                        ? const Radius.circular(18)
-                                        : const Radius.circular(4),
-                                    bottomRight: isMe
-                                        ? const Radius.circular(4)
-                                        : const Radius.circular(18),
-                                  ),
-                                ),
-                                child: Text(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: GestureDetector(
+                          onLongPress: isMe
+                              ? () => _showMessageOptions(
+                                  context,
+                                  msg.id,
+                                  msg.body,
+                                )
+                              : null,
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 280),
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+                            decoration: BoxDecoration(
+                              color: isMe
+                                  ? AppColors.primary
+                                  : AppColors.accent,
+                              borderRadius: BorderRadius.only(
+                                topLeft: const Radius.circular(18),
+                                topRight: const Radius.circular(18),
+                                bottomLeft: isMe
+                                    ? const Radius.circular(18)
+                                    : const Radius.circular(4),
+                                bottomRight: isMe
+                                    ? const Radius.circular(4)
+                                    : const Radius.circular(18),
+                              ),
+                            ),
+                            // ── WhatsApp layout: time floats bottom-right ──
+                            child: Wrap(
+                              alignment: WrapAlignment.end,
+                              crossAxisAlignment: WrapCrossAlignment.end,
+                              spacing: 6,
+                              children: [
+                                Text(
                                   msg.body,
                                   style: GoogleFonts.outfit(
                                     color: AppColors.background,
                                     fontSize: 14,
+                                    height: 1.4,
                                   ),
                                 ),
-                              ),
+                                // Timestamp + checkmark — sits at end of
+                                // last line, slightly lower
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 1),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        _formatTime(msg.sentAt),
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 10,
+                                          color: AppColors.background
+                                              .withOpacity(0.6),
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      if (isMe) ...[
+                                        const SizedBox(width: 3),
+                                        Icon(
+                                          Icons.done_all_rounded,
+                                          size: 13,
+                                          color: AppColors.background
+                                              .withOpacity(0.6),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              _formatTime(msg.sentAt),
-                              style: GoogleFonts.outfit(
-                                fontSize: 11,
-                                color: AppColors.textTertiary,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     );
@@ -340,39 +340,65 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ),
 
-          /// Input bar
+          // ── Input bar ───────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.fromLTRB(
+              12,
+              8,
+              12,
+              MediaQuery.of(context).padding.bottom + 8,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              border: Border(
+                top: BorderSide(color: AppColors.borderLight, width: 0.8),
+              ),
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.borderLight,
+                      color: AppColors.subtleBackground,
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: AppColors.borderMedium),
                     ),
                     child: TextField(
                       controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: "Type a message...",
+                      maxLines: null,
+                      style: GoogleFonts.outfit(
+                        color: AppColors.accent,
+                        fontSize: 14,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        hintStyle: GoogleFonts.outfit(
+                          color: AppColors.textTertiary,
+                          fontSize: 14,
+                        ),
                         border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 8),
-
-                Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    onPressed: _send,
-                    icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                GestureDetector(
+                  onTap: _send,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.send_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
               ],
