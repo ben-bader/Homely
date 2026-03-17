@@ -144,11 +144,12 @@ class HomeScreen extends ConsumerWidget {
     const ProfileScreen(),
   ];
 
+  // ── CHANGE 1: pass isSeller: true to _ExploreTab for sellers ──
   List<Widget> _buildSellerTabs() => [
     const _SellerListingsTab(),
     const ConversationsScreen(),
     const _CreatePropertyPlaceholder(),
-    const _ExploreTab(),
+    const _ExploreTab(isSeller: true),
     const ProfileScreen(),
   ];
 }
@@ -534,8 +535,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                       } else {
                         final st = PropertyStatus.values.firstWhere(
                           (e) => e.label == chip,
-                          orElse: () =>
-                              PropertyStatus.values.first,
+                          orElse: () => PropertyStatus.values.first,
                         );
                         final isSame = filter.status == st;
                         ref
@@ -1009,8 +1009,11 @@ class _CardBtn extends StatelessWidget {
 // ═════════════════════════════════════════════════════════════════════════════
 // EXPLORE TAB
 // ═════════════════════════════════════════════════════════════════════════════
+
+// ── CHANGE 2: _ExploreTab now accepts an optional isSeller flag ──
 class _ExploreTab extends ConsumerStatefulWidget {
-  const _ExploreTab();
+  final bool isSeller;
+  const _ExploreTab({this.isSeller = false});
   @override
   ConsumerState<_ExploreTab> createState() => _ExploreTabState();
 }
@@ -1186,6 +1189,17 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
     final filter = ref.watch(propertyFilterProvider);
     final badgeCount = filter.activeFilterCount;
 
+    // ── CHANGE 3: watch favorites count for the seller badge ──
+    final favoritesAsync = widget.isSeller
+        ? ref.watch(favoritesProvider)
+        : null;
+    final favCount =
+        favoritesAsync?.maybeWhen(
+          data: (list) => list.length,
+          orElse: () => 0,
+        ) ??
+        0;
+
     return SafeArea(
       bottom: false,
       child: CustomScrollView(
@@ -1210,21 +1224,27 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                       ),
                     ),
                   ),
-                  _NotifBtn(
-                    onTap: () async {
-                      if (_userId == null) await _loadUserId();
-                      if (_userId == null || !mounted) return;
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => NotificationsScreen(userId: _userId!),
-                        ),
-                      );
-                      setState(() {});
-                    },
-                  ),
-                  const SizedBox(width: 10),
-                  const _AvatarBtn(),
+                  // ── CHANGE 3: seller sees a favorites button; clients keep notif+avatar ──
+                  if (widget.isSeller)
+                    _SellerFavoritesBtn(favCount: favCount)
+                  else ...[
+                    _NotifBtn(
+                      onTap: () async {
+                        if (_userId == null) await _loadUserId();
+                        if (_userId == null || !mounted) return;
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                NotificationsScreen(userId: _userId!),
+                          ),
+                        );
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                    const _AvatarBtn(),
+                  ],
                 ],
               ),
             ),
@@ -1507,6 +1527,65 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// SELLER FAVORITES BUTTON — replaces notif + avatar in seller's Explore header
+// ═════════════════════════════════════════════════════════════════════════════
+class _SellerFavoritesBtn extends StatelessWidget {
+  final int favCount;
+  const _SellerFavoritesBtn({required this.favCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.subtleBackground,
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: const Icon(
+              Icons.favorite_border_rounded,
+              color: AppColors.accentLight,
+              size: 20,
+            ),
+          ),
+          if (favCount > 0)
+            Positioned(
+              top: 1,
+              right: 1,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    favCount > 99 ? '99+' : '$favCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // FEATURED SECTION
 // ═════════════════════════════════════════════════════════════════════════════
 class _FeaturedSection extends ConsumerWidget {
@@ -1585,7 +1664,9 @@ class _FeaturedCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
-    final isFavoritedAsync = ref.watch(isPropertyFavoritedProvider(property.id));
+    final isFavoritedAsync = ref.watch(
+      isPropertyFavoritedProvider(property.id),
+    );
     final isFavorited = isFavoritedAsync.maybeWhen(
       data: (fav) => fav,
       orElse: () => false,
@@ -1701,9 +1782,13 @@ class _FeaturedCard extends ConsumerWidget {
                 child: GestureDetector(
                   onTap: () {
                     if (isFavorited) {
-                      ref.read(favoritesProvider.notifier).removeFavorite(property.id);
+                      ref
+                          .read(favoritesProvider.notifier)
+                          .removeFavorite(property.id);
                     } else {
-                      ref.read(favoritesProvider.notifier).addFavorite(property.id);
+                      ref
+                          .read(favoritesProvider.notifier)
+                          .addFavorite(property.id);
                     }
                   },
                   child: Container(
@@ -2421,7 +2506,9 @@ class PropertyCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
-    final isFavoritedAsync = ref.watch(isPropertyFavoritedProvider(property.id));
+    final isFavoritedAsync = ref.watch(
+      isPropertyFavoritedProvider(property.id),
+    );
     final isFavorited = isFavoritedAsync.maybeWhen(
       data: (fav) => fav,
       orElse: () => false,
@@ -2490,9 +2577,13 @@ class PropertyCard extends ConsumerWidget {
                   child: GestureDetector(
                     onTap: () {
                       if (isFavorited) {
-                        ref.read(favoritesProvider.notifier).removeFavorite(property.id);
+                        ref
+                            .read(favoritesProvider.notifier)
+                            .removeFavorite(property.id);
                       } else {
-                        ref.read(favoritesProvider.notifier).addFavorite(property.id);
+                        ref
+                            .read(favoritesProvider.notifier)
+                            .addFavorite(property.id);
                       }
                     },
                     child: Container(
