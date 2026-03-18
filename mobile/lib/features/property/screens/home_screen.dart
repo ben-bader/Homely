@@ -144,7 +144,6 @@ class HomeScreen extends ConsumerWidget {
     const ProfileScreen(),
   ];
 
-  // ── CHANGE 1: pass isSeller: true to _ExploreTab for sellers ──
   List<Widget> _buildSellerTabs() => [
     const _SellerListingsTab(),
     const ConversationsScreen(),
@@ -188,14 +187,21 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
   final _authService = AuthService();
   String? _userId;
 
-  static const _statusChips = [
-    'All',
-    'Active',
-    'Inactive',
-    'Sold',
-    'Rented',
-    'Draft',
-  ];
+  // Aligned with backend PropertyStatus enum: AVAILABLE, SUSPENDED, DRAFT
+  static const _statusChips = ['All', 'Available', 'Suspended', 'Draft'];
+
+  static PropertyStatus? _chipToStatus(String chip) {
+    switch (chip) {
+      case 'Available':
+        return PropertyStatus.available;
+      case 'Suspended':
+        return PropertyStatus.suspended;
+      case 'Draft':
+        return PropertyStatus.draft;
+      default:
+        return null; // 'All'
+    }
+  }
 
   @override
   void initState() {
@@ -523,29 +529,21 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final chip = _statusChips[i];
-                  final selected = chip == 'All'
-                      ? filter.status == null
-                      : filter.status?.label == chip;
+                  final chipStatus = _chipToStatus(chip);
+                  final selected = filter.status == chipStatus;
+
                   return GestureDetector(
                     onTap: () {
-                      if (chip == 'All') {
+                      if (selected || chip == 'All') {
+                        // Already selected or tapping All → clear
                         ref
                             .read(sellerListingFilterProvider.notifier)
                             .update((s) => s.copyWith(clearStatus: true));
                       } else {
-                        final st = PropertyStatus.values.firstWhere(
-                          (e) => e.label == chip,
-                          orElse: () => PropertyStatus.values.first,
-                        );
-                        final isSame = filter.status == st;
+                        // Set the new status
                         ref
                             .read(sellerListingFilterProvider.notifier)
-                            .update(
-                              (s) => s.copyWith(
-                                clearStatus: isSame,
-                                status: isSame ? null : st,
-                              ),
-                            );
+                            .update((s) => s.copyWith(status: chipStatus));
                       }
                     },
                     child: AnimatedContainer(
@@ -1009,8 +1007,6 @@ class _CardBtn extends StatelessWidget {
 // ═════════════════════════════════════════════════════════════════════════════
 // EXPLORE TAB
 // ═════════════════════════════════════════════════════════════════════════════
-
-// ── CHANGE 2: _ExploreTab now accepts an optional isSeller flag ──
 class _ExploreTab extends ConsumerStatefulWidget {
   final bool isSeller;
   const _ExploreTab({this.isSeller = false});
@@ -1189,7 +1185,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
     final filter = ref.watch(propertyFilterProvider);
     final badgeCount = filter.activeFilterCount;
 
-    // ── CHANGE 3: watch favorites count for the seller badge ──
     final favoritesAsync = widget.isSeller
         ? ref.watch(favoritesProvider)
         : null;
@@ -1224,7 +1219,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                       ),
                     ),
                   ),
-                  // ── CHANGE 3: seller sees a favorites button; clients keep notif+avatar ──
                   if (widget.isSeller)
                     _SellerFavoritesBtn(favCount: favCount)
                   else ...[
@@ -1527,7 +1521,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// SELLER FAVORITES BUTTON — replaces notif + avatar in seller's Explore header
+// SELLER FAVORITES BUTTON
 // ═════════════════════════════════════════════════════════════════════════════
 class _SellerFavoritesBtn extends StatelessWidget {
   final int favCount;
