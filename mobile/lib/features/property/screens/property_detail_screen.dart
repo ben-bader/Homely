@@ -1,9 +1,13 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/property/models/property.dart';
-import 'package:mobile/features/property/providers/property_providers.dart';
+import 'package:mobile/features/property/providers/property_providers.dart'
+    hide CreatePropertyScreen;
 import 'package:mobile/features/chat/repositories/chat_repository.dart';
 import 'package:mobile/features/chat/screens/chat_screen.dart';
 import 'package:mobile/features/chat/providers/chat_providers.dart';
@@ -27,7 +31,10 @@ class PropertyDetailScreen extends ConsumerWidget {
       loading: () => const Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
         ),
       ),
       error: (e, _) => Scaffold(
@@ -68,10 +75,11 @@ class _BodyState extends ConsumerState<_Body> {
     final auth = AuthService();
     final userId = await auth.getCurrentUserId();
     final role = await auth.getUserRoleFromStorage();
-    if (mounted) setState(() {
-      _currentUserId = userId;
-      _userRole = role;
-    });
+    if (mounted)
+      setState(() {
+        _currentUserId = userId;
+        _userRole = role;
+      });
   }
 
   @override
@@ -89,7 +97,6 @@ class _BodyState extends ConsumerState<_Body> {
     final p = widget.property;
     final h = MediaQuery.of(context).size.height;
 
-    // ✅ Single media watch — used for both hero images and media section
     final mediaAsync = ref.watch(propertyMediaProvider(p.id));
 
     return Scaffold(
@@ -150,16 +157,17 @@ class _BodyState extends ConsumerState<_Body> {
                   bottomLeft: Radius.circular(28),
                   bottomRight: Radius.circular(28),
                 ),
-                // ✅ Hero uses actual Cloudinary images from media provider
                 child: mediaAsync.when(
                   loading: () => _buildHeroCarousel(p.images),
                   error: (_, __) => _buildHeroCarousel(p.images),
                   data: (media) {
-                    final imageUrls = media
-                        .where((m) => m.mediaType == MediaType.IMAGE)
-                        .toList()
-                      ..sort((a, b) =>
-                          a.displayOrder.compareTo(b.displayOrder));
+                    final imageUrls =
+                        media
+                            .where((m) => m.mediaType == MediaType.IMAGE)
+                            .toList()
+                          ..sort(
+                            (a, b) => a.displayOrder.compareTo(b.displayOrder),
+                          );
                     final urls = imageUrls.isNotEmpty
                         ? imageUrls.map((m) => m.url).toList()
                         : p.images;
@@ -186,12 +194,15 @@ class _BodyState extends ConsumerState<_Body> {
                           Text(
                             p.title,
                             style: tt.headlineSmall?.copyWith(
-                                letterSpacing: -0.5),
+                              letterSpacing: -0.5,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: p.listingType.toJson() == 'RENT'
                                   ? const Color(0xFFE8F4FD)
@@ -214,7 +225,7 @@ class _BodyState extends ConsumerState<_Body> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      '${_fmt(p.price)} ${p.currency}mvn ',
+                      '${_fmt(p.price)} ${p.currency}',
                       style: tt.titleMedium?.copyWith(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -230,12 +241,17 @@ class _BodyState extends ConsumerState<_Body> {
                 // Location
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined,
-                        size: 15, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 15,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: Text(p.location,
-                          style: tt.bodySmall?.copyWith(fontSize: 13)),
+                      child: Text(
+                        p.location,
+                        style: tt.bodySmall?.copyWith(fontSize: 13),
+                      ),
                     ),
                   ],
                 ),
@@ -245,32 +261,41 @@ class _BodyState extends ConsumerState<_Body> {
                 // Spec chips
                 if (p.chips.isNotEmpty) ...[
                   Row(
-                    children: List.generate(p.chips.length, (i) => [
-                      Expanded(
-                        child: _SpecBox(
-                          icon: p.chips[i].icon,
-                          label: p.chips[i].label,
+                    children: List.generate(
+                      p.chips.length,
+                      (i) => [
+                        Expanded(
+                          child: _SpecBox(
+                            icon: p.chips[i].icon,
+                            label: p.chips[i].label,
+                          ),
                         ),
-                      ),
-                      if (i < p.chips.length - 1) const SizedBox(width: 10),
-                    ]).expand((e) => e).toList(),
+                        if (i < p.chips.length - 1) const SizedBox(width: 10),
+                      ],
+                    ).expand((e) => e).toList(),
                   ),
                   const SizedBox(height: 32),
                 ] else ...[
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(
-                          color: AppColors.primary.withOpacity(0.2)),
+                        color: AppColors.primary.withOpacity(0.2),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(_propertyIcon(p.propertyType.toJson()),
-                            size: 15, color: AppColors.primary),
+                        Icon(
+                          _propertyIcon(p.propertyType.toJson()),
+                          size: 15,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           p.propertyType.toJson()[0] +
@@ -294,8 +319,10 @@ class _BodyState extends ConsumerState<_Body> {
                 if (p.description.isNotEmpty) ...[
                   Text('Description', style: tt.titleSmall),
                   const SizedBox(height: 10),
-                  Text(p.description,
-                      style: tt.bodyMedium?.copyWith(height: 1.6)),
+                  Text(
+                    p.description,
+                    style: tt.bodyMedium?.copyWith(height: 1.6),
+                  ),
                   const SizedBox(height: 32),
                 ],
 
@@ -317,8 +344,10 @@ class _BodyState extends ConsumerState<_Body> {
                             ? NetworkImage(p.sellerAvatar!)
                             : null,
                         child: p.sellerAvatar == null
-                            ? const Icon(Icons.person,
-                                color: AppColors.textSecondary)
+                            ? const Icon(
+                                Icons.person,
+                                color: AppColors.textSecondary,
+                              )
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -336,8 +365,7 @@ class _BodyState extends ConsumerState<_Body> {
                             if (p.sellerAgency != null &&
                                 p.sellerAgency!.isNotEmpty) ...[
                               const SizedBox(height: 2),
-                              Text(p.sellerAgency!,
-                                  style: tt.bodySmall),
+                              Text(p.sellerAgency!, style: tt.bodySmall),
                             ],
                           ],
                         ),
@@ -373,39 +401,16 @@ class _BodyState extends ConsumerState<_Body> {
                 ],
 
                 const SizedBox(height: 32),
-                FeedbackList(
-                    propertyId: p.id, currentUserId: _currentUserId),
+                FeedbackList(propertyId: p.id, currentUserId: _currentUserId),
                 const SizedBox(height: 32),
 
-                // Location address
-                Text('Location Address', style: tt.titleSmall),
+                // ── Location map ─────────────────────────────────────────
+                Text('Location', style: tt.titleSmall),
                 const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    height: 160,
-                    color: AppColors.borderLight,
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.location_on,
-                              color: Colors.red, size: 32),
-                          const SizedBox(height: 6),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24),
-                            child: Text(
-                              p.location,
-                              textAlign: TextAlign.center,
-                              style: tt.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                _PropertyMap(
+                  latitude: p.latitude,
+                  longitude: p.longitude,
+                  address: p.location,
                 ),
 
                 // Media section
@@ -414,7 +419,9 @@ class _BodyState extends ConsumerState<_Body> {
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Center(
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.primary),
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                   error: (_, __) => const SizedBox.shrink(),
@@ -426,8 +433,7 @@ class _BodyState extends ConsumerState<_Body> {
                         const SizedBox(height: 32),
                         Text('Media', style: tt.titleSmall),
                         const SizedBox(height: 12),
-                        _MediaSection(
-                            media: media, propertyId: p.id),
+                        _MediaSection(media: media, propertyId: p.id),
                       ],
                     );
                   },
@@ -441,7 +447,9 @@ class _BodyState extends ConsumerState<_Body> {
       bottomNavigationBar: _isClient
           ? Container(
               padding: EdgeInsets.fromLTRB(
-                20, 12, 20,
+                20,
+                12,
+                20,
                 MediaQuery.of(context).padding.bottom + 12,
               ),
               decoration: BoxDecoration(
@@ -460,8 +468,11 @@ class _BodyState extends ConsumerState<_Body> {
                   propertyId: p.id,
                   propertyTitle: p.title,
                 ),
-                icon: const Icon(Icons.calendar_today_outlined,
-                    size: 18, color: Colors.white),
+                icon: const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: Colors.white,
+                ),
                 label: Text(
                   'Request a Visit',
                   style: GoogleFonts.outfit(
@@ -525,14 +536,11 @@ class _BodyState extends ConsumerState<_Body> {
                 images.length,
                 (i) => AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 3),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
                   width: _imgIdx == i ? 20 : 7,
                   height: 7,
                   decoration: BoxDecoration(
-                    color: _imgIdx == i
-                        ? Colors.white
-                        : Colors.white54,
+                    color: _imgIdx == i ? Colors.white : Colors.white54,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -547,29 +555,244 @@ class _BodyState extends ConsumerState<_Body> {
 
   IconData _propertyIcon(String type) {
     switch (type) {
-      case 'HOUSE': return Icons.house_outlined;
-      case 'APARTMENT': return Icons.apartment_outlined;
-      case 'VILLA': return Icons.villa_outlined;
-      case 'STUDIO': return Icons.chair_outlined;
-      case 'COMMERCIAL': return Icons.business_outlined;
-      case 'LAND': return Icons.landscape_outlined;
-      default: return Icons.home_outlined;
+      case 'HOUSE':
+        return Icons.house_outlined;
+      case 'APARTMENT':
+        return Icons.apartment_outlined;
+      case 'VILLA':
+        return Icons.villa_outlined;
+      case 'STUDIO':
+        return Icons.chair_outlined;
+      case 'COMMERCIAL':
+        return Icons.business_outlined;
+      case 'LAND':
+        return Icons.landscape_outlined;
+      default:
+        return Icons.home_outlined;
     }
   }
 
   Widget _imgPlaceholder() => Container(
-        color: AppColors.borderMedium,
-        child: const Center(
-          child: Icon(Icons.home_outlined,
-              size: 64, color: AppColors.textTertiary),
-        ),
-      );
+    color: AppColors.borderMedium,
+    child: const Center(
+      child: Icon(Icons.home_outlined, size: 64, color: AppColors.textTertiary),
+    ),
+  );
 
   String _fmt(double p) {
     if (p >= 1000000) return '${(p / 1000000).toStringAsFixed(2)}M';
     if (p >= 1000) return '${(p / 1000).toStringAsFixed(0)}K';
     return p.toStringAsFixed(0);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROPERTY MAP WIDGET
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _PropertyMap extends StatelessWidget {
+  final double? latitude;
+  final double? longitude;
+  final String address;
+
+  const _PropertyMap({
+    required this.latitude,
+    required this.longitude,
+    required this.address,
+  });
+
+  bool get _hasCoordinates =>
+      latitude != null &&
+      longitude != null &&
+      latitude != 0.0 &&
+      longitude != 0.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+
+    // ── No coordinates fallback ──────────────────────────────────────────
+    if (!_hasCoordinates) {
+      return Container(
+        height: 140,
+        decoration: BoxDecoration(
+          color: AppColors.subtleBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.location_on_outlined,
+                size: 28,
+                color: AppColors.textTertiary,
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  address,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: tt.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final point = LatLng(latitude!, longitude!);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Interactive map ──────────────────────────────────────────────
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            height: 220,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: point,
+                initialZoom: 15.0,
+                interactionOptions: const InteractionOptions(
+                  flags:
+                      InteractiveFlag.pinchZoom |
+                      InteractiveFlag.drag |
+                      InteractiveFlag.doubleTapZoom,
+                ),
+              ),
+              children: [
+                // OpenStreetMap tiles — no API key required
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.homely.mobile',
+                  maxZoom: 19,
+                ),
+                // Property pin
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: point,
+                      width: 48,
+                      height: 56,
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.4),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.home_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          // Pin tail
+                          CustomPaint(
+                            size: const Size(12, 8),
+                            painter: _PinTailPainter(color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                // OSM attribution (required by OSM license)
+                RichAttributionWidget(
+                  attributions: [
+                    TextSourceAttribution(
+                      'OpenStreetMap contributors',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Address pill below map ───────────────────────────────────────
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.location_on_rounded,
+                size: 16,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  address,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Pin tail painter ──────────────────────────────────────────────────────────
+
+class _PinTailPainter extends CustomPainter {
+  final Color color;
+  const _PinTailPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = ui.Paint()..color = color;
+    final path = ui.Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -618,7 +841,9 @@ class _MediaSectionState extends State<_MediaSection>
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           labelStyle: GoogleFonts.outfit(
-              fontWeight: FontWeight.w600, fontSize: 14),
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
           tabs: [
             Tab(
               child: Row(
@@ -649,13 +874,15 @@ class _MediaSectionState extends State<_MediaSection>
             controller: _tab,
             children: [
               _MediaGrid(
-                  media: images,
-                  propertyId: widget.propertyId,
-                  isVideo: false),
+                media: images,
+                propertyId: widget.propertyId,
+                isVideo: false,
+              ),
               _MediaGrid(
-                  media: videos,
-                  propertyId: widget.propertyId,
-                  isVideo: true),
+                media: videos,
+                propertyId: widget.propertyId,
+                isVideo: true,
+              ),
             ],
           ),
         ),
@@ -684,9 +911,7 @@ class _MediaGrid extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isVideo
-                  ? Icons.video_library_outlined
-                  : Icons.image_outlined,
+              isVideo ? Icons.video_library_outlined : Icons.image_outlined,
               size: 48,
               color: AppColors.textTertiary,
             ),
@@ -694,7 +919,9 @@ class _MediaGrid extends StatelessWidget {
             Text(
               isVideo ? 'No videos yet' : 'No photos yet',
               style: GoogleFonts.outfit(
-                  color: AppColors.textSecondary, fontSize: 14),
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -729,9 +956,7 @@ class _ImageGridItem extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => _FullscreenImage(url: media.url),
-        ),
+        MaterialPageRoute(builder: (_) => _FullscreenImage(url: media.url)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -747,27 +972,32 @@ class _ImageGridItem extends StatelessWidget {
                   color: AppColors.subtleBackground,
                   child: const Center(
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.primary),
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
                   ),
                 );
               },
               errorBuilder: (_, __, ___) => Container(
                 color: AppColors.subtleBackground,
                 child: const Center(
-                  child: Icon(Icons.broken_image_outlined,
-                      color: AppColors.textTertiary, size: 32),
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: AppColors.textTertiary,
+                    size: 32,
+                  ),
                 ),
               ),
             ),
-
-            // Cover badge
             if (isCover)
               Positioned(
                 bottom: 8,
                 left: 8,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(8),
@@ -782,8 +1012,11 @@ class _ImageGridItem extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded,
-                          color: Colors.white, size: 11),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Colors.white,
+                        size: 11,
+                      ),
                       const SizedBox(width: 3),
                       Text(
                         'Cover',
@@ -828,15 +1061,13 @@ class _VideoGridItem extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              if (media.thumbnailUrl != null &&
-                  media.thumbnailUrl!.isNotEmpty)
+              if (media.thumbnailUrl != null && media.thumbnailUrl!.isNotEmpty)
                 Image.network(
                   media.thumbnailUrl!,
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,
-                  errorBuilder: (_, __, ___) =>
-                      const SizedBox.shrink(),
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
               Container(
                 width: 40,
@@ -844,11 +1075,13 @@ class _VideoGridItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  border:
-                      Border.all(color: Colors.white54, width: 1.5),
+                  border: Border.all(color: Colors.white54, width: 1.5),
                 ),
-                child: const Icon(Icons.play_arrow_rounded,
-                    color: Colors.white, size: 24),
+                child: const Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
             ],
           ),
@@ -866,28 +1099,28 @@ class _FullscreenImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: Center(
-          child: InteractiveViewer(
-            minScale: 0.5,
-            maxScale: 4.0,
-            child: Image.network(
-              url,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.broken_image_outlined,
-                color: Colors.white54,
-                size: 64,
-              ),
-            ),
+    backgroundColor: Colors.black,
+    appBar: AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      iconTheme: const IconThemeData(color: Colors.white),
+    ),
+    body: Center(
+      child: InteractiveViewer(
+        minScale: 0.5,
+        maxScale: 4.0,
+        child: Image.network(
+          url,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Icon(
+            Icons.broken_image_outlined,
+            color: Colors.white54,
+            size: 64,
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -908,31 +1141,31 @@ class _OutlineActionBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.outfit(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.outfit(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 class _ContactBtn extends ConsumerWidget {
@@ -967,14 +1200,14 @@ class _ContactBtn extends ConsumerWidget {
               backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           );
         }
       },
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(20),
@@ -1033,11 +1266,11 @@ class _CircleBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, size: 24, color: iconColor),
-        ),
-      );
+    onTap: onTap,
+    child: SizedBox(
+      width: 40,
+      height: 40,
+      child: Icon(icon, size: 24, color: iconColor),
+    ),
+  );
 }
