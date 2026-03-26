@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/hooks/useProperties";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
+import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
 /* ---------------- TYPES ---------------- */
 
@@ -252,6 +253,31 @@ function PropertyDrawer({
   loadingDetail: boolean;
 }) {
   const p = selectedProperty?.id === property.id ? selectedProperty : null;
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (!p) {
+      setMessage("Property does not exist.");
+      return;
+    }
+
+    setDeleteLoading(true);
+    setMessage(null);
+
+    try {
+      await api.delete(`/admin/properties/${p.id}`);
+      setMessage("Property deleted successfully.");
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        setMessage("Property not found or already deleted.");
+      } else {
+        setMessage("Failed to delete property. Please try again.");
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <Drawer
@@ -329,7 +355,22 @@ function PropertyDrawer({
           )}
         </div>
 
-        <DrawerFooter className="border-t">
+        {message && (
+          <div className="px-5 pb-2">
+            <p className="text-sm text-center text-muted-foreground">{message}</p>
+          </div>
+        )}
+
+        <DrawerFooter className="border-t flex flex-col gap-2">
+          <Button
+            variant="destructive"
+            className="w-full"
+            onClick={handleDelete}
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? "Deleting…" : "Delete Property"}
+          </Button>
+
           <DrawerClose asChild>
             <Button variant="outline" className="w-full">Close</Button>
           </DrawerClose>
@@ -507,11 +548,11 @@ export default function Properties() {
       {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader className="bg-blue-900 text-white">
+          <TableHeader className="bg-primary text-white">
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-white">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
