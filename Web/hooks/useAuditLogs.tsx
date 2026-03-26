@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react"
 
 const getAuditLogs = async (): Promise<AuditLog[]> => {
   const { data } = await api.get<AuditLog[]>("/admin/audit-logs")
-  return data
+  return data || []
 }
 
 export function useAuditLogs() {

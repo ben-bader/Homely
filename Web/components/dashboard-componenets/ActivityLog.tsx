@@ -29,7 +29,7 @@ export default function ActivityMonitoring() {
   const [selectedDetails, setSelectedDetails] = useState<any>(null);
 
   if (loading) {
-    return <div className="p-6">Loading audit logs…</div>;
+    return <div className="p-6">Loading activity logs…</div>;
   }
 
   if (error) {
@@ -37,12 +37,12 @@ export default function ActivityMonitoring() {
   }
 
   if (!logs.length) {
-    return <div className="p-6">No audit logs yet.</div>;
+    return <div className="p-6">No activity logs yet.</div>;
   }
 
   return (
     <div className="p-6">
-      <h2 className="text-lg font-semibold mb-4">Activity Monitoring</h2>
+      <h2 className="text-lg font-semibold mb-4">Activity Logs</h2>
       <p className="text-muted-foreground text-sm mb-4">
         All actions (e.g. report status changes) are recorded here.
       </p>
