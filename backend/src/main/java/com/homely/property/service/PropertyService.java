@@ -15,6 +15,8 @@ import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
 import com.homely.media.repository.PropertyMediaRepository;
 import com.homely.media.service.MediaService;
+import com.homely.moderation.entity.LogActivity;
+import com.homely.moderation.service.LogActivityService;
 import com.homely.notification.dto.NotificationCreateRequest;
 import com.homely.notification.service.NotificationService;
 import com.homely.property.dto.PropertyCreateRequest;
@@ -60,8 +62,8 @@ public class PropertyService {
     private final ObjectMapper objectMapper;
     private final MediaService mediaService;
     private final PropertyMediaRepository propertyMediaRepository;
+    private final LogActivityService logActivityService;
 
-    // ================= CREATE =================
     public PropertyDto create(PropertyCreateRequest request, String userEmail) {
 
         User seller = userService.getByEmail(userEmail);
@@ -77,6 +79,16 @@ public class PropertyService {
         attachSubtype(property, request);
         
         Property saved = propertyRepository.save(property);
+        
+        // Log property creation activity
+        logActivityService.log(
+            seller,
+            LogActivity.ActivityType.CREATE,
+            LogActivity.EntityType.PROPERTY,
+            saved.getId(),
+            "Created property: " + saved.getTitle() + " (" + saved.getPropertyType() + ")",
+            "{\"propertyId\":\"" + saved.getId() + "\",\"title\":\"" + saved.getTitle() + "\",\"type\":\"" + saved.getPropertyType() + "\"}"
+        );
         
         // Send notification to seller confirming property creation
         sendPropertyCreatedNotification(seller, saved);
@@ -147,7 +159,6 @@ public class PropertyService {
         }
     }
 
-    // ================= GET ONE =================
     public PropertyDto get(UUID id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
@@ -164,7 +175,6 @@ public class PropertyService {
         // Populate images from PropertyMedia
         List<String> imageUrls = mediaService.findByPropertyId(id)
                 .stream()
-                .filter(media -> media.getMediaType().equals("IMAGE"))
                 .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
                 .map(media -> media.getUrl())
                 .toList();
@@ -173,7 +183,6 @@ public class PropertyService {
         return enrichWithBoostInfo(dto);
     }
 
-    // ================= HOMEPAGE =================
     public List<PropertyDto> getAll() {
         return enrichWithBoostInfo(propertyRepository.findAllOrderByBoostThenCreatedAt(java.time.Instant.now())
                 .stream()
@@ -196,7 +205,6 @@ public class PropertyService {
     return enrichWithBoostInfo(propertyMapper.toDto(property));
 }
 
-    // ================= FILTER =================
     public List<PropertyDto> filter(
         ListingType type,
         PropertyType propertyType,
@@ -245,7 +253,6 @@ Specification<Property> spec = (root, query, cb) -> null;
                 cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
     }
 
-    // ✅ Sort by boost status then creation date
     return enrichWithBoostInfo(propertyRepository.findAll(spec)
             .stream()
             .sorted((p1, p2) -> {
@@ -272,7 +279,6 @@ Specification<Property> spec = (root, query, cb) -> null;
 }
 
 
-    // ================= GLOBAL SEARCH =================
     public List<PropertyDto> search(String keyword) {
         return propertyRepository.globalSearch(keyword)
                 .stream()
@@ -299,7 +305,6 @@ Specification<Property> spec = (root, query, cb) -> null;
                 .toList();
     }
 
-    // ================= SELLER PROPERTIES =================
     public List<PropertyDto> getBySellerEmail(String email) {
         return propertyRepository.findBySellerEmail(email)
                 .stream()
@@ -326,7 +331,6 @@ Specification<Property> spec = (root, query, cb) -> null;
                 .toList();
     }
 
-    // ================= UPDATE STATUS =================
     public PropertyDto updateStatus(UUID propertyId, PropertyStatus status) {
 
         Property property = propertyRepository.findById(propertyId)
@@ -336,6 +340,19 @@ Specification<Property> spec = (root, query, cb) -> null;
         property.setStatus(status);
         
         Property saved = propertyRepository.save(property);
+        
+        // Log property status update (this is typically done by admin, but we still track it)
+        if (property.getSeller() != null) {
+            String changes = String.format("{\"oldStatus\":\"%s\",\"newStatus\":\"%s\"}", oldStatus, status);
+            logActivityService.log(
+                property.getSeller(),
+                LogActivity.ActivityType.UPDATE,
+                LogActivity.EntityType.PROPERTY,
+                propertyId,
+                "Property status changed from " + oldStatus + " to " + status,
+                changes
+            );
+        }
         
         // Send notification to seller about property status change
         try {
@@ -370,7 +387,6 @@ Specification<Property> spec = (root, query, cb) -> null;
         return enrichWithBoostInfo(dto);
     }
 
-    // ================= UPDATE PROPERTY =================
     public PropertyDto update(UUID propertyId, PropertyUpdateRequest request, String userEmail) {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
@@ -379,16 +395,49 @@ Specification<Property> spec = (root, query, cb) -> null;
             throw new RuntimeException("Only the owner can update this property");
         }
 
-        if (request.getTitle() != null) property.setTitle(request.getTitle());
-        if (request.getDescription() != null) property.setDescription(request.getDescription());
-        if (request.getPrice() != null) property.setPrice(request.getPrice());
-        if (request.getCurrency() != null) property.setCurrency(request.getCurrency());
-        if (request.getListingType() != null) property.setListingType(request.getListingType());
-        if (request.getPropertyType() != null) property.setPropertyType(request.getPropertyType());
-        if (request.getStatus() != null) property.setStatus(request.getStatus());
-        if (request.getAddress() != null) property.setAddress(request.getAddress());
-        if (request.getLatitude() != null) property.setLatitude(request.getLatitude());
-        if (request.getLongitude() != null) property.setLongitude(request.getLongitude());
+        // Track changes for the log
+        StringBuilder changes = new StringBuilder("{");
+
+        if (request.getTitle() != null) { 
+            changes.append("\"title\":\"").append(request.getTitle()).append("\",");
+            property.setTitle(request.getTitle()); 
+        }
+        if (request.getDescription() != null) { 
+            changes.append("\"description\":\"").append(request.getDescription().substring(0, Math.min(50, request.getDescription().length()))).append("...\",");
+            property.setDescription(request.getDescription()); 
+        }
+        if (request.getPrice() != null) { 
+            changes.append("\"price\":\"").append(request.getPrice()).append("\",");
+            property.setPrice(request.getPrice()); 
+        }
+        if (request.getCurrency() != null) { 
+            changes.append("\"currency\":\"").append(request.getCurrency()).append("\",");
+            property.setCurrency(request.getCurrency()); 
+        }
+        if (request.getListingType() != null) { 
+            changes.append("\"listingType\":\"").append(request.getListingType()).append("\",");
+            property.setListingType(request.getListingType()); 
+        }
+        if (request.getPropertyType() != null) { 
+            changes.append("\"propertyType\":\"").append(request.getPropertyType()).append("\",");
+            property.setPropertyType(request.getPropertyType()); 
+        }
+        if (request.getStatus() != null) { 
+            changes.append("\"status\":\"").append(request.getStatus()).append("\",");
+            property.setStatus(request.getStatus()); 
+        }
+        if (request.getAddress() != null) { 
+            changes.append("\"address\":\"").append(request.getAddress()).append("\",");
+            property.setAddress(request.getAddress()); 
+        }
+        if (request.getLatitude() != null) { 
+            changes.append("\"latitude\":\"").append(request.getLatitude()).append("\",");
+            property.setLatitude(request.getLatitude()); 
+        }
+        if (request.getLongitude() != null) { 
+            changes.append("\"longitude\":\"").append(request.getLongitude()).append("\",");
+            property.setLongitude(request.getLongitude()); 
+        }
 
         // Subtype updates (create subtype if missing)
         if (request.getApartment() != null) {
@@ -398,6 +447,7 @@ Specification<Property> spec = (root, query, cb) -> null;
                 a = new Apartment();
                 a.setProperty(property);
                 property.setApartment(a);
+                changes.append("\"apartment\":\"created\",");
             }
             a.setBedrooms(ar.getBedrooms());
             a.setBathrooms(ar.getBathrooms());
@@ -412,6 +462,7 @@ Specification<Property> spec = (root, query, cb) -> null;
                 h = new House();
                 h.setProperty(property);
                 property.setHouse(h);
+                changes.append("\"house\":\"created\",");
             }
             h.setBedrooms(hr.getBedrooms());
             h.setBathrooms(hr.getBathrooms());
@@ -426,6 +477,7 @@ Specification<Property> spec = (root, query, cb) -> null;
                 v = new Villa();
                 v.setProperty(property);
                 property.setVilla(v);
+                changes.append("\"villa\":\"created\",");
             }
             v.setBedrooms(vr.getBedrooms());
             v.setBathrooms(vr.getBathrooms());
@@ -440,6 +492,7 @@ Specification<Property> spec = (root, query, cb) -> null;
                 s = new Studio();
                 s.setProperty(property);
                 property.setStudio(s);
+                changes.append("\"studio\":\"created\",");
             }
             s.setFurnished(sr.isFurnished());
         }
@@ -451,6 +504,7 @@ Specification<Property> spec = (root, query, cb) -> null;
                 c = new Commercial();
                 c.setProperty(property);
                 property.setCommercial(c);
+                changes.append("\"commercial\":\"created\",");
             }
             c.setAreaSqm(cr.getAreaSqm());
             c.setBusinessType(cr.getBusinessType());
@@ -463,12 +517,29 @@ Specification<Property> spec = (root, query, cb) -> null;
                 l = new Land();
                 l.setProperty(property);
                 property.setLand(l);
+                changes.append("\"land\":\"created\",");
             }
             l.setAreaSqm(lr.getAreaSqm());
             l.setConstructible(lr.isConstructible());
         }
 
+        String changesJson = changes.toString();
+        if (changesJson.endsWith(",")) {
+            changesJson = changesJson.substring(0, changesJson.length() - 1);
+        }
+        changesJson += "}";
+
         Property saved = propertyRepository.save(property);
+        
+        // Log property update activity
+        logActivityService.log(
+            property.getSeller(),
+            LogActivity.ActivityType.UPDATE,
+            LogActivity.EntityType.PROPERTY,
+            propertyId,
+            "Updated property: " + property.getTitle(),
+            changesJson
+        );
         
         PropertyDto dto = propertyMapper.toDto(saved);
         // Populate images for the property
@@ -484,7 +555,25 @@ Specification<Property> spec = (root, query, cb) -> null;
 
     // ================= DELETE =================
     public void delete(UUID id) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
+        
+        User seller = property.getSeller();
+        String propertyTitle = property.getTitle();
+        
         propertyRepository.deleteById(id);
+        
+        // Log property deletion activity
+        if (seller != null) {
+            logActivityService.log(
+                seller,
+                LogActivity.ActivityType.DELETE,
+                LogActivity.EntityType.PROPERTY,
+                id,
+                "Deleted property: " + propertyTitle,
+                "{\"propertyId\":\"" + id + "\",\"title\":\"" + propertyTitle + "\"}"
+            );
+        }
     }
     public Property getEntityById(UUID id) {
     return propertyRepository.findById(id)
@@ -513,29 +602,6 @@ public long count(){
             log.info("Property created notification sent to seller: {}", seller.getEmail());
         } catch (Exception e) {
             log.error("Failed to send property creation notification: {}", e.getMessage(), e);
-        }
-    }
-    
-    private void sendPropertyStatusChangedNotification(Property property, PropertyStatus oldStatus, PropertyStatus newStatus) {
-        try {
-            String payload = objectMapper.writeValueAsString(new java.util.HashMap<String, Object>() {{
-                put("propertyTitle", property.getTitle());
-                put("propertyId", property.getId().toString());
-                put("oldStatus", oldStatus.name());
-                put("newStatus", newStatus.name());
-                put("message", "Your property '" + property.getTitle() + "' status has changed from " + 
-                    oldStatus.name() + " to " + newStatus.name());
-            }});
-            
-            NotificationCreateRequest notificationRequest = new NotificationCreateRequest();
-            notificationRequest.setUserId(property.getSeller().getId());
-            notificationRequest.setType("PROPERTY_STATUS_CHANGED");
-            notificationRequest.setPayload(payload);
-            notificationService.create(notificationRequest);
-            
-            log.info("Property status changed notification sent to seller: {}", property.getSeller().getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send property status notification: {}", e.getMessage(), e);
         }
     }
     

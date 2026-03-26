@@ -10,6 +10,8 @@ import com.homely.auth.dto.LoginRequest;
 import com.homely.auth.dto.RegisterRequest;
 import com.homely.common.service.EmailService;
 import com.homely.config.AppConfig;
+import com.homely.moderation.entity.LogActivity;
+import com.homely.moderation.service.LogActivityService;
 import com.homely.user.entity.Profile;
 import com.homely.user.entity.User;
 import com.homely.user.repository.UserRepository;
@@ -25,6 +27,7 @@ public class AuthService {
     private final TokenBlacklist tokenBlacklist;
     private final EmailService emailService;
     private final AppConfig appConfig;
+    private final LogActivityService logActivityService;
 
     public AuthResponse register(RegisterRequest request){
         String normalizedEmail = request.getEmail().trim().toLowerCase();
@@ -47,6 +50,16 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
+        // Log the signup activity
+        logActivityService.log(
+            savedUser,
+            LogActivity.ActivityType.SIGNUP,
+            LogActivity.EntityType.USER,
+            savedUser.getId(),
+            "User registered with email: " + normalizedEmail + " and role: " + request.getRole(),
+            "{\"email\":\"" + normalizedEmail + "\",\"role\":\"" + request.getRole() + "\"}"
+        );
+
         // Send verification email
         String verificationLink = appConfig.getFrontendUrl() + "/api/auth/verify-email?token=" + user.getVerificationToken();
         emailService.sendEmail(user.getEmail(), "Verify Your Email", "Please click the link to verify your email: " + verificationLink);
@@ -67,6 +80,16 @@ public class AuthService {
         if (!user.isEmailVerified()) {
             throw new RuntimeException("Please verify your email first");
         }
+
+        // Log the login activity
+        logActivityService.log(
+            user,
+            LogActivity.ActivityType.LOGIN,
+            LogActivity.EntityType.USER,
+            user.getId(),
+            "User logged in with email: " + normalizedEmail,
+            "{\"email\":\"" + normalizedEmail + "\"}"
+        );
 
         return new AuthResponse(jwtService.generateToken(user));
     }

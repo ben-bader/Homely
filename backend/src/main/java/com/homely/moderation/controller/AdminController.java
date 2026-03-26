@@ -27,11 +27,15 @@ import com.homely.feedback.dto.FeedbackDto;
 import com.homely.feedback.mapper.FeedbackMapper;
 import com.homely.feedback.service.FeedbackService;
 import com.homely.moderation.dto.AuditLogDto;
+import com.homely.moderation.dto.LogActivityDto;
 import com.homely.moderation.dto.ReportDto;
 import com.homely.moderation.entity.DashboardStats;
+import com.homely.moderation.entity.LogActivity;
 import com.homely.moderation.entity.Report;
 import com.homely.moderation.mapper.AuditLogMapper;
+import com.homely.moderation.mapper.LogActivityMapper;
 import com.homely.moderation.mapper.ReportMapper;
+import com.homely.moderation.service.LogActivityService;
 import com.homely.moderation.service.ModerationService;
 import com.homely.property.dto.PropertyDto;
 import com.homely.property.mapper.PropertyMapper;
@@ -60,6 +64,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminController {
 
     private final ModerationService moderationService;
+    private final LogActivityService logActivityService;
     private final UserService userService;
     private final PropertyService propertyService;
     private final ProfileService profileService;
@@ -72,6 +77,7 @@ public class AdminController {
 
     private final ReportMapper reportMapper;
     private final AuditLogMapper auditLogMapper;
+    private final LogActivityMapper logActivityMapper;
     private final UserMapper userMapper;
     private final ProfileMapper profileMapper;
     private final PropertyMapper propertyMapper;
@@ -117,6 +123,13 @@ public class AdminController {
                 .toList();
     }
 
+    @GetMapping("/log-activities")
+    public List<LogActivityDto> getLogActivities() {
+        return moderationService.getAllLogActivities().stream()
+                .map(logActivityMapper::toDto)
+                .toList();
+    }
+
     @GetMapping("/users")
     public List<UserDto> getAllUsers() {
         return userService.getAll().stream().map(userMapper::toDto).toList();
@@ -127,11 +140,22 @@ public class AdminController {
 
         User admin = userService.getByEmail(principal.getName());
         userService.activate(id);
+        User activatedUser = userService.getById(id);
 
         moderationService.logAction(
                 "ACTIVATE_USER",
                 admin,
                 "Activated user account id: " + id);
+        
+        // Log admin action in the new system
+        logActivityService.log(
+            admin,
+            LogActivity.ActivityType.APPROVE,
+            LogActivity.EntityType.USER,
+            id,
+            "Admin reactivated user: " + activatedUser.getEmail(),
+            "{\"userId\":\"" + id + "\",\"email\":\"" + activatedUser.getEmail() + "\"}"
+        );
     }
 
     @PutMapping("/users/{id}/deactivate")
@@ -141,12 +165,23 @@ public class AdminController {
         if (admin == null)
             throw new RuntimeException("Admin not found");
 
+        User deactivatedUser = userService.getById(id);
         userService.deactivate(id);
 
         moderationService.logAction(
                 "DEACTIVATE_USER",
                 admin,
                 "Deactivated user account id:" + id);
+        
+        // Log admin action in the new system
+        logActivityService.log(
+            admin,
+            LogActivity.ActivityType.SUSPEND,
+            LogActivity.EntityType.USER,
+            id,
+            "Admin suspended user: " + deactivatedUser.getEmail(),
+            "{\"userId\":\"" + id + "\",\"email\":\"" + deactivatedUser.getEmail() + "\"}"
+        );
     }
 
     @GetMapping("/profiles")
@@ -205,6 +240,16 @@ public class AdminController {
                 "UPDATE_PROPERTY_STATUS",
                 admin,
                 "Changed property id " + id + " status to " + status);
+        
+        // Log admin action in the new system
+        logActivityService.log(
+            admin,
+            LogActivity.ActivityType.UPDATE,
+            LogActivity.EntityType.PROPERTY,
+            id,
+            "Admin updated property status to: " + status,
+            "{\"propertyId\":\"" + id + "\",\"newStatus\":\"" + status + "\"}"
+        );
 
         return updated;
     }

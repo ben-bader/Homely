@@ -7,6 +7,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.homely.common.enums.RoleType;
+import com.homely.moderation.entity.LogActivity;
+import com.homely.moderation.service.LogActivityService;
 import com.homely.user.dto.UserUpdateRequest;
 import com.homely.user.entity.User;
 import com.homely.user.repository.UserRepository;
@@ -19,6 +21,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LogActivityService logActivityService;
 
     public User getById(UUID id) {
         return userRepository.findById(id)
@@ -42,12 +45,32 @@ public class UserService {
     public void deactivate(UUID id) {
         User user = getById(id);
         user.setActive(false);
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+        
+        // Log user suspension activity
+        logActivityService.log(
+            saved,
+            LogActivity.ActivityType.SUSPEND,
+            LogActivity.EntityType.USER,
+            id,
+            "User account suspended: " + saved.getEmail(),
+            "{\"userId\":\"" + id + "\",\"email\":\"" + saved.getEmail() + "\",\"status\":\"suspended\"}"
+        );
     }
     public void activate(UUID id) {
         User user = getById(id);
         user.setActive(true);
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+        
+        // Log user reactivation activity
+        logActivityService.log(
+            saved,
+            LogActivity.ActivityType.REACTIVATE,
+            LogActivity.EntityType.USER,
+            id,
+            "User account reactivated: " + saved.getEmail(),
+            "{\"userId\":\"" + id + "\",\"email\":\"" + saved.getEmail() + "\",\"status\":\"active\"}"
+        );
     }
     
     public void updateFcmToken(UUID id, String fcmToken) {
@@ -59,13 +82,37 @@ public class UserService {
     public User updateBasicInfo(UUID id, UserUpdateRequest request) {
         User user = getById(id);
 
-        if (request.getName() != null)
+        StringBuilder changes = new StringBuilder("{");
+
+        if (request.getName() != null) {
+            changes.append("\"name\":\"").append(request.getName()).append("\",");
             user.setName(request.getName());
+        }
 
-        if (request.getPhone() != null)
+        if (request.getPhone() != null) {
+            changes.append("\"phone\":\"").append(request.getPhone()).append("\",");
             user.setPhone(request.getPhone());
+        }
 
-        return userRepository.save(user);
+        String changesJson = changes.toString();
+        if (changesJson.endsWith(",")) {
+            changesJson = changesJson.substring(0, changesJson.length() - 1);
+        }
+        changesJson += "}";
+
+        User saved = userRepository.save(user);
+        
+        // Log user update activity
+        logActivityService.log(
+            saved,
+            LogActivity.ActivityType.UPDATE,
+            LogActivity.EntityType.USER,
+            id,
+            "User profile updated",
+            changesJson
+        );
+
+        return saved;
     }
     
     public void updatePassword(UUID id, String newPassword) {

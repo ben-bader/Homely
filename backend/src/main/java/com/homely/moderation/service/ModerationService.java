@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.homely.common.enums.ReportStatus;
 import com.homely.moderation.entity.AuditLog;
+import com.homely.moderation.entity.LogActivity;
 import com.homely.moderation.entity.Report;
 import com.homely.moderation.repository.AuditLogRepository;
 import com.homely.moderation.repository.ReportRepository;
@@ -21,6 +22,7 @@ public class ModerationService {
 
     private final ReportRepository reportRepository;
     private final AuditLogRepository auditLogRepository;
+    private final LogActivityService logActivityService;
 
     public Report report(Report report) {
         return reportRepository.save(report);
@@ -45,6 +47,17 @@ public class ModerationService {
                 "{\"reportId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\"}",
                 reportId, oldStatus, newStatus);
         logAction("REPORT_STATUS_CHANGED", admin, details);
+        
+        // Log the activity in the new system
+        logActivityService.log(
+            admin,
+            LogActivity.ActivityType.REPORT_STATUS_CHANGED,
+            LogActivity.EntityType.REPORT,
+            reportId,
+            "Changed report status from " + oldStatus + " to " + newStatus,
+            details
+        );
+        
         return saved;
     }
 
@@ -63,6 +76,11 @@ public class ModerationService {
     public List<AuditLog> getAllAuditLogs() {
         return auditLogRepository.findAllByOrderByCreatedAtDesc();
     }
+
+    public List<LogActivity> getAllLogActivities() {
+        return logActivityService.getAllActivities();
+    }
+
     public long count(){
         return reportRepository.count();
     }
