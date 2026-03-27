@@ -6,7 +6,6 @@ import Dashboard from "@/components/dashboard-componenets/Dashboard"
 import Properties from "@/components/dashboard-componenets/Properties"
 import Reports from "@/components/dashboard-componenets/Reports"
 import ActivityMonitoring from "@/components/dashboard-componenets/ActivityMonitoring"
-import ActivityLog from "@/components/dashboard-componenets/ActivityLog"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import Users from "@/components/dashboard-componenets/Users"
@@ -29,7 +28,6 @@ export default function Page() {
   "visit requests": <VisitRequests />,
   dashboard: <Dashboard />,
   "activity monitoring": <ActivityMonitoring />,
-  "activity log": <ActivityLog />,
   profile: <Profile />,
   chats: <Chat />,
   "manage parameters": <ManageParameters />,

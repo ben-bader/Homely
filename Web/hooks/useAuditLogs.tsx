@@ -1,35 +1,69 @@
-"use client"
+"use client";
 
-import { api } from "@/lib/api"
-import type { AuditLog } from "@/types/dashboard-types"
-import { useState, useEffect, useCallback } from "react"
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 
-const getAuditLogs = async (): Promise<AuditLog[]> => {
-  const { data } = await api.get<AuditLog[]>("/admin/audit-logs")
-  return data || []
-}
+/* ---------------- TYPES ---------------- */
 
+export type AuditLog = {
+  id: string;
+  action: string;
+  adminId?: string;
+  adminName?: string;
+  adminEmail?: string;
+  details?: string;
+  createdAt?: string;
+};
+
+export type LogActivity = {
+  id: string;
+
+  activityType?: string;
+  entityType?: string;
+  entityId?: string;
+
+  description?: string;
+  metadata?: string;
+
+  adminId?: string;
+  adminName?: string;
+  adminEmail?: string;
+
+  createdAt?: string;
+};
+
+/* ---------------- HOOKS ---------------- */
+
+// Audit Logs
 export function useAuditLogs() {
-  const [logs, setLogs] = useState<AuditLog[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const refetch = useCallback(async () => {
-    try {
-      setLoading(true)
-      const data = await getAuditLogs()
-      setLogs(data)
-      setError(null)
-    } catch (err: any) {
-      setError(err.message || "Failed to load audit logs")
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    refetch()
-  }, [refetch])
+    api
+      .get<AuditLog[]>("/admin/audit-logs")
+      .then((res) => setLogs(res.data))
+      .catch(() => setError("Failed to load audit logs."))
+      .finally(() => setLoading(false));
+  }, []);
 
-  return { logs, loading, error, refetch }
+  return { logs, loading, error };
+}
+
+// Log Activities
+export function useLogActivities() {
+  const [activities, setActivities] = useState<LogActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .get<LogActivity[]>("/admin/log-activities")
+      .then((res) => setActivities(res.data))
+      .catch(() => setError("Failed to load log activities."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { activities, loading, error };
 }

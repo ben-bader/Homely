@@ -84,11 +84,7 @@ const data = {
       url: "#",
       icon: IconHistory,
     },
-    {
-      title: "Activity Log",
-      url: "#",
-      icon: IconListDetails,
-    },
+  
     {
       title: "chats",
       url: "/chat",
