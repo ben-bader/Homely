@@ -115,6 +115,7 @@ public class PropertyController {
     }
 
     // ✅ Delete
+    @PreAuthorize("hasRole('SELLER')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         propertyService.delete(id);
