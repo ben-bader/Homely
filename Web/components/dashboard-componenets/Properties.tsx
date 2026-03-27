@@ -37,6 +37,7 @@ import { useProperties } from "@/hooks/useProperties";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
 import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
+import { useMedia, PropertyMedia } from "@/hooks/useMedia";
 /* ---------------- TYPES ---------------- */
 
 type DateSort = "" | "newest" | "oldest";
@@ -256,6 +257,8 @@ function PropertyDrawer({
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  const { media, loading: mediaLoading, error: mediaError, fetchMedia, deleteMedia } = useMedia();
+
   const handleDelete = async () => {
     if (!p) {
       setMessage("Property does not exist.");
@@ -282,13 +285,13 @@ function PropertyDrawer({
   return (
     <Drawer
       direction="right"
-      onOpenChange={(open) => { if (open) fetchDetail(property.id); }}
+      onOpenChange={(open) => { if (open) { fetchDetail(property.id); fetchMedia(property.id); } }}
     >
       <DrawerTrigger asChild>
         <Button variant="ghost" size="icon"><FaEye /></Button>
       </DrawerTrigger>
 
-      <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
+      <DrawerContent className="flex flex-col max-w-lg ml-auto h-full">
         <DrawerHeader className="border-b pb-4">
           <DrawerTitle className="text-base font-semibold">Property Info</DrawerTitle>
           <DrawerDescription className="text-xs text-muted-foreground">Full details for this listing</DrawerDescription>
@@ -348,6 +351,43 @@ function PropertyDrawer({
                   <InfoRow label="Created At" value={fmtFull(p.createdAt)} />
                   <InfoRow label="Updated At" value={fmtFull(p.updatedAt)} />
                 </div>
+              </section>
+
+              <section className="space-y-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">Media</p>
+                {mediaLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading media…</p>
+                ) : mediaError ? (
+                  <p className="text-sm text-destructive">{mediaError}</p>
+                ) : media.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No media available.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {media.map((m) => (
+                      <div key={m.id} className="relative group">
+                        {m.type === 'video' ? (
+                          <video
+                            src={m.url}
+                            controls
+                            className="w-full h-24 object-cover rounded-md border"
+                          />
+                        ) : (
+                          <img
+                            src={m.url}
+                            alt="Property media"
+                            className="w-full h-24 object-cover rounded-md border"
+                          />
+                        )}
+                        <button
+                          onClick={() => deleteMedia(m.id)}
+                          className="absolute top-1 right-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
             </>
           ) : (
