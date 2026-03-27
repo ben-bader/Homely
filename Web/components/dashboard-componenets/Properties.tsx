@@ -35,7 +35,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useProperties } from "@/hooks/useProperties";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
+import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
+import { useMedia, PropertyMedia } from "@/hooks/useMedia";
 /* ---------------- TYPES ---------------- */
 
 type DateSort = "" | "newest" | "oldest";
@@ -252,17 +254,44 @@ function PropertyDrawer({
   loadingDetail: boolean;
 }) {
   const p = selectedProperty?.id === property.id ? selectedProperty : null;
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const { media, loading: mediaLoading, error: mediaError, fetchMedia, deleteMedia } = useMedia();
+
+  const handleDelete = async () => {
+    if (!p) {
+      setMessage("Property does not exist.");
+      return;
+    }
+
+    setDeleteLoading(true);
+    setMessage(null);
+
+    try {
+      await api.delete(`/admin/properties/${p.id}`);
+      setMessage("Property deleted successfully.");
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        setMessage("Property not found or already deleted.");
+      } else {
+        setMessage("Failed to delete property. Please try again.");
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <Drawer
       direction="right"
-      onOpenChange={(open) => { if (open) fetchDetail(property.id); }}
+      onOpenChange={(open) => { if (open) { fetchDetail(property.id); fetchMedia(property.id); } }}
     >
       <DrawerTrigger asChild>
         <Button variant="ghost" size="icon"><FaEye /></Button>
       </DrawerTrigger>
 
-      <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
+      <DrawerContent className="flex flex-col max-w-lg ml-auto h-full">
         <DrawerHeader className="border-b pb-4">
           <DrawerTitle className="text-base font-semibold">Property Info</DrawerTitle>
           <DrawerDescription className="text-xs text-muted-foreground">Full details for this listing</DrawerDescription>
@@ -323,13 +352,65 @@ function PropertyDrawer({
                   <InfoRow label="Updated At" value={fmtFull(p.updatedAt)} />
                 </div>
               </section>
+
+              <section className="space-y-4">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">Media</p>
+                {mediaLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading media…</p>
+                ) : mediaError ? (
+                  <p className="text-sm text-destructive">{mediaError}</p>
+                ) : media.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No media available.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {media.map((m) => (
+                      <div key={m.id} className="relative group">
+                        {m.type === 'video' ? (
+                          <video
+                            src={m.url}
+                            controls
+                            className="w-full h-24 object-cover rounded-md border"
+                          />
+                        ) : (
+                          <img
+                            src={m.url}
+                            alt="Property media"
+                            className="w-full h-24 object-cover rounded-md border"
+                          />
+                        )}
+                        <button
+                          onClick={() => deleteMedia(m.id)}
+                          className="absolute top-1 right-1 bg-red-500 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             </>
           ) : (
             <p className="text-sm text-muted-foreground">No details available.</p>
           )}
         </div>
 
-        <DrawerFooter className="border-t">
+        {message && (
+          <div className="px-5 pb-2">
+            <p className="text-sm text-center text-muted-foreground">{message}</p>
+          </div>
+        )}
+
+        <DrawerFooter className="border-t flex flex-col gap-2">
+          <Button
+            variant="destructive"
+            className="w-full"
+            onClick={handleDelete}
+            disabled={deleteLoading}
+          >
+            {deleteLoading ? "Deleting…" : "Delete Property"}
+          </Button>
+
           <DrawerClose asChild>
             <Button variant="outline" className="w-full">Close</Button>
           </DrawerClose>
@@ -507,11 +588,11 @@ export default function Properties() {
       {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader className="bg-blue-900 text-white">
+          <TableHeader className="bg-primary text-white">
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-white">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}

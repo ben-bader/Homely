@@ -344,11 +344,11 @@ export default function VisitRequests() {
       {/* Table */}
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader className="bg-blue-900 text-white">
+          <TableHeader className="bg-primary text-white">
             {table.getHeaderGroups().map(hg => (
               <TableRow key={hg.id}>
                 {hg.headers.map(header => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-white">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}

@@ -27,7 +27,7 @@ export default function Page() {
   boosts: <Boosts />,
   "visit requests": <VisitRequests />,
   dashboard: <Dashboard />,
-  "Activity Monitoring": <ActivityMonitoring />,
+  "activity monitoring": <ActivityMonitoring />,
   profile: <Profile />,
   chats: <Chat />,
   "manage parameters": <ManageParameters />,
