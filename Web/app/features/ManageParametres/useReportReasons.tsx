@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";import { api } from "../lib/api";
+import { useEffect, useState } from "react";import { api } from "../../../lib/api";
 import { ReportReason } from "@/types/dashboard-types";
 
 const useReportReasons = () => {

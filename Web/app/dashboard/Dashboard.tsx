@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { ChartAreaInteractive } from '../chart-area-interactive'
-import { DataTable } from '../data-table'
-import { SectionCards } from '../section-cards'
+import { ChartAreaInteractive } from '../../components/dashboardComponents/chart-area-interactive'
+import { DataTable } from '../../components/dashboardComponents/data-table'
+import { SectionCards } from '../../components/dashboardComponents/section-cards'
 import { api } from '@/lib/api'
-import {useReports} from '@/hooks/useReports'
+import {useReports} from '@/app/features/reports/useReports'
 
 const Dashboard = () => {
     const { reports, loading, updateReportStatus } = useReports()

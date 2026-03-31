@@ -37,7 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { api } from "@/lib/api";
 import type { Boost, BoostStatus, BoostPackage } from "@/types/dashboard-types";
 import { FaEye } from "react-icons/fa";
-import useBoostPackages from "@/hooks/useBoostPackages";
+import useBoostPackages from "@/app/features/boosts/useBoostPackages";
 
 /* ---------------- HELPERS ---------------- */
 

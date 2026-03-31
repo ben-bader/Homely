@@ -41,7 +41,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useReports } from "@/hooks/useReports";
+import { useReports } from "@/app/features/reports/useReports";
 import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
 

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
-import useReportReasons from "@/hooks/useReportReasons";
-import  useBoostPackages from "@/hooks/useBoostPackages";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
+import useReportReasons from "@/app/features/ManageParametres/useReportReasons";
+import  useBoostPackages from "@/app/features/boosts/useBoostPackages";
+import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/button";
 import { ReportReason, BoostPackage } from "@/types/dashboard-types";
-import { Card } from "../ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Card } from "../../../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 
 const ManageParameters = () => {
   const { reasons, loading: reasonsLoading, error: reasonsError, refetch: refetchReasons } = useReportReasons();
@@ -135,7 +135,12 @@ const ManageParameters = () => {
                     onChange={(e) => setNewReason(e.target.value)}
                     placeholder="Add new reason"
                   />
-                  <Button onClick={addReportReason}>Add Reason</Button>
+                  <Button
+                    onClick={addReportReason}
+                    className="bg-emerald-500 text-white hover:bg-emerald-600"
+                  >
+                    Add Reason
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   {reasons.map((reason) => (
@@ -189,7 +194,11 @@ const ManageParameters = () => {
                       onChange={(e) => setNewPackage({ ...newPackage, price: e.target.value })}
                     />
                   </div>
-                  <Button onClick={handleAddPackage} disabled={savingPackage} className="w-full">
+                  <Button
+                    onClick={handleAddPackage}
+                    disabled={savingPackage}
+                    className="w-full bg-emerald-500 text-white hover:bg-emerald-600"
+                  >
                     {savingPackage ? "Adding..." : "Add Package"}
                   </Button>
                 </Card>

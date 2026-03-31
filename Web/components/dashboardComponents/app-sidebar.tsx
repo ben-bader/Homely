@@ -25,10 +25,10 @@ import {
   IconMessageCircle,
 } from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents";
-import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import { NavDocuments } from "@/components/dashboardComponents/nav-documents";
+import { NavMain } from "@/components/dashboardComponents/nav-main";
+import { NavSecondary } from "@/components/dashboardComponents/nav-secondary";
+import { NavUser } from "@/components/dashboardComponents/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -38,7 +38,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import Logo from "./logo/Logo";
+import Logo from "../logo/Logo";
 import { BetweenVerticalStartIcon, PlusSquareIcon } from "lucide-react";
 import Link from "next/link";
 

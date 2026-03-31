@@ -1,21 +1,20 @@
 "use client"
 
-import { AppSidebar } from "@/components/app-sidebar"
-import Boosts from "@/components/dashboard-componenets/Boosts"
-import Dashboard from "@/components/dashboard-componenets/Dashboard"
-import Properties from "@/components/dashboard-componenets/Properties"
-import Reports from "@/components/dashboard-componenets/Reports"
-import ActivityMonitoring from "@/components/dashboard-componenets/ActivityMonitoring"
-import { SiteHeader } from "@/components/site-header"
+import { AppSidebar } from "@/components/dashboardComponents/app-sidebar"
+import Boosts from "@/app/features/boosts/Boosts"
+import Dashboard from "@/app/dashboard/Dashboard"
+import Properties from "@/app/features/properties/Properties"
+import Reports from "@/app/features/reports/Reports"
+import ActivityMonitoring from "@/app/features/activityMonitoring/ActivityMonitoring"
+import { SiteHeader } from "@/components/dashboardComponents/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import Users from "@/components/dashboard-componenets/Users"
+import Users from "@/app/features/users/Users"
 import { useState } from "react"
-import AdminDashboardWrapper from "@/components/dashboard-componenets/AdminDashboardWrapper"
-import VisitRequests from "@/components/dashboard-componenets/VisitRequests"
-import Profile from "@/components/dashboard-componenets/profile"
-import Chat from "@/components/dashboard-componenets/Chat";
-import Notifications from "@/components/dashboard-componenets/Notifications"
-import ManageParameters from "@/components/dashboard-componenets/ManageParametres"
+import AdminDashboardWrapper from "@/app/dashboard/AdminDashboardWrapper"
+import VisitRequests from "@/app/features/visitRequests/VisitRequests"
+import Profile from "@/app/features/profile/profile"
+import Chat from "@/app/features/chats/Chat";
+import ManageParameters from "@/app/features/ManageParametres/ManageParametres"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")
@@ -31,7 +30,7 @@ export default function Page() {
   profile: <Profile />,
   chats: <Chat />,
   "manage parameters": <ManageParameters />,
-  notifications: <Notifications />,
+
 
 };
   

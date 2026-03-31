@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { getUserFromToken, isAdmin } from "@/lib/auth"
-import { SidebarMenuItem } from "../ui/sidebar"
+import { SidebarMenuItem } from "../../components/ui/sidebar"
 
 export default function AdminDashboardWrapper({
   children,

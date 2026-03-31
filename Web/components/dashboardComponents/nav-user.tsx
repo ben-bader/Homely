@@ -78,10 +78,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
                 Profile
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => setActiveSection("notifications")}>
-  <IconNotification className="mr-2" />
-  Notifications
-</DropdownMenuItem>
+              
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />

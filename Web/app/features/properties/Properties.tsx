@@ -33,11 +33,11 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties } from "@/app/features/properties/useProperties";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
 import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
-import { useMedia, PropertyMedia } from "@/hooks/useMedia";
+import { useMedia, PropertyMedia } from "@/app/features/properties/useMedia";
 /* ---------------- TYPES ---------------- */
 
 type DateSort = "" | "newest" | "oldest";
