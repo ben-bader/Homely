@@ -25,10 +25,10 @@ import {
   IconMessageCircle,
 } from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents";
-import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import { NavDocuments } from "@/components/dashboardComponents/nav-documents";
+import { NavMain } from "@/components/dashboardComponents/nav-main";
+import { NavSecondary } from "@/components/dashboardComponents/nav-secondary";
+import { NavUser } from "@/components/dashboardComponents/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -39,15 +39,16 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Logo from "./logo/Logo";
+import { BetweenVerticalStartIcon, PlusSquareIcon } from "lucide-react";
+import Link from "next/link";
 
-import { PlusSquareIcon } from "lucide-react";
-function AppSidebar(
-  { setActiveSection, activeSection, ...props }: React.ComponentProps<typeof Sidebar> & {
-    setActiveSection: (section: string) => void,
-    activeSection: string
-  }
-) {
-  const navMain = [
+const data = {
+  user: {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
+  },
+  navMain: [
     {
       title: "dashboard",
       url: "#",

@@ -35,9 +35,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FaEye } from "react-icons/fa";
 
-import { useVisitRequests } from "@/hooks/useVisitRequests";
-import { useProperties } from "@/hooks/useProperties";
-import { useUsers } from "@/hooks/useUsers";
+import { useVisitRequests } from "@/app/features/visitRequests/useVisitRequests";
+import { useProperties } from "@/app/features/properties/useProperties";
+import { useUsers } from "@/app/features/users/useUsers";
 import { VisitStatus, type VisitRequest } from "@/types/dashboard-types";
 
 /* ---------------- TYPES ---------------- */

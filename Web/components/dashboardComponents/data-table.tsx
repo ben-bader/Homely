@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Report, ReportStatus } from "@/types/dashboard-types"
-import { Button } from "./ui/button"
+import { Button } from "../ui/button"
 
 function reporterDisplay(report: Report) {
   if (report.reporterName) return `${report.reporterName} (${report.reporterEmail ?? report.reporterId})`

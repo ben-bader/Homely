@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useAuditLogs } from "@/hooks/useAuditLogs";
-import { useLogActivities } from "@/hooks/useAuditLogs";
+import { useAuditLogs } from "@/app/features/activityMonitoring/useAuditLogs";
+import { useLogActivities } from "@/app/features/activityMonitoring/useAuditLogs";
 
 import {
   Table,
