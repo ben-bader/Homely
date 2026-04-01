@@ -2,32 +2,17 @@
 
 import * as React from "react";
 import {
-  IconArrowUp,
-  IconCamera,
-  IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
   IconHome,
-  IconInnerShadowTop,
-  IconListDetails,
   IconReport,
   IconRocket,
-  IconSearch,
-  IconSettings,
-  IconUser,
   IconUsers,
   IconHistory,
   IconMessageCircle,
+  IconFileAi,
 } from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/dashboardComponents/nav-documents";
 import { NavMain } from "@/components/dashboardComponents/nav-main";
-import { NavSecondary } from "@/components/dashboardComponents/nav-secondary";
 import { NavUser } from "@/components/dashboardComponents/nav-user";
 import {
   Sidebar,
@@ -38,21 +23,25 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import Logo from "./logo/Logo";
-import { BetweenVerticalStartIcon, PlusSquareIcon } from "lucide-react";
-import Link from "next/link";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+import Logo from "../logo/Logo";
+import { PlusSquareIcon } from "lucide-react";
+
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  setActiveSection: (section: string) => void;
+  activeSection: string;
+}
+
+function AppSidebar({
+  setActiveSection,
+  activeSection,
+  ...props
+}: AppSidebarProps) {
+  const navMain = [
     {
       title: "dashboard",
       url: "#",
-      icon: IconDashboard
+      icon: IconDashboard,
     },
     {
       title: "Users",
@@ -96,8 +85,6 @@ const data = {
     },
   ];
 
-  // Add admin profiles only for chief admins
-  
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -107,21 +94,27 @@ const data = {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <div className="">
+              <div>
                 <Logo />
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
-        <NavMain items={navMain} setActiveSection={setActiveSection} activeSection={activeSection} />
+        <NavMain
+          items={navMain}
+          setActiveSection={setActiveSection}
+          activeSection={activeSection}
+        />
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser setActiveSection={setActiveSection} />
-
       </SidebarFooter>
     </Sidebar>
   );
 }
+
 export { AppSidebar };

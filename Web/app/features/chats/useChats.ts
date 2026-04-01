@@ -11,10 +11,18 @@ export function useChats() {
     const fetchConversations = async () => {
       try {
         setLoading(true);
+        console.log("🔄 Fetching conversations from /admin/conversations...");
         const res = await api.get("/admin/conversations");
+        console.log("✅ Conversations fetched:", res.data);
         setConversations(res.data);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch conversations");
+        const errorMsg = err.response?.data?.message || err.message || "Failed to fetch conversations";
+        console.error("❌ Error fetching conversations:", {
+          status: err.response?.status,
+          message: errorMsg,
+          data: err.response?.data,
+        });
+        setError(errorMsg);
       } finally {
         setLoading(false);
       }

@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.homely.user.entity.User;
@@ -15,71 +16,83 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY =
-            "KJDn7TI/5x1Y1H6m/IfEhYpt4qV3FB110tnxN8IVqnU=";
+    @Value("${jwt.secret}")
+    private String secretKey;
 
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+
+    // =========================
+    // TOKEN GENERATION
+    // =========================
     public String generateToken(User user) {
+        Key key = getSigningKey();
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("userId", user.getId().toString())
                 .claim("name", user.getName())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(key, SignatureAlgorithm.HS256) // ✅ new order
                 .compact();
     }
 
+    // =========================
+    // TOKEN VALIDATION
+    // =========================
+    public boolean isTokenValid(String token, User user) {
+        try {
+            String username = extractUsername(token);
+            return username.equals(user.getEmail()) && !isTokenExpired(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    // =========================
+    // CLAIM EXTRACTION
+    // =========================
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public boolean isTokenValid(String token, User user) {
-    try {
-        return extractUsername(token).equals(user.getEmail())
-                && !isTokenExpired(token);
-    } catch (JwtException e) {
-        return false;
-    }
-}
-
-
-    public java.util.Date extractExpiration(String token) {
-        return extractClaim(token, io.jsonwebtoken.Claims::getExpiration);
+    public UUID extractUserId(String token) {
+        String id = extractClaim(token, claims -> claims.get("userId", String.class));
+        return UUID.fromString(id);
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractClaim(token, Claims::getExpiration).before(new Date());
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> resolver) {
-        return resolver.apply(extractAllClaims(token));
+        Claims claims = extractAllClaims(token);
+        return resolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+    public Claims extractAllClaims(String token) {
+        Key key = getSigningKey();
+        return Jwts.parser()
+                .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(
-                Decoders.BASE64.decode(SECRET_KEY)
-        );
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
     }
-    public UUID extractUserId(String token) {
-    Claims claims = Jwts.parserBuilder()
-        .setSigningKey(getSigningKey())
-        .build()
-        .parseClaimsJws(token)
-        .getBody();
 
-    return UUID.fromString(claims.get("userId", String.class));
-}
-
+    // =========================
+    // SIGNING KEY
+    // =========================
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 }
