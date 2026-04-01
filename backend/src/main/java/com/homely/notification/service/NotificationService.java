@@ -14,6 +14,7 @@ import com.homely.notification.mapper.NotificationMapper;
 import com.homely.notification.repository.NotificationRepository;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
+import com.homely.notification.service.MqttNotificationService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
     private final UserService userService;
-    private final FirebaseMessagingService firebaseMessagingService;
+    private final MqttNotificationService mqttNotificationService;
 
     @Transactional
     public NotificationDto create(NotificationCreateRequest request) {
@@ -81,22 +82,26 @@ public class NotificationService {
         try {
             String title = getTitleForType(notificationType);
 
-            // Parse payload as JSON to get relevant info
             Map<String, String> data = Map.of(
                 "type", notificationType,
                 "payload", payload
             );
 
-            firebaseMessagingService.sendNotification(
-                user.getFcmToken(),
-                title,
-                payload != null ? payload : "New notification",
-                data
+            // MQTT topic can be user-specific (fallback to user ID if token is not available)
+            String mqttTarget = user.getFcmToken() != null && !user.getFcmToken().isEmpty()
+                    ? user.getFcmToken()
+                    : user.getId().toString();
+
+            mqttNotificationService.sendNotification(
+                    mqttTarget,
+                    title,
+                    payload != null ? payload : "New notification",
+                    data
             );
 
-            log.info("Push notification sent to user: {} for type: {}", user.getEmail(), notificationType);
+            log.info("MQTT notification sent to user: {} for type: {}", user.getEmail(), notificationType);
         } catch (Exception e) {
-            log.error("Failed to send push notification to user {}: {}", user.getEmail(), e.getMessage(), e);
+            log.error("Failed to send MQTT notification to user {}: {}", user.getEmail(), e.getMessage(), e);
             // Don't fail the notification creation if push fails
         }
     }

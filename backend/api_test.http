@@ -46,7 +46,7 @@ Content-Type: application/json
 Authorization: Bearer  {{token}}
 
 ###
-GET {{baseUrl}}/report-reasons
+GET {{baseUrl}}/log-activities
 Authorization: Bearer  {{token}}
 
 ###

@@ -2,7 +2,6 @@ package com.homely.moderation.dto;
 
 import java.util.UUID;
 
-import com.homely.common.base.BaseEntity;
 import com.homely.moderation.entity.LogActivity.ActivityType;
 import com.homely.moderation.entity.LogActivity.EntityType;
 
@@ -11,7 +10,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LogActivityDto extends BaseEntity {
+public class LogActivityDto  {
+    private UUID id;
     private UUID userId;
     private String userEmail;
     private String userName;

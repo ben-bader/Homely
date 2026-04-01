@@ -39,16 +39,15 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Logo from "./logo/Logo";
-import { BetweenVerticalStartIcon, PlusSquareIcon } from "lucide-react";
-import Link from "next/link";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+import { PlusSquareIcon } from "lucide-react";
+function AppSidebar(
+  { setActiveSection, activeSection, ...props }: React.ComponentProps<typeof Sidebar> & {
+    setActiveSection: (section: string) => void,
+    activeSection: string
+  }
+) {
+  const navMain = [
     {
       title: "dashboard",
       url: "#",
@@ -84,7 +83,6 @@ const data = {
       url: "#",
       icon: IconHistory,
     },
-  
     {
       title: "chats",
       url: "/chat",
@@ -95,14 +93,10 @@ const data = {
       url: "/dashboard/manage-parameters",
       icon: IconFileAi,
     },
-  ],
-};
-function AppSidebar(
-  { setActiveSection, activeSection, ...props }: React.ComponentProps<typeof Sidebar> & {
-    setActiveSection: (section: string) => void,
-    activeSection: string
-  }
-) {
+  ];
+
+  // Add admin profiles only for chief admins
+  
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -120,7 +114,7 @@ function AppSidebar(
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} setActiveSection={setActiveSection} activeSection={activeSection} />
+        <NavMain items={navMain} setActiveSection={setActiveSection} activeSection={activeSection} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser setActiveSection={setActiveSection} />
@@ -129,4 +123,4 @@ function AppSidebar(
     </Sidebar>
   );
 }
-export { data, AppSidebar };
+export { AppSidebar };

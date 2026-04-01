@@ -1,7 +1,7 @@
 package com.homely.moderation.dto;
 
-import com.jayway.jsonpath.internal.filter.ValueNodes.JsonNode;
-
+// ✅ CORRECT
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 
