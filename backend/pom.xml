@@ -65,13 +65,6 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-        <!-- 📨 MQTT CLIENT -->
-        <dependency>
-            <groupId>org.eclipse.paho</groupId>
-            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
-            <version>1.2.5</version>
-        </dependency>
-
         <!-- 🔑 JWT (clean + correct versions) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

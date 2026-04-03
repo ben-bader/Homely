@@ -14,7 +14,7 @@ import com.homely.notification.mapper.NotificationMapper;
 import com.homely.notification.repository.NotificationRepository;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
-import com.homely.notification.service.MqttNotificationService;
+import com.homely.notification.service.StompNotificationService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
     private final UserService userService;
-    private final MqttNotificationService mqttNotificationService;
+    private final StompNotificationService stompNotificationService;
 
     @Transactional
     public NotificationDto create(NotificationCreateRequest request) {
@@ -87,19 +87,15 @@ public class NotificationService {
                 "payload", payload
             );
 
-            // MQTT topic can be user-specific (fallback to user ID if token is not available)
-            String mqttTarget = user.getFcmToken() != null && !user.getFcmToken().isEmpty()
-                    ? user.getFcmToken()
-                    : user.getId().toString();
-
-            mqttNotificationService.sendNotification(
-                    mqttTarget,
+            // STOMP notification sent to user-specific topic
+            stompNotificationService.sendNotification(
+                    user.getId().toString(),
                     title,
                     payload != null ? payload : "New notification",
                     data
             );
 
-            log.info("MQTT notification sent to user: {} for type: {}", user.getEmail(), notificationType);
+            log.info("STOMP notification sent to user: {} for type: {}", user.getEmail(), notificationType);
         } catch (Exception e) {
             log.error("Failed to send MQTT notification to user {}: {}", user.getEmail(), e.getMessage(), e);
             // Don't fail the notification creation if push fails
