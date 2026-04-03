@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { ChartAreaInteractive } from '../../components/dashboardComponents/chart-area-interactive'
 import { DataTable } from '../../components/dashboardComponents/data-table'
 import { SectionCards } from '../../components/dashboardComponents/section-cards'
-import { api } from '@/lib/api'
-import {useReports} from '@/app/features/reports/useReports'
+import { useReports } from '@/app/features/reports/useReports'
+import { useTranslations } from 'next-intl'
 
 const Dashboard = () => {
+    const t = useTranslations('dashboard')
     const { reports, loading, updateReportStatus } = useReports()
+
     if (loading) {
-        return <p className="text-center">Loading Dashboard…</p>
+        return <p className="text-center">{t('loading')}</p>
     }
+
     return (
         <div className="flex flex-col gap-4">
             <SectionCards />
@@ -24,4 +27,4 @@ const Dashboard = () => {
     )
 }
 
-export default Dashboard;
+export default Dashboard

@@ -1,18 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-} from "@tanstack/react-table"
+import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type ColumnFiltersState, type SortingState, type VisibilityState } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer"
@@ -21,36 +10,32 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Report, ReportStatus } from "@/types/dashboard-types"
 import { Button } from "../ui/button"
+import { useTranslations } from "next-intl"
 
 function reporterDisplay(report: Report) {
   if (report.reporterName) return `${report.reporterName} (${report.reporterEmail ?? report.reporterId})`
   return report.reporterEmail ?? report.reporterId
 }
 
-function reportedUserDisplay(report: Report) {
-  if (!report.reportedUserId) return "—"
+function reportedUserDisplay(report: Report, fallback: string) {
+  if (!report.reportedUserId) return fallback
   if (report.reportedUserName) return `${report.reportedUserName} (${report.reportedUserEmail ?? report.reportedUserId})`
   return report.reportedUserEmail ?? report.reportedUserId
 }
 
-function reportedPropertyDisplay(report: Report) {
-  if (!report.reportedPropertyId) return "—"
+function reportedPropertyDisplay(report: Report, fallback: string) {
+  if (!report.reportedPropertyId) return fallback
   return report.reportedPropertyTitle ?? report.reportedPropertyId
 }
 
-function reviewedByDisplay(report: Report) {
-  if (!report.reviewedByAdminId) return "—"
+function reviewedByDisplay(report: Report, fallback: string) {
+  if (!report.reviewedByAdminId) return fallback
   if (report.reviewedByAdminName) return `${report.reviewedByAdminName} (${report.reviewedByAdminEmail ?? report.reviewedByAdminId})`
   return report.reviewedByAdminEmail ?? report.reviewedByAdminId
 }
 
-function TableCellViewer({
-  report,
-  onStatusChange,
-}: {
-  report: Report
-  onStatusChange: (reportId: string, status: ReportStatus) => Promise<void>
-}) {
+function TableCellViewer({ report, onStatusChange }: { report: Report; onStatusChange: (reportId: string, status: ReportStatus) => Promise<void> }) {
+  const t = useTranslations('dashboard.table.drawer')
   const [status, setStatus] = React.useState(report.status)
   const [saving, setSaving] = React.useState(false)
 
@@ -74,59 +59,59 @@ function TableCellViewer({
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>Report Details</DrawerTitle>
-          <DrawerDescription>View full report and update status. Changes are logged in Audit Log.</DrawerDescription>
+          <DrawerTitle>{t('title')}</DrawerTitle>
+          <DrawerDescription>{t('description')}</DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 p-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Reporter</Label>
+              <Label>{t('reporter')}</Label>
               <Input value={reporterDisplay(report)} readOnly />
             </div>
             <div className="flex flex-col gap-2">
-              <Label>Reported User</Label>
-              <Input value={reportedUserDisplay(report)} readOnly />
+              <Label>{t('reportedUser')}</Label>
+              <Input value={reportedUserDisplay(report, '—')} readOnly />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label>Reported Property</Label>
-              <Input value={reportedPropertyDisplay(report)} readOnly />
+              <Label>{t('reportedProperty')}</Label>
+              <Input value={reportedPropertyDisplay(report, '—')} readOnly />
             </div>
             <div className="flex flex-col gap-2">
-              <Label>Reviewed By</Label>
-              <Input value={reviewedByDisplay(report)} readOnly />
+              <Label>{t('reviewedBy')}</Label>
+              <Input value={reviewedByDisplay(report, '—')} readOnly />
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Label>Reason</Label>
+            <Label>{t('reason')}</Label>
             <Input value={report.reason} readOnly className="min-h-[80px]" />
           </div>
           {report.createdAt && (
             <div className="flex flex-col gap-2">
-              <Label>Reported at</Label>
+              <Label>{t('reportedAt')}</Label>
               <Input value={new Date(report.createdAt).toLocaleString()} readOnly />
             </div>
           )}
           <div className="flex flex-col gap-2">
-            <Label>Status</Label>
+            <Label>{t('statusLabel')}</Label>
             <Select value={status} onValueChange={handleStatusChange} disabled={saving}>
               <SelectTrigger>
-                <SelectValue placeholder="Select status" />
+                <SelectValue placeholder={t('statusPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ReportStatus.OPEN}>Open</SelectItem>
-                <SelectItem value={ReportStatus.REVIEWED}>Reviewed</SelectItem>
-                <SelectItem value={ReportStatus.RESOLVED}>Resolved</SelectItem>
-                <SelectItem value={ReportStatus.DISMISSED}>Dismissed</SelectItem>
+                <SelectItem value={ReportStatus.OPEN}>{t('statusOpen')}</SelectItem>
+                <SelectItem value={ReportStatus.REVIEWED}>{t('statusReviewed')}</SelectItem>
+                <SelectItem value={ReportStatus.RESOLVED}>{t('statusResolved')}</SelectItem>
+                <SelectItem value={ReportStatus.DISMISSED}>{t('statusDismissed')}</SelectItem>
               </SelectContent>
             </Select>
-            {saving && <p className="text-xs text-muted-foreground">Saving…</p>}
+            {saving && <p className="text-xs text-muted-foreground">{t('saving')}</p>}
           </div>
         </div>
         <DrawerFooter>
           <DrawerClose asChild>
-            <Button variant="outline">Close</Button>
+            <Button variant="outline">{t('close')}</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -134,51 +119,49 @@ function TableCellViewer({
   )
 }
 
-function buildColumns(onStatusChange: (reportId: string, status: ReportStatus) => Promise<void>): ColumnDef<Report>[] {
+function buildColumns(
+  onStatusChange: (reportId: string, status: ReportStatus) => Promise<void>,
+  t: ReturnType<typeof useTranslations>
+): ColumnDef<Report>[] {
   return [
     {
       accessorKey: "reason",
-      header: "Reason",
+      header: t('reason'),
       cell: ({ row }) => <TableCellViewer report={row.original} onStatusChange={onStatusChange} />,
     },
     {
       id: "reporter",
-      header: "Reporter",
+      header: t('reporter'),
       cell: ({ row }) => reporterDisplay(row.original),
     },
     {
       id: "reportedUser",
-      header: "Reported User",
-      cell: ({ row }) => reportedUserDisplay(row.original),
+      header: t('reportedUser'),
+      cell: ({ row }) => reportedUserDisplay(row.original, '—'),
     },
     {
       id: "reportedProperty",
-      header: "Reported Property",
-      cell: ({ row }) => reportedPropertyDisplay(row.original),
+      header: t('reportedProperty'),
+      cell: ({ row }) => reportedPropertyDisplay(row.original, '—'),
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t('status'),
       cell: ({ row }) => <Badge variant="outline">{row.original.status}</Badge>,
     },
     {
       id: "reviewedBy",
-      header: "Reviewed By",
-      cell: ({ row }) => reviewedByDisplay(row.original),
+      header: t('reviewedBy'),
+      cell: ({ row }) => reviewedByDisplay(row.original, '—'),
     },
   ]
 }
 
-export function DataTable({
-  data,
-  onStatusChange,
-}: {
-  data: Report[]
-  onStatusChange?: (reportId: string, status: ReportStatus) => Promise<void>
-}) {
+export function DataTable({ data, onStatusChange }: { data: Report[]; onStatusChange?: (reportId: string, status: ReportStatus) => Promise<void> }) {
+  const t = useTranslations('dashboard.table')
   const columns = React.useMemo(
-    () => buildColumns(onStatusChange ?? (async () => {})),
-    [onStatusChange]
+    () => buildColumns(onStatusChange ?? (async () => {}), t),
+    [onStatusChange, t]
   )
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -204,7 +187,7 @@ export function DataTable({
   })
 
   return (
-    <div className="overflow-auto rounded-lg border ">
+    <div className="overflow-auto rounded-lg border">
       <Table>
         <TableHeader className="bg-muted sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -231,34 +214,22 @@ export function DataTable({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="text-center h-24">
-                No reports.
+                {t('noReports')}
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-      {/* Pagination controls */}
       <div className="flex items-center justify-between px-4 py-2 border-t text-sm text-muted-foreground">
         <span>
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount() || 1}
+          {t('page')} {table.getState().pagination.pageIndex + 1} {t('of')} {table.getPageCount() || 1}
         </span>
         <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
+          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+            {t('previous')}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
+          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            {t('next')}
           </Button>
         </div>
       </div>
