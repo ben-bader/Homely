@@ -80,7 +80,6 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                     color: AppColors.accent,
                     letterSpacing: -0.5,
                     fontSize: 30,
-                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
