@@ -1,4 +1,10 @@
 {
+  "header": {
+    "title": "Tableau de bord & modération",
+    "github": "GitHub",
+    "toggleToFr": "🇫🇷 FR",
+    "toggleToEn": "🇺🇸 EN"
+  },
   "dashboard": {
     "loading": "Chargement du tableau de bord…",
     "stats": {

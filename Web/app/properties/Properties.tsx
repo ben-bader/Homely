@@ -38,7 +38,165 @@ import { Property, PropertyStatus } from "@/types/dashboard-types";
 import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
 import { useMedia } from "@/app/properties/useMedia";
-import { useTranslations } from "next-intl";
+
+/* ---------------- TRANSLATIONS ---------------- */
+
+type Language = "en" | "fr";
+
+const dict = {
+  en: {
+    title: "Properties",
+    searchPlaceholder: "Search properties...",
+    filters: {
+      title: "Filters",
+      dateNewest: "Newest first",
+      dateOldest: "Oldest first",
+      clearAll: "Clear all",
+      statusLabel: "Status",
+      priceRangeLabel: "Price Range",
+      minPricePlaceholder: "Min",
+      maxPricePlaceholder: "Max",
+      locationLabel: "Location",
+      locationPlaceholder: "City or address",
+      dateSortLabel: "Sort by Date",
+      createdBetweenLabel: "Created Between",
+      dateAfter: "After",
+      dateBefore: "Before",
+    },
+    drawer: {
+      title: "Property Details",
+      description: "Full details for this property",
+      loading: "Loading details...",
+      sectionListing: "Listing",
+      labelTitle: "Title",
+      labelStatus: "Status",
+      labelListingType: "Listing Type",
+      labelPropertyType: "Property Type",
+      labelPrice: "Price",
+      labelBoosted: "Boosted",
+      yes: "Yes",
+      no: "No",
+      sectionLocation: "Location",
+      labelAddress: "Address",
+      labelLat: "Latitude",
+      labelLng: "Longitude",
+      sectionDescription: "Description",
+      sectionApartment: "Apartment Details",
+      labelBedrooms: "Bedrooms",
+      labelBathrooms: "Bathrooms",
+      labelFloor: "Floor",
+      labelElevator: "Elevator",
+      sectionSeller: "Seller",
+      labelSellerName: "Seller Name",
+      sectionTimestamps: "Timestamps",
+      labelCreatedAt: "Created At",
+      labelUpdatedAt: "Updated At",
+      sectionMedia: "Media",
+      loadingMedia: "Loading media...",
+      noMedia: "No media available",
+      noDetails: "No details available",
+      errorNoProperty: "No property selected",
+      successDelete: "Property deleted successfully",
+      errorNotFound: "Property not found",
+      errorDeleteFailed: "Failed to delete property",
+      btnDeleting: "Deleting...",
+      btnDelete: "Delete Property",
+      btnClose: "Close",
+    },
+    colTitle: "Title",
+    colAddress: "Address",
+    colPrice: "Price",
+    colDate: "Date",
+    colSeller: "Seller",
+    colStatus: "Status",
+    colActions: "Actions",
+    loadingMain: "Loading properties...",
+    pageTitle: "Properties",
+    filterButton: "Filters",
+    noResults: "No properties found",
+    pagination: {
+      prev: "Previous",
+      next: "Next",
+      pageInfo: "Page {current} of {total}",
+    },
+  },
+  fr: {
+    title: "Propriétés",
+    searchPlaceholder: "Rechercher des propriétés...",
+    filters: {
+      title: "Filtres",
+      dateNewest: "Plus récent",
+      dateOldest: "Plus ancien",
+      clearAll: "Tout effacer",
+      statusLabel: "Statut",
+      priceRangeLabel: "Plage de prix",
+      minPricePlaceholder: "Min",
+      maxPricePlaceholder: "Max",
+      locationLabel: "Emplacement",
+      locationPlaceholder: "Ville ou adresse",
+      dateSortLabel: "Trier par date",
+      createdBetweenLabel: "Créé entre",
+      dateAfter: "Après",
+      dateBefore: "Avant",
+    },
+    drawer: {
+      title: "Détails de la propriété",
+      description: "Détails complets de cette propriété",
+      loading: "Chargement des détails...",
+      sectionListing: "Annonce",
+      labelTitle: "Titre",
+      labelStatus: "Statut",
+      labelListingType: "Type d'annonce",
+      labelPropertyType: "Type de propriété",
+      labelPrice: "Prix",
+      labelBoosted: "Boosté",
+      yes: "Oui",
+      no: "Non",
+      sectionLocation: "Emplacement",
+      labelAddress: "Adresse",
+      labelLat: "Latitude",
+      labelLng: "Longitude",
+      sectionDescription: "Description",
+      sectionApartment: "Détails de l'appartement",
+      labelBedrooms: "Chambres",
+      labelBathrooms: "Salles de bain",
+      labelFloor: "Étage",
+      labelElevator: "Ascenseur",
+      sectionSeller: "Vendeur",
+      labelSellerName: "Nom du vendeur",
+      sectionTimestamps: "Horodatages",
+      labelCreatedAt: "Créé le",
+      labelUpdatedAt: "Modifié le",
+      sectionMedia: "Médias",
+      loadingMedia: "Chargement des médias...",
+      noMedia: "Aucun média disponible",
+      noDetails: "Aucun détail disponible",
+      errorNoProperty: "Aucune propriété sélectionnée",
+      successDelete: "Propriété supprimée avec succès",
+      errorNotFound: "Propriété introuvable",
+      errorDeleteFailed: "Échec de la suppression",
+      btnDeleting: "Suppression...",
+      btnDelete: "Supprimer la propriété",
+      btnClose: "Fermer",
+    },
+    colTitle: "Titre",
+    colAddress: "Adresse",
+    colPrice: "Prix",
+    colDate: "Date",
+    colSeller: "Vendeur",
+    colStatus: "Statut",
+    colActions: "Actions",
+    loadingMain: "Chargement des propriétés...",
+    pageTitle: "Propriétés",
+    filterButton: "Filtres",
+    noResults: "Aucune propriété trouvée",
+    pagination: {
+      prev: "Précédent",
+      next: "Suivant",
+      pageInfo: "Page {current} sur {total}",
+    },
+  },
+};
 
 /* ---------------- TYPES ---------------- */
 
@@ -54,14 +212,14 @@ function parseDate(v: string | number | null | undefined): Date | null {
   return new Date(v);
 }
 
-function fmt(v: string | number | null | undefined) {
+function fmt(v: string | number | null | undefined, locale: string = "en-US") {
   const d = parseDate(v);
-  return d ? d.toLocaleDateString() : "—";
+  return d ? d.toLocaleDateString(locale) : "—";
 }
 
-function fmtFull(v: string | number | null | undefined) {
+function fmtFull(v: string | number | null | undefined, locale: string = "en-US") {
   const d = parseDate(v);
-  return d ? d.toLocaleString() : "—";
+  return d ? d.toLocaleString(locale) : "—";
 }
 
 /* ---------------- INFO ROW ---------------- */
@@ -84,6 +242,7 @@ function InfoRow({ label, value, mono = false }: { label: string; value: React.R
 /* ---------------- FILTER PANEL ---------------- */
 
 function FilterPanel({
+  lang,
   filterStatus, setFilterStatus,
   minPrice, setMinPrice,
   maxPrice, setMaxPrice,
@@ -93,6 +252,7 @@ function FilterPanel({
   dateSort, setDateSort,
   onClear,
 }: {
+  lang: Language;
   filterStatus: PropertyStatus | "ALL"; setFilterStatus: (v: PropertyStatus | "ALL") => void;
   minPrice: number | ""; setMinPrice: (v: number | "") => void;
   maxPrice: number | ""; setMaxPrice: (v: number | "") => void;
@@ -102,7 +262,7 @@ function FilterPanel({
   dateSort: DateSort; setDateSort: (v: DateSort) => void;
   onClear: () => void;
 }) {
-  const t = useTranslations('properties.filters');
+  const t = dict[lang].filters;
   const statuses: (PropertyStatus | "ALL")[] = ["ALL", "AVAILABLE", "SUSPENDED", "DRAFT"];
   const activeCount = [
     filterStatus !== "ALL", minPrice !== "", maxPrice !== "",
@@ -111,8 +271,8 @@ function FilterPanel({
   ].filter(Boolean).length;
 
   const dateSortOptions: { value: DateSort; label: string; icon: string }[] = [
-    { value: "newest", label: t('dateNewest'), icon: "↓" },
-    { value: "oldest", label: t('dateOldest'), icon: "↑" },
+    { value: "newest", label: t.dateNewest, icon: "↓" },
+    { value: "oldest", label: t.dateOldest, icon: "↑" },
   ];
 
   return (
@@ -122,7 +282,7 @@ function FilterPanel({
           <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
           </svg>
-          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">{t('title')}</span>
+          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">{t.title}</span>
           {activeCount > 0 && (
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {activeCount}
@@ -131,14 +291,14 @@ function FilterPanel({
         </div>
         {activeCount > 0 && (
           <button onClick={onClear} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium">
-            {t('clearAll')}
+            {t.clearAll}
           </button>
         )}
       </div>
 
       <div className="p-4 space-y-5">
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('statusLabel')}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.statusLabel}</label>
           <div className="flex flex-wrap gap-1.5">
             {statuses.map((s) => (
               <button
@@ -157,13 +317,13 @@ function FilterPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('priceRangeLabel')}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.priceRangeLabel}</label>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
               <Input
                 type="number"
-                placeholder={t('minPricePlaceholder')}
+                placeholder={t.minPricePlaceholder}
                 value={minPrice}
                 onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : "")}
                 className="pl-6"
@@ -174,7 +334,7 @@ function FilterPanel({
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
               <Input
                 type="number"
-                placeholder={t('maxPricePlaceholder')}
+                placeholder={t.maxPricePlaceholder}
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : "")}
                 className="pl-6"
@@ -184,14 +344,14 @@ function FilterPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('locationLabel')}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.locationLabel}</label>
           <div className="relative">
             <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <Input
-              placeholder={t('locationPlaceholder')}
+              placeholder={t.locationPlaceholder}
               value={city}
               onChange={(e) => setCity(e.target.value)}
               className="pl-7"
@@ -200,7 +360,7 @@ function FilterPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('dateSortLabel')}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.dateSortLabel}</label>
           <div className="flex gap-1.5">
             {dateSortOptions.map(({ value, label, icon }) => (
               <button
@@ -220,14 +380,14 @@ function FilterPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('createdBetweenLabel')}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.createdBetweenLabel}</label>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">{t('dateAfter')}</span>
+              <span className="text-[10px] text-muted-foreground">{t.dateAfter}</span>
               <Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">{t('dateBefore')}</span>
+              <span className="text-[10px] text-muted-foreground">{t.dateBefore}</span>
               <Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} />
             </div>
           </div>
@@ -240,17 +400,19 @@ function FilterPanel({
 /* ---------------- PROPERTY DRAWER ---------------- */
 
 function PropertyDrawer({
+  lang,
   property,
   fetchDetail,
   selectedProperty,
   loadingDetail,
 }: {
+  lang: Language;
   property: Property;
   fetchDetail: (id: string) => void;
   selectedProperty: Property | null;
   loadingDetail: boolean;
 }) {
-  const t = useTranslations('properties.drawer');
+  const t = dict[lang].drawer;
   const p = selectedProperty?.id === property.id ? selectedProperty : null;
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -259,7 +421,7 @@ function PropertyDrawer({
 
   const handleDelete = async () => {
     if (!p) {
-      setMessage(t('errorNoProperty'));
+      setMessage(t.errorNoProperty);
       return;
     }
 
@@ -268,12 +430,12 @@ function PropertyDrawer({
 
     try {
       await api.delete(`/admin/properties/${p.id}`);
-      setMessage(t('successDelete'));
+      setMessage(t.successDelete);
     } catch (err: any) {
       if (err?.response?.status === 404) {
-        setMessage(t('errorNotFound'));
+        setMessage(t.errorNotFound);
       } else {
-        setMessage(t('errorDeleteFailed'));
+        setMessage(t.errorDeleteFailed);
       }
     } finally {
       setDeleteLoading(false);
@@ -291,74 +453,74 @@ function PropertyDrawer({
 
       <DrawerContent className="flex flex-col max-w-lg ml-auto h-full">
         <DrawerHeader className="border-b pb-4">
-          <DrawerTitle className="text-base font-semibold">{t('title')}</DrawerTitle>
-          <DrawerDescription className="text-xs text-muted-foreground">{t('description')}</DrawerDescription>
+          <DrawerTitle className="text-base font-semibold">{t.title}</DrawerTitle>
+          <DrawerDescription className="text-xs text-muted-foreground">{t.description}</DrawerDescription>
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           {loadingDetail && !p ? (
-            <p className="text-sm text-muted-foreground">{t('loading')}</p>
+            <p className="text-sm text-muted-foreground">{t.loading}</p>
           ) : p ? (
             <>
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionListing')}</p>
-                <InfoRow label={t('labelTitle')} value={p.title} />
-                <InfoRow label={t('labelStatus')} value={<Badge variant={p.status === "AVAILABLE" ? "default" : p.status === "SUSPENDED" ? "destructive" : "secondary"}>{p.status}</Badge>} />
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionListing}</p>
+                <InfoRow label={t.labelTitle} value={p.title} />
+                <InfoRow label={t.labelStatus} value={<Badge variant={p.status === "AVAILABLE" ? "default" : p.status === "SUSPENDED" ? "destructive" : "secondary"}>{p.status}</Badge>} />
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label={t('labelListingType')} value={p.listingType ?? "—"} />
-                  <InfoRow label={t('labelPropertyType')} value={p.propertyType ?? "—"} />
+                  <InfoRow label={t.labelListingType} value={p.listingType ?? "—"} />
+                  <InfoRow label={t.labelPropertyType} value={p.propertyType ?? "—"} />
                 </div>
-                <InfoRow label={t('labelPrice')} value={p.price ? `${p.price.toLocaleString()} ${p.currency}` : "—"} />
-                <InfoRow label={t('labelBoosted')} value={p.isBoosted ? t('yes') : t('no')} />
+                <InfoRow label={t.labelPrice} value={p.price ? `${p.price.toLocaleString()} ${p.currency}` : "—"} />
+                <InfoRow label={t.labelBoosted} value={p.isBoosted ? t.yes : t.no} />
               </section>
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionLocation')}</p>
-                <InfoRow label={t('labelAddress')} value={p.address} />
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionLocation}</p>
+                <InfoRow label={t.labelAddress} value={p.address} />
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label={t('labelLat')} value={p.latitude ?? "—"} mono />
-                  <InfoRow label={t('labelLng')} value={p.longitude ?? "—"} mono />
+                  <InfoRow label={t.labelLat} value={p.latitude ?? "—"} mono />
+                  <InfoRow label={t.labelLng} value={p.longitude ?? "—"} mono />
                 </div>
               </section>
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionDescription')}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionDescription}</p>
                 <p className="text-sm text-foreground leading-relaxed">{p.description || "—"}</p>
               </section>
 
               {p.apartment && (
                 <section className="space-y-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionApartment')}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionApartment}</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <InfoRow label={t('labelBedrooms')} value={p.apartment.bedrooms} />
-                    <InfoRow label={t('labelBathrooms')} value={p.apartment.bathrooms} />
-                    <InfoRow label={t('labelFloor')} value={p.apartment.floor} />
-                    <InfoRow label={t('labelElevator')} value={p.apartment.hasElevator ? t('yes') : t('no')} />
+                    <InfoRow label={t.labelBedrooms} value={p.apartment.bedrooms} />
+                    <InfoRow label={t.labelBathrooms} value={p.apartment.bathrooms} />
+                    <InfoRow label={t.labelFloor} value={p.apartment.floor} />
+                    <InfoRow label={t.labelElevator} value={p.apartment.hasElevator ? t.yes : t.no} />
                   </div>
                 </section>
               )}
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionSeller')}</p>
-                <InfoRow label={t('labelSellerName')} value={p.sellerName} />
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionSeller}</p>
+                <InfoRow label={t.labelSellerName} value={p.sellerName} />
               </section>
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionTimestamps')}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionTimestamps}</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label={t('labelCreatedAt')} value={fmtFull(p.createdAt)} />
-                  <InfoRow label={t('labelUpdatedAt')} value={fmtFull(p.updatedAt)} />
+                  <InfoRow label={t.labelCreatedAt} value={fmtFull(p.createdAt, lang === "fr" ? "fr-FR" : "en-US")} />
+                  <InfoRow label={t.labelUpdatedAt} value={fmtFull(p.updatedAt, lang === "fr" ? "fr-FR" : "en-US")} />
                 </div>
               </section>
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionMedia')}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionMedia}</p>
                 {mediaLoading ? (
-                  <p className="text-sm text-muted-foreground">{t('loadingMedia')}</p>
+                  <p className="text-sm text-muted-foreground">{t.loadingMedia}</p>
                 ) : mediaError ? (
                   <p className="text-sm text-destructive">{mediaError}</p>
                 ) : media.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('noMedia')}</p>
+                  <p className="text-sm text-muted-foreground">{t.noMedia}</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {media.map((m) => (
@@ -389,7 +551,7 @@ function PropertyDrawer({
               </section>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">{t('noDetails')}</p>
+            <p className="text-sm text-muted-foreground">{t.noDetails}</p>
           )}
         </div>
 
@@ -406,11 +568,11 @@ function PropertyDrawer({
             onClick={handleDelete}
             disabled={deleteLoading}
           >
-            {deleteLoading ? t('btnDeleting') : t('btnDelete')}
+            {deleteLoading ? t.btnDeleting : t.btnDelete}
           </Button>
 
           <DrawerClose asChild>
-            <Button variant="outline" className="w-full">{t('btnClose')}</Button>
+            <Button variant="outline" className="w-full">{t.btnClose}</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -421,19 +583,20 @@ function PropertyDrawer({
 /* ---------------- BUILD COLUMNS ---------------- */
 
 function buildColumns(
+  lang: Language,
   selectedProperty: Property | null,
   loadingDetail: boolean,
   fetchDetail: (id: string) => void,
-  t: any
 ): ColumnDef<Property>[] {
+  const t = dict[lang];
   return [
-    { accessorKey: "title", header: t('colTitle'), cell: ({ row }) => row.original.title },
-    { accessorKey: "address", header: t('colAddress'), cell: ({ row }) => row.original.address },
-    { accessorKey: "price", header: t('colPrice'), cell: ({ row }) => `$${row.original.price.toLocaleString()} ${row.original.currency}` },
-    { accessorKey: "createdAt", header: t('colDate'), cell: ({ row }) => fmt(row.original.createdAt) },
-    { accessorKey: "sellerName", header: t('colSeller'), cell: ({ row }) => row.original.sellerName },
+    { accessorKey: "title", header: t.colTitle, cell: ({ row }) => row.original.title },
+    { accessorKey: "address", header: t.colAddress, cell: ({ row }) => row.original.address },
+    { accessorKey: "price", header: t.colPrice, cell: ({ row }) => `$${row.original.price.toLocaleString()} ${row.original.currency}` },
+    { accessorKey: "createdAt", header: t.colDate, cell: ({ row }) => fmt(row.original.createdAt, lang === "fr" ? "fr-FR" : "en-US") },
+    { accessorKey: "sellerName", header: t.colSeller, cell: ({ row }) => row.original.sellerName },
     {
-      accessorKey: "status", header: t('colStatus'),
+      accessorKey: "status", header: t.colStatus,
       cell: ({ row }) => (
         <Badge variant={row.original.status === "AVAILABLE" ? "default" : row.original.status === "SUSPENDED" ? "destructive" : "secondary"}>
           {row.original.status}
@@ -441,9 +604,10 @@ function buildColumns(
       ),
     },
     {
-      id: "seeMore", header: t('colActions'),
+      id: "seeMore", header: t.colActions,
       cell: ({ row }) => (
         <PropertyDrawer
+          lang={lang}
           property={row.original}
           fetchDetail={fetchDetail}
           selectedProperty={selectedProperty}
@@ -457,7 +621,8 @@ function buildColumns(
 /* ---------------- MAIN PAGE ---------------- */
 
 export default function Properties() {
-  const t = useTranslations('properties');
+  const [lang, setLang] = useState<Language>("en");
+  const t = dict[lang];
   const {
     properties, loading, error,
     fetchPropertyDetail, selectedProperty, loadingDetail,
@@ -491,8 +656,8 @@ export default function Properties() {
   ].filter(Boolean).length;
 
   const columns = useMemo(
-    () => buildColumns(selectedProperty, loadingDetail, fetchPropertyDetail, t),
-    [selectedProperty, loadingDetail, fetchPropertyDetail, t]
+    () => buildColumns(lang, selectedProperty, loadingDetail, fetchPropertyDetail),
+    [lang, selectedProperty, loadingDetail, fetchPropertyDetail]
   );
 
   const filteredData = useMemo(() => {
@@ -542,16 +707,21 @@ export default function Properties() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  if (loading) return <div className="p-8">{t('loadingMain')}</div>;
+  if (loading) return <div className="p-8">{t.loadingMain}</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
 
   return (
     <div className="px-8 space-y-6">
-      <h2 className="text-xl font-semibold">{t('pageTitle')}</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">{t.pageTitle}</h2>
+        <Button variant="outline" size="sm" onClick={() => setLang(lang === "en" ? "fr" : "en")}>
+          {lang === "en" ? "🇫🇷 FR" : "🇺🇸 EN"}
+        </Button>
+      </div>
 
       <div className="flex gap-2">
         <Input
-          placeholder={t('searchPlaceholder')}
+          placeholder={t.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -560,7 +730,7 @@ export default function Properties() {
           onClick={() => setFilterOpen((v) => !v)}
           className="relative"
         >
-          {t('filterButton')}
+          {t.filterButton}
           {activeFilterCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {activeFilterCount}
@@ -571,6 +741,7 @@ export default function Properties() {
 
       {filterOpen && (
         <FilterPanel
+          lang={lang}
           filterStatus={filterStatus} setFilterStatus={setFilterStatus}
           minPrice={minPrice} setMinPrice={setMinPrice}
           maxPrice={maxPrice} setMaxPrice={setMaxPrice}
@@ -599,7 +770,7 @@ export default function Properties() {
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-12 text-sm">
-                  {t('noResults')}
+                  {t.noResults}
                 </TableCell>
               </TableRow>
             ) : (
@@ -624,11 +795,11 @@ export default function Properties() {
     onClick={() => table.previousPage()}
     disabled={!table.getCanPreviousPage()}
   >
-    {t('pagination.prev')}
+    {t.pagination.prev}
   </Button>
 
   <span>
-    {t('pagination.pageInfo', { current: pagination.pageIndex + 1, total: Math.max(table.getPageCount(), 1) })}
+    {t.pagination.pageInfo.replace('{current}', (pagination.pageIndex + 1).toString()).replace('{total}', Math.max(table.getPageCount(), 1).toString())}
   </span>
 
   <Button
@@ -637,7 +808,7 @@ export default function Properties() {
     onClick={() => table.nextPage()}
     disabled={!table.getCanNextPage()}
   >
-    {t('pagination.next')}
+    {t.pagination.next}
   </Button>
 </div>
     </div>

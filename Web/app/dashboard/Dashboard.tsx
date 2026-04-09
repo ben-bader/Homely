@@ -1,8 +1,9 @@
+'use client';
 import React from 'react'
 import { ChartAreaInteractive } from '../../components/dashboardComponents/chart-area-interactive'
 import { DataTable } from '../../components/dashboardComponents/data-table'
 import { SectionCards } from '../../components/dashboardComponents/section-cards'
-import { useReports } from '@/app/features/reports/useReports'
+import { useReports } from '@/app/reports/useReports'
 import { useTranslations } from 'next-intl'
 
 const Dashboard = () => {

@@ -77,8 +77,8 @@ const dict = {
       activeStatus: "Active",
       yes: "Yes",
       no: "No",
-      close: "Close"
-    }
+      close: "Close",
+    },
   },
   fr: {
     title: "Utilisateurs",
@@ -113,9 +113,9 @@ const dict = {
       activeStatus: "Actif",
       yes: "Oui",
       no: "Non",
-      close: "Fermer"
-    }
-  }
+      close: "Fermer",
+    },
+  },
 };
 
 /* ---------------- TYPES ---------------- */
@@ -150,6 +150,170 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+/* ---------------- FILTER PANEL ---------------- */
+
+function FilterPanel({
+  t,
+  roles,
+  roleFilter, setRoleFilter,
+  statusFilter, setStatusFilter,
+  dateSort, setDateSort,
+  createdAfter, setCreatedAfter,
+  createdBefore, setCreatedBefore,
+  onClear,
+}: {
+  t: typeof dict["en"];
+  roles: string[];
+  roleFilter: string; setRoleFilter: (v: string) => void;
+  statusFilter: string; setStatusFilter: (v: string) => void;
+  dateSort: DateSort; setDateSort: (v: DateSort) => void;
+  createdAfter: string; setCreatedAfter: (v: string) => void;
+  createdBefore: string; setCreatedBefore: (v: string) => void;
+  onClear: () => void;
+}) {
+  const activeCount = [
+    roleFilter !== "",
+    statusFilter !== "",
+    dateSort !== "",
+    createdAfter !== "",
+    createdBefore !== "",
+  ].filter(Boolean).length;
+
+  const dateSortOptions: { value: DateSort; label: string; icon: string }[] = [
+    { value: "newest", label: t.newest, icon: "↓" },
+    { value: "oldest", label: t.oldest, icon: "↑" },
+  ];
+
+  const statusOptions = [
+    { value: "active", label: t.active },
+    { value: "inactive", label: t.inactive },
+  ];
+
+  return (
+    <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
+        <div className="flex items-center gap-2">
+          <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          </svg>
+          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">{t.filters}</span>
+          {activeCount > 0 && (
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              {activeCount}
+            </span>
+          )}
+        </div>
+        {activeCount > 0 && (
+          <button onClick={onClear} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium">
+            {t.clearAll}
+          </button>
+        )}
+      </div>
+
+      <div className="p-4 space-y-5">
+        {/* Role */}
+        {roles.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.role}</label>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setRoleFilter("")}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                  roleFilter === ""
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                {t.all}
+              </button>
+              {roles.map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setRoleFilter(roleFilter === role ? "" : role)}
+                  className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                    roleFilter === role
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Status */}
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.status}</label>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setStatusFilter("")}
+              className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                statusFilter === ""
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+              }`}
+            >
+              {t.all}
+            </button>
+            {statusOptions.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setStatusFilter(statusFilter === value ? "" : value)}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                  statusFilter === value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date sort */}
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.sortByDate}</label>
+          <div className="flex gap-1.5">
+            {dateSortOptions.map(({ value, label, icon }) => (
+              <button
+                key={value}
+                onClick={() => setDateSort(dateSort === value ? "" : value)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                  dateSort === value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                <span>{icon}</span>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date range */}
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.joinedBetween}</label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <span className="text-[10px] text-muted-foreground">{t.after}</span>
+              <Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] text-muted-foreground">{t.before}</span>
+              <Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- MAIN PAGE ---------------- */
 
 export default function Users() {
@@ -172,6 +336,22 @@ export default function Users() {
     const set = new Set(users.map((u) => u.role).filter(Boolean));
     return Array.from(set).sort();
   }, [users]);
+
+  const clearFilters = () => {
+    setRoleFilter("");
+    setStatusFilter("");
+    setDateSort("");
+    setCreatedAfter("");
+    setCreatedBefore("");
+  };
+
+  const activeFilterCount = [
+    roleFilter !== "",
+    statusFilter !== "",
+    dateSort !== "",
+    createdAfter !== "",
+    createdBefore !== "",
+  ].filter(Boolean).length;
 
   const handleToggle = useCallback(
     async (id: string, currentActive: boolean) => {
@@ -202,9 +382,9 @@ export default function Users() {
         id: "action",
         header: "Action",
         cell: ({ row }) => (
-          <Switch 
-            checked={row.original.active} 
-            onCheckedChange={() => handleToggle(row.original.id, row.original.active)} 
+          <Switch
+            checked={row.original.active}
+            onCheckedChange={() => handleToggle(row.original.id, row.original.active)}
           />
         ),
       },
@@ -225,9 +405,9 @@ export default function Users() {
                 <InfoRow label={t.details.name} value={row.original.name} />
                 <InfoRow label={t.details.email} value={row.original.email} />
                 <InfoRow label={t.role} value={row.original.role} />
-                <InfoRow 
-                  label={t.details.created} 
-                  value={parseDate(row.original.createdAt)?.toLocaleString(lang === "fr" ? "fr-FR" : "en-US") ?? "—"} 
+                <InfoRow
+                  label={t.details.created}
+                  value={parseDate(row.original.createdAt)?.toLocaleString(lang === "fr" ? "fr-FR" : "en-US") ?? "—"}
                 />
                 <InfoRow label={t.details.activeStatus} value={row.original.active ? t.details.yes : t.details.no} />
               </div>
@@ -246,8 +426,14 @@ export default function Users() {
     const filtered = users.filter((u) => {
       const textMatch = [u.name, u.email, u.role].join(" ").toLowerCase().includes(search.toLowerCase());
       const roleMatch = !roleFilter || u.role.toLowerCase() === roleFilter.toLowerCase();
-      const statusMatch = !statusFilter || (statusFilter === "active" && u.active) || (statusFilter === "inactive" && !u.active);
-      return textMatch && roleMatch && statusMatch;
+      const statusMatch =
+        !statusFilter ||
+        (statusFilter === "active" && u.active) ||
+        (statusFilter === "inactive" && !u.active);
+      const created = parseDate(u.createdAt)?.getTime() ?? null;
+      const afterMatch = !createdAfter || (created !== null && created >= new Date(createdAfter + "T00:00:00Z").getTime());
+      const beforeMatch = !createdBefore || (created !== null && created <= new Date(createdBefore + "T23:59:59Z").getTime());
+      return textMatch && roleMatch && statusMatch && afterMatch && beforeMatch;
     });
 
     if (dateSort === "newest") {
@@ -256,7 +442,7 @@ export default function Users() {
       filtered.sort((a, b) => (parseDate(a.createdAt)?.getTime() ?? 0) - (parseDate(b.createdAt)?.getTime() ?? 0));
     }
     return filtered;
-  }, [users, search, roleFilter, statusFilter, dateSort]);
+  }, [users, search, roleFilter, statusFilter, dateSort, createdAfter, createdBefore]);
 
   const table = useReactTable({
     data: filteredData,
@@ -279,12 +465,35 @@ export default function Users() {
         </Button>
       </div>
 
+      {/* Search + Filter toggle */}
       <div className="flex gap-2">
         <Input placeholder={t.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Button variant="outline" onClick={() => setFilterOpen(!filterOpen)}>
-          {t.filters} {filteredData.length < users.length && t.filtered}
+        <Button variant="outline" onClick={() => setFilterOpen(!filterOpen)} className="relative shrink-0">
+          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          </svg>
+          {t.filters}
+          {activeFilterCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              {activeFilterCount}
+            </span>
+          )}
         </Button>
       </div>
+
+      {/* ✅ Filter panel — this was missing in the original */}
+      {filterOpen && (
+        <FilterPanel
+          t={t}
+          roles={roles}
+          roleFilter={roleFilter} setRoleFilter={setRoleFilter}
+          statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+          dateSort={dateSort} setDateSort={setDateSort}
+          createdAfter={createdAfter} setCreatedAfter={setCreatedAfter}
+          createdBefore={createdBefore} setCreatedBefore={setCreatedBefore}
+          onClear={clearFilters}
+        />
+      )}
 
       <div className="overflow-auto rounded-lg border">
         <Table>
@@ -300,20 +509,28 @@ export default function Users() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                ))}
+            {table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-12 text-sm">
+                  {t.noResults}
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       <div className="flex justify-center items-center gap-4 py-2 text-sm">
         <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>{t.prev}</Button>
-        <span>{t.page} {pagination.pageIndex + 1} {t.of} {table.getPageCount()}</span>
+        <span>{t.page} {pagination.pageIndex + 1} {t.of} {Math.max(table.getPageCount(), 1)}</span>
         <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>{t.next}</Button>
       </div>
     </div>

@@ -1,36 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-// Adjust the import path if your file has a specific export name
-// import { languages } from "@/languages"; 
+import { useTranslations, useLocale } from 'next-intl';
 
 export function SiteHeader() {
-  const [lang, setLang] = useState<"en" | "fr">("en");
+  const locale = useLocale();
+  const t = useTranslations('header');
 
-  // A small local dictionary for the header text if not using the root file
-  const t = {
-    en: {
-      title: "Admin Dashboard & moderation",
-      github: "GitHub",
-      toggle: "🇫🇷 FR",
-    },
-    fr: {
-      title: "Tableau de bord & modération",
-      github: "GitHub",
-      toggle: "🇺🇸 EN",
-    },
-  };
-
-  const current = t[lang];
-
-  const toggleLanguage = () => {
-    const newLang = lang === "en" ? "fr" : "en";
-    setLang(newLang);
-    // If you have a global state manager or a context provider, 
-    // you would trigger the language change here.
+  const toggleLocale = () => {
+    const newLocale = locale === 'en' ? 'fr' : 'en';
+    document.cookie = `locale=${newLocale}; path=/; max-age=31536000; samesite=lax`;
+    // Small delay ensures the cookie is committed before the reload
+    setTimeout(() => window.location.reload(), 50);
   };
 
   return (
@@ -41,20 +24,19 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        
+
         <h1 className="text-sm md:text-base font-medium truncate">
-          {current.title}
+          {t('title')}
         </h1>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Language Switcher Button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={toggleLanguage}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleLocale}
             className="text-xs font-bold px-2 h-8"
           >
-            {current.toggle}
+            {locale === 'en' ? t('toggleToFr') : t('toggleToEn')}
           </Button>
 
           <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
@@ -64,7 +46,7 @@ export function SiteHeader() {
               target="_blank"
               className="dark:text-foreground"
             >
-              {current.github}
+              {t('github')}
             </a>
           </Button>
         </div>

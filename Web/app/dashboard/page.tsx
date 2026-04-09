@@ -1,20 +1,20 @@
 "use client"
 
 import { AppSidebar } from "@/components/dashboardComponents/app-sidebar"
-import Boosts from "@/app/features/boosts/Boosts"
+import Boosts from "@/app/boosts/Boosts"
 import Dashboard from "@/app/dashboard/Dashboard"
-import Properties from "@/app/features/properties/Properties"
-import Reports from "@/app/features/reports/Reports"
-import ActivityMonitoring from "@/app/features/activityMonitoring/ActivityMonitoring"
+import Properties from "@/app/properties/Properties"
+import Reports from "@/app/reports/Reports"
+import ActivityMonitoring from "@/app/activityMonitoring/ActivityMonitoring"
 import { SiteHeader } from "@/components/dashboardComponents/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import Users from "@/app/features/users/Users"
+import Users from "@/app/users/Users"
 import { useState } from "react"
 import AdminDashboardWrapper from "@/app/dashboard/AdminDashboardWrapper"
-import VisitRequests from "@/app/features/visitRequests/VisitRequests"
-import Profile from "@/app/features/profile/profile"
-import Chat from "@/app/features/chats/Chat";
-import ManageParameters from "@/app/features/ManageParametres/ManageParametres"
+import VisitRequests from "@/app/visitRequests/VisitRequests"
+import Profile from "@/app/profile/profile"
+import Chat from "@/app/chats/Chat";
+import ManageParameters from "@/app/ManageParametres/ManageParametres"
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")

@@ -1,4 +1,10 @@
 {
+  "header": {
+    "title": "Admin Dashboard & moderation",
+    "github": "GitHub",
+    "toggleToFr": "🇫🇷 FR",
+    "toggleToEn": "🇺🇸 EN"
+  },
   "dashboard": {
     "loading": "Loading Dashboard…",
     "stats": {
