@@ -116,7 +116,7 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
           <div ref={bottomRef} />
         </div>
         <DrawerFooter className="border-t">
-          <DrawerClose asChild><Button variant="outline" className="w-full">{t('close')}</Button></DrawerClose>
+          <DrawerClose asChild><Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t('close')}</Button></DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
@@ -186,9 +186,9 @@ export default function ChatPage() {
         </Table>
       </div>
       <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>{t('previous')}</Button>
+        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>←</Button>
         <span>{t('page')} {pagination.pageIndex + 1} {t('of')} {Math.max(table.getPageCount(), 1)}</span>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>{t('next')}</Button>
+        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>→</Button>
       </div>
     </div>
   );

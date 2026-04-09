@@ -9,7 +9,8 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -31,13 +32,19 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useProperties } from "@/app/properties/useProperties";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
 import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
 import { useMedia } from "@/app/properties/useMedia";
+import { AddressMapPopover } from "@/components/ui/AddressMapPopover";
 
 /* ---------------- TRANSLATIONS ---------------- */
 
@@ -62,6 +69,10 @@ const dict = {
       createdBetweenLabel: "Created Between",
       dateAfter: "After",
       dateBefore: "Before",
+      total: "Total Properties",
+      available: "Available",
+      suspended: "Suspended",
+      draft: "Draft",
     },
     drawer: {
       title: "Property Details",
@@ -109,7 +120,7 @@ const dict = {
     colDate: "Date",
     colSeller: "Seller",
     colStatus: "Status",
-    colActions: "Actions",
+    colActions: "See More",
     loadingMain: "Loading properties...",
     pageTitle: "Properties",
     filterButton: "Filters",
@@ -138,6 +149,10 @@ const dict = {
       createdBetweenLabel: "Créé entre",
       dateAfter: "Après",
       dateBefore: "Avant",
+      total: "Total des propriétés",
+      available: "Disponible",
+      suspended: "Suspendu",
+      draft: "Brouillon",
     },
     drawer: {
       title: "Détails de la propriété",
@@ -185,7 +200,7 @@ const dict = {
     colDate: "Date",
     colSeller: "Vendeur",
     colStatus: "Statut",
-    colActions: "Actions",
+    colActions: "Voir plus",
     loadingMain: "Chargement des propriétés...",
     pageTitle: "Propriétés",
     filterButton: "Filtres",
@@ -476,7 +491,10 @@ function PropertyDrawer({
 
               <section className="space-y-4">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionLocation}</p>
-                <InfoRow label={t.labelAddress} value={p.address} />
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{t.labelAddress}</span>
+                  <AddressMapPopover address={p.address} />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <InfoRow label={t.labelLat} value={p.latitude ?? "—"} mono />
                   <InfoRow label={t.labelLng} value={p.longitude ?? "—"} mono />
@@ -572,7 +590,7 @@ function PropertyDrawer({
           </Button>
 
           <DrawerClose asChild>
-            <Button variant="outline" className="w-full">{t.btnClose}</Button>
+            <Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t.btnClose}</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -587,21 +605,43 @@ function buildColumns(
   selectedProperty: Property | null,
   loadingDetail: boolean,
   fetchDetail: (id: string) => void,
+  handleStatusUpdate: (id: string, status: PropertyStatus) => void,
 ): ColumnDef<Property>[] {
   const t = dict[lang];
   return [
     { accessorKey: "title", header: t.colTitle, cell: ({ row }) => row.original.title },
-    { accessorKey: "address", header: t.colAddress, cell: ({ row }) => row.original.address },
+    {
+      accessorKey: "address",
+      header: t.colAddress,
+      maxSize: 100,
+      cell: ({ row }) => <AddressMapPopover address={row.original.address} />,
+    },
     { accessorKey: "price", header: t.colPrice, cell: ({ row }) => `$${row.original.price.toLocaleString()} ${row.original.currency}` },
     { accessorKey: "createdAt", header: t.colDate, cell: ({ row }) => fmt(row.original.createdAt, lang === "fr" ? "fr-FR" : "en-US") },
     { accessorKey: "sellerName", header: t.colSeller, cell: ({ row }) => row.original.sellerName },
     {
       accessorKey: "status", header: t.colStatus,
-      cell: ({ row }) => (
-        <Badge variant={row.original.status === "AVAILABLE" ? "default" : row.original.status === "SUSPENDED" ? "destructive" : "secondary"}>
-          {row.original.status}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        let triggerClass = "h-7 w-[130px] text-xs";
+        if (status === "AVAILABLE") triggerClass += " bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/50";
+        else if (status === "SUSPENDED") triggerClass += " bg-destructive/10 text-destructive border-destructive/30";
+        else if (status === "DRAFT") triggerClass += " bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200/50 dark:border-yellow-900/50";
+        
+        return (
+          <Select
+            value={status}
+            onValueChange={(v) => handleStatusUpdate(row.original.id, v as PropertyStatus)}
+          >
+            <SelectTrigger className={triggerClass}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="AVAILABLE">AVAILABLE</SelectItem>
+              <SelectItem value="SUSPENDED">SUSPENDED</SelectItem>
+              <SelectItem value="DRAFT">DRAFT</SelectItem>
+            </SelectContent>
+          </Select>
+        );
+      },
     },
     {
       id: "seeMore", header: t.colActions,
@@ -655,9 +695,19 @@ export default function Properties() {
     dateSort !== "",
   ].filter(Boolean).length;
 
+  const handleStatusUpdate = async (id: string, status: PropertyStatus) => {
+    try {
+      await api.put(`/admin/properties/${id}/status`, null, { params: { status } });
+      // Update local state
+      setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    } catch (error) {
+      console.error("Failed to update property status", error);
+    }
+  };
+
   const columns = useMemo(
-    () => buildColumns(lang, selectedProperty, loadingDetail, fetchPropertyDetail),
-    [lang, selectedProperty, loadingDetail, fetchPropertyDetail]
+    () => buildColumns(lang, selectedProperty, loadingDetail, fetchPropertyDetail, handleStatusUpdate),
+    [lang, selectedProperty, loadingDetail, fetchPropertyDetail, handleStatusUpdate]
   );
 
   const filteredData = useMemo(() => {
@@ -707,6 +757,12 @@ export default function Properties() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  // Summary calculations
+  const totalProperties = properties.length;
+  const availableProperties = properties.filter(p => p.status === "AVAILABLE").length;
+  const suspendedProperties = properties.filter(p => p.status === "SUSPENDED").length;
+  const draftProperties = properties.filter(p => p.status === "DRAFT").length;
+
   if (loading) return <div className="p-8">{t.loadingMain}</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
 
@@ -717,6 +773,34 @@ export default function Properties() {
         <Button variant="outline" size="sm" onClick={() => setLang(lang === "en" ? "fr" : "en")}>
           {lang === "en" ? "🇫🇷 FR" : "🇺🇸 EN"}
         </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="rounded-lg border p-4 flex items-center gap-3 bg-muted/50">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.filters.total}</p>
+            <p className="text-2xl font-bold text-foreground">{totalProperties}</p>
+          </div>
+        </div>
+        <div className="rounded-lg border p-4 flex items-center gap-3 bg-green-50 dark:bg-green-950/30">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.filters.available}</p>
+            <p className="text-2xl font-bold text-green-600">{availableProperties}</p>
+          </div>
+        </div>
+        <div className="rounded-lg border p-4 flex items-center gap-3 bg-destructive/10">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.filters.suspended}</p>
+            <p className="text-2xl font-bold text-destructive">{suspendedProperties}</p>
+          </div>
+        </div>
+        <div className="rounded-lg border p-4 flex items-center gap-3 bg-yellow-50 dark:bg-yellow-950/30">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.filters.draft}</p>
+            <p className="text-2xl font-bold text-yellow-600">{draftProperties}</p>
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-2">
@@ -788,29 +872,29 @@ export default function Properties() {
         </Table>
       </div>
 
-     <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
-  <Button
-    variant="outline"
-    size="sm"
-    onClick={() => table.previousPage()}
-    disabled={!table.getCanPreviousPage()}
-  >
-    {t.pagination.prev}
-  </Button>
+      <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          ←
+        </Button>
 
-  <span>
-    {t.pagination.pageInfo.replace('{current}', (pagination.pageIndex + 1).toString()).replace('{total}', Math.max(table.getPageCount(), 1).toString())}
-  </span>
+        <span>
+          {t.pagination.pageInfo.replace('{current}', (pagination.pageIndex + 1).toString()).replace('{total}', Math.max(table.getPageCount(), 1).toString())}
+        </span>
 
-  <Button
-    variant="outline"
-    size="sm"
-    onClick={() => table.nextPage()}
-    disabled={!table.getCanNextPage()}
-  >
-    {t.pagination.next}
-  </Button>
-</div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          →
+        </Button>
+      </div>
     </div>
   );
 }

@@ -38,63 +38,29 @@ function AppSidebar({
   ...props
 }: AppSidebarProps) {
   const navMain = [
-    {
-      title: "dashboard",
-      url: "#",
-      icon: IconDashboard,
-    },
-    {
-      title: "Users",
-      url: "/users",
-      icon: IconUsers,
-    },
-    {
-      title: "Properties",
-      url: "#",
-      icon: IconHome,
-    },
-    {
-      title: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      title: "Boosts",
-      url: "#",
-      icon: IconRocket,
-    },
-    {
-      title: "Visit Requests",
-      url: "#",
-      icon: PlusSquareIcon,
-    },
-    {
-      title: "Activity Monitoring",
-      url: "#",
-      icon: IconHistory,
-    },
-    {
-      title: "chats",
-      url: "/chat",
-      icon: IconMessageCircle,
-    },
-    {
-      title: "Manage Parameters",
-      url: "/dashboard/manage-parameters",
-      icon: IconFileAi,
-    },
+    { title: "dashboard",        url: "#",                          icon: IconDashboard    },
+    { title: "Users",            url: "/users",                     icon: IconUsers        },
+    { title: "Properties",       url: "#",                          icon: IconHome         },
+    { title: "Reports",          url: "#",                          icon: IconReport       },
+    { title: "Boosts",           url: "#",                          icon: IconRocket       },
+    { title: "Visit Requests",   url: "#",                          icon: PlusSquareIcon   },
+    { title: "Activity Monitoring", url: "#",                       icon: IconHistory      },
+    { title: "chats",            url: "/chat",                      icon: IconMessageCircle},
+    { title: "Manage Parameters",url: "/dashboard/manage-parameters",icon: IconFileAi     },
   ];
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    // ↓ constrain the sidebar width
+    <Sidebar collapsible="offcanvas" className="[--sidebar-width:200px]" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
+            {/* ↓ tighter padding + smaller logo */}
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:!p-1"
             >
-              <div>
+              <div className="scale-90 origin-left">
                 <Logo />
               </div>
             </SidebarMenuButton>

@@ -114,7 +114,7 @@ function LogDetailsDrawer({ log, type }: { log: any; type: Tab }) {
 
         <DrawerFooter className="border-t">
           <DrawerClose asChild>
-            <Button variant="outline" className="w-full">Close</Button>
+            <Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">Close</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
