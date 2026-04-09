@@ -49,6 +49,7 @@ public class AuthController {
             return """
                 <!DOCTYPE html>
                 <html lang="en">
+
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,7 +57,7 @@ public class AuthController {
                     <style>
                         body {
                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            background: #070711;
                             margin: 0;
                             padding: 0;
                             min-height: 100vh;
@@ -64,19 +65,21 @@ public class AuthController {
                             align-items: center;
                             justify-content: center;
                         }
+
                         .container {
-                            background: white;
+                            background: #000621;
                             border-radius: 12px;
                             padding: 2rem;
-                            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
                             text-align: center;
                             max-width: 400px;
                             width: 90%;
                         }
+
                         .success-icon {
                             width: 64px;
                             height: 64px;
-                            background: #10b981;
+                            background: #0f0;
+                            color:#000621 ;
                             border-radius: 50%;
                             display: flex;
                             align-items: center;
@@ -84,41 +87,31 @@ public class AuthController {
                             margin: 0 auto 1.5rem;
                             font-size: 28px;
                         }
+
                         h1 {
-                            color: #1f2937;
+                            color: #f7f7f7;
                             margin-bottom: 0.5rem;
                             font-size: 1.875rem;
                             font-weight: 700;
                         }
+
                         p {
-                            color: #6b7280;
+                            color: #818791;
                             margin-bottom: 2rem;
                             line-height: 1.6;
                         }
-                        .btn {
-                            background: #3b82f6;
-                            color: white;
-                            border: none;
-                            padding: 0.75rem 2rem;
-                            border-radius: 8px;
-                            font-weight: 600;
-                            text-decoration: none;
-                            display: inline-block;
-                            transition: background-color 0.2s;
-                        }
-                        .btn:hover {
-                            background: #2563eb;
-                        }
+
                     </style>
                 </head>
+
                 <body>
                     <div class="container">
                         <div class="success-icon">✓</div>
                         <h1>Email Verified Successfully!</h1>
-                        <p>Your email has been verified. You can now log in to your account.</p>
-                        <a href="/" class="btn">Go to Login</a>
+                        <p>Your email has been verified. You can now close this tab and log in to your account.</p>
                     </div>
                 </body>
+
                 </html>
                 """;
         } catch (Exception e) {
@@ -132,7 +125,7 @@ public class AuthController {
                     <style>
                         body {
                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            background: #070711;
                             margin: 0;
                             padding: 0;
                             min-height: 100vh;
@@ -141,10 +134,9 @@ public class AuthController {
                             justify-content: center;
                         }
                         .container {
-                            background: white;
+                            background: #000621;
                             border-radius: 12px;
                             padding: 2rem;
-                            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
                             text-align: center;
                             max-width: 400px;
                             width: 90%;
@@ -153,6 +145,7 @@ public class AuthController {
                             width: 64px;
                             height: 64px;
                             background: #ef4444;
+                            color:#000621 ;
                             border-radius: 50%;
                             display: flex;
                             align-items: center;
@@ -162,38 +155,24 @@ public class AuthController {
                             color: white;
                         }
                         h1 {
-                            color: #1f2937;
+                            color: #f7f7f7;
                             margin-bottom: 0.5rem;
                             font-size: 1.875rem;
                             font-weight: 700;
                         }
                         p {
-                            color: #6b7280;
+                            color: #818791;
                             margin-bottom: 2rem;
                             line-height: 1.6;
                         }
-                        .btn {
-                            background: #3b82f6;
-                            color: white;
-                            border: none;
-                            padding: 0.75rem 2rem;
-                            border-radius: 8px;
-                            font-weight: 600;
-                            text-decoration: none;
-                            display: inline-block;
-                            transition: background-color 0.2s;
-                        }
-                        .btn:hover {
-                            background: #2563eb;
-                        }
+                       
                     </style>
                 </head>
                 <body>
                     <div class="container">
                         <div class="error-icon">✕</div>
                         <h1>Verification Failed</h1>
-                        <p>The verification link is invalid or has expired. Please try registering again or contact support.</p>
-                        <a href="/" class="btn">Go to Home</a>
+                        <p>The verification link is invalid or has expired. Please try registering again or contact support <a href="mailto:homely.support@gmail.com">homely.support@gmail.com</a>.</p>
                     </div>
                 </body>
                 </html>
