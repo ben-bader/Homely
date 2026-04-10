@@ -85,14 +85,13 @@ function LogDetailsDrawer({ log, type }: { log: any; type: Tab }) {
             <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">Core Info</p>
             <InfoRow label="Timestamp" value={fmtFull(log.createdAt)} />
             <InfoRow label="Activity Type" value={<Badge variant="outline">{isUserActivity ? log.activityType : log.action}</Badge>} />
-            {isUserActivity && <InfoRow label="Entity" value={`${log.entityType} (${log.entityId})`} />}
+            {isUserActivity && <InfoRow label="Entity" value={log.entityType} />}
           </section>
 
           <section className="space-y-4">
             <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">User / Actor</p>
             <InfoRow label="Name" value={isUserActivity ? log.userName : log.adminName} />
             <InfoRow label="Email" value={isUserActivity ? log.userEmail : log.adminEmail} />
-            <InfoRow label="ID" value={isUserActivity ? log.userId : log.adminId} />
           </section>
 
           {log.description && (

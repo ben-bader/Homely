@@ -597,7 +597,6 @@ function ReportDrawer({ report, t, lang }: { report: Report; t: any; lang: strin
 
           {/* Overview */}
           <Section label={t.details.overview}>
-            <Field label="ID" value={report.id} mono />
             <Field label="Reason" value={report.reason} />
             <Field label={t.status}>
               <StatusBadge status={report.status} t={t} />
@@ -609,7 +608,6 @@ function ReportDrawer({ report, t, lang }: { report: Report; t: any; lang: strin
           <Section label={t.details.reporter}>
             <Field label="Name" value={report.reporterName} />
             <Field label="Email" value={report.reporterEmail} />
-            <Field label="ID" value={report.reporterId} mono />
           </Section>
 
           {/* Target */}
@@ -617,13 +615,11 @@ function ReportDrawer({ report, t, lang }: { report: Report; t: any; lang: strin
             {isProperty ? (
               <>
                 <Field label="Property" value={report.reportedPropertyTitle} />
-                <Field label="Property ID" value={report.reportedPropertyId} mono />
               </>
             ) : (
               <>
                 <Field label="Name" value={report.reportedUserName} />
                 <Field label="Email" value={report.reportedUserEmail} />
-                <Field label="ID" value={report.reportedUserId} mono />
               </>
             )}
           </Section>
@@ -634,7 +630,6 @@ function ReportDrawer({ report, t, lang }: { report: Report; t: any; lang: strin
               <>
                 <Field label="Name" value={report.reviewedByAdminName} />
                 <Field label="Email" value={report.reviewedByAdminEmail} />
-                <Field label="ID" value={report.reviewedByAdminId} mono />
               </>
             ) : (
               <p className="text-sm text-muted-foreground italic">{t.details.notReviewed}</p>

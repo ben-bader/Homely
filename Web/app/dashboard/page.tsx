@@ -15,7 +15,7 @@ import VisitRequests from "@/app/visitRequests/VisitRequests"
 import Profile from "@/app/profile/profile"
 import Chat from "@/app/chats/Chat";
 import ManageParameters from "@/app/ManageParametres/ManageParametres"
-
+import AdminManager from "../AdminManager/AdminManager"
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard")
   
@@ -28,6 +28,7 @@ export default function Page() {
   dashboard: <Dashboard />,
   "activity monitoring": <ActivityMonitoring />,
   profile: <Profile />,
+  "manage admins": <AdminManager />,
   chats: <Chat />,
   "manage parameters": <ManageParameters />,
 

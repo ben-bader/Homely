@@ -26,6 +26,7 @@ import {
 
 import Logo from "../logo/Logo";
 import { PlusSquareIcon } from "lucide-react";
+import { getUserFromToken } from "@/lib/auth";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   setActiveSection: (section: string) => void;
@@ -37,25 +38,68 @@ function AppSidebar({
   activeSection,
   ...props
 }: AppSidebarProps) {
+  const user = getUserFromToken();
+
+  // ✅ SAFE STATE (no localStorage in render)
+  const [permissions, setPermissions] = React.useState<Record<string, boolean>>({});
+
+  // ✅ LOAD PERMISSIONS SAFELY
+  React.useEffect(() => {
+    const stored = localStorage.getItem("permissions");
+
+    if (stored) {
+      try {
+        setPermissions(JSON.parse(stored));
+      } catch {
+        setPermissions({});
+      }
+    }
+  }, []);
+
+  const permissionKeys: Record<string, string> = {
+    dashboard: "dashboard",
+    Users: "users",
+    Properties: "properties",
+    Reports: "reports",
+    Boosts: "boosts",
+    "Visit Requests": "visit_requests",
+    "Activity Monitoring": "activity_monitoring",
+    chats: "chats",
+    "Manage Parameters": "manage_parameters",
+    "Manage admins": "manage_admins",
+  };
+
   const navMain = [
-    { title: "dashboard",        url: "#",                          icon: IconDashboard    },
-    { title: "Users",            url: "/users",                     icon: IconUsers        },
-    { title: "Properties",       url: "#",                          icon: IconHome         },
-    { title: "Reports",          url: "#",                          icon: IconReport       },
-    { title: "Boosts",           url: "#",                          icon: IconRocket       },
-    { title: "Visit Requests",   url: "#",                          icon: PlusSquareIcon   },
-    { title: "Activity Monitoring", url: "#",                       icon: IconHistory      },
-    { title: "chats",            url: "/chat",                      icon: IconMessageCircle},
-    { title: "Manage Parameters",url: "/dashboard/manage-parameters",icon: IconFileAi     },
+    { title: "dashboard", url: "#", icon: IconDashboard },
+    { title: "Users", url: "/users", icon: IconUsers },
+    { title: "Properties", url: "#", icon: IconHome },
+    { title: "Reports", url: "#", icon: IconReport },
+    { title: "Boosts", url: "#", icon: IconRocket },
+    { title: "Visit Requests", url: "#", icon: PlusSquareIcon },
+    { title: "Activity Monitoring", url: "#", icon: IconHistory },
+    { title: "chats", url: "#", icon: IconMessageCircle },
+    { title: "Manage Parameters", url: "#", icon: IconFileAi },
+    { title: "Manage admins", url: "#", icon: IconUsers },
   ];
 
+  // ✅ STRICT PERMISSION FILTER (no undefined bugs)
+  const filteredNavMain = navMain.filter((item) => {
+    const key = permissionKeys[item.title];
+
+    if (!key) return true; // no permission rule = allow
+
+    return permissions[key] === true; // ONLY allow true
+  });
+
   return (
-    // ↓ constrain the sidebar width
-    <Sidebar collapsible="offcanvas" className="[--sidebar-width:200px]" {...props}>
+    <Sidebar
+      collapsible="offcanvas"
+      className="[--sidebar-width:200px]"
+      {...props}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            {/* ↓ tighter padding + smaller logo */}
             <SidebarMenuButton
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1"
@@ -70,7 +114,7 @@ function AppSidebar({
 
       <SidebarContent>
         <NavMain
-          items={navMain}
+          items={filteredNavMain}
           setActiveSection={setActiveSection}
           activeSection={activeSection}
         />
