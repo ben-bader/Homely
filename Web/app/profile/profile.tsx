@@ -30,7 +30,7 @@ export default function Profile() {
   React.useEffect(() => {
     api.get("/profile/me")
       .then((res) => {
-        if (res.data?.avatarUrl) setAvatarUrl(res.data.avatarUrl)
+        if (res.data?.avtarUrl) setAvatarUrl(res.data.avtarUrl)
       })
       .catch(() => {})
   }, [])
@@ -40,7 +40,7 @@ export default function Profile() {
     if (!file) return
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error(t('avatar.sizeError', { defaultValue: "File must be under 2 MB" }))
+      toast.error("Le fichier doit être inférieur à 2 Mo")
       return
     }
 
@@ -52,12 +52,12 @@ export default function Profile() {
       api.put("/profile/me/avatar", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       }).then((res) => {
-        if (res.data?.avatarUrl) setAvatarUrl(res.data.avatarUrl)
+        if (res.data?.avtarUrl) setAvatarUrl(res.data.avtarUrl)
       }),
       {
-        loading: t('avatar.loadingToast', { defaultValue: "Uploading photo..." }),
-        success: t('avatar.successToast', { defaultValue: "Photo updated!" }),
-        error: t('avatar.errorToast', { defaultValue: "Upload failed. Try again." }),
+        loading: "Téléchargement de la photo...",
+        success: "Photo mise à jour !",
+        error: "Échec du téléchargement. Réessayez.",
       }
     )
     setAvatarLoading(false)
@@ -70,9 +70,9 @@ export default function Profile() {
     toast.promise(
       api.delete("/profile/me/avatar").then(() => setAvatarUrl(null)),
       {
-        loading: t('avatar.removingToast', { defaultValue: "Removing photo..." }),
-        success: t('avatar.removeSuccessToast', { defaultValue: "Photo removed." }),
-        error: t('avatar.removeErrorToast', { defaultValue: "Could not remove photo." }),
+        loading: "Suppression de la photo...",
+        success: "Photo supprimée.",
+        error: "Impossible de supprimer la photo.",
       }
     )
   }
@@ -140,10 +140,10 @@ export default function Profile() {
         <Card className="rounded-2xl shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl">
-              {t('avatar.title', { defaultValue: "Profile photo" })}
+              Photo de profil
             </CardTitle>
             <CardDescription>
-              {t('avatar.description', { defaultValue: "This photo will appear in the sidebar and across the app." })}
+              Cette photo apparaîtra dans la barre latérale et dans toute l'application.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -164,12 +164,13 @@ export default function Profile() {
                 />
 
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   disabled={avatarLoading}
                   onClick={() => fileInputRef.current?.click()}
+                  className="bg-gray-800 hover:bg-gray-700 text-white"
                 >
-                  {t('avatar.uploadButton', { defaultValue: "Upload photo" })}
+                  Upload
                 </Button>
 
                 {avatarUrl && (
@@ -179,12 +180,12 @@ export default function Profile() {
                     className="text-destructive hover:text-destructive"
                     onClick={handleRemoveAvatar}
                   >
-                    {t('avatar.removeButton', { defaultValue: "Remove photo" })}
+                    Supprimer la photo
                   </Button>
                 )}
 
                 <p className="text-xs text-muted-foreground">
-                  {t('avatar.hint', { defaultValue: "JPG, PNG or WebP · max 2 MB" })}
+                  JPG, PNG ou WebP · max 2 Mo
                 </p>
               </div>
             </div>
