@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import { useAuditLogs } from "@/app/activityMonitoring/useAuditLogs";
 import { useLogActivities } from "@/app/activityMonitoring/useAuditLogs";
-
 import {
   Table,
   TableBody,

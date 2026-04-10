@@ -23,7 +23,9 @@ export default function AdminDashboardWrapper({
       }
 
       // ✅ load permissions (global system you're currently using)
-      const stored = localStorage.getItem(`permissions_${user.id}`) || localStorage.getItem("permissions");
+const stored = user
+  ? localStorage.getItem(`permissions_${user.id}`)
+  : null;
 
       if (!stored) {
         // fallback default permissions

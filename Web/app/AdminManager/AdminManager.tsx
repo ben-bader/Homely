@@ -246,9 +246,20 @@ export default function AdminManager() {
   const totalInactive = allAdmins.filter((u) => !u.active).length;
 
   /* ---------- Per-admin permissions helpers ---------- */
-  function getPerms(id: string): PermissionMap {
-    return adminPerms[id] ?? Object.fromEntries(PERMISSIONS.map((p) => [p.key, false]));
+ function getPerms(id: string): PermissionMap {
+  if (adminPerms[id]) return adminPerms[id];
+
+  const stored = localStorage.getItem(`permissions_${id}`);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      setAdminPerms((prev) => ({ ...prev, [id]: parsed }));
+      return parsed;
+    } catch {}
   }
+
+  return Object.fromEntries(PERMISSIONS.map((p) => [p.key, false]));
+}
 
   function setPerms(id: string, map: PermissionMap) {
     setAdminPerms((prev) => ({ ...prev, [id]: map }));
@@ -270,16 +281,16 @@ export default function AdminManager() {
   );
 
   /* ---------- Save permissions ---------- */
-  async function handleSavePerms(id: string) {
-  const perms = getPerms(id)
+async function handleSavePerms(id: string) {
+  const perms = getPerms(id);
 
-  // ❌ REMOVE backend call (optional if you're frontend-only)
-  // await api.put(`/admin/users/${id}/permissions`, { permissions: perms });
+  // ✅ save in localStorage
+  localStorage.setItem(`permissions_${id}`, JSON.stringify(perms));
 
-  // ✅ Save per-user
-  localStorage.setItem(`permissions_${id}`, JSON.stringify(perms))
+  // ✅ ALSO update state (important for instant UI)
+  setAdminPerms((prev) => ({ ...prev, [id]: perms }));
 
-  // If saving for current user, update global permissions for sidebar
+  // ✅ if current user → update sidebar permissions
   const user = getUserFromToken();
   if (user && user.id === id) {
     localStorage.setItem("permissions", JSON.stringify(perms));

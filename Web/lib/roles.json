@@ -1,14 +1,12 @@
 {
-  "DEFAULT_ADMIN": {
-    "dashboard": true,
-    "users": true,
-    "properties": true,
-    "reports": true,
-    "boosts": true,
-    "visit_requests": true,
-    "activity_monitoring": true,
-    "chats": true,
-    "manage_parameters": true,
-    "manage_admins": false
-  }
+  "dashboard": true,
+  "users": true,
+  "properties": true,
+  "reports": true,
+  "boosts": true,
+  "visit_requests": true,
+  "activity_monitoring": true,
+  "chats": true,
+  "manage_parameters": true,
+  "manage_admins": false
 }

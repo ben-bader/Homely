@@ -5,9 +5,8 @@ import {
   IconDotsVertical,
   IconLogout,
   IconUserCircle,
-  IconNotification,
 } from "@tabler/icons-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -24,6 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { getUserFromToken } from "@/lib/auth"
+import { api } from "@/lib/api"
 
 interface NavUserProps {
   setActiveSection: (section: string) => void
@@ -32,18 +32,49 @@ interface NavUserProps {
 export function NavUser({ setActiveSection }: NavUserProps) {
   const { isMobile } = useSidebar()
   const [user, setUser] = React.useState<any>(null)
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null)
+
+  const fetchAvatar = React.useCallback(async () => {
+    try {
+      const res = await api.get("/profile/me")
+      if (res.data?.avatarUrl) setAvatarUrl(res.data.avatarUrl)
+      else setAvatarUrl(null)
+    } catch {
+      setAvatarUrl(null)
+    }
+  }, [])
 
   React.useEffect(() => {
     const decoded = getUserFromToken()
     setUser(decoded)
+    fetchAvatar()
+  }, [fetchAvatar])
+
+  // Re-fetch avatar whenever the user navigates back to this component
+  // (e.g. after updating it in the Profile page)
+  React.useEffect(() => {
+    const handleFocus = () => fetchAvatar()
+    window.addEventListener("focus", handleFocus)
+    return () => window.removeEventListener("focus", handleFocus)
+  }, [fetchAvatar])
+
+  // Listen for a custom event dispatched by Profile.tsx after a successful upload
+  React.useEffect(() => {
+    const handleAvatarUpdate = (e: CustomEvent<{ avatarUrl: string | null }>) => {
+      setAvatarUrl(e.detail.avatarUrl)
+    }
+    window.addEventListener("avatar-updated", handleAvatarUpdate as EventListener)
+    return () => window.removeEventListener("avatar-updated", handleAvatarUpdate as EventListener)
   }, [])
 
   if (!user) return null
 
   const logout = () => {
     localStorage.removeItem("jwt")
-    setActiveSection("dashboard") // Optional: reset to dashboard after logout
+    setActiveSection("dashboard")
   }
+
+  const userInitial = (user.name ?? "?").charAt(0).toUpperCase()
 
   return (
     <SidebarMenu>
@@ -52,7 +83,16 @@ export function NavUser({ setActiveSection }: NavUserProps) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg">
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                {avatarUrl && (
+                  <AvatarImage
+                    src={avatarUrl}
+                    alt={user.name}
+                    className="rounded-lg object-cover"
+                  />
+                )}
+                <AvatarFallback className="rounded-lg">
+                  {userInitial}
+                </AvatarFallback>
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm ml-2">
@@ -69,7 +109,27 @@ export function NavUser({ setActiveSection }: NavUserProps) {
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel>Account</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <div className="flex items-center gap-3 py-1">
+                <Avatar className="h-9 w-9 rounded-lg">
+                  {avatarUrl && (
+                    <AvatarImage
+                      src={avatarUrl}
+                      alt={user.name}
+                      className="rounded-lg object-cover"
+                    />
+                  )}
+                  <AvatarFallback className="rounded-lg text-sm">
+                    {userInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium leading-none">{user.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{user.sub}</p>
+                </div>
+              </div>
+            </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
@@ -77,8 +137,6 @@ export function NavUser({ setActiveSection }: NavUserProps) {
                 <IconUserCircle />
                 Profile
               </DropdownMenuItem>
-
-              
             </DropdownMenuGroup>
 
             <DropdownMenuSeparator />

@@ -38,24 +38,45 @@ function AppSidebar({
   activeSection,
   ...props
 }: AppSidebarProps) {
-  const user = getUserFromToken();
 
-  // ✅ SAFE STATE (no localStorage in render)
-  const [permissions, setPermissions] = React.useState<Record<string, boolean>>({});
+  const [permissions, setPermissions] = React.useState<Record<string, boolean> | null>(null);
 
-  // ✅ LOAD PERMISSIONS SAFELY
+  // ✅ Load permissions safely
   React.useEffect(() => {
-    const stored = localStorage.getItem("permissions");
+    const user = getUserFromToken();
+    if (!user) {
+      setPermissions({});
+      return;
+    }
 
-    if (stored) {
-      try {
-        setPermissions(JSON.parse(stored));
-      } catch {
-        setPermissions({});
-      }
+    const stored = localStorage.getItem(`permissions_${user.id}`);
+
+    if (!stored) {
+      setPermissions({});
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored);
+
+      // ✅ IMPORTANT FIX:
+      // if permissions are nested (DEFAULT_ADMIN), flatten them
+      const flat =
+        parsed?.dashboard !== undefined
+          ? parsed
+          : parsed?.[user.role] || parsed?.DEFAULT_ADMIN || {};
+
+      setPermissions(flat);
+    } catch {
+      setPermissions({});
     }
   }, []);
 
+  if (!permissions) {
+    return <div className="p-3 text-sm text-muted-foreground">Loading sidebar...</div>;
+  }
+
+  // 🔑 map UI labels → permission keys
   const permissionKeys: Record<string, string> = {
     dashboard: "dashboard",
     Users: "users",
@@ -82,13 +103,13 @@ function AppSidebar({
     { title: "Manage admins", url: "#", icon: IconUsers },
   ];
 
-  // ✅ STRICT PERMISSION FILTER (no undefined bugs)
+  // ✅ SAFE FILTER (NO BUGS EVER)
   const filteredNavMain = navMain.filter((item) => {
     const key = permissionKeys[item.title];
 
-    if (!key) return true; // no permission rule = allow
+    if (!key) return true;
 
-    return permissions[key] === true; // ONLY allow true
+    return permissions?.[key] === true;
   });
 
   return (
@@ -100,10 +121,7 @@ function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1"
-            >
+            <SidebarMenuButton asChild>
               <div className="scale-90 origin-left">
                 <Logo />
               </div>
