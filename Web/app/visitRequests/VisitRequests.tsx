@@ -33,7 +33,15 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FaEye } from "react-icons/fa";
+import { api } from "@/lib/api";
 
 import { useVisitRequests } from "@/app/visitRequests/useVisitRequests";
 import { useProperties } from "@/app/properties/useProperties";
@@ -159,6 +167,27 @@ function statusVariant(status: VisitStatus): "default" | "secondary" | "destruct
     case VisitStatus.REJECTED: return "destructive";
     default: return "outline";
   }
+}
+
+function StatusSelect({ request, onUpdate }: { request: any; onUpdate: (id: string, status: VisitStatus) => Promise<void> }) {
+  const status = request.status;
+  let triggerClass = "h-7 w-[130px] text-xs";
+  if (status === VisitStatus.PENDING) triggerClass += " bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200/50 dark:border-yellow-900/50";
+  else if (status === VisitStatus.APPROVED) triggerClass += " bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/50";
+  else if (status === VisitStatus.COMPLETED) triggerClass += " bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/50";
+  else if (status === VisitStatus.REJECTED) triggerClass += " bg-destructive/10 text-destructive border-destructive/30";
+  
+  return (
+    <Select value={status} onValueChange={(value: string) => onUpdate(request.id, value as VisitStatus)}>
+      <SelectTrigger className={triggerClass}><SelectValue /></SelectTrigger>
+      <SelectContent>
+        <SelectItem value={VisitStatus.PENDING}>{VisitStatus.PENDING}</SelectItem>
+        <SelectItem value={VisitStatus.APPROVED}>{VisitStatus.APPROVED}</SelectItem>
+        <SelectItem value={VisitStatus.COMPLETED}>{VisitStatus.COMPLETED}</SelectItem>
+        <SelectItem value={VisitStatus.REJECTED}>{VisitStatus.REJECTED}</SelectItem>
+      </SelectContent>
+    </Select>
+  );
 }
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -353,6 +382,14 @@ export default function VisitRequests() {
     setCreatedBefore("");
   };
 
+  const handleStatusUpdate = useCallback(
+    async (id: string, status: VisitStatus) => {
+      await api.put(`/admin/visit-requests/${id}/status`, null, { params: { status } });
+      // Update local state here if visitRequests is updatable
+    },
+    []
+  );
+
   const activeFilterCount = [
     filterStatus !== "ALL",
     createdAfter !== "",
@@ -396,7 +433,7 @@ export default function VisitRequests() {
         accessorKey: "status",
         header: t.status,
         cell: ({ row }) => (
-          <Badge variant={statusVariant(row.original.status)}>{row.original.status.toLowerCase()}</Badge>
+          <StatusSelect request={row.original} onUpdate={handleStatusUpdate} />
         ),
       },
       {
@@ -442,7 +479,7 @@ export default function VisitRequests() {
               </div>
               <DrawerFooter>
                 <DrawerClose asChild>
-                  <Button variant="outline" className="w-full">{t.details.close}</Button>
+                  <Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t.details.close}</Button>
                 </DrawerClose>
               </DrawerFooter>
             </DrawerContent>
@@ -450,7 +487,7 @@ export default function VisitRequests() {
         ),
       },
     ],
-    [t, dateLocale]
+    [t, dateLocale, handleStatusUpdate]
   );
 
   const visitRequestsWithSeller = useMemo(() => {
@@ -574,9 +611,9 @@ export default function VisitRequests() {
       </div>
 
       <div className="flex justify-center items-center gap-2 px-4 py-2 text-sm text-muted-foreground">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>{t.prev}</Button>
+        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>←</Button>
         <span>{t.page} {pagination.pageIndex + 1} {t.of} {Math.max(table.getPageCount(), 1)}</span>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>{t.next}</Button>
+        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>→</Button>
       </div>
     </div>
   );

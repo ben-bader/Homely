@@ -385,6 +385,7 @@ export default function Users() {
           <Switch
             checked={row.original.active}
             onCheckedChange={() => handleToggle(row.original.id, row.original.active)}
+            className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
           />
         ),
       },
@@ -412,7 +413,7 @@ export default function Users() {
                 <InfoRow label={t.details.activeStatus} value={row.original.active ? t.details.yes : t.details.no} />
               </div>
               <DrawerFooter className="mt-auto">
-                <DrawerClose asChild><Button variant="outline">{t.details.close}</Button></DrawerClose>
+                <DrawerClose asChild><Button variant="outline" className="bg-black hover:bg-gray-900 text-white border-gray-700">{t.details.close}</Button></DrawerClose>
               </DrawerFooter>
             </DrawerContent>
           </Drawer>
@@ -454,6 +455,11 @@ export default function Users() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  // Summary calculations
+  const totalMembers = users.length;
+  const totalActivated = users.filter(u => u.active).length;
+  const totalDeactivated = users.filter(u => !u.active).length;
+
   if (loading) return <div className="p-8">...</div>;
 
   return (
@@ -463,6 +469,28 @@ export default function Users() {
         <Button variant="outline" size="sm" onClick={() => setLang(lang === "en" ? "fr" : "en")}>
           {lang === "en" ? "🇫🇷 FR" : "🇺🇸 EN"}
         </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="rounded-lg border p-4 flex items-center gap-3 bg-muted/50">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.resultsPlural}</p>
+            <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
+          </div>
+        </div>
+        <div className="rounded-lg border p-4 flex items-center gap-3 bg-green-50 dark:bg-green-950/30">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.active}</p>
+            <p className="text-2xl font-bold text-green-600">{totalActivated}</p>
+          </div>
+        </div>
+        <div className="rounded-lg border p-4 flex items-center gap-3 bg-destructive/10">
+          <div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.inactive}</p>
+            <p className="text-2xl font-bold text-destructive">{totalDeactivated}</p>
+          </div>
+        </div>
       </div>
 
       {/* Search + Filter toggle */}
@@ -529,9 +557,9 @@ export default function Users() {
       </div>
 
       <div className="flex justify-center items-center gap-4 py-2 text-sm">
-        <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>{t.prev}</Button>
+        <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>←</Button>
         <span>{t.page} {pagination.pageIndex + 1} {t.of} {Math.max(table.getPageCount(), 1)}</span>
-        <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>{t.next}</Button>
+        <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>→</Button>
       </div>
     </div>
   );

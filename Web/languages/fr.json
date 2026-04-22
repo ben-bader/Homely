@@ -118,43 +118,43 @@
       "errorMessage": "Échec de la mise à jour de la limite"
     }
   },
-  "profile": {
-    "accountInfo": {
-      "title": "Informations du compte",
-      "description": "Mettez à jour votre nom et votre adresse email.",
-      "nameLabel": "Nom",
-      "emailLabel": "Email",
-      "saveButton": "Enregistrer les modifications",
-      "loadingToast": "Mise à jour du profil...",
-      "successToast": "Profil mis à jour avec succès !",
-      "errorToast": "Échec de la mise à jour du profil.",
-      "userNotFound": "Utilisateur introuvable"
-    },
-    "password": {
-      "title": "Changer le mot de passe",
-      "description": "Assurez-vous que votre mot de passe est fort et sécurisé.",
-      "currentLabel": "Mot de passe actuel",
-      "newLabel": "Nouveau mot de passe",
-      "confirmLabel": "Confirmer le nouveau mot de passe",
-      "updateButton": "Mettre à jour le mot de passe",
-      "mismatchError": "Les mots de passe ne correspondent pas",
-      "mismatchDescription": "Veuillez vous assurer que les deux mots de passe sont identiques.",
-      "loadingToast": "Mise à jour du mot de passe...",
-      "successToast": "Mot de passe mis à jour avec succès !",
-      "errorToast": "Échec de la mise à jour du mot de passe."
-    },
-    "danger": {
-      "title": "Zone dangereuse",
-      "description": "La suppression de votre compte effacera définitivement toutes vos données. Cette action est irréversible.",
-      "deleteButton": "Supprimer mon compte",
-      "confirmTitle": "Êtes-vous absolument sûr ?",
-      "confirmDescription": "Cette action est irréversible.",
-      "confirmLabel": "Supprimer",
-      "successToast": "Compte supprimé avec succès",
-      "errorToast": "Échec de la suppression du compte",
-      "userNotFound": "Utilisateur introuvable"
-    }
+"profile": {
+  "accountInfo": {
+    "title": "Informations du compte",
+    "description": "Mettez à jour votre nom et votre adresse email.",
+    "nameLabel": "Nom",
+    "emailLabel": "Email",
+    "saveButton": "Enregistrer les modifications",
+    "loadingToast": "Mise à jour du profil...",
+    "successToast": "Profil mis à jour avec succès !",
+    "errorToast": "Échec de la mise à jour du profil.",
+    "userNotFound": "Utilisateur introuvable"
   },
+  "password": {
+    "title": "Changer le mot de passe",
+    "description": "Assurez-vous que votre mot de passe est fort et sécurisé.",
+    "currentLabel": "Mot de passe actuel",
+    "newLabel": "Nouveau mot de passe",
+    "confirmLabel": "Confirmer le nouveau mot de passe",
+    "updateButton": "Mettre à jour le mot de passe",
+    "mismatchError": "Les mots de passe ne correspondent pas",
+    "mismatchDescription": "Veuillez vous assurer que les deux mots de passe sont identiques.",
+    "loadingToast": "Mise à jour du mot de passe...",
+    "successToast": "Mot de passe mis à jour avec succès !",
+    "errorToast": "Échec de la mise à jour du mot de passe."
+  },
+  "danger": {
+    "title": "Zone dangereuse",
+    "description": "La suppression de votre compte effacera définitivement toutes vos données. Cette action est irréversible.",
+    "deleteButton": "Supprimer mon compte",
+    "confirmTitle": "Êtes-vous absolument sûr ?",
+    "confirmDescription": "Cette action est irréversible.",
+    "confirmLabel": "Supprimer",
+    "successToast": "Compte supprimé avec succès",
+    "errorToast": "Échec de la suppression du compte",
+    "userNotFound": "Utilisateur introuvable"
+  }
+},
   "properties": {
     "loading": "Chargement des propriétés…",
     "title": "Propriétés",

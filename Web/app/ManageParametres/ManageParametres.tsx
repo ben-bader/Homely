@@ -85,7 +85,7 @@ const ManageParameters = () => {
               : <>
                 <div className="flex gap-4 mb-4">
                   <Input type="text" value={newReason} onChange={(e) => setNewReason(e.target.value)} placeholder={t('reasons.placeholder')} />
-                  <Button onClick={addReportReason} className="bg-emerald-500 text-white hover:bg-emerald-600">{t('reasons.addButton')}</Button>
+                  <Button onClick={addReportReason} className="bg-emerald-800 text-white hover:bg-emerald-600">{t('reasons.addButton')}</Button>
                 </div>
                 <div className="space-y-2">
                   {reasons.map((reason) => (
@@ -113,7 +113,7 @@ const ManageParameters = () => {
                     <Input placeholder={t('packages.durationPlaceholder')} type="number" value={newPackage.durationDays} onChange={(e) => setNewPackage({ ...newPackage, durationDays: e.target.value })} />
                     <Input placeholder={t('packages.pricePlaceholder')} type="number" step="0.01" value={newPackage.price} onChange={(e) => setNewPackage({ ...newPackage, price: e.target.value })} />
                   </div>
-                  <Button onClick={handleAddPackage} disabled={savingPackage} className="w-full bg-emerald-500 text-white hover:bg-emerald-600">
+                  <Button onClick={handleAddPackage} disabled={savingPackage} className="w-full bg-emerald-800 text-white hover:bg-emerald-600">
                     {savingPackage ? t('packages.adding') : t('packages.addButton')}
                   </Button>
                 </Card>

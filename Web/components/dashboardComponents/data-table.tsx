@@ -111,7 +111,7 @@ function TableCellViewer({ report, onStatusChange }: { report: Report; onStatusC
         </div>
         <DrawerFooter>
           <DrawerClose asChild>
-            <Button variant="outline">{t('close')}</Button>
+            <Button variant="outline" className="bg-black hover:bg-gray-900 text-white border-gray-700">{t('close')}</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

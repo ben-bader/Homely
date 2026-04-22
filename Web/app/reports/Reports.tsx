@@ -423,19 +423,27 @@ export default function Reports() {
       {
         accessorKey: "status",
         header: t.status,
-        cell: ({ row }) => (
-          <Select
-            value={row.original.status}
-            onValueChange={(v) => handleStatusUpdate(row.original.id, v as ReportStatus)}
-          >
-            <SelectTrigger className="h-7 w-[130px] text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="OPEN">{t.waiting}</SelectItem>
-              <SelectItem value="RESOLVED">{t.resolved}</SelectItem>
-              <SelectItem value="DISMISSED">{t.dismissed}</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
+        cell: ({ row }) => {
+          const status = row.original.status;
+          let triggerClass = "h-7 w-[130px] text-xs";
+          if (status === "OPEN") triggerClass += " bg-destructive/10 text-destructive border-destructive/30";
+          else if (status === "RESOLVED") triggerClass += " bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/50";
+          else if (status === "DISMISSED") triggerClass += " bg-muted/50 text-muted-foreground border-muted";
+          
+          return (
+            <Select
+              value={status}
+              onValueChange={(v) => handleStatusUpdate(row.original.id, v as ReportStatus)}
+            >
+              <SelectTrigger className={triggerClass}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="OPEN">{t.waiting}</SelectItem>
+                <SelectItem value="RESOLVED">{t.resolved}</SelectItem>
+                <SelectItem value="DISMISSED">{t.dismissed}</SelectItem>
+              </SelectContent>
+            </Select>
+          );
+        },
       },
       {
         accessorKey: "createdAt",
@@ -560,9 +568,9 @@ export default function Reports() {
       </div>
 
       <div className="flex justify-center items-center gap-4 py-2">
-        <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>{t.prev}</Button>
+        <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>←</Button>
         <span className="text-sm">{t.page} {pagination.pageIndex + 1} {t.of} {Math.max(table.getPageCount(), 1)}</span>
-        <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>{t.next}</Button>
+        <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>→</Button>
       </div>
     </div>
   );
@@ -571,21 +579,127 @@ export default function Reports() {
 /* ---------------- DRAWER ---------------- */
 
 function ReportDrawer({ report, t, lang }: { report: Report; t: any; lang: string }) {
+  const locale = lang === "fr" ? "fr-FR" : "en-US";
+  const isProperty = !!report.reportedPropertyId;
+
   return (
     <Drawer direction="right">
-      <DrawerTrigger asChild><Button variant="ghost" size="icon"><FaEye /></Button></DrawerTrigger>
-      <DrawerContent className="max-w-md ml-auto h-full p-6">
-        <DrawerHeader>
+      <DrawerTrigger asChild>
+        <Button variant="ghost" size="icon"><FaEye /></Button>
+      </DrawerTrigger>
+      <DrawerContent className="max-w-md ml-auto h-full p-6 overflow-y-auto">
+        <DrawerHeader className="px-0">
           <DrawerTitle>{t.details.title}</DrawerTitle>
           <DrawerDescription>{t.details.desc}</DrawerDescription>
         </DrawerHeader>
-        <div className="space-y-4 mt-4">
-          <p><strong>{t.status}:</strong> {report.status}</p>
-          <p><strong>{t.details.reporter}:</strong> {report.reporterName}</p>
-          <p><strong>{t.sortByDate}:</strong> {fmtFull(report.createdAt, lang === "fr" ? "fr-FR" : "en-US")}</p>
+
+        <div className="space-y-5 mt-2">
+
+          {/* Overview */}
+          <Section label={t.details.overview}>
+            <Field label="Reason" value={report.reason} />
+            <Field label={t.status}>
+              <StatusBadge status={report.status} t={t} />
+            </Field>
+            <Field label="Type" value={isProperty ? t.property : t.user} />
+          </Section>
+
+          {/* Reporter */}
+          <Section label={t.details.reporter}>
+            <Field label="Name" value={report.reporterName} />
+            <Field label="Email" value={report.reporterEmail} />
+          </Section>
+
+          {/* Target */}
+          <Section label={t.details.target}>
+            {isProperty ? (
+              <>
+                <Field label="Property" value={report.reportedPropertyTitle} />
+              </>
+            ) : (
+              <>
+                <Field label="Name" value={report.reportedUserName} />
+                <Field label="Email" value={report.reportedUserEmail} />
+              </>
+            )}
+          </Section>
+
+          {/* Reviewed By */}
+          <Section label={t.details.reviewedBy}>
+            {report.reviewedByAdminId ? (
+              <>
+                <Field label="Name" value={report.reviewedByAdminName} />
+                <Field label="Email" value={report.reviewedByAdminEmail} />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">{t.details.notReviewed}</p>
+            )}
+          </Section>
+
+          {/* Timestamps */}
+          <Section label={t.details.timestamps}>
+            <Field label="Created At" value={fmtFull(report.createdAt, locale)} />
+            <Field label="Updated At" value={fmtFull(report.updatedAt, locale)} />
+          </Section>
+
         </div>
-        <DrawerFooter><DrawerClose asChild><Button variant="outline">{t.details.close}</Button></DrawerClose></DrawerFooter>
+
+        <DrawerFooter className="px-0 mt-6">
+          <DrawerClose asChild>
+            <Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t.details.close}</Button>
+          </DrawerClose>
+        </DrawerFooter>
       </DrawerContent>
     </Drawer>
+  );
+}
+
+/* --- small helpers --- */
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border bg-muted/30 overflow-hidden">
+      <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground px-3 py-2 bg-muted/60 border-b">
+        {label}
+      </p>
+      <div className="px-3 py-2 space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  mono = false,
+  children,
+}: {
+  label: string;
+  value?: string | null;
+  mono?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex justify-between items-start gap-4 text-sm">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      {children ?? (
+        <span className={`text-right break-all ${mono ? "font-mono text-xs text-muted-foreground" : "font-medium"}`}>
+          {value ?? "—"}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ status, t }: { status: ReportStatus; t: any }) {
+  const map: Record<ReportStatus, { label: string; className: string }> = {
+    OPEN: { label: t.waiting, className: "bg-destructive/10 text-destructive border-destructive/30" },
+    RESOLVED: { label: t.resolved, className: "bg-green-50 text-green-700 border-green-200/50 dark:bg-green-950/30 dark:text-green-400" },
+    DISMISSED: { label: t.dismissed, className: "bg-muted/50 text-muted-foreground border-muted" },
+  };
+  const { label, className } = map[status];
+  return (
+    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${className}`}>
+      {label}
+    </span>
   );
 }

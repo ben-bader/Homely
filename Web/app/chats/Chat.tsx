@@ -116,7 +116,7 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
           <div ref={bottomRef} />
         </div>
         <DrawerFooter className="border-t">
-          <DrawerClose asChild><Button variant="outline" className="w-full">{t('close')}</Button></DrawerClose>
+          <DrawerClose asChild><Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t('close')}</Button></DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
@@ -168,6 +168,9 @@ export default function ChatPage() {
       <div className="flex gap-2">
         <Input placeholder={t('searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
         <Button variant="outline" onClick={() => setFilterOpen((v) => !v)} className="relative">
+          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          </svg>
           {t('filter')}
           {activeFilterCount > 0 && <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{activeFilterCount}</span>}
         </Button>
@@ -186,9 +189,9 @@ export default function ChatPage() {
         </Table>
       </div>
       <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>{t('previous')}</Button>
+        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>←</Button>
         <span>{t('page')} {pagination.pageIndex + 1} {t('of')} {Math.max(table.getPageCount(), 1)}</span>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>{t('next')}</Button>
+        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>→</Button>
       </div>
     </div>
   );
