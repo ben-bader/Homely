@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/features/auth/screens/reset_password_screen.dart';
 import 'package:mobile/features/notifications/services/notification_service.dart';
 import 'package:app_links/app_links.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/email_verification_screen.dart';
@@ -22,17 +21,15 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
 
   await NotificationService().init();
 
-  // Handle initial deep link
   final appLinks = AppLinks();
   String? initialLink;
   try {
     initialLink = (await appLinks.getInitialLink())?.toString();
   } catch (e) {
-    // Handle error
+    debugPrint('Deep link error: $e');
   }
 
   runApp(
@@ -67,10 +64,10 @@ class HomelyApp extends StatelessWidget {
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF0F172A),  // Midnight Navy
+        seedColor: const Color(0xFF0F172A),
         brightness: Brightness.light,
       ),
-      scaffoldBackgroundColor: const Color(0xFFFAFAFA),  // Off White
+      scaffoldBackgroundColor: const Color(0xFFFAFAFA),
     );
 
     return base.copyWith(
@@ -112,11 +109,8 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    // Listen for incoming deep links
     _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        _handleDeepLink(uri.toString());
-      }
+      if (uri != null) _handleDeepLink(uri.toString());
     });
 
     _checkAuthStatus();
@@ -127,13 +121,14 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
-    // Check for initial deep link
     if (widget.initialLink != null) {
       _handleDeepLink(widget.initialLink!);
       return;
     }
 
     final isLoggedIn = await _authService.isLoggedIn();
+
+    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,
@@ -142,6 +137,7 @@ class _SplashScreenState extends State<SplashScreen>
             isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
       ),
     );
+
     NotificationService().startPolling(_authService);
   }
 
@@ -170,7 +166,6 @@ class _SplashScreenState extends State<SplashScreen>
       }
     }
 
-    // If no valid deep link, proceed with normal auth check
     _checkAuthStatus();
   }
 
@@ -205,8 +200,6 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
             const SizedBox(height: 32),
-
-            /// Title using theme (IMPORTANT)
             Text(
               'Homely',
               style: tt.headlineLarge?.copyWith(
@@ -215,9 +208,7 @@ class _SplashScreenState extends State<SplashScreen>
                 letterSpacing: -1,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               'Your Real Estate Partner',
               style: tt.bodyMedium?.copyWith(
@@ -226,9 +217,7 @@ class _SplashScreenState extends State<SplashScreen>
                 letterSpacing: 0.5,
               ),
             ),
-
             const SizedBox(height: 48),
-
             SizedBox(
               width: 30,
               height: 30,

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:mobile/core/network/api_client.dart';
 import 'package:mobile/core/network/endpoints.dart';
 import 'package:mobile/features/auth/services/auth_service.dart';
@@ -10,23 +9,23 @@ import 'package:mobile/features/notifications/models/notifications.dart';
 class NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   Timer? _pollTimer;
 
   // ─────────────────────────────────────────────────────────────
   // init — call once at app start
   // ─────────────────────────────────────────────────────────────
-Future<void> init() async {
-  // Fix: InitializationSettings passed as named params, not positional
-  await _localNotifications.initialize(
-    settings: const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
-    ),
-    onDidReceiveNotificationResponse: _onNotificationTap,
-  );
-    // Create Android notification channel
+  Future<void> init() async {
+    // FIX: InitializationSettings is a positional argument, not named
+// Try this
+await _localNotifications.initialize(
+  settings: const InitializationSettings(
+    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    iOS: DarwinInitializationSettings(),
+  ),
+  onDidReceiveNotificationResponse: _onNotificationTap,
+);
+
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'homely_channel',
       'Homely Notifications',
@@ -35,45 +34,12 @@ Future<void> init() async {
     );
 
     await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
-    // Request iOS permissions
     await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
-
-    // Request Firebase messaging permissions
-    await _firebaseMessaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-
-    // Handle foreground Firebase messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-     
-      _handleRemoteMessage(message);
-    });
-
-    // Handle notification tap from background
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-
-      _handleMessageTap(message);
-    });
-
-    // Handle notification tap from terminated state
-    final initialMessage = await _firebaseMessaging.getInitialMessage();
-    if (initialMessage != null) {
-
-      _handleMessageTap(initialMessage);
-    }
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -81,51 +47,8 @@ Future<void> init() async {
   // ─────────────────────────────────────────────────────────────
   void _onNotificationTap(NotificationResponse response) {
     debugPrint(
-      '[NotificationService] 🔔 Local notification tapped: ${response.payload}',
+      '[NotificationService] Local notification tapped: ${response.payload}',
     );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Firebase message handlers
-  // ─────────────────────────────────────────────────────────────
-  void _handleRemoteMessage(RemoteMessage message) {
-    final notification = message.notification;
-    final data = message.data;
-
-    if (notification != null) {
-      _showLocalNotification(
-        NotificationModel(
-          id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-          type: data['type'] ?? 'NOTIFICATION',
-          payload: data['payload'] ?? notification.body ?? 'New notification',
-          read: false,
-        ),
-      );
-    }
-  }
-
-  void _handleMessageTap(RemoteMessage message) {
-    final type = message.data['type'] ?? '';
-
-    switch (type) {
-      case 'NEW_CHAT_MESSAGE':
-      case 'CONVERSATION_CREATED':
-        debugPrint(
-          '[NotificationService] 💬 Navigate to chat: ${message.data['conversationId']}',
-        );
-        break;
-      case 'VISIT_REQUEST_CREATED':
-      case 'VISIT_REQUEST_STATUS_CHANGED':
-        debugPrint('[NotificationService] 👁️ Navigate to visit requests');
-        break;
-      case 'PROPERTY_CREATED':
-        debugPrint(
-          '[NotificationService] 🏠 Navigate to property: ${message.data['propertyId']}',
-        );
-        break;
-      default:
-        debugPrint('[NotificationService] 📲 Navigate to notifications');
-    }
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -134,25 +57,21 @@ Future<void> init() async {
   Future<void> startPolling(AuthService authService) async {
     final userId = await authService.getCurrentUserId();
     if (userId == null) {
-      debugPrint('[NotificationService] ⚠️ Cannot start polling: userId is null');
+      debugPrint('[NotificationService] Cannot start polling: userId is null');
       return;
     }
 
-    debugPrint('[NotificationService] ✅ Starting polling for userId: $userId');
-
-    await _registerDeviceToken(userId);
+    debugPrint('[NotificationService] Starting polling for userId: $userId');
 
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
       try {
         final notifications = await fetchUnread(userId);
         debugPrint(
-          '[NotificationService] 📬 Fetched ${notifications.length} unread notifications',
+          '[NotificationService] Fetched ${notifications.length} unread notifications',
         );
-        // Removed duplicate local notification showing - FCM handles push notifications
-        // Only polling to keep notification count updated for UI badge
       } catch (e) {
-        debugPrint('[NotificationService] ❌ Polling error: $e');
+        debugPrint('[NotificationService] Polling error: $e');
       }
     });
   }
@@ -163,32 +82,10 @@ Future<void> init() async {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // FCM token registration
-  // ─────────────────────────────────────────────────────────────
-  Future<void> _registerDeviceToken(String userId) async {
-    try {
-      final token = await _firebaseMessaging.getToken();
-      if (token != null) {
-        debugPrint('[NotificationService] 🔐 FCM token: $token');
-        await ApiClient.post(
-          '/users/$userId/fcm-token',
-          body: {'token': token},
-          auth: true,
-        );
-      }
-    } catch (e) {
-      debugPrint('[NotificationService] ❌ Error registering FCM token: $e');
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────
   // Show local notification
-  // Fix: show() now uses correct positional + named args
   // ─────────────────────────────────────────────────────────────
-  Future<void> _showLocalNotification(NotificationModel n) async {
-    debugPrint(
-      '[NotificationService] 🔔 Showing: ${n.type} - ${n.payload}',
-    );
+  Future<void> showLocalNotification(NotificationModel n) async {
+    debugPrint('[NotificationService] Showing: ${n.type} - ${n.payload}');
 
     const androidDetails = AndroidNotificationDetails(
       'homely_channel',
@@ -200,7 +97,7 @@ Future<void> init() async {
     );
 
     await _localNotifications.show(
-      id: n.id.hashCode,
+      id: n.id.hashCode & 0x7FFFFFFF,
       title: n.getTitle(),
       body: n.getDetailedMessage(),
       notificationDetails: const NotificationDetails(android: androidDetails),
@@ -233,7 +130,7 @@ Future<void> init() async {
 
       return [];
     } catch (e) {
-      debugPrint('[NotificationService] 🚫 Error fetching notifications: $e');
+      debugPrint('[NotificationService] Error fetching notifications: $e');
       return [];
     }
   }
@@ -248,7 +145,7 @@ Future<void> init() async {
         auth: true,
       );
     } catch (e) {
-      debugPrint('[NotificationService] ❌ Error marking as read: $e');
+      debugPrint('[NotificationService] Error marking as read: $e');
     }
   }
 
@@ -257,17 +154,17 @@ Future<void> init() async {
   // ─────────────────────────────────────────────────────────────
   String titleFor(String type) {
     return switch (type) {
-      'NEW_CHAT_MESSAGE'              => '💬 New Message',
-      'CONVERSATION_CREATED'          => '💬 New Conversation',
-      'VISIT_REQUEST_CREATED'         => '👁️ New Visit Request',
-      'VISIT_REQUEST_STATUS_CHANGED'  => '👁️ Visit Request Updated',
-      'PROPERTY_CREATED'              => '🏠 New Property',
-      'BOOST_PURCHASED'               => '⚡ Boost Purchased',
-      'BOOST_STATUS_CHANGED'          => '⚡ Boost Updated',
-      'FEEDBACK_RECEIVED'             => '⭐ New Feedback',
-      'MESSAGE'                       => '💬 New Message',
-      'ALERT'                         => '🚨 Alert',
-      _                               => '🔔 Notification',
+      'NEW_CHAT_MESSAGE'             => 'New Message',
+      'CONVERSATION_CREATED'         => 'New Conversation',
+      'VISIT_REQUEST_CREATED'        => 'New Visit Request',
+      'VISIT_REQUEST_STATUS_CHANGED' => 'Visit Request Updated',
+      'PROPERTY_CREATED'             => 'New Property',
+      'BOOST_PURCHASED'              => 'Boost Purchased',
+      'BOOST_STATUS_CHANGED'         => 'Boost Updated',
+      'FEEDBACK_RECEIVED'            => 'New Feedback',
+      'MESSAGE'                      => 'New Message',
+      'ALERT'                        => 'Alert',
+      _                              => 'Notification',
     };
   }
 }

@@ -5,14 +5,18 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homely.boost.repository.BoostPurchaseRepository;
+import com.homely.common.dto.PageResponse;
 import com.homely.common.enums.ListingType;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
+import com.homely.common.util.PaginationUtil;
 import com.homely.media.repository.PropertyMediaRepository;
 import com.homely.media.service.MediaService;
 import com.homely.moderation.entity.LogActivity;
@@ -643,5 +647,85 @@ public long count(){
             
             return dto;
         }).toList();
+    }
+
+    // ============== PAGINATED METHODS ==============
+
+    /**
+     * Get all properties paginated with boost sorting
+     */
+    public PageResponse<PropertyDto> getAllPaginated(Integer pageNumber, Integer pageSize) {
+        pageNumber = PaginationUtil.validatePageNumber(pageNumber);
+        pageSize = PaginationUtil.validatePageSize(pageSize);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageNumber, pageSize);
+        
+        Page<Property> page = propertyRepository.findAllOrderByBoostThenCreatedAt(Instant.now(), pageable);
+        return PaginationUtil.toPageResponse(page, this::propertyToDto);
+    }
+
+    /**
+     * Filter properties paginated
+     */
+    public PageResponse<PropertyDto> filterPaginated(
+            ListingType listingType,
+            PropertyType propertyType,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            String city,
+            Instant fromDate,
+            Instant toDate,
+            Integer pageNumber,
+            Integer pageSize) {
+        
+        pageNumber = PaginationUtil.validatePageNumber(pageNumber);
+        pageSize = PaginationUtil.validatePageSize(pageSize);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageNumber, pageSize);
+        
+        Page<Property> page = propertyRepository.filterPaginated(
+                listingType, propertyType, city, minPrice, maxPrice, fromDate, toDate, pageable);
+        
+        return PaginationUtil.toPageResponse(page, this::propertyToDto);
+    }
+
+    /**
+     * Search properties paginated
+     */
+    public PageResponse<PropertyDto> searchPaginated(String keyword, Integer pageNumber, Integer pageSize) {
+        pageNumber = PaginationUtil.validatePageNumber(pageNumber);
+        pageSize = PaginationUtil.validatePageSize(pageSize);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageNumber, pageSize);
+        
+        Page<Property> page = propertyRepository.globalSearchPaginated(keyword, pageable);
+        return PaginationUtil.toPageResponse(page, this::propertyToDto);
+    }
+
+    /**
+     * Get seller properties paginated
+     */
+    public PageResponse<PropertyDto> getBySellerEmailPaginated(String email, Integer pageNumber, Integer pageSize) {
+        pageNumber = PaginationUtil.validatePageNumber(pageNumber);
+        pageSize = PaginationUtil.validatePageSize(pageSize);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(pageNumber, pageSize);
+        
+        Page<Property> page = propertyRepository.findBySellerEmail(email, pageable);
+        return PaginationUtil.toPageResponse(page, this::propertyToDto);
+    }
+
+    /**
+     * Helper method to convert Property entity to PropertyDto with boost and media info
+     */
+    private PropertyDto propertyToDto(Property property) {
+        PropertyDto dto = propertyMapper.toDto(property);
+        
+        // Populate images from PropertyMedia
+        List<String> imageUrls = propertyMediaRepository.findByPropertyId(property.getId())
+                .stream()
+                .sorted((a, b) -> Integer.compare(a.getDisplayOrder(), b.getDisplayOrder()))
+                .map(media -> media.getUrl())
+                .toList();
+        dto.setImages(imageUrls);
+        
+        // Enrich with boost info
+        return enrichWithBoostInfo(dto);
     }
 }

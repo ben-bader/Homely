@@ -3,6 +3,8 @@ package com.homely.notification.repository;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,4 +28,15 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     @Query("SELECT n FROM Notification n WHERE n.user = :user AND n.type = :type AND n.sent = true ORDER BY n.createdAt DESC")
     java.util.Optional<Notification> findFirstByUserAndTypeAndSentTrue(@Param("user") com.homely.user.entity.User user, @Param("type") String type);
+
+    // ============== PAGINATED VERSIONS ==============
+
+    @Query("SELECT n FROM Notification n WHERE n.user.email = :email ORDER BY n.createdAt DESC")
+    Page<Notification> findByUserEmailPaginated(@Param("email") String email, Pageable pageable);
+
+    @Query("SELECT n FROM Notification n WHERE n.user.email = :email AND n.read = false ORDER BY n.createdAt DESC")
+    Page<Notification> findByUserEmailAndReadFalsePaginated(@Param("email") String email, Pageable pageable);
+
+    @Query("SELECT n FROM Notification n WHERE n.user.id = :userId ORDER BY n.createdAt DESC")
+    Page<Notification> findByUserIdPaginated(@Param("userId") UUID userId, Pageable pageable);
 }

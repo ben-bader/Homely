@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.homely.common.dto.PageResponse;
 import com.homely.common.enums.ListingType;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.PropertyType;
@@ -47,7 +48,15 @@ public class PropertyController {
                 propertyService.create(request, principal.getName()));
     }
 
-    // ✅ Homepage (scroll all properties)
+    // ✅ Homepage (scroll all properties) - PAGINATED
+    @GetMapping("/paginated")
+    public ResponseEntity<PageResponse<PropertyDto>> getAllPaginated(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "30") Integer pageSize) {
+        return ResponseEntity.ok(propertyService.getAllPaginated(page, pageSize));
+    }
+
+    // ✅ Homepage (scroll all properties) - OLD ENDPOINT (kept for backward compatibility)
     @GetMapping
     public List<PropertyDto> getAll() {
         return propertyService.getAll();
@@ -59,7 +68,24 @@ public class PropertyController {
         return propertyService.get(id);
     }
 
-    // ✅ FILTER
+    // ✅ FILTER - PAGINATED
+    @GetMapping("/filter/paginated")
+    public ResponseEntity<PageResponse<PropertyDto>> filterPaginated(
+            @RequestParam(required = false) ListingType listingType,
+            @RequestParam(required = false) PropertyType propertyType,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Instant fromDate,
+            @RequestParam(required = false) Instant toDate,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "30") Integer pageSize) {
+        
+        return ResponseEntity.ok(propertyService.filterPaginated(
+                listingType, propertyType, minPrice, maxPrice, city, fromDate, toDate, page, pageSize));
+    }
+
+    // ✅ FILTER - OLD ENDPOINT
     @GetMapping("/filter")
     public List<PropertyDto> filter(
             @RequestParam(required = false) ListingType listingType,
@@ -79,13 +105,32 @@ public class PropertyController {
                 toDate);
     }
 
-    // ✅ GLOBAL SEARCH
+    // ✅ GLOBAL SEARCH - PAGINATED
+    @GetMapping("/search/paginated")
+    public ResponseEntity<PageResponse<PropertyDto>> searchPaginated(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "30") Integer pageSize) {
+        return ResponseEntity.ok(propertyService.searchPaginated(keyword, page, pageSize));
+    }
+
+    // ✅ GLOBAL SEARCH - OLD ENDPOINT
     @GetMapping("/search")
     public List<PropertyDto> search(@RequestParam String keyword) {
         return propertyService.search(keyword);
     }
 
-    // ✅ Seller → My Listings
+    // ✅ Seller → My Listings - PAGINATED
+    @PreAuthorize("hasRole('SELLER')")
+    @GetMapping("/my-listed/paginated")
+    public ResponseEntity<PageResponse<PropertyDto>> getMyListedPropertiesPaginated(
+            Principal principal,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "30") Integer pageSize) {
+        return ResponseEntity.ok(propertyService.getBySellerEmailPaginated(principal.getName(), page, pageSize));
+    }
+
+    // ✅ Seller → My Listings - OLD ENDPOINT
     @PreAuthorize("hasRole('SELLER')")
     @GetMapping("/my-listed")
     public List<PropertyDto> getMyListedProperties(Principal principal) {

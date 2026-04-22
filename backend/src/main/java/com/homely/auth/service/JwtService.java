@@ -26,9 +26,7 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    // =========================
     // TOKEN GENERATION
-    // =========================
     public String generateToken(User user) {
         Key key = getSigningKey();
         return Jwts.builder()
@@ -42,9 +40,7 @@ public class JwtService {
                 .compact();
     }
 
-    // =========================
     // TOKEN VALIDATION
-    // =========================
     public boolean isTokenValid(String token, User user) {
         try {
             String username = extractUsername(token);
@@ -54,9 +50,7 @@ public class JwtService {
         }
     }
 
-    // =========================
     // CLAIM EXTRACTION
-    // =========================
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -88,9 +82,8 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    // =========================
     // SIGNING KEY
-    // =========================
+
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);

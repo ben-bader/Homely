@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { api } from "@/lib/api";
+import { api, PaginatedResponse } from "@/lib/api";
 import { Property, PropertyStatus } from "@/types/dashboard-types";
 
 export function useProperties() {
@@ -9,20 +9,40 @@ export function useProperties() {
 
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  // Fetch all properties
-  const fetchProperties = useCallback(async () => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(30);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Fetch properties paginated
+  const fetchProperties = useCallback(async (page: number = 0) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<Property[]>("/admin/properties");
-      setProperties(res.data ?? []);
+      const res = await api.get<PaginatedResponse<Property>>("/admin/properties/paginated", {
+        params: { page, pageSize },
+      });
+      
+      // Replace or append based on page
+      if (page === 0) {
+        setProperties(res.data.content ?? []);
+      } else {
+        setProperties((prev) => [...prev, ...(res.data.content ?? [])]);
+      }
+      
+      setCurrentPage(res.data.pageNumber);
+      setTotalPages(res.data.totalPages);
+      setTotalElements(res.data.totalElements);
+      setHasMore(res.data.hasNext);
     } catch (err) {
       console.error("Failed to fetch properties", err);
       setError("Failed to load properties");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pageSize]);
 
   // Fetch single property detail from already loaded list (no extra API call)
   const fetchPropertyDetail = useCallback(
@@ -32,6 +52,13 @@ export function useProperties() {
     },
     [properties]
   );
+
+  // Load more properties (infinite scroll)
+  const loadMore = useCallback(() => {
+    if (hasMore && !loading) {
+      fetchProperties(currentPage + 1);
+    }
+  }, [hasMore, loading, currentPage, fetchProperties]);
 
   // Update property status (matches AdminController: PUT /admin/properties/{id}/status?status=...)
   const updatePropertyStatus = useCallback(
@@ -56,8 +83,9 @@ export function useProperties() {
     [selectedProperty]
   );
 
+  // Initial fetch
   useEffect(() => {
-    fetchProperties();
+    fetchProperties(0);
   }, [fetchProperties]);
 
   return {
@@ -66,11 +94,17 @@ export function useProperties() {
     error,
     fetchProperties,
     selectedProperty,
-    // detail loading/error no longer needed since we derive from list
     loadingDetail: false,
     errorDetail: null,
     fetchPropertyDetail,
     setSelectedProperty,
     updatePropertyStatus,
+    // Pagination
+    currentPage,
+    pageSize,
+    totalPages,
+    totalElements,
+    hasMore,
+    loadMore,
   };
 }

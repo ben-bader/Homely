@@ -30,7 +30,7 @@ class _NotificationBellState extends State<NotificationBell> {
   Future<void> _refresh() async {
     if (_userId == null) return;
     final data = await _service.fetchUnread(_userId!);
-    if (mounted) setState(() => _unreadCount = data.length);
+    if (mounted) setState(() => _unreadCount = data.where((n) => !n.read).length);
   }
 
   @override
@@ -49,7 +49,7 @@ class _NotificationBellState extends State<NotificationBell> {
             builder: (_) => NotificationsScreen(userId: _userId!),
           ),
         );
-        _refresh(); // refresh count when returning from screen
+        _refresh();
       },
     );
   }

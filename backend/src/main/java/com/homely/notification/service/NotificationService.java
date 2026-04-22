@@ -4,9 +4,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.homely.common.dto.PageResponse;
+import com.homely.common.util.PaginationUtil;
 import com.homely.notification.dto.NotificationCreateRequest;
 import com.homely.notification.dto.NotificationDto;
 import com.homely.notification.entity.Notification;
@@ -14,7 +18,6 @@ import com.homely.notification.mapper.NotificationMapper;
 import com.homely.notification.repository.NotificationRepository;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
-import com.homely.notification.service.StompNotificationService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -157,6 +160,48 @@ public class NotificationService {
         } catch (Exception e) {
             log.error("Error getting unread notifications for email {}: {}", email, e.getMessage(), e);
             return List.of();
+        }
+    }
+
+    // ============== PAGINATED METHODS ==============
+
+    /**
+     * Get all notifications paginated by email
+     */
+    public PageResponse<NotificationDto> getAllByEmailPaginated(String email, Integer pageNumber, Integer pageSize) {
+        try {
+            pageNumber = PaginationUtil.validatePageNumber(pageNumber);
+            pageSize = PaginationUtil.validatePageSize(pageSize);
+            Pageable pageable = org.springframework.data.domain.PageRequest.of(pageNumber, pageSize);
+
+            Page<Notification> page = notificationRepository.findByUserEmailPaginated(email, pageable);
+            log.debug("Retrieved {} notifications for user: {} (page {}, size {})", 
+                page.getContent().size(), email, pageNumber, pageSize);
+            
+            return PaginationUtil.toPageResponse(page, notificationMapper::toDto);
+        } catch (Exception e) {
+            log.error("Error getting paginated notifications for email {}: {}", email, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving notifications", e);
+        }
+    }
+
+    /**
+     * Get unread notifications paginated by email
+     */
+    public PageResponse<NotificationDto> getUnreadByEmailPaginated(String email, Integer pageNumber, Integer pageSize) {
+        try {
+            pageNumber = PaginationUtil.validatePageNumber(pageNumber);
+            pageSize = PaginationUtil.validatePageSize(pageSize);
+            Pageable pageable = org.springframework.data.domain.PageRequest.of(pageNumber, pageSize);
+
+            Page<Notification> page = notificationRepository.findByUserEmailAndReadFalsePaginated(email, pageable);
+            log.debug("Retrieved {} unread notifications for user: {} (page {}, size {})", 
+                page.getContent().size(), email, pageNumber, pageSize);
+            
+            return PaginationUtil.toPageResponse(page, notificationMapper::toDto);
+        } catch (Exception e) {
+            log.error("Error getting paginated unread notifications for email {}: {}", email, e.getMessage(), e);
+            throw new RuntimeException("Error retrieving unread notifications", e);
         }
     }
 }
