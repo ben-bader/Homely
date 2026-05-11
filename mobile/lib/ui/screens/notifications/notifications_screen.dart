@@ -17,7 +17,8 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key, required this.userId});
 
   @override
-  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
@@ -32,7 +33,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     super.dispose();
   }
 
-  List<NotificationEntity> _filterNotifications(List<NotificationEntity> notifications) {
+  List<NotificationEntity> _filterNotifications(
+    List<NotificationEntity> notifications,
+  ) {
     final query = _query.trim().toLowerCase();
     if (query.isEmpty) return notifications;
 
@@ -57,7 +60,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   Future<void> _markAllRead(List<NotificationEntity> notifications) async {
     for (final notification in notifications.where((n) => !n.read)) {
-      await ref.read(notificationRepositoryProvider).markAsRead(notification.id);
+      await ref
+          .read(notificationRepositoryProvider)
+          .markAsRead(notification.id);
     }
     ref.invalidate(notificationsProvider(widget.userId));
   }
@@ -78,7 +83,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 builder: (_) => ChatScreen(
                   conversationId: conversationId,
                   currentUserId: widget.userId,
-                  chatTitle: data['senderName'] as String? ??
+                  chatTitle:
+                      data['senderName'] as String? ??
                       data['clientName'] as String? ??
                       'Chat',
                   chatSubtitle: data['propertyTitle'] as String? ?? '',
@@ -154,20 +160,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               padding: const EdgeInsets.all(24),
               child: Text(
                 e.toString(),
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  color: AppColors.error,
-                ),
+                style: GoogleFonts.outfit(fontSize: 14, color: AppColors.error),
                 textAlign: TextAlign.center,
               ),
             ),
           ),
           data: (notifications) {
             final allNotifications = notifications;
-            final unreadNotifications =
-                allNotifications.where((n) => !n.read).toList();
-            final filteredNotifications =
-                _filterNotifications(allNotifications);
+            final unreadNotifications = allNotifications
+                .where((n) => !n.read)
+                .toList();
+            final filteredNotifications = _filterNotifications(
+              allNotifications,
+            );
 
             return Column(
               children: [
@@ -198,8 +203,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       ),
                       if (!_searchOpen) ...[
                         IconButton(
-                          icon: const Icon(Icons.search,
-                              color: AppColors.accent),
+                          icon: const Icon(
+                            Icons.search,
+                            color: AppColors.accent,
+                          ),
                           onPressed: () => setState(() => _searchOpen = true),
                         ),
                         if (unreadNotifications.isNotEmpty)
@@ -246,7 +253,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       : RefreshIndicator(
                           onRefresh: () async {
                             ref.invalidate(
-                                notificationsProvider(widget.userId));
+                              notificationsProvider(widget.userId),
+                            );
                           },
                           backgroundColor: AppColors.cardBackground,
                           color: AppColors.primary,
@@ -274,6 +282,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 }
+
 class _NotificationTile extends StatelessWidget {
   final NotificationEntity notification;
   final VoidCallback onTap;

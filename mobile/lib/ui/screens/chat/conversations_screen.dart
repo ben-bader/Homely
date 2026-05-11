@@ -26,7 +26,10 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     super.dispose();
   }
 
-  List<ConversationEntity> _filter(List<ConversationEntity> convs, String currentUserId) {
+  List<ConversationEntity> _filter(
+    List<ConversationEntity> convs,
+    String currentUserId,
+  ) {
     // Sort newest first
     final sorted = [...convs]
       ..sort((a, b) {

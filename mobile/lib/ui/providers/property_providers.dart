@@ -4,14 +4,12 @@ import '../../data/repositories/property_repository_impl.dart';
 import '../../domain/entities/property/property_entity.dart';
 import '../../domain/repositories/i_property_repository.dart';
 
-final propertyRemoteDatasourceProvider =
-    Provider<PropertyRemoteDatasource>(
+final propertyRemoteDatasourceProvider = Provider<PropertyRemoteDatasource>(
   (ref) => PropertyRemoteDatasourceImpl(),
 );
 
 final propertyRepositoryProvider = Provider<IPropertyRepository>((ref) {
-  return PropertyRepositoryImpl(
-      ref.read(propertyRemoteDatasourceProvider));
+  return PropertyRepositoryImpl(ref.read(propertyRemoteDatasourceProvider));
 });
 
 class PropertyFilter {
@@ -75,38 +73,32 @@ class PropertyFilter {
     bool clearMaxPrice = false,
     bool clearFromDate = false,
     bool clearToDate = false,
-  }) =>
-      PropertyFilter(
-        search: clearSearch ? null : (search ?? this.search),
-        listingType: clearListingType
-            ? null
-            : (listingType ?? this.listingType),
-        propertyType: clearPropertyType
-            ? null
-            : (propertyType ?? this.propertyType),
-        city: clearCity ? null : (city ?? this.city),
-        minPrice:
-            clearMinPrice ? null : (minPrice ?? this.minPrice),
-        maxPrice:
-            clearMaxPrice ? null : (maxPrice ?? this.maxPrice),
-        fromDate:
-            clearFromDate ? null : (fromDate ?? this.fromDate),
-        toDate: clearToDate ? null : (toDate ?? this.toDate),
-      );
+  }) => PropertyFilter(
+    search: clearSearch ? null : (search ?? this.search),
+    listingType: clearListingType ? null : (listingType ?? this.listingType),
+    propertyType: clearPropertyType
+        ? null
+        : (propertyType ?? this.propertyType),
+    city: clearCity ? null : (city ?? this.city),
+    minPrice: clearMinPrice ? null : (minPrice ?? this.minPrice),
+    maxPrice: clearMaxPrice ? null : (maxPrice ?? this.maxPrice),
+    fromDate: clearFromDate ? null : (fromDate ?? this.fromDate),
+    toDate: clearToDate ? null : (toDate ?? this.toDate),
+  );
 
   PropertyFilter clearFilters() => PropertyFilter(search: search);
 }
 
-final propertyFilterProvider =
-    StateProvider<PropertyFilter>((ref) => const PropertyFilter());
+final propertyFilterProvider = StateProvider<PropertyFilter>(
+  (ref) => const PropertyFilter(),
+);
 
 final propertiesProvider =
     AsyncNotifierProvider<PropertiesNotifier, List<PropertyEntity>>(
-  PropertiesNotifier.new,
-);
+      PropertiesNotifier.new,
+    );
 
-class PropertiesNotifier
-    extends AsyncNotifier<List<PropertyEntity>> {
+class PropertiesNotifier extends AsyncNotifier<List<PropertyEntity>> {
   @override
   Future<List<PropertyEntity>> build() async {
     final filter = ref.watch(propertyFilterProvider);
@@ -127,11 +119,9 @@ class PropertiesNotifier
       if (filter.city != null && filter.city!.isNotEmpty)
         params['city'] = filter.city!;
       if (filter.fromDate != null)
-        params['fromDate'] =
-            filter.fromDate!.toUtc().toIso8601String();
+        params['fromDate'] = filter.fromDate!.toUtc().toIso8601String();
       if (filter.toDate != null)
-        params['toDate'] =
-            filter.toDate!.toUtc().toIso8601String();
+        params['toDate'] = filter.toDate!.toUtc().toIso8601String();
       return repo.filter(params);
     }
 
@@ -141,10 +131,10 @@ class PropertiesNotifier
   Future<void> refresh() async => ref.invalidateSelf();
 }
 
-final propertyDetailProvider = AsyncNotifierProviderFamily<
-    PropertyDetailNotifier, PropertyEntity, String>(
-  PropertyDetailNotifier.new,
-);
+final propertyDetailProvider =
+    AsyncNotifierProviderFamily<PropertyDetailNotifier, PropertyEntity, String>(
+      PropertyDetailNotifier.new,
+    );
 
 class PropertyDetailNotifier
     extends FamilyAsyncNotifier<PropertyEntity, String> {
@@ -155,36 +145,36 @@ class PropertyDetailNotifier
 
 final sellerListingsProvider =
     AsyncNotifierProvider<SellerListingsNotifier, List<PropertyEntity>>(
-  SellerListingsNotifier.new,
-);
+      SellerListingsNotifier.new,
+    );
 
-class SellerListingsNotifier
-    extends AsyncNotifier<List<PropertyEntity>> {
+class SellerListingsNotifier extends AsyncNotifier<List<PropertyEntity>> {
   @override
   Future<List<PropertyEntity>> build() =>
       ref.read(propertyRepositoryProvider).getMyListedProperties();
 
   void onCreated(PropertyEntity property) {
-    state.whenData(
-        (list) => state = AsyncData([property, ...list]));
+    state.whenData((list) => state = AsyncData([property, ...list]));
   }
 
   void onUpdated(PropertyEntity updated) {
-    state.whenData((list) => state = AsyncData([
-          for (final p in list)
-            if (p.id == updated.id) updated else p,
-        ]));
+    state.whenData(
+      (list) => state = AsyncData([
+        for (final p in list)
+          if (p.id == updated.id) updated else p,
+      ]),
+    );
   }
 
   Future<void> onDeleted(String id) async {
     // FIX: Capture messenger before async gap in UI layer
     await ref.read(propertyRepositoryProvider).delete(id);
-    state.whenData((list) =>
-        state = AsyncData(list.where((p) => p.id != id).toList()));
+    state.whenData(
+      (list) => state = AsyncData(list.where((p) => p.id != id).toList()),
+    );
   }
 
-  Future<void> changeStatus(
-      String id, PropertyStatus status) async {
+  Future<void> changeStatus(String id, PropertyStatus status) async {
     final updated = await ref
         .read(propertyRepositoryProvider)
         .updateStatus(id, status);

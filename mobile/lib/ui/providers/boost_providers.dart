@@ -15,11 +15,10 @@ final boostRepositoryProvider = Provider<IBoostRepository>((ref) {
 
 final myBoostsProvider =
     AsyncNotifierProvider<MyBoostsNotifier, List<BoostPurchaseEntity>>(
-  MyBoostsNotifier.new,
-);
+      MyBoostsNotifier.new,
+    );
 
-class MyBoostsNotifier
-    extends AsyncNotifier<List<BoostPurchaseEntity>> {
+class MyBoostsNotifier extends AsyncNotifier<List<BoostPurchaseEntity>> {
   @override
   Future<List<BoostPurchaseEntity>> build() =>
       ref.read(boostRepositoryProvider).getMyBoosts();
@@ -32,15 +31,15 @@ class MyBoostsNotifier
   }) async {
     final previous = state;
     try {
-      final created =
-          await ref.read(boostRepositoryProvider).create(
-                propertyId: propertyId,
-                amount: amount,
-                currency: currency,
-                durationDays: durationDays,
-              );
-      state.whenData(
-          (list) => state = AsyncData([created, ...list]));
+      final created = await ref
+          .read(boostRepositoryProvider)
+          .create(
+            propertyId: propertyId,
+            amount: amount,
+            currency: currency,
+            durationDays: durationDays,
+          );
+      state.whenData((list) => state = AsyncData([created, ...list]));
     } catch (e, st) {
       state = previous;
       Error.throwWithStackTrace(e, st);
@@ -48,7 +47,8 @@ class MyBoostsNotifier
   }
 }
 
-final boostPackagesProvider =
-    FutureProvider<List<BoostPackageEntity>>((ref) async {
+final boostPackagesProvider = FutureProvider<List<BoostPackageEntity>>((
+  ref,
+) async {
   return ref.read(boostRepositoryProvider).getBoostPackages();
 });

@@ -10,14 +10,15 @@ final mediaRemoteDatasourceProvider = Provider<MediaRemoteDatasource>(
 );
 
 final mediaRepositoryProvider = Provider<IMediaRepository>((ref) {
-  return MediaRepositoryImpl(
-      ref.read(mediaRemoteDatasourceProvider));
+  return MediaRepositoryImpl(ref.read(mediaRemoteDatasourceProvider));
 });
 
-final propertyMediaProvider = AsyncNotifierProviderFamily<
-    PropertyMediaNotifier, List<PropertyMediaEntity>, String>(
-  PropertyMediaNotifier.new,
-);
+final propertyMediaProvider =
+    AsyncNotifierProviderFamily<
+      PropertyMediaNotifier,
+      List<PropertyMediaEntity>,
+      String
+    >(PropertyMediaNotifier.new);
 
 class PropertyMediaNotifier
     extends FamilyAsyncNotifier<List<PropertyMediaEntity>, String> {
@@ -37,10 +38,7 @@ class PropertyMediaNotifier
   Future<void> removeMedia(String mediaId) async {
     final previous = state;
     state = AsyncData(
-      state.valueOrNull
-              ?.where((m) => m.id != mediaId)
-              .toList() ??
-          [],
+      state.valueOrNull?.where((m) => m.id != mediaId).toList() ?? [],
     );
     try {
       await ref.read(mediaRepositoryProvider).delete(mediaId);
@@ -59,13 +57,14 @@ class PropertyMediaNotifier
     try {
       final repo = ref.read(mediaRepositoryProvider);
       final url = await repo.uploadVideo(
-          file: file, propertyId: arg, displayOrder: displayOrder);
-      state =
-          await AsyncValue.guard(() => repo.getByPropertyId(arg));
+        file: file,
+        propertyId: arg,
+        displayOrder: displayOrder,
+      );
+      state = await AsyncValue.guard(() => repo.getByPropertyId(arg));
       return url;
     } catch (e) {
-      ref.read(videoUploadErrorProvider.notifier).state =
-          e.toString();
+      ref.read(videoUploadErrorProvider.notifier).state = e.toString();
       rethrow;
     } finally {
       ref.read(videoUploadLoadingProvider.notifier).state = false;
@@ -81,13 +80,14 @@ class PropertyMediaNotifier
     try {
       final repo = ref.read(mediaRepositoryProvider);
       final url = await repo.uploadImage(
-          file: file, propertyId: arg, displayOrder: displayOrder);
-      state =
-          await AsyncValue.guard(() => repo.getByPropertyId(arg));
+        file: file,
+        propertyId: arg,
+        displayOrder: displayOrder,
+      );
+      state = await AsyncValue.guard(() => repo.getByPropertyId(arg));
       return url;
     } catch (e) {
-      ref.read(videoUploadErrorProvider.notifier).state =
-          e.toString();
+      ref.read(videoUploadErrorProvider.notifier).state = e.toString();
       rethrow;
     } finally {
       ref.read(videoUploadLoadingProvider.notifier).state = false;
@@ -96,36 +96,31 @@ class PropertyMediaNotifier
 }
 
 final videoUploadLoadingProvider = StateProvider<bool>((ref) => false);
-final videoUploadErrorProvider =
-    StateProvider<String?>((ref) => null);
+final videoUploadErrorProvider = StateProvider<String?>((ref) => null);
 
 final propertyImagesProvider =
-    Provider.family<List<PropertyMediaEntity>, String>(
-        (ref, propertyId) {
-  return ref
-          .watch(propertyMediaProvider(propertyId))
-          .valueOrNull
-          ?.where((m) => m.isImage)
-          .toList() ??
-      [];
-});
+    Provider.family<List<PropertyMediaEntity>, String>((ref, propertyId) {
+      return ref
+              .watch(propertyMediaProvider(propertyId))
+              .valueOrNull
+              ?.where((m) => m.isImage)
+              .toList() ??
+          [];
+    });
 
 final propertyVideosProvider =
-    Provider.family<List<PropertyMediaEntity>, String>(
-        (ref, propertyId) {
-  return ref
-          .watch(propertyMediaProvider(propertyId))
-          .valueOrNull
-          ?.where((m) => m.isVideo)
-          .toList() ??
-      [];
-});
+    Provider.family<List<PropertyMediaEntity>, String>((ref, propertyId) {
+      return ref
+              .watch(propertyMediaProvider(propertyId))
+              .valueOrNull
+              ?.where((m) => m.isVideo)
+              .toList() ??
+          [];
+    });
 
-final propertyMediaCountProvider =
-    Provider.family<int, String>((ref, propertyId) {
-  return ref
-          .watch(propertyMediaProvider(propertyId))
-          .valueOrNull
-          ?.length ??
-      0;
+final propertyMediaCountProvider = Provider.family<int, String>((
+  ref,
+  propertyId,
+) {
+  return ref.watch(propertyMediaProvider(propertyId)).valueOrNull?.length ?? 0;
 });

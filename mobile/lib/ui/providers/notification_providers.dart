@@ -6,19 +6,21 @@ import '../../domain/repositories/i_notification_repository.dart';
 
 final notificationRemoteDatasourceProvider =
     Provider<NotificationRemoteDatasource>(
-  (ref) => NotificationRemoteDatasourceImpl(),
-);
+      (ref) => NotificationRemoteDatasourceImpl(),
+    );
 
-final notificationRepositoryProvider =
-    Provider<INotificationRepository>((ref) {
+final notificationRepositoryProvider = Provider<INotificationRepository>((ref) {
   return NotificationRepositoryImpl(
-      ref.read(notificationRemoteDatasourceProvider));
+    ref.read(notificationRemoteDatasourceProvider),
+  );
 });
 
 final notificationsProvider =
-    FutureProvider.family<List<NotificationEntity>, String>(
-        (ref, userId) async {
-  return ref
-      .read(notificationRepositoryProvider)
-      .fetchNotifications(userId);
-});
+    FutureProvider.family<List<NotificationEntity>, String>((
+      ref,
+      userId,
+    ) async {
+      return ref
+          .read(notificationRepositoryProvider)
+          .fetchNotifications(userId);
+    });

@@ -103,8 +103,7 @@ class Endpoints {
       '/properties/$propertyId/media';
 
   /// GET - Get media by property ID (media service endpoint)
-  static String getMediaByPropertyId(String propertyId) =>
-      '/media/$propertyId';
+  static String getMediaByPropertyId(String propertyId) => '/media/$propertyId';
 
   /// POST - Create media entry
   static const String createMedia = '/media';
@@ -180,7 +179,8 @@ class Endpoints {
   static String editChatMessage(String messageId) => '/chat/message/$messageId';
 
   /// DELETE - Delete chat message
-  static String deleteChatMessage(String messageId) => '/chat/message/$messageId';
+  static String deleteChatMessage(String messageId) =>
+      '/chat/message/$messageId';
 
   // ==================== BOOST ENDPOINTS ====================
 

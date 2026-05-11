@@ -612,7 +612,8 @@ class _Avatar extends ConsumerWidget {
                       errorBuilder: (_, __, ___) => _fallback(),
                     );
                   }
-                  return profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
+                  return profile.avatarUrl != null &&
+                          profile.avatarUrl!.isNotEmpty
                       ? Image.network(
                           profile.avatarUrl!,
                           fit: BoxFit.cover,
@@ -654,7 +655,10 @@ class _Avatar extends ConsumerWidget {
   }
 
   Future<void> _pickImage(
-      BuildContext context, WidgetRef ref, String userId) async {
+    BuildContext context,
+    WidgetRef ref,
+    String userId,
+  ) async {
     final source = await _showImageSourcePicker(context);
     if (source == null) return;
 
@@ -1422,7 +1426,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               // ── Avatar ───────────────────────────────────
               Center(
                 child: GestureDetector(
-                  onTap: () => _selectProfileImage(context, ref, widget.profile.userId),
+                  onTap: () =>
+                      _selectProfileImage(context, ref, widget.profile.userId),
                   child: Stack(
                     children: [
                       Container(
@@ -1443,31 +1448,38 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ],
                         ),
                         child: ClipOval(
-                          child: ref.watch(localAvatarPathProvider(widget.profile.userId)).when(
-                            data: (path) {
-                              if (path != null && path.isNotEmpty) {
-                                return Image.file(
-                                  File(path),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _avatarFallback(),
-                                );
-                              }
-                              return widget.profile.avatarUrl != null && widget.profile.avatarUrl!.isNotEmpty
-                                  ? Image.network(
-                                      widget.profile.avatarUrl!,
+                          child: ref
+                              .watch(
+                                localAvatarPathProvider(widget.profile.userId),
+                              )
+                              .when(
+                                data: (path) {
+                                  if (path != null && path.isNotEmpty) {
+                                    return Image.file(
+                                      File(path),
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => _avatarFallback(),
-                                    )
-                                  : _avatarFallback();
-                            },
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.primary,
+                                      errorBuilder: (_, __, ___) =>
+                                          _avatarFallback(),
+                                    );
+                                  }
+                                  return widget.profile.avatarUrl != null &&
+                                          widget.profile.avatarUrl!.isNotEmpty
+                                      ? Image.network(
+                                          widget.profile.avatarUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              _avatarFallback(),
+                                        )
+                                      : _avatarFallback();
+                                },
+                                loading: () => const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                error: (_, __) => _avatarFallback(),
                               ),
-                            ),
-                            error: (_, __) => _avatarFallback(),
-                          ),
                         ),
                       ),
                       Positioned(
@@ -1612,7 +1624,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _selectProfileImage(
-      BuildContext context, WidgetRef ref, String userId) async {
+    BuildContext context,
+    WidgetRef ref,
+    String userId,
+  ) async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       backgroundColor: AppColors.cardBackground,

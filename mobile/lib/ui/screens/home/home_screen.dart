@@ -775,10 +775,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
 class _SellerPropertyCard extends ConsumerWidget {
   final PropertyEntity property;
   final VoidCallback onTap;
-  const _SellerPropertyCard({
-    required this.property,
-    required this.onTap,
-  });
+  const _SellerPropertyCard({required this.property, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -931,9 +928,8 @@ class _SellerPropertyCard extends ConsumerWidget {
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => EditPropertyScreen(
-                                property: property,
-                              ),
+                              builder: (_) =>
+                                  EditPropertyScreen(property: property),
                             ),
                           ),
                         ),

@@ -4,20 +4,20 @@ import '../../data/repositories/feedback_repository_impl.dart';
 import '../../domain/entities/feedback/feedback_entity.dart';
 import '../../domain/repositories/i_feedback_repository.dart';
 
-final feedbackRemoteDatasourceProvider =
-    Provider<FeedbackRemoteDatasource>(
+final feedbackRemoteDatasourceProvider = Provider<FeedbackRemoteDatasource>(
   (ref) => FeedbackRemoteDatasourceImpl(),
 );
 
 final feedbackRepositoryProvider = Provider<IFeedbackRepository>((ref) {
-  return FeedbackRepositoryImpl(
-      ref.read(feedbackRemoteDatasourceProvider));
+  return FeedbackRepositoryImpl(ref.read(feedbackRemoteDatasourceProvider));
 });
 
-final propertyFeedbackProvider = AsyncNotifierProviderFamily<
-    PropertyFeedbackNotifier, List<FeedbackEntity>, String>(
-  PropertyFeedbackNotifier.new,
-);
+final propertyFeedbackProvider =
+    AsyncNotifierProviderFamily<
+      PropertyFeedbackNotifier,
+      List<FeedbackEntity>,
+      String
+    >(PropertyFeedbackNotifier.new);
 
 class PropertyFeedbackNotifier
     extends FamilyAsyncNotifier<List<FeedbackEntity>, String> {
@@ -31,8 +31,7 @@ class PropertyFeedbackNotifier
       final created = await ref
           .read(feedbackRepositoryProvider)
           .create(propertyId: arg, rating: rating, comment: comment);
-      state.whenData(
-          (list) => state = AsyncData([created, ...list]));
+      state.whenData((list) => state = AsyncData([created, ...list]));
     } catch (e, st) {
       state = previous;
       Error.throwWithStackTrace(e, st);
@@ -41,12 +40,12 @@ class PropertyFeedbackNotifier
 
   Future<void> delete(String feedbackId) async {
     final previous = state;
-    state.whenData((list) => state = AsyncData(
-        list.where((f) => f.id != feedbackId).toList()));
+    state.whenData(
+      (list) =>
+          state = AsyncData(list.where((f) => f.id != feedbackId).toList()),
+    );
     try {
-      await ref
-          .read(feedbackRepositoryProvider)
-          .delete(feedbackId);
+      await ref.read(feedbackRepositoryProvider).delete(feedbackId);
     } catch (e, st) {
       state = previous;
       Error.throwWithStackTrace(e, st);
@@ -54,10 +53,11 @@ class PropertyFeedbackNotifier
   }
 }
 
-final propertyAverageRatingProvider =
-    Provider.family<double, String>((ref, propertyId) {
-  final feedbackAsync =
-      ref.watch(propertyFeedbackProvider(propertyId));
+final propertyAverageRatingProvider = Provider.family<double, String>((
+  ref,
+  propertyId,
+) {
+  final feedbackAsync = ref.watch(propertyFeedbackProvider(propertyId));
   return feedbackAsync.maybeWhen(
     data: (list) {
       if (list.isEmpty) return 0.0;
@@ -68,10 +68,10 @@ final propertyAverageRatingProvider =
   );
 });
 
-final propertyReviewCountProvider =
-    Provider.family<int, String>((ref, propertyId) {
-  final feedbackAsync =
-      ref.watch(propertyFeedbackProvider(propertyId));
-  return feedbackAsync.maybeWhen(
-      data: (list) => list.length, orElse: () => 0);
+final propertyReviewCountProvider = Provider.family<int, String>((
+  ref,
+  propertyId,
+) {
+  final feedbackAsync = ref.watch(propertyFeedbackProvider(propertyId));
+  return feedbackAsync.maybeWhen(data: (list) => list.length, orElse: () => 0);
 });

@@ -5,15 +5,14 @@ import '../../data/repositories/profile_repository_impl.dart';
 import '../../domain/entities/profile/profile_entity.dart';
 import '../../domain/repositories/i_profile_repository.dart';
 
-final profileRemoteDatasourceProvider =
-    Provider<ProfileRemoteDatasource>(
+final profileRemoteDatasourceProvider = Provider<ProfileRemoteDatasource>(
   (ref) => ProfileRemoteDatasourceImpl(),
 );
 
 final localAvatarPathProvider =
     AsyncNotifierProvider.family<LocalAvatarPathNotifier, String?, String>(
-  LocalAvatarPathNotifier.new,
-);
+      LocalAvatarPathNotifier.new,
+    );
 
 class LocalAvatarPathNotifier extends FamilyAsyncNotifier<String?, String> {
   static String _prefsKey(String userId) => 'local_profile_avatar_$userId';
@@ -43,14 +42,11 @@ class LocalAvatarPathNotifier extends FamilyAsyncNotifier<String?, String> {
 }
 
 final profileRepositoryProvider = Provider<IProfileRepository>((ref) {
-  return ProfileRepositoryImpl(
-      ref.read(profileRemoteDatasourceProvider));
+  return ProfileRepositoryImpl(ref.read(profileRemoteDatasourceProvider));
 });
 
 final profileNotifierProvider =
-    AsyncNotifierProvider<ProfileNotifier, ProfileEntity>(
-  ProfileNotifier.new,
-);
+    AsyncNotifierProvider<ProfileNotifier, ProfileEntity>(ProfileNotifier.new);
 
 final currentProfileProvider = Provider<ProfileEntity?>((ref) {
   return ref.watch(profileNotifierProvider).valueOrNull;
@@ -69,14 +65,13 @@ class ProfileNotifier extends AsyncNotifier<ProfileEntity> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repo = ref.read(profileRepositoryProvider);
-      final updatedProfile =
-          await repo.updateProfileFields(request.toProfileJson());
+      final updatedProfile = await repo.updateProfileFields(
+        request.toProfileJson(),
+      );
       try {
-        await repo.updateUserFields(
-            current.userId, request.toUserJson());
+        await repo.updateUserFields(current.userId, request.toUserJson());
       } catch (_) {}
-      return updatedProfile.copyWith(
-          name: request.name, phone: request.phone);
+      return updatedProfile.copyWith(name: request.name, phone: request.phone);
     });
 
     if (state.hasError) state = previous;

@@ -81,7 +81,9 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
     setState(() => _loading = true);
 
     try {
-      final currentUserId = await ref.read(authRepositoryProvider).getCurrentUserId();
+      final currentUserId = await ref
+          .read(authRepositoryProvider)
+          .getCurrentUserId();
 
       if (currentUserId == null) {
         throw Exception('You must be logged in to submit a report');
