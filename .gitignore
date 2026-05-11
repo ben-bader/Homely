@@ -96,7 +96,5 @@ temp/
 .vscode/
 !.vscode/extensions.json
 
-# Modelization and Postman (optional - adjust based on needs)
-# modelization/ - keep if version controlled
-# postman/ - keep if version controlled
+
 modelization/*

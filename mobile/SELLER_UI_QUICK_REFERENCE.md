@@ -2,19 +2,20 @@
 
 ## File Locations
 
-| File | Purpose |
-|------|---------|
-| `lib/features/seller/screens/seller_listings_screen.dart` | Displays seller's properties |
-| `lib/features/seller/screens/create_property_screen.dart` | 3-step property creation form |
-| `lib/features/seller/providers/seller_providers.dart` | Riverpod providers for seller data |
-| `lib/features/property/screens/home_screen.dart` | Role-based navigation (MODIFIED) |
-| `lib/features/property/repositories/property_repository.dart` | API methods (MODIFIED) |
-| `lib/features/profile/screens/profile_screen.dart` | Profile + seller listings (MODIFIED) |
-| `lib/features/auth/services/auth_service.dart` | Auth methods (MODIFIED) |
+| File                                                            | Purpose                              |
+| --------------------------------------------------------------- | ------------------------------------ |
+| `lib/features/seller/screens/seller_listings_screen.dart`     | Displays seller's properties         |
+| `lib/features/seller/screens/create_property_screen.dart`     | 3-step property creation form        |
+| `lib/features/seller/providers/seller_providers.dart`         | Riverpod providers for seller data   |
+| `lib/features/property/screens/home_screen.dart`              | Role-based navigation (MODIFIED)     |
+| `lib/features/property/repositories/property_repository.dart` | API methods (MODIFIED)               |
+| `lib/features/profile/screens/profile_screen.dart`            | Profile + seller listings (MODIFIED) |
+| `lib/features/auth/services/auth_service.dart`                | Auth methods (MODIFIED)              |
 
 ## Common Tasks
 
 ### Task: Add Seller Features to New Role
+
 ```dart
 // In home_screen.dart
 if (_userRole == 'SELLER') {
@@ -24,6 +25,7 @@ if (_userRole == 'SELLER') {
 ```
 
 ### Task: Fetch Seller Listings
+
 ```dart
 // In any ConsumerWidget
 final listingsAsync = ref.watch(sellerListingsProvider);
@@ -36,6 +38,7 @@ listingsAsync.when(
 ```
 
 ### Task: Create Property
+
 ```dart
 // In create_property_screen.dart
 final propertyResponse = await ApiClient.post('/api/properties', 
@@ -50,6 +53,7 @@ final propertyId = propertyResponse['id'];
 ```
 
 ### Task: Upload Image
+
 ```dart
 final videoUploadNotifier = ref.read(
   propertyMediaProvider(propertyId).notifier
@@ -61,6 +65,7 @@ await videoUploadNotifier.uploadVideo(
 ```
 
 ### Task: Refresh Seller Listings
+
 ```dart
 ref.invalidate(sellerListingsProvider);
 // or
@@ -70,11 +75,13 @@ ref.read(sellerListingsProvider.notifier).refresh();
 ## UI Components Reference
 
 ### SellerListingsScreen Components
+
 - `_ListingCard` - Individual property card
 - `_EmptyState` - No properties message
 - `_ErrorView` - Error display
 
 ### CreatePropertyScreen Components
+
 - `_buildBasicInfoStep()` - First step form
 - `_buildDetailsStep()` - Second step form
 - `_buildMediaStep()` - Image upload step
@@ -83,12 +90,14 @@ ref.read(sellerListingsProvider.notifier).refresh();
 - `_buildCheckbox()` - Boolean fields
 
 ### Profile Components
+
 - `_SellerListingsSection` - Shows seller's top 3 properties
 - Returns empty if user is not seller
 
 ## Navigation Patterns
 
 ### Navigate to Create Property
+
 ```dart
 Navigator.push(
   context,
@@ -97,6 +106,7 @@ Navigator.push(
 ```
 
 ### Navigate to Property Details
+
 ```dart
 Navigator.push(
   context,
@@ -107,6 +117,7 @@ Navigator.push(
 ```
 
 ### Navigate Back
+
 ```dart
 Navigator.pop(context); // With optional result
 ```
@@ -116,7 +127,7 @@ Navigator.pop(context); // With optional result
 Before testing, ensure backend has:
 
 - [ ] `POST /api/properties` endpoint
-- [ ] `GET /api/properties/my-listed` endpoint  
+- [ ] `GET /api/properties/my-listed` endpoint
 - [ ] `POST /api/media/upload` endpoint
 - [ ] `GET /api/media/{propertyId}/media` endpoint
 - [ ] User role stored in JWT claims
@@ -124,23 +135,23 @@ Before testing, ensure backend has:
 
 ## Error Codes Handled
 
-| Code | Meaning | Handled In |
-|------|---------|-----------|
-| 400 | Invalid data | `media_repository.dart` |
-| 401 | Unauthorized | `media_repository.dart` |
-| 403 | Forbidden | `media_repository.dart` |
-| 413 | File too large | `media_repository.dart` |
-| 500 | Server error | Try-catch blocks |
+| Code | Meaning        | Handled In                |
+| ---- | -------------- | ------------------------- |
+| 400  | Invalid data   | `media_repository.dart` |
+| 401  | Unauthorized   | `media_repository.dart` |
+| 403  | Forbidden      | `media_repository.dart` |
+| 413  | File too large | `media_repository.dart` |
+| 500  | Server error   | Try-catch blocks          |
 
 ## Form Validation Rules
 
-| Field | Rule |
-|-------|------|
-| Title | Required, non-empty |
-| Location | Required, non-empty |
-| Price | Required, > 0 |
-| Images | At least 0 (optional but recommended) |
-| All other fields | Can be empty (defaults applied) |
+| Field            | Rule                                  |
+| ---------------- | ------------------------------------- |
+| Title            | Required, non-empty                   |
+| Location         | Required, non-empty                   |
+| Price            | Required, > 0                         |
+| Images           | At least 0 (optional but recommended) |
+| All other fields | Can be empty (defaults applied)       |
 
 ## Status Values
 
@@ -180,12 +191,14 @@ enum PropertyType {
 ## Debugging Tips
 
 ### Check User Role
+
 ```dart
 final session = await AuthService().getCurrentSession();
 print('User role: ${session?.role}'); // Should print 'SELLER'
 ```
 
 ### Check API Response
+
 ```dart
 try {
   final response = await ApiClient.get('/api/properties/my-listed');
@@ -196,12 +209,14 @@ try {
 ```
 
 ### Check Navigation Index
+
 ```dart
 final idx = ref.watch(navIndexProvider);
 print('Current tab: $idx'); // 0-4
 ```
 
 ### Check Image Upload
+
 ```dart
 // Add logs in create_property_screen.dart
 print('Uploading image $i of ${_selectedImages.length}');
@@ -219,6 +234,7 @@ print('Upload status: $_isUploading');
 ## Testing Commands
 
 ### Test API Endpoints
+
 ```bash
 # In terminal, test endpoint:
 curl -X GET http://localhost:8080/api/properties/my-listed \
@@ -226,6 +242,7 @@ curl -X GET http://localhost:8080/api/properties/my-listed \
 ```
 
 ### Test Image Upload
+
 ```bash
 # Using multipart form-data
 curl -X POST http://localhost:8080/api/media/upload \
@@ -237,21 +254,21 @@ curl -X POST http://localhost:8080/api/media/upload \
 
 ## Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| Properties not showing | Check: `getCurrentSession()` returns 'SELLER' role |
-| Images not uploading | Check: File size < limit, Bearer token valid |
-| Navigation not switching | Check: Role is loaded before building tabs |
-| Form won't submit | Check: All required fields filled (title, location, price) |
-| API 401 errors | Check: Token in SharedPreferences, not expired |
+| Issue                    | Solution                                                   |
+| ------------------------ | ---------------------------------------------------------- |
+| Properties not showing   | Check:`getCurrentSession()` returns 'SELLER' role        |
+| Images not uploading     | Check: File size < limit, Bearer token valid               |
+| Navigation not switching | Check: Role is loaded before building tabs                 |
+| Form won't submit        | Check: All required fields filled (title, location, price) |
+| API 401 errors           | Check: Token in SharedPreferences, not expired             |
 
 ## Next Enhancement Ideas
 
-- [ ] Property editing
-- [ ] Batch image operations
+- [X] Property editing
+- [X] Batch image operations
 - [ ] Property analytics dashboard
 - [ ] Scheduled property removal
-- [ ] Video upload support
+- [X] Video upload support
 - [ ] Property templates/cloning
 - [ ] Auto-pricing suggestions
 - [ ] Tenant management
