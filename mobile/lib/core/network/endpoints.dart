@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// 🌐 API Endpoints Configuration
 /// Central configuration for all backend API endpoints
 class Endpoints {
@@ -5,15 +7,27 @@ class Endpoints {
 
   // ==================== BASE URL ====================
 
-  /// Base URL for the backend API
-  /// Update this based on your environment
-  static const String baseUrl = 'https://unparrying-christene-reductively.ngrok-free.dev/api';
+  /// Android emulator uses 10.0.2.2 to reach the host machine.
+  static const String androidDevBaseUrl = 'http://10.0.2.2:8082/api';
 
   /// Base URL for development
   static const String devBaseUrl = 'http://localhost:8082/api';
 
   /// Base URL for production
   static const String prodBaseUrl = 'https://api.homely.com/api';
+
+  /// Base URL for the backend API
+  static String get baseUrl => kReleaseMode ? prodBaseUrl : _debugBaseUrl();
+
+  static String _debugBaseUrl() {
+    if (kIsWeb) return devBaseUrl;
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return androidDevBaseUrl;
+      default:
+        return devBaseUrl;
+    }
+  }
 
   // ==================== AUTH ENDPOINTS ====================
 

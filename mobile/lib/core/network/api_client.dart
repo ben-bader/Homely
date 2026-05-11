@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mobile/core/network/endpoints.dart';
-import 'package:mobile/core/storage/secure_storage.dart';
-class ApiClient {
+import '../errors/exceptions.dart';
+import 'endpoints.dart';
+import '../../data/datasources/local/secure_storage.dart';
 
+class ApiClient {
   static final _storage = SecureStorage();
-  static const String baseUrl = Endpoints.baseUrl;
+
+  static String get baseUrl => Endpoints.baseUrl;
+
   static Future<Map<String, String>> _headers({bool auth = true}) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -23,7 +26,9 @@ class ApiClient {
     Map<String, String>? queryParams,
     bool auth = true,
   }) async {
-    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
+    final uri = Uri.parse(
+      '$baseUrl$path',
+    ).replace(queryParameters: queryParams);
     final res = await http
         .get(uri, headers: await _headers(auth: auth))
         .timeout(const Duration(seconds: 15));
@@ -51,7 +56,9 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool auth = true,
   }) async {
-    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
+    final uri = Uri.parse(
+      '$baseUrl$path',
+    ).replace(queryParameters: queryParams);
     final res = await http
         .put(
           uri,
@@ -67,7 +74,9 @@ class ApiClient {
     Map<String, String>? queryParams,
     bool auth = true,
   }) async {
-    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
+    final uri = Uri.parse(
+      '$baseUrl$path',
+    ).replace(queryParameters: queryParams);
     final res = await http
         .delete(uri, headers: await _headers(auth: auth))
         .timeout(const Duration(seconds: 15));
@@ -80,7 +89,9 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool auth = true,
   }) async {
-    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: queryParams);
+    final uri = Uri.parse(
+      '$baseUrl$path',
+    ).replace(queryParameters: queryParams);
     final res = await http
         .patch(
           uri,
@@ -91,13 +102,11 @@ class ApiClient {
     return _handle(res);
   }
 
-  // ── User ──────────────────────────────────────────────────
   static Future<Map<String, dynamic>> fetchUserById(String userId) async {
     final data = await get(Endpoints.userById(userId));
     return data as Map<String, dynamic>;
   }
 
-  // ── Response handler ──────────────────────────────────────
   static dynamic _handle(http.Response res) {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       if (res.body.isEmpty) return null;
@@ -129,12 +138,4 @@ class ApiClient {
         throw ApiException(message, res.statusCode);
     }
   }
-}
-
-class ApiException implements Exception {
-  final String message;
-  final int statusCode;
-  const ApiException(this.message, this.statusCode);
-  @override
-  String toString() => message;
 }

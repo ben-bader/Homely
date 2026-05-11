@@ -3,17 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile/features/auth/screens/reset_password_screen.dart';
-import 'package:mobile/features/notifications/services/notification_service.dart';
 import 'package:app_links/app_links.dart';
-import 'package:firebase_core/firebase_core.dart';
-
-import 'features/auth/screens/login_screen.dart';
-import 'features/auth/screens/email_verification_screen.dart';
-import 'features/auth/screens/forgot_password_screen.dart';
-import 'features/onboarding/screens/onboarding_screen.dart';
-import 'features/property/screens/home_screen.dart';
-import 'features/auth/services/auth_service.dart';
+import 'core/theme/app_colors.dart';
+import 'data/datasources/local/secure_storage.dart';
+import 'infrastructure/services/notification_service.dart';
+import 'infrastructure/services/chat_service.dart';
+import 'ui/providers/auth_providers.dart';
+import 'ui/screens/auth/login_screen.dart';
+import 'ui/screens/auth/email_verification_screen.dart';
+import 'ui/screens/auth/forgot_password_screen.dart';
+import 'ui/screens/auth/reset_password_screen.dart';
+import 'ui/screens/onboarding/onboarding_screen.dart';
+import 'ui/screens/home/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,29 +23,21 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
 
   await NotificationService().init();
+  await ChatService().init();
 
-  // Handle initial deep link
   final appLinks = AppLinks();
   String? initialLink;
   try {
     initialLink = (await appLinks.getInitialLink())?.toString();
-  } catch (e) {
-    // Handle error
-  }
+  } catch (_) {}
 
-  runApp(
-    ProviderScope(
-      child: HomelyApp(initialLink: initialLink),
-    ),
-  );
+  runApp(ProviderScope(child: HomelyApp(initialLink: initialLink)));
 }
 
 class HomelyApp extends StatelessWidget {
   final String? initialLink;
-
   const HomelyApp({super.key, this.initialLink});
 
   @override
@@ -55,10 +48,10 @@ class HomelyApp extends StatelessWidget {
       theme: _buildTheme(),
       home: SplashScreen(initialLink: initialLink),
       routes: {
-        '/login': (context) => const LoginScreen(),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/email-verification': (context) => const EmailVerificationScreen(),
-        '/reset-password': (context) => const ResetPasswordScreen(),
+        '/login': (_) => const LoginScreen(),
+        '/forgot-password': (_) => const ForgotPasswordScreen(),
+        '/email-verification': (_) => const EmailVerificationScreen(),
+        '/reset-password': (_) => const ResetPasswordScreen(),
       },
     );
   }
@@ -67,30 +60,27 @@ class HomelyApp extends StatelessWidget {
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF0F172A),  // Midnight Navy
+        seedColor: const Color(0xFF0F172A),
         brightness: Brightness.light,
       ),
-      scaffoldBackgroundColor: const Color(0xFFFAFAFA),  // Off White
+      scaffoldBackgroundColor: const Color(0xFFFAFAFA),
     );
-
     return base.copyWith(
       textTheme: GoogleFonts.outfitTextTheme(base.textTheme),
     );
   }
 }
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   final String? initialLink;
-
   const SplashScreen({super.key, this.initialLink});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
-  final _authService = AuthService();
   late final AnimationController _controller;
   late final Animation<double> _pulseAnimation;
   StreamSubscription? _linkSubscription;
@@ -99,42 +89,29 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-
     _pulseAnimation = Tween<double>(
       begin: 0.95,
       end: 1.05,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-
-    // Listen for incoming deep links
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        _handleDeepLink(uri.toString());
-      }
+      if (uri != null) _handleDeepLink(uri.toString());
     });
-
     _checkAuthStatus();
   }
 
   Future<void> _checkAuthStatus() async {
     await Future.delayed(const Duration(seconds: 2));
-
     if (!mounted) return;
-
-    // Check for initial deep link
     if (widget.initialLink != null) {
       _handleDeepLink(widget.initialLink!);
       return;
     }
-
-    final isLoggedIn = await _authService.isLoggedIn();
-
+    final isLoggedIn = await ref.read(authRepositoryProvider).isLoggedIn();
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -142,12 +119,12 @@ class _SplashScreenState extends State<SplashScreen>
             isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
       ),
     );
-    NotificationService().startPolling(_authService);
+    final storage = ref.read(secureStorageProvider);
+    NotificationService().startPolling(storage);
   }
 
   void _handleDeepLink(String link) {
     final uri = Uri.parse(link);
-
     if (uri.pathSegments.contains('verify-email')) {
       final token = uri.queryParameters['token'];
       if (token != null) {
@@ -169,15 +146,12 @@ class _SplashScreenState extends State<SplashScreen>
         return;
       }
     }
-
-    // If no valid deep link, proceed with normal auth check
     _checkAuthStatus();
   }
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
@@ -205,8 +179,6 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
             const SizedBox(height: 32),
-
-            /// Title using theme (IMPORTANT)
             Text(
               'Homely',
               style: tt.headlineLarge?.copyWith(
@@ -215,20 +187,15 @@ class _SplashScreenState extends State<SplashScreen>
                 letterSpacing: -1,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               'Your Real Estate Partner',
               style: tt.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
                 color: Colors.white.withOpacity(0.6),
                 letterSpacing: 0.5,
               ),
             ),
-
             const SizedBox(height: 48),
-
             SizedBox(
               width: 30,
               height: 30,
