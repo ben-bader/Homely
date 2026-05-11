@@ -27,7 +27,6 @@ public class LogActivity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private EntityType entityType;
 
-    @Column(columnDefinition = "VARCHAR(36)")
     private UUID entityId;
 
     private String description;

@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../errors/exceptions.dart';
-import 'endpoints.dart';
-import '../../data/datasources/local/secure_storage.dart';
-
+import 'package:mobile/core/network/endpoints.dart';
+import 'package:mobile/core/storage/secure_storage.dart';
 class ApiClient {
   static final _storage = SecureStorage();
 
@@ -107,6 +105,23 @@ class ApiClient {
     return data as Map<String, dynamic>;
   }
 
+  // ── Pagination helper ─────────────────────────────────────
+  /// Default page size (30 items per page)
+  static const int defaultPageSize = 30;
+
+  /// Validate and sanitize page number
+  static int validatePageNumber(int? pageNumber) {
+    if (pageNumber == null || pageNumber < 0) return 0;
+    return pageNumber;
+  }
+
+  /// Validate and sanitize page size
+  static int validatePageSize(int? pageSize) {
+    if (pageSize == null || pageSize <= 0) return defaultPageSize;
+    return pageSize > 100 ? 100 : pageSize; // Max 100 items per page
+  }
+
+  // ── Response handler ──────────────────────────────────────
   static dynamic _handle(http.Response res) {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       if (res.body.isEmpty) return null;

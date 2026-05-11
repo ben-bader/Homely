@@ -1,63 +1,110 @@
-"use client"
+"use client";
 
-import { AppSidebar } from "@/components/dashboardComponents/app-sidebar"
-import Boosts from "@/app/features/boosts/Boosts"
-import Dashboard from "@/app/dashboard/Dashboard"
-import Properties from "@/app/features/properties/Properties"
-import Reports from "@/app/features/reports/Reports"
-import ActivityMonitoring from "@/app/features/activityMonitoring/ActivityMonitoring"
-import { SiteHeader } from "@/components/dashboardComponents/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import Users from "@/app/features/users/Users"
-import { useState } from "react"
-import AdminDashboardWrapper from "@/app/dashboard/AdminDashboardWrapper"
-import VisitRequests from "@/app/features/visitRequests/VisitRequests"
-import Profile from "@/app/features/profile/profile"
-import Chat from "@/app/features/chats/Chat";
-import ManageParameters from "@/app/features/ManageParametres/ManageParametres"
+import React, { useEffect, useState } from "react";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/dashboardComponents/app-sidebar";
+import { SiteHeader } from "@/components/dashboardComponents/site-header";
+
+import Dashboard from "@/app/dashboard/Dashboard";
+import Users from "@/app/users/Users";
+import Properties from "@/app/properties/Properties";
+import Reports from "@/app/reports/Reports";
+import Boosts from "@/app/boosts/Boosts";
+import ActivityMonitoring from "@/app/activityMonitoring/ActivityMonitoring";
+import VisitRequests from "@/app/visitRequests/VisitRequests";
+import Profile from "@/app/profile/profile";
+import Chat from "@/app/chats/Chat";
+import ManageParameters from "@/app/ManageParametres/ManageParametres";
+import AdminManager from "../AdminManager/AdminManager";
+
+import { getUserFromToken } from "@/lib/auth";
 
 export default function Page() {
-  const [activeSection, setActiveSection] = useState("dashboard")
-  
-  const components: Record<string, React.ReactNode> = {
-  users: <Users />,
-  properties: <Properties />,
-  reports: <Reports />,
-  boosts: <Boosts />,
-  "visit requests": <VisitRequests />,
-  dashboard: <Dashboard />,
-  "activity monitoring": <ActivityMonitoring />,
-  profile: <Profile />,
-  chats: <Chat />,
-  "manage parameters": <ManageParameters />,
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
 
+  // ✅ Load permissions per user
+  useEffect(() => {
+    const user = getUserFromToken();
+    if (!user) return;
 
-};
-  
-  
+    const stored = localStorage.getItem(`permissions_${user.id}`);
+
+    if (stored) {
+      try {
+        setPermissions(JSON.parse(stored));
+      } catch {
+        setPermissions({});
+      }
+    }
+  }, []);
+
+  // ❌ fallback UI
+  function NoAccess() {
     return (
-      <AdminDashboardWrapper>
-
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "calc(var(--spacing) * 72)",
-            "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
-        }
-        >
-        <AppSidebar variant="inset" setActiveSection={setActiveSection} activeSection={activeSection}/>
-        <SidebarInset>
-          <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6"> 
-                   {components[activeSection]}
-              </div>
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-        </AdminDashboardWrapper>
-    )
+      <div className="p-6 text-center text-muted-foreground">
+        You don’t have permission to access this section
+      </div>
+    );
   }
+
+  // ✅ IMPORTANT FIX: only ONE component renders
+  function renderSection() {
+    switch (activeSection) {
+      case "dashboard":
+        return permissions.dashboard ? <Dashboard /> : <NoAccess />;
+
+      case "users":
+        return permissions.users ? <Users /> : <NoAccess />;
+
+      case "properties":
+        return permissions.properties ? <Properties /> : <NoAccess />;
+
+      case "reports":
+        return permissions.reports ? <Reports /> : <NoAccess />;
+
+      case "boosts":
+        return permissions.boosts ? <Boosts /> : <NoAccess />;
+
+      case "visit requests":
+        return permissions.visit_requests ? <VisitRequests /> : <NoAccess />;
+
+      case "activity monitoring":
+        return permissions.activity_monitoring ? <ActivityMonitoring /> : <NoAccess />;
+
+      case "manage admins":
+        return permissions.manage_admins ? <AdminManager /> : <NoAccess />;
+
+      case "chats":
+        return permissions.chats ? <Chat /> : <NoAccess />;
+
+      case "manage parameters":
+        return permissions.manage_parameters ? <ManageParameters /> : <NoAccess />;
+
+      case "profile":
+        return <Profile />;
+
+      default:
+        return <NoAccess />;
+    }
+  }
+
+  return (
+    <SidebarProvider>
+      <AppSidebar
+        setActiveSection={setActiveSection}
+        activeSection={activeSection}
+      />
+
+      <SidebarInset>
+        <SiteHeader />
+
+        <div className="flex flex-1 flex-col">
+          <div className="flex flex-col gap-4 py-4 md:py-6">
+            {renderSection()}
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}

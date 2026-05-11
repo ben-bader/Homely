@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:8082/api",
+  baseURL: "https://unparrying-christene-reductively.ngrok-free.dev/api",
   withCredentials: true,
   headers: {
     "ngrok-skip-browser-warning": "true", 
@@ -30,3 +30,18 @@ api.interceptors.response.use((response) => {
   console.error("❌ Response error:", error.response?.status, error.response?.data || error.message);
   return Promise.reject(error);
 });
+
+/**
+ * Pagination type for API responses
+ */
+export interface PaginatedResponse<T> {
+  content: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  isFirst: boolean;
+  isLast: boolean;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}

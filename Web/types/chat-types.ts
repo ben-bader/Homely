@@ -16,6 +16,8 @@ export interface Conversation {
   clientId: string;
   clientActive: boolean;
   propertyId: string;
+  propertyTitle: string;
   messages?: ChatMessageResponse[]; // optional, will load lazily
   loadingMessages?: boolean;
+  createdAt: string;
 }

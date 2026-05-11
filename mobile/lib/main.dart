@@ -4,17 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:app_links/app_links.dart';
-import 'core/theme/app_colors.dart';
-import 'data/datasources/local/secure_storage.dart';
-import 'infrastructure/services/notification_service.dart';
-import 'infrastructure/services/chat_service.dart';
-import 'ui/providers/auth_providers.dart';
-import 'ui/screens/auth/login_screen.dart';
-import 'ui/screens/auth/email_verification_screen.dart';
-import 'ui/screens/auth/forgot_password_screen.dart';
-import 'ui/screens/auth/reset_password_screen.dart';
-import 'ui/screens/onboarding/onboarding_screen.dart';
-import 'ui/screens/home/home_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/email_verification_screen.dart';
+import 'features/auth/screens/forgot_password_screen.dart';
+import 'features/onboarding/screens/onboarding_screen.dart';
+import 'features/property/screens/home_screen.dart';
+import 'features/auth/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +28,9 @@ void main() async {
   String? initialLink;
   try {
     initialLink = (await appLinks.getInitialLink())?.toString();
-  } catch (_) {}
+  } catch (e) {
+    // Handle error
+  }
 
   runApp(ProviderScope(child: HomelyApp(initialLink: initialLink)));
 }
@@ -96,7 +95,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _pulseAnimation = Tween<double>(
       begin: 0.95,
       end: 1.05,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    // Listen for incoming deep links
     _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
       if (uri != null) _handleDeepLink(uri.toString());
     });
@@ -106,12 +109,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _checkAuthStatus() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
+
+    // Check for initial deep link
     if (widget.initialLink != null) {
       _handleDeepLink(widget.initialLink!);
       return;
     }
-    final isLoggedIn = await ref.read(authRepositoryProvider).isLoggedIn();
-    if (!mounted) return;
+
+    final isLoggedIn = await _authService.isLoggedIn();
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -119,8 +125,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
       ),
     );
-    final storage = ref.read(secureStorageProvider);
-    NotificationService().startPolling(storage);
+    NotificationService().startPolling(_authService);
   }
 
   void _handleDeepLink(String link) {
@@ -146,6 +151,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         return;
       }
     }
+
+    // If no valid deep link, proceed with normal auth check
     _checkAuthStatus();
   }
 
