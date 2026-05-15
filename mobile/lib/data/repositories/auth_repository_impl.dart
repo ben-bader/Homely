@@ -54,8 +54,18 @@ class AuthRepositoryImpl implements IAuthRepository {
       _remote.requestPasswordReset(email: email);
 
   @override
-  Future<void> resetPassword(String token, String newPassword) =>
-      _remote.resetPassword(token: token, newPassword: newPassword);
+  Future<void> resetPassword({
+    required String token,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) =>
+      _remote.resetPassword(
+        token: token,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+      );
 
   @override
   Future<void> verifyEmail(String token) => _remote.verifyEmail(token: token);

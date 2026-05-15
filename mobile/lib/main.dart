@@ -4,14 +4,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:app_links/app_links.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:homely/data/datasources/local/secure_storage.dart';
+import 'package:homely/infrastructure/services/app_initializer.dart';
+import 'package:homely/infrastructure/services/notification_service.dart';
+import 'package:homely/ui/screens/auth/email_verification_screen.dart';
+import 'package:homely/ui/screens/auth/forgot_password_screen.dart';
+import 'package:homely/ui/screens/auth/login_screen.dart';
+import 'package:homely/ui/screens/auth/reset_password_screen.dart';
+import 'package:homely/ui/screens/home/home_screen.dart';
+import 'package:homely/ui/screens/onboarding/onboarding_screen.dart';
 
-import 'features/auth/screens/login_screen.dart';
-import 'features/auth/screens/email_verification_screen.dart';
-import 'features/auth/screens/forgot_password_screen.dart';
-import 'features/onboarding/screens/onboarding_screen.dart';
-import 'features/property/screens/home_screen.dart';
-import 'features/auth/services/auth_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,8 +24,8 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Only initialize notification service setup (not polling)
   await NotificationService().init();
-  await ChatService().init();
 
   final appLinks = AppLinks();
   String? initialLink;
@@ -47,6 +50,8 @@ class HomelyApp extends StatelessWidget {
       theme: _buildTheme(),
       home: SplashScreen(initialLink: initialLink),
       routes: {
+        '/home': (_) => const HomeScreen(),
+        '/onboarding': (_) => const OnboardingScreen(),
         '/login': (_) => const LoginScreen(),
         '/forgot-password': (_) => const ForgotPasswordScreen(),
         '/email-verification': (_) => const EmailVerificationScreen(),
@@ -84,6 +89,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final Animation<double> _pulseAnimation;
   StreamSubscription? _linkSubscription;
   final AppLinks _appLinks = AppLinks();
+  
+  /// Flag to ensure navigation happens only once
+  bool _hasNavigated = false;
+
+  SecureStorage get _authService => SecureStorage();
 
   @override
   void initState() {
@@ -99,61 +109,135 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    // Listen for incoming deep links
+    // Listen for incoming deep links (after app is already running)
     _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
-      if (uri != null) _handleDeepLink(uri.toString());
+      if (uri != null) _handleDeepLinkNavigation(uri.toString());
     });
-    _checkAuthStatus();
+    
+    // Start the single startup flow
+    _startupFlow();
   }
 
-  Future<void> _checkAuthStatus() async {
+  /// Single startup flow that runs exactly once
+  Future<void> _startupFlow() async {
     await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
+    if (!mounted || _hasNavigated) return;
 
-    // Check for initial deep link
+    // Step 1: Check if there's an initial deep link (handles reset-password and verify-email)
     if (widget.initialLink != null) {
-      _handleDeepLink(widget.initialLink!);
-      return;
+      final handled = _handleInitialDeepLink(widget.initialLink!);
+      if (handled) {
+        return; // Navigation was handled by deep link
+      }
     }
 
-    final isLoggedIn = await _authService.isLoggedIn();
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
-      ),
-    );
-    NotificationService().startPolling(_authService);
+    // Step 2: Normal auth flow (only if deep link didn't handle navigation)
+    await _navigateBasedOnAuthStatus();
   }
 
-  void _handleDeepLink(String link) {
+  /// Handles deep links provided at app startup
+  /// Returns true if navigation was performed, false otherwise
+  bool _handleInitialDeepLink(String link) {
+    if (_hasNavigated) return false;
+
     final uri = Uri.parse(link);
-    if (uri.pathSegments.contains('verify-email')) {
+
+    if (uri.pathSegments.contains('reset-password')) {
+      final token = uri.queryParameters['token'];
+      final email = uri.queryParameters['email'];
+      if (token != null && email != null) {
+        _hasNavigated = true;
+        Navigator.pushReplacementNamed(
+          context,
+          '/reset-password',
+          arguments: {
+            'token': token,
+            'email': email,
+          },
+        );
+        return true;
+      }
+    } else if (uri.pathSegments.contains('verify-email')) {
       final token = uri.queryParameters['token'];
       if (token != null) {
+        _hasNavigated = true;
         Navigator.pushReplacementNamed(
           context,
           '/email-verification',
           arguments: token,
         );
-        return;
+        return true;
+      }
+    }
+
+    // No valid deep link action was taken
+    return false;
+  }
+
+  /// Handles deep links received while app is already running
+  /// This is separate from startup deep link handling
+  void _handleDeepLinkNavigation(String link) {
+    // Only handle if we're on home screen or can navigate to these screens
+    final uri = Uri.parse(link);
+    
+    if (uri.pathSegments.contains('verify-email')) {
+      final token = uri.queryParameters['token'];
+      if (token != null) {
+        Navigator.pushNamed(
+          context,
+          '/email-verification',
+          arguments: token,
+        );
       }
     } else if (uri.pathSegments.contains('reset-password')) {
       final token = uri.queryParameters['token'];
       if (token != null) {
-        Navigator.pushReplacementNamed(
+        Navigator.pushNamed(
           context,
           '/reset-password',
           arguments: token,
         );
-        return;
       }
     }
+  }
 
-    // If no valid deep link, proceed with normal auth check
-    _checkAuthStatus();
+  /// Navigate based on authentication status (only called once during startup)
+  Future<void> _navigateBasedOnAuthStatus() async {
+    if (_hasNavigated) return;
+
+    try {
+      final isLoggedIn = await _authService.isLoggedIn();
+
+      if (!mounted) return;
+
+      _hasNavigated = true;
+
+      if (isLoggedIn) {
+        // Initialize background services before navigating to home
+        await AppInitializer().initializeAfterLogin();
+
+        if (!mounted) return;
+
+        Navigator.pushReplacementNamed(
+          context,
+          '/home',
+        );
+      } else {
+        Navigator.pushReplacementNamed(
+          context,
+          '/onboarding',
+        );
+      }
+    } catch (e) {
+      print('Error during auth status check: $e');
+      if (mounted) {
+        _hasNavigated = true;
+        Navigator.pushReplacementNamed(
+          context,
+          '/onboarding',
+        );
+      }
+    }
   }
 
   @override

@@ -11,13 +11,13 @@ class Endpoints {
   static const String androidDevBaseUrl = 'http://10.0.2.2:8082/api';
 
   /// Base URL for development
-  static const String devBaseUrl = 'http://localhost:8082/api';
+  static const String devBaseUrl = 'https://unparrying-christene';
 
   /// Base URL for production
   static const String prodBaseUrl = 'https://api.homely.com/api';
 
   /// Base URL for the backend API
-  static String get baseUrl => kReleaseMode ? prodBaseUrl : _debugBaseUrl();
+  static const String  baseUrl = "https://unparrying-christene-reductively.ngrok-free.dev/api" ;
 
   static String _debugBaseUrl() {
     if (kIsWeb) return devBaseUrl;
@@ -27,6 +27,27 @@ class Endpoints {
       default:
         return devBaseUrl;
     }
+  }
+
+  // ==================== WEBSOCKET ENDPOINTS ====================
+
+  /// Get WebSocket URL for STOMP connections
+  /// Converts HTTP/HTTPS base URL to WS/WSS with correct endpoint
+  static String getWebSocketUrl() {
+    String wsUrl = baseUrl;
+    
+    // For ngrok URLs or HTTPS production URLs, use secure WebSocket (wss://)
+    if (wsUrl.startsWith('https://')) {
+      wsUrl = wsUrl.replaceFirst('https://', 'wss://');
+    } else if (wsUrl.startsWith('http://')) {
+      // For local development, use insecure WebSocket (ws://)
+      wsUrl = wsUrl.replaceFirst('http://', 'ws://');
+    }
+    
+    // Remove /api suffix if present and add /ws endpoint
+    wsUrl = wsUrl.replaceFirst('/api', '') + '/ws';
+    
+    return wsUrl;
   }
 
   // ==================== AUTH ENDPOINTS ====================

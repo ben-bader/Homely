@@ -115,13 +115,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           // ── Top bar ───────────────────────────────────────
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Image.asset(
                     'assets/logo.png',
-                    height: 56,
+                    height: 120,
                     fit: BoxFit.contain,
                     color: Colors.white,
                     colorBlendMode: BlendMode.srcIn,
@@ -161,7 +161,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Positioned(
             left: 28,
             right: 28,
-            top: MediaQuery.of(context).size.height * 0.14,
+            top: MediaQuery.of(context).size.height * 0.16,
             child: Text(
               items[index].title.toUpperCase(),
               textAlign: TextAlign.left,

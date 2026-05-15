@@ -58,7 +58,10 @@ class SecureStorage {
   Future<void> saveUserRole(String role) async {
     await _storage.write(key: _userRoleKey, value: role);
   }
-
+  Future<bool> isLoggedIn() async {
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
+  }
   Future<void> saveUserSession({
     required String token,
     required String userId,

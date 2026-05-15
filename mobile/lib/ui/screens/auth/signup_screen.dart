@@ -96,16 +96,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 16),
+                  horizontal: 16),
               child: Row(children: [
                 Image.asset('assets/logo.png',
-                    height: 56, fit: BoxFit.contain),
+                    height:140, fit: BoxFit.contain),
               ]),
             ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 28, vertical: 8),
+                    horizontal: 28),
                 child: Form(
                   key: _formKey,
                   child: Column(

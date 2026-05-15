@@ -113,13 +113,13 @@ class _BodyState extends ConsumerState<_Body> {
                   ),
                   Expanded(
                     child: Text(
-                      'PropertyEntity Detail',
+                      'Property Detail',
                       textAlign: TextAlign.center,
                       style: tt.titleLarge?.copyWith(
                         color: AppColors.background,
                         letterSpacing: -0.5,
                         height: 1.1,
-                        fontSize: 25,
+                        fontSize: 28,
                       ),
                     ),
                   ),

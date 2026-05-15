@@ -28,8 +28,7 @@ class NotificationService {
   void _connect(String token) {
     _stompClient = StompClient(
       config: StompConfig(
-        url:
-            'ws://${Endpoints.baseUrl.replaceFirst('https://', '').replaceFirst('http://', '')}/ws',
+        url: Endpoints.getWebSocketUrl(),
         onConnect: _onConnect,
         onWebSocketError: (error) => print('WebSocket error: $error'),
         onStompError: (error) => print('STOMP error: $error'),

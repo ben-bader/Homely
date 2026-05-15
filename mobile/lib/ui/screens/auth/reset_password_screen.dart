@@ -6,7 +6,14 @@ import '../../../core/utils/validators.dart';
 import '../../../ui/providers/auth_providers.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String? token;
+  final String? email;
+  
+  const ResetPasswordScreen({
+    super.key,
+    this.token,
+    this.email,
+  });
 
   @override
   ConsumerState<ResetPasswordScreen> createState() =>
@@ -16,6 +23,7 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
 class _ResetPasswordScreenState
     extends ConsumerState<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -24,19 +32,54 @@ class _ResetPasswordScreenState
   bool _obscureConfirmPassword = true;
   bool _passwordReset = false;
   String? _token;
+  String? _email;
+
+  @override
+  void initState() {
+    super.initState();
+    // Get token and email from constructor or route arguments
+    _token = widget.token;
+    _email = widget.email;
+    
+    if (_email != null) {
+      _emailController.text = _email!;
+    }
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_token == null) {
-      _token =
-          ModalRoute.of(context)!.settings.arguments as String;
+    // Try to get from route arguments if not already set
+    if (_token == null || _email == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null) {
+        if (args is Map<String, dynamic>) {
+          _token = args['token'] as String?;
+          _email = args['email'] as String?;
+          if (_email != null && _emailController.text.isEmpty) {
+            _emailController.text = _email!;
+          }
+        } else if (args is String) {
+          // Legacy support for token-only argument
+          _token = args;
+        }
+      }
     }
   }
 
   Future<void> _resetPassword() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_token == null) return;
+    if (_token == null || _email == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Invalid reset link. Please try again.',
+            style: GoogleFonts.outfit()),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30)),
+      ));
+      return;
+    }
     if (_passwordController.text !=
         _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -52,8 +95,10 @@ class _ResetPasswordScreenState
     setState(() => _isLoading = true);
     try {
       await ref.read(authRepositoryProvider).resetPassword(
-            _token!,
-            _passwordController.text,
+            token: _token!,
+            email: _email!,
+            password: _passwordController.text,
+            confirmPassword: _confirmPasswordController.text,
           );
       setState(() => _passwordReset = true);
     } catch (e) {
@@ -74,6 +119,7 @@ class _ResetPasswordScreenState
 
   @override
   void dispose() {
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -124,6 +170,8 @@ class _ResetPasswordScreenState
                 height: 1.5,
               )),
           const SizedBox(height: 40),
+          _buildEmailField(),
+          const SizedBox(height: 24),
           _buildPasswordField(
             label: 'New Password',
             controller: _passwordController,
@@ -178,6 +226,44 @@ class _ResetPasswordScreenState
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Email',
+            style: GoogleFonts.outfit(
+                color: AppColors.accent,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.2)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _emailController,
+          readOnly: true,
+          style: GoogleFonts.outfit(color: AppColors.accent),
+          decoration: InputDecoration(
+            hintText: 'your@email.com',
+            hintStyle: GoogleFonts.outfit(
+                color: AppColors.textSecondary),
+            filled: true,
+            fillColor: AppColors.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide:
+                  BorderSide(color: AppColors.primary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20, vertical: 18),
+          ),
+        ),
+      ],
     );
   }
 
@@ -269,8 +355,11 @@ class _ResetPasswordScreenState
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: () => Navigator.of(context)
-                .popUntil((route) => route.isFirst),
+            onPressed: () => Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (route) => false,
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,

@@ -18,7 +18,9 @@ abstract class AuthRemoteDatasource {
   Future<Map<String, dynamic>> requestPasswordReset({required String email});
   Future<Map<String, dynamic>> resetPassword({
     required String token,
-    required String newPassword,
+    required String email,
+    required String password,
+    required String confirmPassword,
   });
   Future<Map<String, dynamic>> verifyEmail({required String token});
   Future<Map<String, dynamic>> resendVerification({required String email});
@@ -87,11 +89,19 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   @override
   Future<Map<String, dynamic>> resetPassword({
     required String token,
-    required String newPassword,
+    required String email,
+    required String password,
+    required String confirmPassword,
   }) async {
     final response = await ApiClient.post(
-      '${Endpoints.resetPassword}?token=${Uri.encodeComponent(token)}&newPassword=${Uri.encodeComponent(newPassword)}',
+      Endpoints.resetPassword,
       auth: false,
+      body: {
+        'email': email,
+        'token': token,
+        'newPassword': password,
+        'confirmPassword': confirmPassword,
+      },
     );
     return response;
   }
