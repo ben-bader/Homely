@@ -30,7 +30,7 @@ class AppColors {
   static const Color borderDark = Color(0xFF94A3B8);
   static const Color shadow = Color(0x1A000000);
   static const Color overlay = Color(0x800F172A);
-  static Color whiteGlass = const Color(0xFFFFFFFF).withOpacity(0.85);
+  static Color whiteGlass = const Color(0xFFFFFFFF).withValues(alpha: 0.85);
 
   static const List<Color> primaryGradient = [
     Color(0xFF020617),
@@ -54,7 +54,7 @@ class AppColors {
   static const Color statusBoosted = Color(0xFF334155);
 
   static Color withOpacity(Color color, double opacity) =>
-      color.withOpacity(opacity);
+      color.withValues(alpha: opacity);
 
   static Color getStatusColor(String status) {
     switch (status.toUpperCase()) {

@@ -13,6 +13,7 @@ import 'package:homely/ui/screens/auth/login_screen.dart';
 import 'package:homely/ui/screens/auth/reset_password_screen.dart';
 import 'package:homely/ui/screens/home/home_screen.dart';
 import 'package:homely/ui/screens/onboarding/onboarding_screen.dart';
+import 'package:homely/ui/screens/seller/seller_dashboard_screen.dart';
 
 
 
@@ -24,9 +25,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Only initialize notification service setup (not polling)
-  await NotificationService().init();
-
+  // Notification initialization is started later after login so first render is not blocked.
   final appLinks = AppLinks();
   String? initialLink;
   try {
@@ -56,6 +55,7 @@ class HomelyApp extends StatelessWidget {
         '/forgot-password': (_) => const ForgotPasswordScreen(),
         '/email-verification': (_) => const EmailVerificationScreen(),
         '/reset-password': (_) => const ResetPasswordScreen(),
+        SellerDashboardScreen.routeName: (_) => const SellerDashboardScreen(),
       },
     );
   }
@@ -213,11 +213,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       _hasNavigated = true;
 
       if (isLoggedIn) {
-        // Initialize background services before navigating to home
-        await AppInitializer().initializeAfterLogin();
-
         if (!mounted) return;
-
+        _hasNavigated = true;
+        unawaited(AppInitializer().initializeAfterLogin());
         Navigator.pushReplacementNamed(
           context,
           '/home',
@@ -257,8 +255,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     colors: [
-                      Colors.white.withOpacity(0.2),
-                      Colors.white.withOpacity(0.1),
+                      Colors.white.withValues(alpha: 0.2),
+                      Colors.white.withValues(alpha: 0.1),
                     ],
                   ),
                 ),
@@ -282,7 +280,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             Text(
               'Your Real Estate Partner',
               style: tt.bodyMedium?.copyWith(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
                 letterSpacing: 0.5,
               ),
             ),
@@ -291,7 +289,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               width: 30,
               height: 30,
               child: CircularProgressIndicator(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 strokeWidth: 2.5,
               ),
             ),

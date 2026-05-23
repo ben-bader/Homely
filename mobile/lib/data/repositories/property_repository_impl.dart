@@ -15,7 +15,7 @@ class PropertyRepositoryImpl implements IPropertyRepository {
     final data = await _remote.getAll();
     return data
         .map((e) =>
-            PropertyModel.fromJson(e as Map<String, dynamic>))
+            PropertyModel.fromJson(e))
         .toList();
   }
 
@@ -31,7 +31,7 @@ class PropertyRepositoryImpl implements IPropertyRepository {
     final data = await _remote.filter(params);
     return data
         .map((e) =>
-            PropertyModel.fromJson(e as Map<String, dynamic>))
+            PropertyModel.fromJson(e))
         .toList();
   }
 
@@ -40,7 +40,7 @@ class PropertyRepositoryImpl implements IPropertyRepository {
     final data = await _remote.search(keyword);
     return data
         .map((e) =>
-            PropertyModel.fromJson(e as Map<String, dynamic>))
+            PropertyModel.fromJson(e))
         .toList();
   }
 
@@ -49,7 +49,7 @@ class PropertyRepositoryImpl implements IPropertyRepository {
     final data = await _remote.getMyListedProperties();
     return data
         .map((e) =>
-            PropertyModel.fromJson(e as Map<String, dynamic>))
+            PropertyModel.fromJson(e))
         .toList();
   }
 
@@ -82,7 +82,7 @@ class PropertyRepositoryImpl implements IPropertyRepository {
     final data = await _remote.getPropertyMedia(propertyId);
     return data
         .map((e) =>
-            PropertyMediaModel.fromJson(e as Map<String, dynamic>))
+            PropertyMediaModel.fromJson(e))
         .toList();
   }
 }

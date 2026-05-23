@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:homely/core/network/api_client.dart';
 import 'package:homely/core/network/endpoints.dart';
 
@@ -68,11 +70,21 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
   @override
   Future<Map<String, dynamic>> refreshToken(String token) async {
-    final response = await ApiClient.post(
-      '/auth/refresh',
-      body: {'token': token},
-    );
-    return response;
+    // Use direct http call to avoid recursion into ApiClient auth flow
+    final uri = Uri.parse(Endpoints.getFullUrl(Endpoints.refreshToken));
+    final resp = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'token': token}),
+    ).timeout(const Duration(seconds: 10));
+    if (resp.statusCode >= 200 && resp.statusCode < 300) {
+      try {
+        return jsonDecode(resp.body) as Map<String, dynamic>;
+      } catch (_) {
+        return <String, dynamic>{};
+      }
+    }
+    throw Exception('Failed to refresh token: ${resp.statusCode}');
   }
 
   @override

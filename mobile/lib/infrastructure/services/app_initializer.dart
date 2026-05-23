@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:homely/infrastructure/services/chat_service.dart';
 import 'package:homely/infrastructure/services/notification_service.dart';
 import 'package:homely/data/datasources/local/secure_storage.dart';
@@ -23,17 +25,20 @@ class AppInitializer {
     }
 
     try {
-      // Initialize Chat Service
       await ChatService().init();
-
-      // Start Notification polling with the authenticated user context
-      final authService = SecureStorage();
-      NotificationService().startPolling(authService);
-
+      unawaited(_initializeNotificationService());
       _initialized = true;
     } catch (e) {
-      print('Error during app initialization after login: $e');
-      rethrow;
+      debugPrint('Error during app initialization after login: $e');
+    }
+  }
+
+  Future<void> _initializeNotificationService() async {
+    try {
+      await NotificationService().init();
+      NotificationService().startPolling(SecureStorage());
+    } catch (e) {
+      debugPrint('[AppInitializer] Notification init failed: $e');
     }
   }
 

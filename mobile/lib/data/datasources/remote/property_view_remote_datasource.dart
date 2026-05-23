@@ -1,4 +1,5 @@
 import 'package:homely/core/network/api_client.dart';
+import 'package:homely/core/network/endpoints.dart';
 
 abstract class PropertyViewRemoteDatasource {
   Future<Map<String, dynamic>> trackView(String propertyId);
@@ -11,7 +12,7 @@ class PropertyViewRemoteDatasourceImpl implements PropertyViewRemoteDatasource {
   @override
   Future<Map<String, dynamic>> trackView(String propertyId) async {
     final response = await ApiClient.post(
-      '/properties/$propertyId/views',
+      Endpoints.trackPropertyView(propertyId),
       body: {},
     );
     return response;
@@ -19,7 +20,9 @@ class PropertyViewRemoteDatasourceImpl implements PropertyViewRemoteDatasource {
 
   @override
   Future<int> getViewCount(String propertyId) async {
-    final response = await ApiClient.get('/properties/$propertyId/views');
+    final response = await ApiClient.get(
+      Endpoints.propertyViewStats(propertyId),
+    );
     return int.tryParse(response['count'].toString()) ?? 0;
   }
 
@@ -27,13 +30,17 @@ class PropertyViewRemoteDatasourceImpl implements PropertyViewRemoteDatasource {
   Future<List<Map<String, dynamic>>> getViewsByProperty(
     String propertyId,
   ) async {
-    final response = await ApiClient.get('/properties/$propertyId/views/list');
+    final response = await ApiClient.get(
+      Endpoints.propertyViewsByProperty(propertyId),
+    );
     return List<Map<String, dynamic>>.from(response ?? []);
   }
 
   @override
   Future<List<Map<String, dynamic>>> getViewsByUser(String userId) async {
-    final response = await ApiClient.get('/users/$userId/views');
+    final response = await ApiClient.get(
+      Endpoints.propertyViewsByUser(userId),
+    );
     return List<Map<String, dynamic>>.from(response ?? []);
   }
 }

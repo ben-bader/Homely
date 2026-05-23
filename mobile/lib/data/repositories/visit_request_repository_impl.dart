@@ -23,7 +23,7 @@ class VisitRequestRepositoryImpl implements IVisitRequestRepository {
     final data = await _remote.getMyRequests();
     return data
         .map((e) =>
-            VisitRequestModel.fromJson(e as Map<String, dynamic>))
+            VisitRequestModel.fromJson(e))
         .toList();
   }
 
@@ -33,7 +33,7 @@ class VisitRequestRepositoryImpl implements IVisitRequestRepository {
     final data = await _remote.getRequestsForProperty(propertyId);
     return data
         .map((e) =>
-            VisitRequestModel.fromJson(e as Map<String, dynamic>))
+            VisitRequestModel.fromJson(e))
         .toList();
   }
 

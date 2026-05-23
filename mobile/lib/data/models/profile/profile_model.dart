@@ -14,15 +14,15 @@ class ProfileModel extends ProfileEntity {
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) => ProfileModel(
-        userId: json['userId']?.toString() ?? '',
-        name: json['name']?.toString() ?? '',
-        email: json['email']?.toString() ?? '',
-        phone: json['phone']?.toString(),
-        bio: json['bio']?.toString(),
-        address: json['address']?.toString(),
-        avatarUrl: json['avtarUrl']?.toString(),
-        idDocumentUrl: json['idDocumentUrl']?.toString(),
-        verified: json['verified'] as bool? ?? false,
+      userId: (json['userId'] ?? json['id'] ?? json['user']?['id'])?.toString() ?? '',
+      name: (json['name'] ?? json['user']?['name'])?.toString() ?? '',
+      email: (json['email'] ?? json['user']?['email'])?.toString() ?? '',
+      phone: (json['phone'] ?? json['user']?['phone'])?.toString(),
+      bio: (json['bio'] ?? json['user']?['bio'])?.toString(),
+      address: (json['address'] ?? json['user']?['address'])?.toString(),
+      avatarUrl: (json['avatarUrl'] ?? json['avtarUrl'] ?? json['user']?['avatarUrl'] ?? json['user']?['avatar'])?.toString(),
+      idDocumentUrl: (json['idDocumentUrl'] ?? json['user']?['idDocumentUrl'])?.toString(),
+      verified: (json['verified'] ?? json['user']?['verified']) as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {

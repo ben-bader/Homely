@@ -1,5 +1,50 @@
 import 'package:flutter/foundation.dart';
 
+class EnvironmentConfig {
+  EnvironmentConfig._();
+
+  static const String _debugBaseUrlFromEnv =
+      String.fromEnvironment('API_BASE_URL', defaultValue: '');
+  static const String _releaseBaseUrlFromEnv =
+      String.fromEnvironment('PRODUCTION_API_BASE_URL', defaultValue: '');
+
+  static const String defaultDevBaseUrl =
+      'https://elegant-jasiah-speedfully.ngrok-free.dev/api';
+  static const String defaultProdBaseUrl = defaultDevBaseUrl;
+
+  static final EnvironmentConfig instance = EnvironmentConfig._();
+
+  String _overrideBaseUrl = '';
+
+  String get baseUrl {
+    if (_overrideBaseUrl.isNotEmpty) return _normalizeUrl(_overrideBaseUrl);
+    if (kReleaseMode) {
+      return _normalizeUrl(
+        _releaseBaseUrlFromEnv.isNotEmpty
+            ? _releaseBaseUrlFromEnv
+            : defaultProdBaseUrl,
+      );
+    }
+    return _normalizeUrl(
+      _debugBaseUrlFromEnv.isNotEmpty ? _debugBaseUrlFromEnv : defaultDevBaseUrl,
+    );
+  }
+
+  void setOverrideBaseUrl(String url) {
+    _overrideBaseUrl = _normalizeUrl(url);
+  }
+
+  void clearOverride() {
+    _overrideBaseUrl = '';
+  }
+
+  static String _normalizeUrl(String url) {
+    if (url.isEmpty) return url;
+    if (url.endsWith('/')) return url.substring(0, url.length - 1);
+    return url;
+  }
+}
+
 /// 🌐 API Endpoints Configuration
 /// Central configuration for all backend API endpoints
 class Endpoints {
@@ -7,27 +52,13 @@ class Endpoints {
 
   // ==================== BASE URL ====================
 
+  static String get baseUrl => EnvironmentConfig.instance.baseUrl;
+
   /// Android emulator uses 10.0.2.2 to reach the host machine.
-  static const String androidDevBaseUrl = 'http://10.0.2.2:8082/api';
+  /// Base URL for development and staging is selected by env values.
 
-  /// Base URL for development
-  static const String devBaseUrl = 'https://unparrying-christene';
-
-  /// Base URL for production
-  static const String prodBaseUrl = 'https://api.homely.com/api';
-
-  /// Base URL for the backend API
-  static const String  baseUrl = "https://unparrying-christene-reductively.ngrok-free.dev/api" ;
-
-  static String _debugBaseUrl() {
-    if (kIsWeb) return devBaseUrl;
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return androidDevBaseUrl;
-      default:
-        return devBaseUrl;
-    }
-  }
+  /// Base URL for production is selected in release mode or via
+  /// --dart-define=PRODUCTION_API_BASE_URL.
 
   // ==================== WEBSOCKET ENDPOINTS ====================
 
@@ -36,16 +67,18 @@ class Endpoints {
   static String getWebSocketUrl() {
     String wsUrl = baseUrl;
     
-    // For ngrok URLs or HTTPS production URLs, use secure WebSocket (wss://)
+    // Remove /api suffix if present
+    wsUrl = wsUrl.replaceAll(RegExp(r'/api$'), '');
+    
+    // Convert protocol to WebSocket protocol
     if (wsUrl.startsWith('https://')) {
       wsUrl = wsUrl.replaceFirst('https://', 'wss://');
     } else if (wsUrl.startsWith('http://')) {
-      // For local development, use insecure WebSocket (ws://)
       wsUrl = wsUrl.replaceFirst('http://', 'ws://');
     }
     
-    // Remove /api suffix if present and add /ws endpoint
-    wsUrl = wsUrl.replaceFirst('/api', '') + '/ws';
+    // Add /ws endpoint
+    wsUrl = '$wsUrl/ws';
     
     return wsUrl;
   }
@@ -138,13 +171,11 @@ class Endpoints {
   // ==================== USER ENDPOINTS ====================
 
   /// GET - Get current user profile
-  static const String profile = '/users/profile';
 
   /// GET - Get user by ID
   static String userById(String id) => '/users/$id';
 
   /// PUT - Update user profile
-  static const String updateProfile = '/users/profile';
 
   /// GET - Get current user profile (alternative endpoint)
   static const String getProfileMe = '/profile/me';
@@ -156,43 +187,37 @@ class Endpoints {
   static const String changePassword = '/users/change-password';
 
   /// POST - Upload profile picture
-  static const String uploadProfilePicture = '/users/profile/picture';
+  static const String uploadProfilePicture = '/profile/picture';
 
   /// DELETE - Delete account
-  static const String deleteAccount = '/users/account';
+  static String deleteAccount(String id) => '/users/$id';
 
-  // ==================== CONVERSATION/CHAT ENDPOINTS ====================
+  static const String createReport = '/users/reports';
+  static String updateFcmToken(String id) => '/users/$id/fcm-token';
 
-  /// GET - Get all conversations
-  static const String conversations = '/conversations';
+  // ==================== PROPERTY VIEW ENDPOINTS ====================
 
-  /// GET - Get conversation by ID
-  static String conversationById(String id) => '/conversations/$id';
+  /// POST - Track a property view
+  static String trackPropertyView(String propertyId) => '/properties/$propertyId/view';
 
-  /// POST - Create new conversation
-  static const String createConversation = '/conversations';
+  /// GET - Get property view stats
+  static String propertyViewStats(String propertyId) => '/properties/$propertyId/views/stats';
 
-  /// GET - Get messages in conversation
-  static String conversationMessages(String conversationId) =>
-      '/conversations/$conversationId/messages';
+  /// GET - Get views by property
+  static String propertyViewsByProperty(String propertyId) => '/property-views/property/$propertyId';
 
-  /// POST - Send message
-  static String sendMessage(String conversationId) =>
-      '/conversations/$conversationId/messages';
+  /// GET - Get views by user
+  static String propertyViewsByUser(String userId) => '/property-views/user/$userId';
 
-  /// PUT - Mark conversation as read
-  static String markAsRead(String conversationId) =>
-      '/conversations/$conversationId/read';
+  // ==================== CHAT ENDPOINTS ====================
 
-  // ==================== CHAT ENDPOINTS (ALTERNATIVE) ====================
-
-  /// GET - Get chat messages
+  /// GET - Get chat messages for a conversation
   static const String chatMessages = '/chat/messages';
 
-  /// GET - Get chat conversations
+  /// GET - Get all chat conversations
   static const String chatConversations = '/chat/conversations';
 
-  /// POST - Create chat conversation for property
+  /// POST - Create chat conversation for a property
   static String createChatConversation(String propertyId) =>
       '/chat/conversations/$propertyId';
 
@@ -203,43 +228,76 @@ class Endpoints {
   static String deleteChatMessage(String messageId) =>
       '/chat/message/$messageId';
 
+  /// DELETE - Delete conversation
+  static String deleteConversation(String conversationId) =>
+      '/chat/conversations/$conversationId';
+
   // ==================== BOOST ENDPOINTS ====================
 
-  /// POST - Purchase boost for property
-  static String purchaseBoost(String propertyId) =>
-      '/properties/$propertyId/boost';
+  /// POST - Purchase/Create boost for property
+  static const String purchaseBoost = '/boost';
+
+  /// GET - Get boost by ID
+  static String getBoostById(String boostId) => '/boost/$boostId';
 
   /// GET - Get boost history
-  static const String boostHistory = '/boost/history';
+  static const String boostHistory = '/boost/status';
 
-  /// GET - Get active boosts
-  static const String activeBoosts = '/boost/active';
+  /// GET - Get active boosts for current seller
+  static const String activeBoosts = '/boost/my-boosts';
+
+  /// GET - Check if property is currently boosted
+  static String isPropertyBoosted(String propertyId) =>
+      '/boost/property/$propertyId/is-boosted';
+
+  /// GET - Get active boost for property
+  static String getActiveBoostForProperty(String propertyId) =>
+      '/boost/property/$propertyId/active';
 
   // ==================== VISIT REQUEST ENDPOINTS ====================
 
   /// POST - Request property visit
-  static String requestVisit(String propertyId) =>
-      '/properties/$propertyId/visits';
+  static const String requestVisit = '/visits';
 
-  /// GET - Get visit requests (for sellers)
+  /// GET - Get visit requests (for sellers managing their properties)
   static const String visitRequests = '/visits/requests';
 
-  /// GET - Get my visit requests (for clients)
+  /// GET - Get my visit requests (for clients who requested visits)
   static const String myVisitRequests = '/visits/my-requests';
 
   /// PUT - Update visit request status
   static String updateVisitStatus(String visitId) => '/visits/$visitId/status';
 
+  /// DELETE - Delete visit request
+  static String deleteVisitRequest(String visitId) => '/visits/$visitId';
+
+  // ==================== SELLER ANALYTICS ENDPOINTS ====================
+
+  /// GET - Get seller analytics dashboard
+  static const String sellerAnalytics = '/seller/analytics';
+
+  /// GET - Get views over time (last 30 days)
+  static const String sellerAnalyticsViewsOverTime = '/seller/analytics/views-over-time';
+
+  /// GET - Get messages over time (last 30 days)
+  static const String sellerAnalyticsMessagesOverTime = '/seller/analytics/messages-over-time';
+
+  /// GET - Get visits over time (last 30 days)
+  static const String sellerAnalyticsVisitsOverTime = '/seller/analytics/visits-over-time';
+
+  /// GET - Get top performing properties
+  static const String sellerAnalyticsTopProperties = '/seller/analytics/top-properties';
+
   // ==================== FEEDBACK ENDPOINTS ====================
 
   /// POST - Submit feedback
-  static const String submitFeedback = '/feedback';
+  static const String submitFeedback = '/feedbacks';
 
   /// GET - Get all feedback (admin)
-  static const String allFeedback = '/feedback/all';
+  static const String allFeedback = '/feedbacks';
 
   /// GET - Get my feedback
-  static const String myFeedback = '/feedback/my';
+  static String myFeedback(String userId) => '/feedbacks/user/$userId';
 
   // ==================== NOTIFICATION ENDPOINTS ====================
 
@@ -305,7 +363,6 @@ class Endpoints {
   }
 
   /// Get base URL based on environment
-  static String getBaseUrl({bool isProduction = false}) {
-    return isProduction ? prodBaseUrl : devBaseUrl;
-  }
+  static String getBaseUrl() => baseUrl;
+
 }

@@ -3,7 +3,9 @@ package com.homely.property.controller;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,8 @@ import com.homely.property.dto.PropertyCreateRequest;
 import com.homely.property.dto.PropertyDto;
 import com.homely.property.dto.PropertyUpdateRequest;
 import com.homely.property.service.PropertyService;
+import com.homely.propertyview.dto.PropertyViewCreateRequest;
+import com.homely.propertyview.service.PropertyViewService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 public class PropertyController {
 
     private final PropertyService propertyService;
+    private final PropertyViewService propertyViewService;
 
     // ✅ Create property
     @PostMapping
@@ -164,5 +169,38 @@ public class PropertyController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         propertyService.delete(id);
+    }
+
+    // ==================== PROPERTY VIEW TRACKING ====================
+
+    /// POST - Track property view
+    @PostMapping("/{id}/view")
+    public ResponseEntity<?> trackPropertyView(
+            @PathVariable UUID id,
+            Principal principal) {
+        try {
+            String userEmail = principal != null ? principal.getName() : null;
+            PropertyViewCreateRequest request = new PropertyViewCreateRequest();
+            request.setPropertyId(id);
+            propertyViewService.create(request, userEmail);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Property view tracked"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    /// GET - Get property view statistics
+    @GetMapping("/{id}/views/stats")
+    public ResponseEntity<?> getPropertyViewStats(@PathVariable UUID id) {
+        try {
+            long viewCount = propertyViewService.countByProperty(id);
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("propertyId", id);
+            stats.put("totalViews", viewCount);
+            stats.put("timestamp", Instant.now());
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "error", e.getMessage()));
+        }
     }
 }

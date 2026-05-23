@@ -100,10 +100,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.30),
+                      Colors.black.withValues(alpha: 0.30),
                       Colors.transparent,
                       Colors.transparent,
-                      Colors.black.withOpacity(0.90),
+                      Colors.black.withValues(alpha: 0.90),
                     ],
                     stops: const [0, 0.3, 0.50, 1],
                   ),
@@ -129,7 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   TextButton(
                     onPressed: skip,
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.18),
+                      backgroundColor: Colors.white.withValues(alpha: 0.18),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 22,
                         vertical: 10,
@@ -137,7 +137,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                         side: BorderSide(
-                          color: Colors.white.withOpacity(0.35),
+                          color: Colors.white.withValues(alpha: 0.35),
                           width: 1,
                         ),
                       ),
@@ -248,7 +248,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
+                              color: Colors.black.withValues(alpha: 0.25),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:homely/core/theme/app_colors.dart';
+import 'package:homely/ui/widgets/skeletons.dart';
 import 'package:homely/ui/providers/property_providers.dart';
 import 'package:homely/ui/providers/profile_providers.dart';
 import 'package:homely/ui/providers/auth_providers.dart';
@@ -26,12 +27,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: profileAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.primary,
-          ),
-        ),
+        loading: () => const SimpleListSkeleton(),
         error: (e, _) => _ErrorView(
           message: e.toString(),
           onRetry: () => ref.invalidate(profileNotifierProvider),
@@ -210,7 +206,7 @@ class _ProfileContent extends ConsumerWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -329,7 +325,6 @@ class _ProfileHero extends StatelessWidget {
             style: GoogleFonts.outfit(
               color: AppColors.accent,
               fontSize: 30,
-              fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
               height: 1.1,
             ),
@@ -392,7 +387,7 @@ class _ProfileHero extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00B894).withOpacity(0.12),
+                          color: const Color(0xFF00B894).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -449,7 +444,7 @@ class _ProfileHero extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -536,7 +531,7 @@ class _ProfileHero extends StatelessWidget {
                   Icon(
                     Icons.format_quote_rounded,
                     size: 16,
-                    color: AppColors.primary.withOpacity(0.5),
+                    color: AppColors.primary.withValues(alpha: 0.5),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -593,7 +588,7 @@ class _Avatar extends ConsumerWidget {
           border: Border.all(color: AppColors.background, width: 3),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.14),
+              color: Colors.black.withValues(alpha: 0.14),
               blurRadius: 18,
               offset: const Offset(0, 6),
             ),
@@ -609,7 +604,7 @@ class _Avatar extends ConsumerWidget {
                     return Image.file(
                       File(path),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _fallback(),
+                      errorBuilder: (_, _, _) => _fallback(),
                     );
                   }
                   return profile.avatarUrl != null &&
@@ -617,7 +612,7 @@ class _Avatar extends ConsumerWidget {
                       ? Image.network(
                           profile.avatarUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _fallback(),
+                          errorBuilder: (_, _, _) => _fallback(),
                         )
                       : _fallback();
                 },
@@ -627,7 +622,7 @@ class _Avatar extends ConsumerWidget {
                     color: AppColors.primary,
                   ),
                 ),
-                error: (_, __) => _fallback(),
+                error: (_, _) => _fallback(),
               ),
             ),
             Positioned(
@@ -703,7 +698,7 @@ class _Avatar extends ConsumerWidget {
   }
 
   Widget _fallback() => Container(
-    color: AppColors.primary.withOpacity(0.1),
+    color: AppColors.primary.withValues(alpha: 0.1),
     child: Center(
       child: Text(
         _initials(),
@@ -737,7 +732,7 @@ class _StatChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 8,
           offset: const Offset(0, 2),
         ),
@@ -822,7 +817,7 @@ class _MenuCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -875,7 +870,7 @@ class _MenuRow extends StatelessWidget {
               height: 38,
               decoration: BoxDecoration(
                 color: item.isDestructive
-                    ? AppColors.error.withOpacity(0.08)
+                    ? AppColors.error.withValues(alpha: 0.08)
                     : AppColors.subtleBackground,
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -918,7 +913,7 @@ class _MenuRow extends StatelessWidget {
             Icon(
               Icons.chevron_right_rounded,
               size: 18,
-              color: AppColors.textTertiary.withOpacity(0.6),
+              color: AppColors.textTertiary.withValues(alpha: 0.6),
             ),
           ],
         ),
@@ -997,7 +992,7 @@ class _PersonalInfoScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -1022,7 +1017,7 @@ class _PersonalInfoScreen extends StatelessWidget {
                             width: 34,
                             height: 34,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.08),
+                              color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(9),
                             ),
                             child: Icon(
@@ -1171,7 +1166,7 @@ class _MyListingsScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
             itemCount: listings.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (_, i) => _ListingCard(property: listings[i]),
           );
         },
@@ -1191,7 +1186,7 @@ class _ListingCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 8,
           offset: const Offset(0, 3),
         ),
@@ -1209,7 +1204,7 @@ class _ListingCard extends StatelessWidget {
                     width: 56,
                     height: 56,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(),
+                    errorBuilder: (_, _, _) => _placeholder(),
                   )
                 : _placeholder(),
           ),
@@ -1245,7 +1240,7 @@ class _ListingCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: _statusColor(property.status.toString()).withOpacity(0.1),
+              color: _statusColor(property.status.toString()).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -1436,12 +1431,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppColors.primary.withValues(alpha: 0.2),
                             width: 2.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.15),
+                              color: AppColors.primary.withValues(alpha: 0.15),
                               blurRadius: 20,
                               offset: const Offset(0, 6),
                             ),
@@ -1458,7 +1453,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     return Image.file(
                                       File(path),
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
+                                      errorBuilder: (_, _, _) =>
                                           _avatarFallback(),
                                     );
                                   }
@@ -1467,7 +1462,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                       ? Image.network(
                                           widget.profile.avatarUrl!,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
+                                          errorBuilder: (_, _, _) =>
                                               _avatarFallback(),
                                         )
                                       : _avatarFallback();
@@ -1478,7 +1473,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     color: AppColors.primary,
                                   ),
                                 ),
-                                error: (_, __) => _avatarFallback(),
+                                error: (_, _) => _avatarFallback(),
                               ),
                         ),
                       ),
@@ -1497,7 +1492,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.4),
+                                color: AppColors.primary.withValues(alpha: 0.4),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -1590,7 +1585,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   onPressed: isSaving ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
-                    disabledBackgroundColor: AppColors.accent.withOpacity(0.4),
+                    disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.4),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -1668,7 +1663,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _avatarFallback() => Container(
-    color: AppColors.primary.withOpacity(0.08),
+    color: AppColors.primary.withValues(alpha: 0.08),
     child: const Icon(Icons.person, color: AppColors.primary, size: 38),
   );
 }

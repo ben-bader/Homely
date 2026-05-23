@@ -25,7 +25,7 @@ class FeedbackRepositoryImpl implements IFeedbackRepository {
     final data = await _remote.getByProperty(propertyId);
     return data
         .map((e) =>
-            FeedbackModel.fromJson(e as Map<String, dynamic>))
+            FeedbackModel.fromJson(e))
         .toList();
   }
 
@@ -34,7 +34,7 @@ class FeedbackRepositoryImpl implements IFeedbackRepository {
     final data = await _remote.getByUser(userId);
     return data
         .map((e) =>
-            FeedbackModel.fromJson(e as Map<String, dynamic>))
+            FeedbackModel.fromJson(e))
         .toList();
   }
 

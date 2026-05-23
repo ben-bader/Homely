@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import '../../../domain/entities/property/property_entity.dart';
-import '../../../domain/entities/property/property_subtype_entities.dart';
 import 'property_subtype_models.dart';
 
 class PropertyModel extends PropertyEntity {

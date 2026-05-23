@@ -108,20 +108,27 @@ class PropertiesNotifier extends AsyncNotifier<List<PropertyEntity>> {
 
     if (filter.isFiltering) {
       final params = <String, String>{};
-      if (filter.listingType != null)
+      if (filter.listingType != null) {
         params['listingType'] = filter.listingType!.toJson();
-      if (filter.propertyType != null)
+      }
+      if (filter.propertyType != null) {
         params['propertyType'] = filter.propertyType!.toJson();
-      if (filter.minPrice != null)
+      }
+      if (filter.minPrice != null) {
         params['minPrice'] = filter.minPrice.toString();
-      if (filter.maxPrice != null)
+      }
+      if (filter.maxPrice != null) {
         params['maxPrice'] = filter.maxPrice.toString();
-      if (filter.city != null && filter.city!.isNotEmpty)
+      }
+      if (filter.city != null && filter.city!.isNotEmpty) {
         params['city'] = filter.city!;
-      if (filter.fromDate != null)
+      }
+      if (filter.fromDate != null) {
         params['fromDate'] = filter.fromDate!.toUtc().toIso8601String();
-      if (filter.toDate != null)
+      }
+      if (filter.toDate != null) {
         params['toDate'] = filter.toDate!.toUtc().toIso8601String();
+      }
       return repo.filter(params);
     }
 

@@ -13,6 +13,7 @@ import 'package:homely/core/theme/app_colors.dart';
 import 'package:homely/ui/screens/property/property_detail_screen.dart';
 import 'package:homely/ui/screens/seller/create_property_screen.dart';
 import 'package:homely/ui/screens/seller/edit_property_screen.dart';
+import 'package:homely/ui/screens/seller/seller_dashboard_screen.dart';
 import 'package:homely/ui/providers/auth_providers.dart';
 import 'package:homely/ui/widgets/boost/boost_sheet.dart';
 import 'package:homely/ui/screens/favorites/favorites_screen.dart';
@@ -111,7 +112,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, __) => Scaffold(
+      error: (_, _) => Scaffold(
         backgroundColor: AppColors.background,
         body: const _PlaceholderTab(label: 'Error loading user'),
       ),
@@ -119,7 +120,7 @@ class HomeScreen extends ConsumerWidget {
         final isSeller = userRole == 'SELLER';
         final tabs = isSeller ? _buildSellerTabs() : _buildClientTabs();
 
-        ref.listen(navIndexProvider, (_, __) {
+        ref.listen(navIndexProvider, (_, _) {
           ref.invalidate(navBadgesProvider);
         });
 
@@ -237,10 +238,12 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
       final Set<String> seen = {};
       final List<String> results = [];
       for (final p in allListings) {
-        if (p.title.toLowerCase().contains(q) && seen.add(p.title))
+        if (p.title.toLowerCase().contains(q) && seen.add(p.title)) {
           results.add(p.title);
-        if (p.address.toLowerCase().contains(q) && seen.add(p.address))
+        }
+        if (p.address.toLowerCase().contains(q) && seen.add(p.address)) {
           results.add(p.address);
+        }
       }
       setState(() => _suggestions = results.take(5).toList());
     }
@@ -318,7 +321,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
           // ── Header ────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -330,9 +333,19 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                         letterSpacing: -0.5,
                         height: 1.1,
                         fontSize: 30,
-                        fontWeight: FontWeight.w800,
                       ),
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.insights_rounded),
+                    color: AppColors.primary,
+                    tooltip: 'Seller dashboard',
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        SellerDashboardScreen.routeName,
+                      );
+                    },
                   ),
                   _NotifBtn(
                     onTap: () async {
@@ -347,8 +360,6 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                       setState(() {});
                     },
                   ),
-                  const SizedBox(width: 10),
-                  const _AvatarBtn(),
                 ],
               ),
             ),
@@ -368,7 +379,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                       borderRadius: BorderRadius.circular(50),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(1, 2),
                         ),
@@ -407,7 +418,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                         ),
                         ValueListenableBuilder<TextEditingValue>(
                           valueListenable: _searchController,
-                          builder: (_, value, __) => value.text.isNotEmpty
+                          builder: (_, value, _) => value.text.isNotEmpty
                               ? GestureDetector(
                                   onTap: _clearSearch,
                                   child: Padding(
@@ -450,7 +461,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
@@ -524,7 +535,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                 itemCount: _statusChips.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final chip = _statusChips[i];
                   final chipStatus = _chipToStatus(chip);
@@ -604,7 +615,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.08),
+                          color: AppColors.error.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -748,7 +759,7 @@ class _SellerListingsTabState extends ConsumerState<_SellerListingsTab> {
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                     sliver: SliverList.separated(
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (ctx, i) => _SellerPropertyCard(
                         property: filtered[i],
                         onTap: () => Navigator.push(
@@ -788,7 +799,7 @@ class _SellerPropertyCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -808,7 +819,7 @@ class _SellerPropertyCard extends ConsumerWidget {
                     ? Image.network(
                         property.images.first,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _placeholder(),
+                        errorBuilder: (_, _, _) => _placeholder(),
                       )
                     : _placeholder(),
               ),
@@ -1194,7 +1205,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.10),
+                    color: Colors.black.withValues(alpha: 0.10),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -1355,8 +1366,6 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                         setState(() {});
                       },
                     ),
-                    const SizedBox(width: 10),
-                    const _AvatarBtn(),
                   ],
                 ],
               ),
@@ -1382,7 +1391,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                       borderRadius: BorderRadius.circular(50),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(1, 2),
                         ),
@@ -1424,7 +1433,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                         ),
                         ValueListenableBuilder<TextEditingValue>(
                           valueListenable: _searchController,
-                          builder: (_, value, __) => value.text.isNotEmpty
+                          builder: (_, value, _) => value.text.isNotEmpty
                               ? GestureDetector(
                                   onTap: () {
                                     _hideSuggestion();
@@ -1508,7 +1517,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                 itemCount: _types.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final t = _types[i];
                   final selected = _isChipSelected(t, filter);
@@ -1594,7 +1603,7 @@ class _ExploreTabState extends ConsumerState<_ExploreTab> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.08),
+                          color: AppColors.error.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -1711,8 +1720,9 @@ class _FeaturedSection extends ConsumerWidget {
 
     return propertiesAsync.maybeWhen(
       data: (props) {
-        if (props.isEmpty)
+        if (props.isEmpty) {
           return const SliverToBoxAdapter(child: SizedBox.shrink());
+        }
         final featured = props.take(5).toList();
         return SliverToBoxAdapter(
           child: Column(
@@ -1747,7 +1757,7 @@ class _FeaturedSection extends ConsumerWidget {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
                   itemCount: featured.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  separatorBuilder: (_, _) => const SizedBox(width: 14),
                   itemBuilder: (ctx, i) => _FeaturedCard(
                     property: featured[i],
                     onTap: () => Navigator.push(
@@ -1793,7 +1803,7 @@ class _FeaturedCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -1808,7 +1818,7 @@ class _FeaturedCard extends ConsumerWidget {
                   ? Image.network(
                       property.images.first,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         color: AppColors.subtleBackground,
                         child: const Icon(
                           Icons.home_outlined,
@@ -1832,7 +1842,7 @@ class _FeaturedCard extends ConsumerWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.65),
+                      Colors.black.withValues(alpha: 0.65),
                     ],
                     stops: const [0.4, 1.0],
                   ),
@@ -1876,7 +1886,7 @@ class _FeaturedCard extends ConsumerWidget {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.92),
+                    color: Colors.white.withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Text(
@@ -1908,7 +1918,7 @@ class _FeaturedCard extends ConsumerWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.92),
+                      color: Colors.white.withValues(alpha: 0.92),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -2054,7 +2064,7 @@ class _PropertyList extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
               sliver: SliverList.separated(
                 itemCount: props.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                separatorBuilder: (_, _) => const SizedBox(height: 14),
                 itemBuilder: (_, i) => PropertyCard(
                   property: props[i],
                   searchQuery: filter.search ?? '',
@@ -2152,8 +2162,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             onPrimary: Colors.white,
             surface: AppColors.cardBackground,
             onSurface: AppColors.accent,
-          ),
-          dialogBackgroundColor: AppColors.cardBackground,
+          ), dialogTheme: DialogThemeData(backgroundColor: AppColors.cardBackground),
         ),
         child: child!,
       ),
@@ -2245,7 +2254,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.08),
+                      color: AppColors.error.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -2275,9 +2284,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   padding: const EdgeInsets.only(right: 8),
                   child: GestureDetector(
                     onTap: () => setState(() {
-                      if (s == 'All')
+                      if (s == 'All') {
                         _listingType = null;
-                      else if (s == 'Rent')
+                      } else if (s == 'Rent')
                         _listingType = ListingType.rent;
                       else
                         _listingType = ListingType.sell;
@@ -2501,11 +2510,11 @@ class _DatePickerField extends StatelessWidget {
         height: 48,
         decoration: BoxDecoration(
           color: hasValue
-              ? AppColors.primary.withOpacity(0.08)
+              ? AppColors.primary.withValues(alpha: 0.08)
               : AppColors.subtleBackground,
           borderRadius: BorderRadius.circular(12),
           border: hasValue
-              ? Border.all(color: AppColors.primary.withOpacity(0.3), width: 1)
+              ? Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1)
               : null,
         ),
         child: Row(
@@ -2635,7 +2644,7 @@ class PropertyCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.09),
+              color: Colors.black.withValues(alpha: 0.09),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -2657,7 +2666,7 @@ class PropertyCard extends ConsumerWidget {
                         ? Image.network(
                             property.images.first,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _placeholder(),
+                            errorBuilder: (_, _, _) => _placeholder(),
                           )
                         : _placeholder(),
                   ),
@@ -2835,15 +2844,16 @@ class _HighlightText extends StatelessWidget {
         spans.add(TextSpan(text: text.substring(start), style: baseStyle));
         break;
       }
-      if (idx > start)
+      if (idx > start) {
         spans.add(TextSpan(text: text.substring(start, idx), style: baseStyle));
+      }
       spans.add(
         TextSpan(
           text: text.substring(idx, idx + q.length),
           style: baseStyle?.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.w800,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
           ),
         ),
       );
@@ -2901,94 +2911,70 @@ class _NotifBtn extends ConsumerStatefulWidget {
 }
 
 class _NotifBtnState extends ConsumerState<_NotifBtn> {
-  int _unreadCount = 0;
-
   @override
-  void initState() {
-    super.initState();
-    _load();
-  }
+  Widget build(BuildContext context) {
+    final userIdAsync = ref.watch(currentUserIdProvider);
+    final unreadCount = userIdAsync.when(
+      data: (userId) {
+        if (userId == null) return 0;
+        final notificationsAsync = ref.watch(notificationsProvider(userId));
+        return notificationsAsync.when(
+          data: (notifications) => notifications.where((n) => !n.read).length,
+          loading: () => 0,
+          error: (_, __) => 0,
+        );
+      },
+      loading: () => 0,
+      error: (_, __) => 0,
+    );
 
-  Future<void> _load() async {
-    final userId = await ref.read(authRepositoryProvider).getCurrentUserId();
-    if (userId == null) return;
-    final notifications = await ref.read(notificationsProvider(userId).future);
-    if (mounted)
-      setState(() => _unreadCount = notifications.where((n) => !n.read).length);
-  }
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: widget.onTap,
-    child: Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.subtleBackground,
-            borderRadius: BorderRadius.circular(50),
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.subtleBackground,
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: const Icon(
+              Icons.notifications_outlined,
+              color: AppColors.accentLight,
+              size: 20,
+            ),
           ),
-          child: const Icon(
-            Icons.notifications_outlined,
-            color: AppColors.accentLight,
-            size: 20,
-          ),
-        ),
-        if (_unreadCount > 0)
-          Positioned(
-            top: 1,
-            right: 1,
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: const BoxDecoration(
-                color: AppColors.error,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  '$_unreadCount',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
+          if (unreadCount > 0)
+            Positioned(
+              top: 1,
+              right: 1,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: const BoxDecoration(
+                  color: AppColors.error,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    '$unreadCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
-// ── Avatar Button ─────────────────────────────────────────────────────────────
-class _AvatarBtn extends StatelessWidget {
-  const _AvatarBtn();
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 44,
-    height: 44,
-    decoration: BoxDecoration(
-      color: AppColors.accentLight,
-      borderRadius: BorderRadius.circular(50),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
-    child: const Icon(
-      Icons.person_rounded,
-      color: AppColors.background,
-      size: 22,
-    ),
-  );
-}
 
 // ═════════════════════════════════════════════════════════════════════════════
 // BOTTOM NAV
@@ -3076,7 +3062,7 @@ class _BottomNav extends ConsumerWidget {
             color: AppColors.background,
             border: Border(
               top: BorderSide(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 width: 0.5,
               ),
             ),

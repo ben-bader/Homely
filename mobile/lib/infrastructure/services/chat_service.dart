@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../../core/network/endpoints.dart';
 import '../../data/datasources/local/secure_storage.dart';
@@ -13,24 +15,46 @@ class ChatService {
   final SecureStorage _storage = SecureStorage();
   final StreamController<Map<String, dynamic>> _messageController =
       StreamController<Map<String, dynamic>>.broadcast();
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  bool _isConnecting = false;
 
   Stream<Map<String, dynamic>> get messageStream => _messageController.stream;
 
   Future<void> init() async {
-    final token = await _storage.getToken();
-    if (token != null) {
-      _connect(token);
+    try {
+      final token = await _storage.getToken();
+      if (token != null) {
+        _connect(token);
+      }
+    } catch (e) {
+      debugPrint('[ChatService] init failed: $e');
     }
   }
 
   void _connect(String token) {
+    if (_isConnecting || _stompClient?.isActive == true) return;
+    _isConnecting = true;
+    _reconnectTimer?.cancel();
+
     _stompClient = StompClient(
       config: StompConfig(
         url: Endpoints.getWebSocketUrl(),
-        onConnect: _onConnect,
-        onWebSocketError: (error) => print('Chat WebSocket error: $error'),
-        onStompError: (error) => print('Chat STOMP error: $error'),
-        onDisconnect: (frame) => print('Chat Disconnected: $frame'),
+        onConnect: (frame) {
+          _reconnectAttempts = 0;
+          _isConnecting = false;
+          _onConnect(frame);
+        },
+        onWebSocketError: (error) {
+          debugPrint('[ChatService] WebSocket error: $error');
+        },
+        onStompError: (error) {
+          debugPrint('[ChatService] STOMP error: $error');
+        },
+        onDisconnect: (frame) {
+          debugPrint('[ChatService] Disconnected: $frame');
+          _scheduleReconnect(token);
+        },
         stompConnectHeaders: {'Authorization': 'Bearer $token'},
         webSocketConnectHeaders: {'Authorization': 'Bearer $token'},
       ),
@@ -39,19 +63,34 @@ class ChatService {
   }
 
   void _onConnect(StompFrame frame) {
-    print('Connected to Chat STOMP');
+    debugPrint('[ChatService] Connected to Chat STOMP');
 
-    // Subscribe to user's chat messages
     final userId = _storage.getUserId();
-    if (userId != null) {
-      _stompClient?.subscribe(
-        destination: '/user/$userId/chat',
-        callback: (frame) {
-          final message = jsonDecode(frame.body ?? '{}');
-          _messageController.add(message);
-        },
-      );
+    _stompClient?.subscribe(
+      destination: '/user/$userId/chat',
+      callback: (frame) {
+        final message = jsonDecode(frame.body ?? '{}');
+        _messageController.add(message);
+      },
+    );
+  }
+
+  void _scheduleReconnect(String token) {
+    _reconnectTimer?.cancel();
+    _reconnectAttempts++;
+    if (_reconnectAttempts > 5) {
+      debugPrint('[ChatService] Reconnect attempts exhausted.');
+      return;
     }
+
+    final delaySeconds = min(30, 1 << (_reconnectAttempts - 1));
+    debugPrint('[ChatService] Reconnecting in $delaySeconds seconds...');
+    _reconnectTimer = Timer(Duration(seconds: delaySeconds), () async {
+      final authToken = await _storage.getToken();
+      if (authToken != null) {
+        _connect(authToken);
+      }
+    });
   }
 
   bool get isConnected => _stompClient?.isActive ?? false;
@@ -60,7 +99,6 @@ class ChatService {
     final token = await _storage.getToken();
     if (token != null) {
       _connect(token);
-      // Wait a bit for connection
       await Future.delayed(const Duration(seconds: 1));
       onConnected?.call();
     }
@@ -70,8 +108,9 @@ class ChatService {
     String conversationId,
     void Function(Map<String, dynamic>) onMessage,
   ) {
-    if (_stompClient?.isActive == true) {
-      _stompClient?.subscribe(
+    final bool isActive = _stompClient?.isActive ?? false;
+    if (isActive) {
+      _stompClient!.subscribe(
         destination: '/topic/chat/$conversationId',
         callback: (frame) {
           final message = jsonDecode(frame.body ?? '{}');
@@ -94,6 +133,7 @@ class ChatService {
   }
 
   void disconnect() {
+    _reconnectTimer?.cancel();
     _stompClient?.deactivate();
     _messageController.close();
   }

@@ -267,7 +267,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           disabledBackgroundColor:
-              AppColors.primary.withOpacity(0.5),
+              AppColors.primary.withValues(alpha: 0.5),
           elevation: 0,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30)),

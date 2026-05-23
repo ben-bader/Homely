@@ -21,7 +21,7 @@ class PropertyViewCountBadge extends ConsumerWidget {
 
     return countAsync.when(
       loading: () => expanded ? _ExpandedSkeleton() : _CompactSkeleton(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (count) =>
           expanded ? _ExpandedBadge(count: count) : _CompactBadge(count: count),
     );

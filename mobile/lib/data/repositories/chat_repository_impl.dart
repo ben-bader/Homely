@@ -16,7 +16,7 @@ class ChatRepositoryImpl implements IChatRepository {
     final data = await _remote.fetchMessages(conversationId);
     return data
         .map((e) =>
-            MessageModel.fromJson(e as Map<String, dynamic>))
+            MessageModel.fromJson(e))
         .toList();
   }
 
@@ -32,7 +32,7 @@ class ChatRepositoryImpl implements IChatRepository {
     final data = await _remote.fetchConversations();
     return data
         .map((e) =>
-            ConversationModel.fromJson(e as Map<String, dynamic>))
+            ConversationModel.fromJson(e))
         .toList();
   }
 

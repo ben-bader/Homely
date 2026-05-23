@@ -13,7 +13,7 @@ class FavoriteRepositoryImpl implements IFavoriteRepository {
     final data = await _remote.getUserFavorites();
     return data
         .map((e) =>
-            FavoriteModel.fromJson(e as Map<String, dynamic>))
+            FavoriteModel.fromJson(e))
         .toList();
   }
 

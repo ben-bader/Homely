@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:homely/core/theme/app_colors.dart';
 import 'package:homely/ui/screens/boost/my_boosts_screen.dart';
 import 'package:homely/domain/entities/notification/notification_entity.dart';
 import 'package:homely/ui/screens/chat/conversations_screen.dart';
 import 'package:homely/ui/screens/visit_requests/seller_visit_requests_screen.dart';
 import 'package:homely/ui/screens/property/property_detail_screen.dart';
-import 'package:homely/ui/widgets/boost/boost_sheet.dart';
 import 'package:homely/ui/screens/chat/chat_screen.dart';
 import 'package:homely/ui/providers/notification_providers.dart';
 
@@ -54,17 +54,21 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _markRead(NotificationEntity notification) async {
-    await ref.read(notificationRepositoryProvider).markAsRead(notification.id);
+    // Optimistic update: refresh UI immediately, then send request
     ref.invalidate(notificationsProvider(widget.userId));
+    try {
+      await ref.read(notificationRepositoryProvider).markAsRead(notification.id);
+    } catch (_) {}
   }
 
   Future<void> _markAllRead(List<NotificationEntity> notifications) async {
-    for (final notification in notifications.where((n) => !n.read)) {
-      await ref
-          .read(notificationRepositoryProvider)
-          .markAsRead(notification.id);
-    }
+    // Optimistic: refresh UI first
     ref.invalidate(notificationsProvider(widget.userId));
+    for (final notification in notifications.where((n) => !n.read)) {
+      try {
+        await ref.read(notificationRepositoryProvider).markAsRead(notification.id);
+      } catch (_) {}
+    }
   }
 
   void _handleTap(NotificationEntity notification) {
@@ -149,19 +153,34 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: notificationsAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.primary,
-            ),
-          ),
+          loading: () => const _NotificationsSkeleton(),
           error: (e, _) => Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text(
-                e.toString(),
-                style: GoogleFonts.outfit(fontSize: 14, color: AppColors.error),
-                textAlign: TextAlign.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Unable to load notifications.',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      color: AppColors.error,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 14),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                    ),
+                    onPressed: () =>
+                        ref.invalidate(notificationsProvider(widget.userId)),
+                    child: Text(
+                      'Retry',
+                      style: GoogleFonts.outfit(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -277,6 +296,53 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationsSkeleton extends StatelessWidget {
+  const _NotificationsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.subtleBackground,
+      highlightColor: AppColors.background,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Column(
+          children: List.generate(5, (index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(height: 16, width: 120, color: Colors.white),
+                    const SizedBox(height: 10),
+                    Container(
+                      height: 12,
+                      width: double.infinity,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 12,
+                      width: MediaQuery.of(context).size.width * 0.5,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -403,7 +469,7 @@ class _NotificationTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: unread
-              ? AppColors.primary.withOpacity(0.03)
+              ? AppColors.primary.withValues(alpha: 0.03)
               : Colors.transparent,
           border: Border(
             bottom: BorderSide(color: AppColors.borderLight, width: 0.8),
@@ -417,7 +483,7 @@ class _NotificationTile extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: content.iconColor.withOpacity(0.1),
+                color: content.iconColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(content.icon, color: content.iconColor, size: 22),
@@ -502,7 +568,7 @@ class _NotificationTile extends StatelessWidget {
                   child: Icon(
                     Icons.check_circle_outline_rounded,
                     size: 18,
-                    color: AppColors.primary.withOpacity(0.6),
+                    color: AppColors.primary.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -644,10 +710,10 @@ class _TabChip extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: selected
-                      ? Colors.white.withOpacity(0.25)
+                      ? Colors.white.withValues(alpha: 0.25)
                       : (isUnread
-                            ? AppColors.error.withOpacity(0.12)
-                            : AppColors.primary.withOpacity(0.12)),
+                            ? AppColors.error.withValues(alpha: 0.12)
+                            : AppColors.primary.withValues(alpha: 0.12)),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(

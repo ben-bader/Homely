@@ -13,12 +13,15 @@ class Validators {
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Password is required';
     if (value.length < 8) return 'Password must be at least 8 characters';
-    if (!value.contains(RegExp(r'[A-Z]')))
+    if (!value.contains(RegExp(r'[A-Z]'))) {
       return 'Password must contain at least one uppercase letter';
-    if (!value.contains(RegExp(r'[a-z]')))
+    }
+    if (!value.contains(RegExp(r'[a-z]'))) {
       return 'Password must contain at least one lowercase letter';
-    if (!value.contains(RegExp(r'[0-9]')))
+    }
+    if (!value.contains(RegExp(r'[0-9]'))) {
       return 'Password must contain at least one number';
+    }
     return null;
   }
 
@@ -40,20 +43,23 @@ class Validators {
     if (value == null || value.isEmpty) return 'Phone number is required';
     final cleanedValue = value.replaceAll(RegExp(r'[\s-]'), '');
     final phoneRegex = RegExp(r'^\+?[0-9]{10,15}$');
-    if (!phoneRegex.hasMatch(cleanedValue))
+    if (!phoneRegex.hasMatch(cleanedValue)) {
       return 'Please enter a valid phone number';
+    }
     return null;
   }
 
   static String? validateRequired(String? value, {String? fieldName}) {
-    if (value == null || value.isEmpty)
+    if (value == null || value.isEmpty) {
       return '${fieldName ?? 'This field'} is required';
+    }
     return null;
   }
 
   static String? validateNumber(String? value, {String? fieldName}) {
-    if (value == null || value.isEmpty)
+    if (value == null || value.isEmpty) {
       return '${fieldName ?? 'This field'} is required';
+    }
     if (double.tryParse(value) == null) return 'Please enter a valid number';
     return null;
   }
@@ -71,10 +77,12 @@ class Validators {
     int minLength, {
     String? fieldName,
   }) {
-    if (value == null || value.isEmpty)
+    if (value == null || value.isEmpty) {
       return '${fieldName ?? 'This field'} is required';
-    if (value.length < minLength)
+    }
+    if (value.length < minLength) {
       return '${fieldName ?? 'This field'} must be at least $minLength characters';
+    }
     return null;
   }
 
@@ -83,8 +91,9 @@ class Validators {
     int maxLength, {
     String? fieldName,
   }) {
-    if (value != null && value.length > maxLength)
+    if (value != null && value.length > maxLength) {
       return '${fieldName ?? 'This field'} must not exceed $maxLength characters';
+    }
     return null;
   }
 
@@ -107,8 +116,9 @@ class Validators {
 
   static String? validateDescription(String? value, {int minLength = 10}) {
     if (value == null || value.isEmpty) return 'Description is required';
-    if (value.length < minLength)
+    if (value.length < minLength) {
       return 'Description must be at least $minLength characters';
+    }
     return null;
   }
 
@@ -124,8 +134,9 @@ class Validators {
     bool required = true,
   }) {
     return (String? value) {
-      if (value == null || value.isEmpty)
+      if (value == null || value.isEmpty) {
         return required ? 'This field is required' : null;
+      }
       if (!regex.hasMatch(value)) return errorMessage;
       return null;
     };

@@ -334,7 +334,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           boxShadow: [
             BoxShadow(
               color: Colors.black
-                  .withOpacity(isSelected ? 0.15 : 0.05),
+                  .withValues(alpha: isSelected ? 0.15 : 0.05),
               blurRadius: isSelected ? 12 : 8,
               offset: const Offset(0, 4),
             ),
@@ -371,7 +371,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           disabledBackgroundColor:
-              AppColors.primary.withOpacity(0.5),
+              AppColors.primary.withValues(alpha: 0.5),
           elevation: 0,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30)),

@@ -1,4 +1,5 @@
 import 'package:homely/core/network/api_client.dart';
+import 'package:homely/core/network/endpoints.dart';
 
 abstract class FeedbackRemoteDatasource {
   Future<List<Map<String, dynamic>>> getPropertyFeedback(String propertyId);
@@ -23,8 +24,12 @@ class FeedbackRemoteDatasourceImpl implements FeedbackRemoteDatasource {
   Future<List<Map<String, dynamic>>> getPropertyFeedback(
     String propertyId,
   ) async {
-    final response = await ApiClient.get('/feedback/property/$propertyId');
-    return List<Map<String, dynamic>>.from(response ?? []);
+    try {
+      final response = await ApiClient.get('/feedbacks/property/$propertyId');
+      return List<Map<String, dynamic>>.from(response ?? []);
+    } catch (_) {
+      return <Map<String, dynamic>>[];
+    }
   }
 
   @override
@@ -32,29 +37,37 @@ class FeedbackRemoteDatasourceImpl implements FeedbackRemoteDatasource {
     String propertyId,
     Map<String, dynamic> feedback,
   ) async {
-    final response = await ApiClient.post(
-      '/feedback',
-      body: {'propertyId': propertyId, ...feedback},
-    );
-    return response;
+    try {
+      final response = await ApiClient.post(
+        Endpoints.submitFeedback,
+        body: {'propertyId': propertyId, ...feedback},
+      );
+      return response as Map<String, dynamic>? ?? <String, dynamic>{};
+    } catch (_) {
+      return <String, dynamic>{};
+    }
   }
 
   @override
   Future<Map<String, dynamic>> getPropertyAverageRating(
     String propertyId,
   ) async {
-    final response = await ApiClient.get(
-      '/feedback/property/$propertyId/rating',
-    );
-    return response;
+    try {
+      final response = await ApiClient.get('/feedbacks/property/$propertyId/rating');
+      return response as Map<String, dynamic>? ?? <String, dynamic>{};
+    } catch (_) {
+      return <String, dynamic>{};
+    }
   }
 
   @override
   Future<int> getPropertyReviewCount(String propertyId) async {
-    final response = await ApiClient.get(
-      '/feedback/property/$propertyId/count',
-    );
-    return int.tryParse(response['count'].toString()) ?? 0;
+    try {
+      final response = await ApiClient.get('/feedbacks/property/$propertyId/count');
+      return int.tryParse(response['count'].toString()) ?? 0;
+    } catch (_) {
+      return 0;
+    }
   }
 
   @override
@@ -67,7 +80,11 @@ class FeedbackRemoteDatasourceImpl implements FeedbackRemoteDatasource {
     if (comment != null) {
       feedback['comment'] = comment;
     }
-    return await submitFeedback(propertyId, feedback);
+    try {
+      return await submitFeedback(propertyId, feedback);
+    } catch (_) {
+      return <String, dynamic>{};
+    }
   }
 
   @override
@@ -77,12 +94,20 @@ class FeedbackRemoteDatasourceImpl implements FeedbackRemoteDatasource {
 
   @override
   Future<List<Map<String, dynamic>>> getByUser(String userId) async {
-    final response = await ApiClient.get('/feedback/user/$userId');
-    return List<Map<String, dynamic>>.from(response ?? []);
+    try {
+      final response = await ApiClient.get('/feedbacks/user/$userId');
+      return List<Map<String, dynamic>>.from(response ?? []);
+    } catch (_) {
+      return <Map<String, dynamic>>[];
+    }
   }
 
   @override
   Future<void> delete(String id) async {
-    await ApiClient.delete('/feedback/$id');
+    try {
+      await ApiClient.delete('/feedbacks/$id');
+    } catch (_) {
+      // ignore
+    }
   }
 }

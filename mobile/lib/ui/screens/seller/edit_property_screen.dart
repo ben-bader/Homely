@@ -35,7 +35,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
   bool _loading = false;
 
   // ✅ Track whether controllers have been seeded from property data
-  bool _seeded = false;
+  final bool _seeded = false;
 
   @override
   void initState() {
@@ -111,7 +111,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
   Future<void> _pickImages() async {
     try {
       final files = await _picker.pickMultiImage();
-      if (files == null || files.isEmpty) return;
+      if (files.isEmpty) return;
 
       final propertyId = widget.property.id;
       final startIndex = ref.read(propertyMediaCountProvider(propertyId));
@@ -206,7 +206,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                         ? Image.network(
                             p.images.first,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _heroPlaceholder(),
+                            errorBuilder: (_, _, _) => _heroPlaceholder(),
                           )
                         : _heroPlaceholder(),
                   ),
@@ -372,7 +372,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                 color: AppColors.background,
                 border: Border(
                   top: BorderSide(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     width: 1,
                   ),
                 ),
@@ -381,7 +381,7 @@ class _EditPropertyScreenState extends ConsumerState<EditPropertyScreen> {
                 onPressed: _loading ? null : _saveChanges,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+                  disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

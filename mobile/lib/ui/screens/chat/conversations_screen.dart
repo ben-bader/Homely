@@ -377,7 +377,7 @@ class _ConversationTile extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: AppColors.borderLight.withOpacity(0.7),
+              color: AppColors.borderLight.withValues(alpha: 0.7),
               width: 0.8,
             ),
           ),

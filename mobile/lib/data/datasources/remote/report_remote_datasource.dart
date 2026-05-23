@@ -22,9 +22,8 @@ class ReportRemoteDatasourceImpl implements ReportRemoteDatasource {
       '/reports',
       body: {
         'reporterId': reporterId,
-        if (reportedUserId != null) 'reportedUserId': reportedUserId,
-        if (reportedPropertyId != null)
-          'reportedPropertyId': reportedPropertyId,
+        'reportedUserId': ?reportedUserId,
+        'reportedPropertyId': ?reportedPropertyId,
         'reason': reason,
       },
     );

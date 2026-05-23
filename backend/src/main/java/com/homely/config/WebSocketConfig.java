@@ -19,8 +19,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Pure STOMP/WebSocket endpoint (NO SockJS for Flutter STOMP client compatibility)
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*").withSockJS(); // allow frontend
+                .setAllowedOriginPatterns("*"); // Allow all origins for dev/staging
+        
+        // Note: DO NOT add .withSockJS() - it's incompatible with Flutter's STOMP client
+        // which expects raw WebSocket, not SockJS protocol
     }
 
     @Override

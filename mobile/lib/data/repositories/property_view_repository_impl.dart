@@ -24,7 +24,7 @@ class PropertyViewRepositoryImpl implements IPropertyViewRepository {
     final data = await _remote.getViewsByProperty(propertyId);
     return data
         .map((e) =>
-            PropertyViewModel.fromJson(e as Map<String, dynamic>))
+            PropertyViewModel.fromJson(e))
         .toList();
   }
 
@@ -34,7 +34,7 @@ class PropertyViewRepositoryImpl implements IPropertyViewRepository {
     final data = await _remote.getViewsByUser(userId);
     return data
         .map((e) =>
-            PropertyViewModel.fromJson(e as Map<String, dynamic>))
+            PropertyViewModel.fromJson(e))
         .toList();
   }
 }

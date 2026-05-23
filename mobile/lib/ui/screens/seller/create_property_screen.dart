@@ -29,7 +29,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
 
   // ── Data ───────────────────────────────────────────────────────────────────
   final ImagePicker _picker = ImagePicker();
-  List<File> _images = [];
+  final List<File> _images = [];
 
   String _title = '';
   String _description = '';
@@ -340,7 +340,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
                       color: isActive
                           ? AppColors.primary
                           : isDone
-                          ? AppColors.primary.withOpacity(0.12)
+                          ? AppColors.primary.withValues(alpha: 0.12)
                           : AppColors.subtleBackground,
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -353,7 +353,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
                           height: 20,
                           decoration: BoxDecoration(
                             color: isActive
-                                ? Colors.white.withOpacity(0.25)
+                                ? Colors.white.withValues(alpha: 0.25)
                                 : isDone
                                 ? AppColors.primary
                                 : AppColors.borderMedium,
@@ -408,7 +408,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
           // Animated progress bar
           AnimatedBuilder(
             animation: _progressController,
-            builder: (_, __) => ClipRRect(
+            builder: (_, _) => ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: _progressController.value,
@@ -439,7 +439,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
         color: AppColors.background,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -479,7 +479,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
               onPressed: _loading ? null : _next,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+                disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -628,9 +628,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
             margin: const EdgeInsets.only(bottom: 20),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -867,10 +867,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 32),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.04),
+                color: AppColors.primary.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.25),
+                  color: AppColors.primary.withValues(alpha: 0.25),
                   width: 1.5,
                   strokeAlign: BorderSide.strokeAlignCenter,
                 ),
@@ -881,7 +881,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -965,7 +965,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -1047,7 +1047,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.55),
+                color: Colors.black.withValues(alpha: 0.55),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -1273,7 +1273,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
                   height: 30,
                   decoration: BoxDecoration(
                     color: value > 0
-                        ? AppColors.primary.withOpacity(0.1)
+                        ? AppColors.primary.withValues(alpha: 0.1)
                         : AppColors.borderLight,
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1300,7 +1300,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -1328,12 +1328,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: value
-            ? AppColors.primary.withOpacity(0.06)
+            ? AppColors.primary.withValues(alpha: 0.06)
             : AppColors.subtleBackground,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: value
-              ? AppColors.primary.withOpacity(0.2)
+              ? AppColors.primary.withValues(alpha: 0.2)
               : Colors.transparent,
         ),
       ),

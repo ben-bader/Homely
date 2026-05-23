@@ -120,7 +120,7 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -455,7 +455,7 @@ class _ReelItemState extends ConsumerState<_ReelItem>
     children: [
       propertyAsync.when(
         loading: () => const SizedBox.shrink(),
-        error: (_, __) => const SizedBox.shrink(),
+        error: (_, _) => const SizedBox.shrink(),
         data: (property) => Consumer(
           builder: (context, ref, child) {
             final isFavoritedAsync = ref.watch(
@@ -526,7 +526,7 @@ class _ReelItemState extends ConsumerState<_ReelItem>
       children: [
         propertyAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (property) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -535,12 +535,12 @@ class _ReelItemState extends ConsumerState<_ReelItem>
                 children: [
                   ReelBadge(
                     text: property.propertyType.toJson(),
-                    color: AppColors.primary.withOpacity(0.85),
+                    color: AppColors.primary.withValues(alpha: 0.85),
                   ),
                   const SizedBox(width: 6),
                   ReelBadge(
                     text: property.listingType.toJson(),
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                   ),
                 ],
               ),
@@ -562,7 +562,7 @@ class _ReelItemState extends ConsumerState<_ReelItem>
                     height: 1.2,
                     shadows: [
                       Shadow(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         blurRadius: 8,
                       ),
                     ],

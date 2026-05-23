@@ -49,7 +49,7 @@ class ReelProgressBar extends StatelessWidget {
             Container(
               height: 2,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -59,7 +59,7 @@ class ReelProgressBar extends StatelessWidget {
               child: Container(
                 height: 2,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.35),
+                  color: Colors.white.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -103,7 +103,7 @@ class ReelGradients extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.65),
+                  Colors.black.withValues(alpha: 0.65),
                   Colors.transparent,
                 ],
               ),
@@ -121,8 +121,8 @@ class ReelGradients extends StatelessWidget {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
                 colors: [
-                  Colors.black.withOpacity(0.92),
-                  Colors.black.withOpacity(0.0),
+                  Colors.black.withValues(alpha: 0.92),
+                  Colors.black.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -239,7 +239,7 @@ class ReelCircleBtn extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white12),
           ),
@@ -295,7 +295,7 @@ class ReelPlayPauseOverlay extends StatelessWidget {
             width: 68,
             height: 68,
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white24, width: 1.5),
             ),
@@ -389,7 +389,7 @@ class ReelEmptyScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.slow_motion_video_rounded,
-                  size: 64, color: Colors.white.withOpacity(0.12)),
+                  size: 64, color: Colors.white.withValues(alpha: 0.12)),
               const SizedBox(height: 16),
               Text(message,
                   style: GoogleFonts.outfit(

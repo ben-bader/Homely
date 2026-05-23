@@ -191,8 +191,9 @@ class _ResetPasswordScreenState
                 _obscureConfirmPassword =
                     !_obscureConfirmPassword),
             validator: (v) {
-              if (v == null || v.isEmpty)
+              if (v == null || v.isEmpty) {
                 return 'Please confirm your password';
+              }
               return null;
             },
           ),

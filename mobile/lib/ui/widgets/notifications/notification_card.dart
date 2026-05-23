@@ -51,12 +51,12 @@ class NotificationCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isRead
               ? AppColors.background
-              : AppColors.primary.withOpacity(0.04),
+              : AppColors.primary.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isRead
                 ? AppColors.borderLight
-                : AppColors.primary.withOpacity(0.12),
+                : AppColors.primary.withValues(alpha: 0.12),
           ),
         ),
         child: Padding(

@@ -135,9 +135,10 @@ class PropertyEntity {
       r.add(PropertyChip(
           icon: Icons.layers_outlined,
           label: 'Floor ${apartment!.floor}'));
-      if (apartment!.hasElevator)
+      if (apartment!.hasElevator) {
         r.add(PropertyChip(
             icon: Icons.elevator_outlined, label: 'Elevator'));
+      }
     } else if (house != null) {
       r.add(PropertyChip(
           icon: Icons.bed_outlined,
@@ -145,10 +146,11 @@ class PropertyEntity {
       r.add(PropertyChip(
           icon: Icons.bathtub_outlined,
           label: '${house!.bathrooms} Baths'));
-      if (house!.landAreaSqm != null)
+      if (house!.landAreaSqm != null) {
         r.add(PropertyChip(
             icon: Icons.square_foot_outlined,
             label: '${house!.landAreaSqm!.toStringAsFixed(0)} m²'));
+      }
     } else if (villa != null) {
       r.add(PropertyChip(
           icon: Icons.bed_outlined,
@@ -164,20 +166,23 @@ class PropertyEntity {
           icon: Icons.chair_outlined,
           label: studio!.furnished ? 'Furnished' : 'Unfurnished'));
     } else if (commercial != null) {
-      if (commercial!.areaSqm != null)
+      if (commercial!.areaSqm != null) {
         r.add(PropertyChip(
             icon: Icons.square_foot_outlined,
             label:
                 '${commercial!.areaSqm!.toStringAsFixed(0)} m²'));
-      if (commercial!.businessType != null)
+      }
+      if (commercial!.businessType != null) {
         r.add(PropertyChip(
             icon: Icons.business_outlined,
             label: commercial!.businessType!));
+      }
     } else if (land != null) {
-      if (land!.areaSqm != null)
+      if (land!.areaSqm != null) {
         r.add(PropertyChip(
             icon: Icons.square_foot_outlined,
             label: '${land!.areaSqm!.toStringAsFixed(0)} m²'));
+      }
       r.add(PropertyChip(
           icon: Icons.construction_outlined,
           label: land!.constructible

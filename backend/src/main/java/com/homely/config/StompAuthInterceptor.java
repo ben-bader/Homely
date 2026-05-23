@@ -31,22 +31,28 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             String authHeader = accessor.getFirstNativeHeader("Authorization");
 
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                String email = jwtService.extractUsername(token);
-                if (email != null) {
-                    User user = userService.getByEmail(email);
-                    if (user != null && jwtService.isTokenValid(token, user) && user.isActive()) {
+                try {
+                    String token = authHeader.substring(7);
+                    String email = jwtService.extractUsername(token);
+                    if (email != null) {
+                        User user = userService.getByEmail(email);
+                        if (user != null && jwtService.isTokenValid(token, user) && user.isActive()) {
 
-                        // Set Principal for STOMP session
-                        UsernamePasswordAuthenticationToken auth =
-                                new UsernamePasswordAuthenticationToken(
-                                        user.getEmail(),
-                                        null,
-                                        user.getAuthorities()
-                                );
+                            // Set Principal for STOMP session
+                            UsernamePasswordAuthenticationToken auth =
+                                    new UsernamePasswordAuthenticationToken(
+                                            user.getEmail(),
+                                            null,
+                                            user.getAuthorities()
+                                    );
 
-                        accessor.setUser(auth);
+                            accessor.setUser(auth);
+                        }
                     }
+                } catch (Exception e) {
+                    // Log but don't block handshake - auth validation failed silently
+                    // This allows unauthenticated WebSocket connections if needed
+                    System.err.println("WebSocket auth validation error: " + e.getMessage());
                 }
             }
         }

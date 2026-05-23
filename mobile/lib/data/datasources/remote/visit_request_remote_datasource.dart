@@ -1,4 +1,5 @@
 import 'package:homely/core/network/api_client.dart';
+import 'package:homely/core/network/endpoints.dart';
 
 abstract class VisitRequestRemoteDatasource {
   Future<Map<String, dynamic>> create({
@@ -21,7 +22,7 @@ class VisitRequestRemoteDatasourceImpl implements VisitRequestRemoteDatasource {
     required DateTime requestedDate,
   }) async {
     final response = await ApiClient.post(
-      '/visit-requests',
+      Endpoints.requestVisit,
       body: {
         'propertyId': propertyId,
         'requestedDate': requestedDate.toIso8601String(),
@@ -32,7 +33,7 @@ class VisitRequestRemoteDatasourceImpl implements VisitRequestRemoteDatasource {
 
   @override
   Future<List<Map<String, dynamic>>> getMyRequests() async {
-    final response = await ApiClient.get('/visit-requests/my-requests');
+    final response = await ApiClient.get(Endpoints.myVisitRequests);
     return List<Map<String, dynamic>>.from(response ?? []);
   }
 
@@ -40,9 +41,8 @@ class VisitRequestRemoteDatasourceImpl implements VisitRequestRemoteDatasource {
   Future<List<Map<String, dynamic>>> getRequestsForProperty(
     String propertyId,
   ) async {
-    final response = await ApiClient.get(
-      '/visit-requests/property/$propertyId',
-    );
+    final endpoint = '/visits/property/$propertyId/seller';
+    final response = await ApiClient.get(endpoint);
     return List<Map<String, dynamic>>.from(response ?? []);
   }
 
@@ -52,7 +52,7 @@ class VisitRequestRemoteDatasourceImpl implements VisitRequestRemoteDatasource {
     required String status,
   }) async {
     final response = await ApiClient.put(
-      '/visit-requests/$id/status',
+      Endpoints.updateVisitStatus(id),
       body: {'status': status},
     );
     return response;
@@ -60,6 +60,6 @@ class VisitRequestRemoteDatasourceImpl implements VisitRequestRemoteDatasource {
 
   @override
   Future<void> delete(String id) async {
-    await ApiClient.delete('/visit-requests/$id');
+    await ApiClient.delete(Endpoints.deleteVisitRequest(id));
   }
 }

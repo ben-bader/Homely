@@ -97,7 +97,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -312,7 +312,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                         style: GoogleFonts.outfit(
                                           fontSize: 10,
                                           color: AppColors.background
-                                              .withOpacity(0.6),
+                                              .withValues(alpha: 0.6),
                                           fontWeight: FontWeight.w400,
                                         ),
                                       ),
@@ -322,7 +322,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                           Icons.done_all_rounded,
                                           size: 13,
                                           color: AppColors.background
-                                              .withOpacity(0.6),
+                                              .withValues(alpha: 0.6),
                                         ),
                                       ],
                                     ],

@@ -278,7 +278,7 @@ class PropertyHeroBanner extends ConsumerWidget {
               child: Image.network(
                 images.first.url,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _HeroPlaceholder(height: height),
+                errorBuilder: (_, _, _) => _HeroPlaceholder(height: height),
               ),
             ),
           ),
@@ -496,7 +496,7 @@ class _ImageTile extends StatelessWidget {
             Image.network(
               media.url,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 color: AppColors.borderLight,
                 child: const Icon(
                   Icons.broken_image_outlined,
@@ -597,7 +597,7 @@ class _VideoTile extends StatelessWidget {
                         ? Image.network(
                             media.thumbnailUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _videoPlaceholder(),
+                            errorBuilder: (_, _, _) => _videoPlaceholder(),
                           )
                         : _videoPlaceholder(),
                     Center(
@@ -757,7 +757,7 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
             child: Image.network(
               widget.images[i].url,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Icon(
+              errorBuilder: (_, _, _) => const Icon(
                 Icons.broken_image_outlined,
                 color: Colors.white54,
                 size: 64,
@@ -855,7 +855,7 @@ class _GalleryShimmer extends StatelessWidget {
         mainAxisSpacing: 8,
       ),
       itemCount: 6,
-      itemBuilder: (_, __) => Container(
+      itemBuilder: (_, _) => Container(
         decoration: BoxDecoration(
           color: AppColors.borderLight,
           borderRadius: BorderRadius.circular(12),

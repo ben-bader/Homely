@@ -30,7 +30,7 @@ class BoostRepositoryImpl implements IBoostRepository {
     final data = await _remote.getMyBoosts();
     return data
         .map((e) =>
-            BoostPurchaseModel.fromJson(e as Map<String, dynamic>))
+            BoostPurchaseModel.fromJson(e))
         .toList();
   }
 
@@ -39,7 +39,7 @@ class BoostRepositoryImpl implements IBoostRepository {
     final data = await _remote.getBoostPackages();
     return data
         .map((e) =>
-            BoostPackageModel.fromJson(e as Map<String, dynamic>))
+            BoostPackageModel.fromJson(e))
         .toList();
   }
 }

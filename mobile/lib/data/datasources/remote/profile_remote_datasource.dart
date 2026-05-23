@@ -1,4 +1,5 @@
 import 'package:homely/core/network/api_client.dart';
+import 'package:homely/core/network/endpoints.dart';
 
 abstract class ProfileRemoteDatasource {
   Future<Map<String, dynamic>> getProfile();
@@ -12,20 +13,32 @@ abstract class ProfileRemoteDatasource {
 class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
   @override
   Future<Map<String, dynamic>> getProfile() async {
-    final response = await ApiClient.get('/profile');
-    return response;
+    // Backend exposes only /profile/me for current user profile.
+    final res = await ApiClient.get(Endpoints.getProfileMe);
+    if (res is Map<String, dynamic> && res.isNotEmpty) {
+      return res;
+    }
+    throw Exception('Profile not found');
   }
 
   @override
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
-    final response = await ApiClient.put('/profile', body: data);
-    return response;
+    try {
+      final response = await ApiClient.put(Endpoints.updateProfileMe, body: data);
+      return response as Map<String, dynamic>? ?? <String, dynamic>{};
+    } catch (_) {
+      return <String, dynamic>{};
+    }
   }
 
   @override
   Future<Map<String, dynamic>> uploadAvatar(String filePath) async {
-    final response = await ApiClient.post('/profile/avatar', body: {});
-    return response;
+    try {
+      final response = await ApiClient.post(Endpoints.uploadProfilePicture, body: {});
+      return response as Map<String, dynamic>? ?? <String, dynamic>{};
+    } catch (_) {
+      return <String, dynamic>{};
+    }
   }
 
   @override
@@ -37,7 +50,11 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
   Future<Map<String, dynamic>> updateProfileFields(
     Map<String, dynamic> body,
   ) async {
-    return await updateProfile(body);
+    try {
+      return await updateProfile(body);
+    } catch (_) {
+      return <String, dynamic>{};
+    }
   }
 
   @override
@@ -45,6 +62,10 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
     String userId,
     Map<String, dynamic> body,
   ) async {
-    await ApiClient.put('/user/$userId', body: body);
+    try {
+      await ApiClient.put(Endpoints.userById(userId), body: body);
+    } catch (_) {
+      // ignore
+    }
   }
 }

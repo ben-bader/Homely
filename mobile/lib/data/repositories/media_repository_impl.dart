@@ -13,7 +13,7 @@ class MediaRepositoryImpl implements IMediaRepository {
   Future<List<PropertyMediaEntity>> getByPropertyId(String propertyId) async {
     final data = await _remote.getByPropertyId(propertyId);
     return (data
-        .map((e) => PropertyMediaModel.fromJson(e as Map<String, dynamic>))
+        .map((e) => PropertyMediaModel.fromJson(e))
         .toList()
       ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder)));
   }

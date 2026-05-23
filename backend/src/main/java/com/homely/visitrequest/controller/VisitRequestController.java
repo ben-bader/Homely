@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.common.enums.VisitStatus;
-import com.homely.user.repository.UserRepository;
 import com.homely.visitrequest.dto.VisitRequestCreateRequest;
 import com.homely.visitrequest.dto.VisitRequestDto;
 import com.homely.visitrequest.mapper.VisitRequestMapper;
@@ -25,7 +24,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/visit-requests")
+@RequestMapping("/api/visits")
 @RequiredArgsConstructor
 public class VisitRequestController {
 
@@ -39,7 +38,15 @@ public class VisitRequestController {
         return visitRequestService.create(request, principal.getName());
     }
 
-   
+    // ✅ Get seller's visit requests (for their properties)
+    @GetMapping("/requests")
+    public List<VisitRequestDto> getVisitRequests(Principal principal) {
+        String email = principal.getName();
+        return visitRequestService.getByUserEmail(email).stream()
+                .map(visitRequestMapper::toDto)
+                .toList();
+    }
+
     @PutMapping("/{id}/status")
     public VisitRequestDto updateStatus(@PathVariable UUID id, @RequestParam VisitStatus status) {
         return visitRequestService.updateStatus(id, status);
@@ -50,7 +57,7 @@ public class VisitRequestController {
         visitRequestService.delete(id);
     }
 
-    // --- New endpoint for authenticated user to get their own requests ---
+    // ✅ Get authenticated user's visit requests (as client)
     @GetMapping("/my-requests")
     public List<VisitRequestDto> getMyRequests(Principal principal) {
         String email = principal.getName();

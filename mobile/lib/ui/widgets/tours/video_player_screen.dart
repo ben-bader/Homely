@@ -315,7 +315,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen>
       children: [
         propertyAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (property) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -324,12 +324,12 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen>
                 children: [
                   ReelBadge(
                     text: property.propertyType.toJson(),
-                    color: AppColors.primary.withOpacity(0.85),
+                    color: AppColors.primary.withValues(alpha: 0.85),
                   ),
                   const SizedBox(width: 6),
                   ReelBadge(
                     text: property.listingType.toJson(),
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                   ),
                 ],
               ),
@@ -351,7 +351,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen>
                     height: 1.2,
                     shadows: [
                       Shadow(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         blurRadius: 8,
                       ),
                     ],

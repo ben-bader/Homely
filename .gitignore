@@ -62,6 +62,7 @@ Thumbs.db
 *~
 .env
 .env.*.local
+.env.example
 
 # Logs
 logs/

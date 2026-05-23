@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../ui/providers/visit_request_providers.dart';
 
 class RequestVisitSheet extends ConsumerStatefulWidget {

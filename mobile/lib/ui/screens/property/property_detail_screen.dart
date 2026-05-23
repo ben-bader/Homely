@@ -148,7 +148,7 @@ class _BodyState extends ConsumerState<_Body> {
                 ),
                 child: mediaAsync.when(
                   loading: () => _buildHeroCarousel(p.images),
-                  error: (_, __) => _buildHeroCarousel(p.images),
+                  error: (_, _) => _buildHeroCarousel(p.images),
                   data: (media) {
                     final imageUrls =
                         media
@@ -271,10 +271,10 @@ class _BodyState extends ConsumerState<_Body> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
+                      color: AppColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.2),
+                        color: AppColors.primary.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Row(
@@ -419,7 +419,7 @@ class _BodyState extends ConsumerState<_Body> {
                       ),
                     ),
                   ),
-                  error: (_, __) => const SizedBox.shrink(),
+                  error: (_, _) => const SizedBox.shrink(),
                   data: (media) {
                     if (media.isEmpty) return const SizedBox.shrink();
                     return Column(
@@ -517,7 +517,7 @@ class _BodyState extends ConsumerState<_Body> {
                 ),
               );
             },
-            errorBuilder: (_, __, ___) => _imgPlaceholder(),
+            errorBuilder: (_, _, _) => _imgPlaceholder(),
           ),
         ),
         if (images.length > 1)
@@ -689,7 +689,7 @@ class _PropertyMap extends StatelessWidget {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.4),
+                                  color: AppColors.primary.withValues(alpha: 0.4),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -735,7 +735,7 @@ class _PropertyMap extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -973,7 +973,7 @@ class _ImageGridItem extends StatelessWidget {
                   ),
                 );
               },
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 color: AppColors.subtleBackground,
                 child: const Center(
                   child: Icon(
@@ -998,7 +998,7 @@ class _ImageGridItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
+                        color: Colors.black.withValues(alpha: 0.25),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -1061,7 +1061,7 @@ class _VideoGridItem extends StatelessWidget {
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
               Container(
                 width: 40,
@@ -1106,7 +1106,7 @@ class _FullscreenImage extends StatelessWidget {
         child: Image.network(
           url,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const Icon(
+          errorBuilder: (_, _, _) => const Icon(
             Icons.broken_image_outlined,
             color: Colors.white54,
             size: 64,
