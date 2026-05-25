@@ -11,7 +11,7 @@ export function useChats() {
     const fetchConversations = async () => {
       try {
         setLoading(true);
-        const res = await api.get<Conversation[]>("/chat/conversations");
+        const res = await api.get<Conversation[]>("/admin/conversations");
         setConversations(res.data);
       } catch (err: any) {
         setError(err?.response?.data?.message || err.message || "Failed to fetch conversations");

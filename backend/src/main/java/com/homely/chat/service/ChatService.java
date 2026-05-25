@@ -18,6 +18,7 @@ import com.homely.chat.repository.ConversationRepository;
 import com.homely.chat.repository.MessageRepository;
 import com.homely.common.enums.MessageType;
 import com.homely.common.enums.ReadStatus;
+import com.homely.common.enums.RoleType;
 import com.homely.notification.dto.NotificationCreateRequest;
 import com.homely.notification.service.NotificationService;
 import com.homely.property.entity.Property;
@@ -102,12 +103,15 @@ public class ChatService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found: " + userId));
 
-        if (!isParticipant(conv, user)) {
+        boolean isUserParticipant = isParticipant(conv, user);
+        if (user.getRole() != RoleType.ADMIN && !isUserParticipant) {
             throw new ForbiddenException("User is not a participant of conversation: " + conversationId);
         }
 
         var messagesPage = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId, pageable);
-        markConversationMessagesAsRead(conversationId, userId);
+        if (isUserParticipant) {
+            markConversationMessagesAsRead(conversationId, userId);
+        }
         return messagesPage;
     }
 

@@ -54,6 +54,7 @@
   },
   "chats": {
     "loading": "Loading conversations…",
+    "error": "Failed to load conversations",
     "title": "Conversations",
     "searchPlaceholder": "Search by seller, client, property…",
     "filter": "Filter",
@@ -64,10 +65,12 @@
     "filtered": "(filtered)",
     "drawer": {
       "title": "Conversation", "seller": "Seller", "client": "Client", "property": "Property",
+      "participantOne": "Participant One", "participantTwo": "Participant Two",
       "loadingMessages": "Loading messages…", "noMessages": "No messages yet", "close": "Close"
     },
     "table": {
-      "seller": "Seller", "client": "Client", "property": "Property", "startedAt": "Started At"
+      "seller": "Seller", "client": "Client", "property": "Property", "startedAt": "Started At",
+      "participantOne": "Participant One", "participantTwo": "Participant Two"
     },
     "filters": {
       "label": "Filters", "clearAll": "Clear all",
