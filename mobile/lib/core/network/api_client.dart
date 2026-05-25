@@ -316,14 +316,20 @@ class ApiClient {
         await Future.delayed(_backoffDelay(attempt));
       } on SocketException {
         attempt++;
-        debugPrint('[ApiClient] SocketException on attempt $attempt/$_maxRetries');
+        debugPrint(
+          '[ApiClient] SocketException on attempt $attempt/$_maxRetries',
+        );
         if (attempt > _maxRetries) {
-          throw NetworkException('Network unavailable. Please check your connection.');
+          throw NetworkException(
+            'Network unavailable. Please check your connection.',
+          );
         }
         await Future.delayed(_backoffDelay(attempt));
       } on http.ClientException {
         attempt++;
-        debugPrint('[ApiClient] Http client exception on attempt $attempt/$_maxRetries');
+        debugPrint(
+          '[ApiClient] Http client exception on attempt $attempt/$_maxRetries',
+        );
         if (attempt > _maxRetries) {
           throw NetworkException('Network error. Please try again.');
         }
