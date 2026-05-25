@@ -1,5 +1,7 @@
 package com.homely.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -19,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class StompAuthInterceptor implements ChannelInterceptor {
 
+    private static final Logger log = LoggerFactory.getLogger(StompAuthInterceptor.class);
+
     private final JwtService jwtService;
     private final UserService userService;
 
@@ -27,7 +31,17 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+        if (accessor == null) return message;
+
+        StompCommand command = accessor.getCommand();
+        String sessionId = accessor.getSessionId();
+        String destination = accessor.getDestination();
+        String userInfo = accessor.getUser() != null ? accessor.getUser().getName() : "anonymous";
+
+        log.debug("STOMP preSend: cmd={}, session={}, user={}, dest={}", command, sessionId, userInfo, destination);
+
+        // Handle CONNECT — extract Authorization header and populate Principal
+        if (StompCommand.CONNECT.equals(command)) {
             String authHeader = accessor.getFirstNativeHeader("Authorization");
 
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -38,7 +52,6 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                         User user = userService.getByEmail(email);
                         if (user != null && jwtService.isTokenValid(token, user) && user.isActive()) {
 
-                            // Set Principal for STOMP session
                             UsernamePasswordAuthenticationToken auth =
                                     new UsernamePasswordAuthenticationToken(
                                             user.getEmail(),
@@ -47,14 +60,27 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                                     );
 
                             accessor.setUser(auth);
+                            log.info("STOMP CONNECT authenticated session={} user={}", sessionId, user.getEmail());
+                        } else {
+                            log.warn("STOMP CONNECT authentication failed for token user={}, session={}", email, sessionId);
                         }
                     }
                 } catch (Exception e) {
-                    // Log but don't block handshake - auth validation failed silently
-                    // This allows unauthenticated WebSocket connections if needed
-                    System.err.println("WebSocket auth validation error: " + e.getMessage());
+                    log.warn("WebSocket auth validation error for session {}: {}", sessionId, e.getMessage());
                 }
+            } else {
+                log.debug("STOMP CONNECT without Authorization header for session={}", sessionId);
             }
+        }
+
+        // Log SUBSCRIBE and SEND frames for diagnostics
+        if (StompCommand.SUBSCRIBE.equals(command)) {
+            log.info("STOMP SUBSCRIBE session={} user={} dest={}", sessionId, userInfo, destination);
+        }
+
+        if (StompCommand.SEND.equals(command)) {
+            Object payload = message.getPayload();
+            log.info("STOMP SEND session={} user={} dest={} payloadType={}", sessionId, userInfo, destination, payload != null ? payload.getClass().getSimpleName() : "null");
         }
 
         return message;

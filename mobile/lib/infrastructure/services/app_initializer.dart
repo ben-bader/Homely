@@ -36,7 +36,6 @@ class AppInitializer {
   Future<void> _initializeNotificationService() async {
     try {
       await NotificationService().init();
-      NotificationService().startPolling(SecureStorage());
     } catch (e) {
       debugPrint('[AppInitializer] Notification init failed: $e');
     }

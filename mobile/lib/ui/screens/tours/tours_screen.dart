@@ -279,7 +279,7 @@ class _ReelItemState extends ConsumerState<_ReelItem>
         MaterialPageRoute(
           builder: (_) => ChatScreen(
             conversationId: conv.id,
-            currentUserId: conv.clientId,
+              currentUserId: conv.participantOneId,
             chatTitle: property.sellerName,
             chatSubtitle: property.title,
           ),

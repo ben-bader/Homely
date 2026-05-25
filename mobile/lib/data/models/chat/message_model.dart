@@ -8,6 +8,12 @@ class MessageModel extends MessageEntity {
     required super.senderName,
     required super.body,
     required super.sentAt,
+    super.messageType,
+    super.propertyId,
+    super.propertyTitle,
+    super.propertyImageUrl,
+    super.propertyPrice,
+    super.propertyLocation,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json) =>
@@ -18,5 +24,11 @@ class MessageModel extends MessageEntity {
         senderName: json['senderName'] ?? '',
         body: json['body'] ?? '',
         sentAt: DateTime.tryParse(json['sentAt'] ?? '') ?? DateTime.now(),
+        messageType: json['messageType']?.toString(),
+        propertyId: json['propertyId']?.toString(),
+        propertyTitle: json['propertyTitle']?.toString(),
+        propertyImageUrl: json['propertyImageUrl']?.toString(),
+        propertyPrice: json['propertyPrice']?.toString(),
+        propertyLocation: json['propertyLocation']?.toString(),
       );
 }

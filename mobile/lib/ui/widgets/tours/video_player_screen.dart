@@ -124,9 +124,9 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen>
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ChatScreen(
+            builder: (_) => ChatScreen(
             conversationId: conv.id,
-            currentUserId: conv.clientId,
+            currentUserId: conv.participantOneId,
             chatTitle: property.sellerName,
             chatSubtitle: property.title,
           ),

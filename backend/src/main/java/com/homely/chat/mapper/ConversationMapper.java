@@ -15,14 +15,15 @@ import com.homely.chat.entity.Message;
 public interface ConversationMapper {
 
     @Mapping(target = "propertyId", source = "property.id")
-    @Mapping(target = "clientId", source = "client.id")
-    @Mapping(target = "sellerId", source = "seller.id")
+    @Mapping(target = "participantOneId", source = "participantOne.id")
+    @Mapping(target = "participantTwoId", source = "participantTwo.id")
     @Mapping(target = "propertyTitle", expression = "java(entity.getProperty() != null ? entity.getProperty().getTitle() : null)")
-    @Mapping(target = "sellerName", expression = "java(entity.getSeller() != null ? entity.getSeller().getName() : null)")
-    @Mapping(target = "clientName", expression = "java(entity.getClient() != null ? entity.getClient().getName() : null)")
-    @Mapping(target = "sellerAvatar", ignore = true) // Profile doesn't have profilePicture field
-    @Mapping(target = "clientAvatar", ignore = true)
+    @Mapping(target = "participantTwoName", expression = "java(entity.getParticipantTwo() != null ? entity.getParticipantTwo().getName() : null)")
+    @Mapping(target = "participantOneName", expression = "java(entity.getParticipantOne() != null ? entity.getParticipantOne().getName() : null)")
+    @Mapping(target = "participantTwoAvatar", ignore = true)
+    @Mapping(target = "participantOneAvatar", ignore = true)
     @Mapping(target = "lastMessage", ignore = true)
+    @Mapping(target = "lastMessageType", ignore = true)
     @Mapping(target = "lastMessageAt", ignore = true)
     @Mapping(target = "unreadCount", ignore = true)
     @Mapping(target = "createdAt", source = "createdAt")
@@ -36,11 +37,14 @@ public interface ConversationMapper {
                     .max(Comparator.comparing((Message m) -> m.getCreatedAt() != null ? m.getCreatedAt() : entity.getUpdatedAt()))
                     .orElse(null);
             if (lastMsg != null) {
-                dto.setLastMessage(lastMsg.getBody());
+                dto.setLastMessage(lastMsg.getText());
+                dto.setLastMessageType(lastMsg.getType() != null ? lastMsg.getType().name() : null);
                 dto.setLastMessageAt(lastMsg.getCreatedAt() != null ? lastMsg.getCreatedAt() : entity.getUpdatedAt());
             }
         }
-        // TODO: Calculate unread count based on readAt timestamps
+        if (dto.getPropertyTitle() == null && entity.getLastMessage() != null && entity.getLastMessage().getProperty() != null) {
+            dto.setPropertyTitle(entity.getLastMessage().getProperty().getTitle());
+        }
         dto.setUnreadCount(0);
     }
 }

@@ -5,6 +5,7 @@ import '../../domain/entities/chat/conversation_entity.dart';
 import '../../domain/entities/chat/message_entity.dart';
 import '../../domain/repositories/i_chat_repository.dart';
 import '../../infrastructure/services/chat_service.dart';
+import '../../infrastructure/services/notification_service.dart';
 
 final chatRemoteDatasourceProvider = Provider<ChatRemoteDatasource>(
   (ref) => ChatRemoteDatasourceImpl(),
@@ -16,11 +17,19 @@ final chatRepositoryProvider = Provider<IChatRepository>((ref) {
 
 final chatServiceProvider = Provider<ChatService>((ref) => ChatService());
 
-final conversationsProvider = FutureProvider<List<ConversationEntity>>((
-  ref,
-) async {
-  return ref.read(chatRepositoryProvider).fetchConversations();
-});
+final notificationStreamProvider = StreamProvider.autoDispose<Map<String, dynamic>>(
+  (ref) => NotificationService().notificationStream,
+);
+
+final chatEventStreamProvider = StreamProvider.autoDispose<Map<String, dynamic>>(
+  (ref) => ref.read(chatServiceProvider).messageStream,
+);
+
+final conversationsProvider = FutureProvider<List<ConversationEntity>>(
+  (ref) async {
+    return ref.read(chatRepositoryProvider).fetchConversations();
+  },
+);
 
 final chatProvider =
     StateNotifierProvider.family<
@@ -33,50 +42,73 @@ class ChatNotifier extends StateNotifier<AsyncValue<List<MessageEntity>>> {
   final Ref _ref;
   final String conversationId;
   bool _subscribed = false;
+  late final void Function(Map<String, dynamic>) _wsCallback;
 
   ChatNotifier(this._ref, this.conversationId)
     : super(const AsyncValue.loading()) {
+    _wsCallback = _onMessageReceived;
     _init();
   }
 
   Future<void> _init() async {
     try {
+      // Fetch initial messages
       final messages = await _repo.fetchMessages(conversationId);
-      if (mounted) state = AsyncValue.data(messages);
-      if (_ws.isConnected) {
-        _subscribe();
-        return;
+      if (mounted) {
+        state = AsyncValue.data(messages);
       }
-      await _ws.connect(onConnected: _subscribe);
+
+      // Ensure WebSocket is connected before subscribing
+      if (!_ws.isConnected) {
+        await _ws.connect(onConnected: () {
+          if (mounted) _subscribe();
+        });
+      } else {
+        if (mounted) _subscribe();
+      }
     } catch (e, st) {
       if (mounted) state = AsyncValue.error(e, st);
     }
   }
 
   void _subscribe() {
-    if (_subscribed) return;
+    if (_subscribed || !mounted) return;
     _subscribed = true;
-    _ws.subscribe(conversationId, _onMessageReceived);
+    _ws.subscribe(conversationId, _wsCallback);
   }
 
   void _onMessageReceived(Map<String, dynamic> incoming) {
     final message = MessageEntity(
-      id: incoming['id'] ?? '',
-      conversationId: incoming['conversationId'] ?? '',
-      senderId: incoming['senderId'] ?? '',
-      senderName: incoming['senderName'] ?? '',
-      body: incoming['body'] ?? '',
-      sentAt: DateTime.parse(
-        incoming['sentAt'] ?? DateTime.now().toIso8601String(),
-      ),
+      id: incoming['id']?.toString() ?? '',
+      conversationId: incoming['conversationId']?.toString() ?? '',
+      senderId: incoming['senderId']?.toString() ?? '',
+      senderName: incoming['senderName']?.toString() ?? '',
+      body: incoming['body']?.toString() ?? '',
+      sentAt: DateTime.tryParse(incoming['sentAt']?.toString() ?? '') ??
+          DateTime.now(),
+      messageType: incoming['messageType']?.toString(),
+      propertyId: incoming['propertyId']?.toString(),
+      propertyTitle: incoming['propertyTitle']?.toString(),
+      propertyImageUrl: incoming['propertyImageUrl']?.toString(),
+      propertyPrice: incoming['propertyPrice']?.toString(),
+      propertyLocation: incoming['propertyLocation']?.toString(),
     );
     if (!mounted) return;
-    state.whenData((current) {
-      final alreadyExists = current.any((m) => m.id == message.id);
-      if (!alreadyExists) {
-        state = AsyncValue.data([...current, message]);
-      }
-    });
+
+    state.when(
+      data: (current) {
+        final alreadyExists = current.any((m) => m.id == message.id);
+        if (!alreadyExists) {
+          state = AsyncValue.data([...current, message]);
+        }
+      },
+      loading: () {
+        state = AsyncValue.data([message]);
+      },
+      error: (error, stack) {
+        state = AsyncValue.data([message]);
+      },
+    );
   }
 
   void send(String body) {
@@ -119,6 +151,15 @@ class ChatNotifier extends StateNotifier<AsyncValue<List<MessageEntity>>> {
         );
       });
     } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    if (_subscribed) {
+      _ws.unsubscribe(conversationId, _wsCallback);
+      _subscribed = false;
+    }
+    super.dispose();
   }
 
   IChatRepository get _repo => _ref.read(chatRepositoryProvider);

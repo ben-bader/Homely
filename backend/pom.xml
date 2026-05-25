@@ -54,6 +54,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
+        <!-- 🧩 FLYWAY FOR SAFE SCHEMA MIGRATION -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
         <!-- 🗂️ JACKSON (explicit, version managed by Boot BOM) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

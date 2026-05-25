@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:homely/core/theme/app_colors.dart';
+import '../../../domain/entities/chat/message_entity.dart';
 import '../../providers/chat_providers.dart';
+import '../property/property_detail_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -253,87 +255,86 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     final msg = messages[i];
                     final isMe = msg.senderId == widget.currentUserId;
 
-                    return Align(
-                      alignment: isMe
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3),
-                        child: GestureDetector(
-                          onLongPress: isMe
-                              ? () => _showMessageOptions(
-                                  context,
-                                  msg.id,
-                                  msg.body,
-                                )
-                              : null,
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 280),
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
-                            decoration: BoxDecoration(
-                              color: isMe
-                                  ? AppColors.primary
-                                  : AppColors.accent,
-                              borderRadius: BorderRadius.only(
-                                topLeft: const Radius.circular(18),
-                                topRight: const Radius.circular(18),
-                                bottomLeft: isMe
-                                    ? const Radius.circular(18)
-                                    : const Radius.circular(4),
-                                bottomRight: isMe
-                                    ? const Radius.circular(4)
-                                    : const Radius.circular(18),
+                    final isPropertyShare = msg.isPropertyShare;
+                return Align(
+                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: isPropertyShare
+                        ? _buildPropertyShareCard(msg, isMe)
+                        : GestureDetector(
+                            onLongPress: isMe
+                                ? () => _showMessageOptions(
+                                    context,
+                                    msg.id,
+                                    msg.body,
+                                  )
+                                : null,
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 280),
+                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+                              decoration: BoxDecoration(
+                                color: isMe ? AppColors.primary : AppColors.accent,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(18),
+                                  topRight: const Radius.circular(18),
+                                  bottomLeft: isMe
+                                      ? const Radius.circular(18)
+                                      : const Radius.circular(4),
+                                  bottomRight: isMe
+                                      ? const Radius.circular(4)
+                                      : const Radius.circular(18),
+                                ),
+                              ),
+                              // ── WhatsApp layout: time floats bottom-right ──
+                              child: Wrap(
+                                alignment: WrapAlignment.end,
+                                crossAxisAlignment: WrapCrossAlignment.end,
+                                spacing: 6,
+                                children: [
+                                  Text(
+                                    msg.body,
+                                    style: GoogleFonts.outfit(
+                                      color: AppColors.background,
+                                      fontSize: 14,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  // Timestamp + checkmark — sits at end of
+                                  // last line, slightly lower
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 1),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          _formatTime(msg.sentAt),
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 10,
+                                            color: AppColors.background
+                                                .withValues(alpha: 0.6),
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                        if (isMe) ...[
+                                          const SizedBox(width: 3),
+                                          Icon(
+                                            Icons.done_all_rounded,
+                                            size: 13,
+                                            color: AppColors.background
+                                                .withValues(alpha: 0.6),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            // ── WhatsApp layout: time floats bottom-right ──
-                            child: Wrap(
-                              alignment: WrapAlignment.end,
-                              crossAxisAlignment: WrapCrossAlignment.end,
-                              spacing: 6,
-                              children: [
-                                Text(
-                                  msg.body,
-                                  style: GoogleFonts.outfit(
-                                    color: AppColors.background,
-                                    fontSize: 14,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                // Timestamp + checkmark — sits at end of
-                                // last line, slightly lower
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 1),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        _formatTime(msg.sentAt),
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 10,
-                                          color: AppColors.background
-                                              .withValues(alpha: 0.6),
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                                      if (isMe) ...[
-                                        const SizedBox(width: 3),
-                                        Icon(
-                                          Icons.done_all_rounded,
-                                          size: 13,
-                                          color: AppColors.background
-                                              .withValues(alpha: 0.6),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                      ),
-                    );
+                  ),
+                );
                   },
                 );
               },
@@ -405,6 +406,128 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPropertyShareCard(MessageEntity msg, bool isMe) {
+    final title = msg.propertyTitle?.isNotEmpty == true ? msg.propertyTitle! : msg.body;
+    return GestureDetector(
+      onTap: msg.propertyId != null
+          ? () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PropertyDetailScreen(
+                    propertyId: msg.propertyId!,
+                  ),
+                ),
+              )
+          : null,
+      child: Container(
+        width: 280,
+        decoration: BoxDecoration(
+          color: isMe ? AppColors.primary : AppColors.accent,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (msg.propertyImageUrl != null && msg.propertyImageUrl!.isNotEmpty)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
+                ),
+                child: Image.network(
+                  msg.propertyImageUrl!,
+                  height: 140,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 140,
+                    color: AppColors.subtleBackground,
+                    child: const Icon(
+                      Icons.home_outlined,
+                      size: 48,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              )
+            else
+              Container(
+                height: 140,
+                decoration: BoxDecoration(
+                  color: AppColors.subtleBackground,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(18),
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.home_outlined,
+                    size: 48,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.outfit(
+                      color: AppColors.background,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (msg.propertyLocation != null && msg.propertyLocation!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        msg.propertyLocation!,
+                        style: GoogleFonts.outfit(
+                          color: AppColors.background.withValues(alpha: 0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  if (msg.propertyPrice != null && msg.propertyPrice!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        msg.propertyPrice!,
+                        style: GoogleFonts.outfit(
+                          color: AppColors.background.withValues(alpha: 0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.open_in_new,
+                        size: 14,
+                        color: AppColors.background.withValues(alpha: 0.8),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'View property',
+                        style: GoogleFonts.outfit(
+                          color: AppColors.background.withValues(alpha: 0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

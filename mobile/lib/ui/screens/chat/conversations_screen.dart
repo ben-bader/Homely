@@ -19,6 +19,12 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
   int _filterIndex = 0; // 0 = All, 1 = Unread
+  bool _hasRegisteredListeners = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -55,7 +61,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
           .otherPersonName(currentUserId)
           .toLowerCase()
           .contains(q);
-      final msgMatch = (c.lastMessage ?? '').toLowerCase().contains(q);
+      final msgMatch = c.lastMessagePreview.toLowerCase().contains(q);
       final propMatch = (c.propertyTitle ?? '').toLowerCase().contains(q);
       return nameMatch || msgMatch || propMatch;
     }).toList();
@@ -63,6 +69,30 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasRegisteredListeners) {
+      _hasRegisteredListeners = true;
+      ref.listen<AsyncValue<Map<String, dynamic>>>(
+        notificationStreamProvider,
+        (previous, next) {
+          next.whenData((event) {
+            final type = event['type']?.toString();
+            if (type == 'NEW_CHAT_MESSAGE' || type == 'NEW_CONVERSATION') {
+              ref.invalidate(conversationsProvider);
+            }
+          });
+        },
+      );
+
+      ref.listen<AsyncValue<Map<String, dynamic>>>(
+        chatEventStreamProvider,
+        (previous, next) {
+          next.whenData((_) {
+            ref.invalidate(conversationsProvider);
+          });
+        },
+      );
+    }
+
     final convsAsync = ref.watch(conversationsProvider);
     final profileAsync = ref.watch(profileNotifierProvider);
     final tt = Theme.of(context).textTheme;
@@ -270,13 +300,15 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                                   false;
                             },
                             onDismissed: (direction) async {
+                              final scaffoldMessenger = ScaffoldMessenger.of(context);
                               try {
                                 await ref
                                     .read(chatRepositoryProvider)
                                     .deleteConversation(conv.id);
                                 ref.invalidate(conversationsProvider);
                               } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                if (!mounted) return;
+                                scaffoldMessenger.showSnackBar(
                                   SnackBar(content: Text(e.toString())),
                                 );
                               }
@@ -442,7 +474,7 @@ class _ConversationTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          conv.lastMessage ?? '',
+                          conv.lastMessagePreview,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.outfit(

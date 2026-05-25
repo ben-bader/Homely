@@ -74,7 +74,7 @@ public class SellerAnalyticsService {
         Long totalMessages = 0L;
         for (PropertyDto property : allProperties) {
             if (property.getId() != null) {
-                List<Conversation> conversations = conversationRepository.findByClientIdOrSellerId(seller.getId(), seller.getId());
+                List<Conversation> conversations = conversationRepository.findByParticipantOneIdOrParticipantTwoId(seller.getId());
                 for (Conversation conversation : conversations) {
                     if (conversation.getProperty().getId().equals(property.getId())) {
                         totalMessages += messageRepository.countByConversationId(conversation.getId());
@@ -157,7 +157,7 @@ public class SellerAnalyticsService {
                     
                     // Get message count for this property
                     Long messageCount = 0L;
-                    List<Conversation> conversations = conversationRepository.findByClientIdOrSellerId(sellerId, sellerId);
+                    List<Conversation> conversations = conversationRepository.findByParticipantOneIdOrParticipantTwoId(sellerId);
                     for (Conversation conversation : conversations) {
                         if (conversation.getProperty() != null && conversation.getProperty().getId().equals(property.getId())) {
                             messageCount += messageRepository.countByConversationId(conversation.getId());

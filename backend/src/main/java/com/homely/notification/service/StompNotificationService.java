@@ -39,7 +39,7 @@ public class StompNotificationService {
             String destination = "/topic/notifications/" + targetUserId;
             messagingTemplate.convertAndSend(destination, (Object) payload);
 
-            log.info("Sent STOMP notification to user {}: {}", targetUserId, title);
+            log.info("Sent STOMP notification to user {} -> dest={} payloadKeys={}", targetUserId, destination, payload.keySet());
 
         } catch (Exception e) {
             log.error("Failed to send STOMP notification to user {}: {}", targetUserId, e.getMessage(), e);
@@ -55,9 +55,10 @@ public class StompNotificationService {
                     "timestamp", System.currentTimeMillis()
             );
 
-            messagingTemplate.convertAndSend("/topic/notifications/broadcast", (Object) payload);
+            String dest = "/topic/notifications/broadcast";
+            messagingTemplate.convertAndSend(dest, (Object) payload);
 
-            log.info("Broadcast STOMP notification: {}", title);
+            log.info("Broadcast STOMP notification -> dest={} payloadKeys={}", dest, payload.keySet());
 
         } catch (Exception e) {
             log.error("Failed to broadcast STOMP notification: {}", e.getMessage(), e);

@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:homely/ui/providers/profile_providers.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
@@ -1174,13 +1175,16 @@ class _ContactBtn extends ConsumerWidget {
         try {
           final repo = ref.read(chatRepositoryProvider);
           final conv = await repo.createConversation(property.id);
+          final currentUserId =
+              ref.read(profileNotifierProvider).valueOrNull?.userId ??
+                  conv.participantOneId;
           if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => ChatScreen(
                 conversationId: conv.id,
-                currentUserId: conv.clientId,
+                currentUserId: currentUserId,
                 chatTitle: property.sellerName,
                 chatSubtitle: property.title,
               ),

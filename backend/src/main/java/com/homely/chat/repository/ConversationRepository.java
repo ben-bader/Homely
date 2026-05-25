@@ -5,14 +5,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.homely.chat.entity.Conversation;
-import com.homely.property.entity.Property;
-import com.homely.user.entity.User;
 
 public interface ConversationRepository extends JpaRepository<Conversation, UUID> {
-    List<Conversation> findByClientIdOrSellerId(UUID ClientId, UUID SellerId);
+    // Legacy client/seller based queries removed. Use participant-based queries.
 
-    Optional<Conversation> findByPropertyAndClient(Property property,User client);
+    @Query("SELECT c FROM Conversation c WHERE (c.participantOne.id = :first AND c.participantTwo.id = :second) OR (c.participantOne.id = :second AND c.participantTwo.id = :first)")
+    Optional<Conversation> findByParticipants(@Param("first") UUID participantOneId, @Param("second") UUID participantTwoId);
 
+    @Query("SELECT c FROM Conversation c WHERE c.participantOne.id = :userId OR c.participantTwo.id = :userId")
+    List<Conversation> findByParticipantOneIdOrParticipantTwoId(@Param("userId") UUID userId);
 }

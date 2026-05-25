@@ -7,10 +7,15 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.homely.common.enums.MessageType;
+import com.homely.common.enums.ReadStatus;
+import com.homely.property.entity.Property;
 import com.homely.user.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -36,7 +41,28 @@ public class Message {
     @JoinColumn(name = "sender_id")
     private User sender;
 
-    private String body;
+    @Column(name = "body")
+    private String text;
+
+    public String getBody() {
+        return text;
+    }
+
+    public void setBody(String body) {
+        this.text = body;
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MessageType type = MessageType.TEXT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ReadStatus readStatus = ReadStatus.UNREAD;
+
+    @ManyToOne
+    @JoinColumn(name = "property_id")
+    private Property property;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "TEXT")

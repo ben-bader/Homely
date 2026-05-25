@@ -11,6 +11,10 @@ public interface MessageMapper {
 
     @Mapping(target = "conversationId", source = "conversation.id")
     @Mapping(target = "senderId", source = "sender.id")
+    @Mapping(target = "text", source = "text")
+    @Mapping(target = "messageType", source = "type")
+    @Mapping(target = "propertyId", source = "property.id")
+    @Mapping(target = "readStatus", source = "readStatus")
     @Mapping(target = "createdAt", source = "createdAt")
     @Mapping(target = "updatedAt", source = "updatedAt")
     MessageDto toDto(Message entity);

@@ -348,12 +348,6 @@ class Endpoints {
   // ==================== PROPERTY VIEW TRACKING ====================
 
   /// POST - Track property view
-  static String trackPropertyView(String propertyId) =>
-      '/properties/$propertyId/view';
-
-  /// GET - Get property view statistics
-  static String propertyViewStats(String propertyId) =>
-      '/properties/$propertyId/views/stats';
 
   // ==================== HELPER METHODS ====================
 

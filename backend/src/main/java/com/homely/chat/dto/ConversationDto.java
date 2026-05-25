@@ -11,16 +11,17 @@ import lombok.Setter;
 public class ConversationDto {
     private UUID id;
     private UUID propertyId;
-    private UUID clientId;
-    private UUID sellerId;
-    
+    // legacy client/seller removed; use participant IDs instead
+    private UUID participantOneId;
+    private UUID participantTwoId;
     // Display fields
     private String propertyTitle;
-    private String sellerName;
-    private String clientName;                // ← include both sides
-    private String sellerAvatar;
-    private String clientAvatar;
+    private String participantOneName;
+    private String participantTwoName;
+    private String participantOneAvatar;
+    private String participantTwoAvatar;
     private String lastMessage;
+    private String lastMessageType;
     private Instant lastMessageAt;
     private int unreadCount;
 
