@@ -3,14 +3,19 @@ import 'package:flutter/foundation.dart';
 class EnvironmentConfig {
   EnvironmentConfig._();
 
-  static const String _debugBaseUrlFromEnv =
-      String.fromEnvironment('API_BASE_URL', defaultValue: '');
-  static const String _releaseBaseUrlFromEnv =
-      String.fromEnvironment('PRODUCTION_API_BASE_URL', defaultValue: '');
+  static const String _debugBaseUrlFromEnv = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: '',
+  );
+  static const String _releaseBaseUrlFromEnv = String.fromEnvironment(
+    'PRODUCTION_API_BASE_URL',
+    defaultValue: '',
+  );
 
-  static const String defaultDevBaseUrl =
+  static const String defaultDevBaseUrl = 'http://localhost:8082/api';
+  // Keep the public tunnel as the default production base URL
+  static const String defaultProdBaseUrl =
       'https://elegant-jasiah-speedfully.ngrok-free.dev/api';
-  static const String defaultProdBaseUrl = defaultDevBaseUrl;
 
   static final EnvironmentConfig instance = EnvironmentConfig._();
 
@@ -26,7 +31,9 @@ class EnvironmentConfig {
       );
     }
     return _normalizeUrl(
-      _debugBaseUrlFromEnv.isNotEmpty ? _debugBaseUrlFromEnv : defaultDevBaseUrl,
+      _debugBaseUrlFromEnv.isNotEmpty
+          ? _debugBaseUrlFromEnv
+          : defaultDevBaseUrl,
     );
   }
 
@@ -66,20 +73,20 @@ class Endpoints {
   /// Converts HTTP/HTTPS base URL to WS/WSS with correct endpoint
   static String getWebSocketUrl() {
     String wsUrl = baseUrl;
-    
+
     // Remove /api suffix if present
     wsUrl = wsUrl.replaceAll(RegExp(r'/api$'), '');
-    
+
     // Convert protocol to WebSocket protocol
     if (wsUrl.startsWith('https://')) {
       wsUrl = wsUrl.replaceFirst('https://', 'wss://');
     } else if (wsUrl.startsWith('http://')) {
       wsUrl = wsUrl.replaceFirst('http://', 'ws://');
     }
-    
+
     // Add /ws endpoint
     wsUrl = '$wsUrl/ws';
-    
+
     return wsUrl;
   }
 
@@ -198,16 +205,20 @@ class Endpoints {
   // ==================== PROPERTY VIEW ENDPOINTS ====================
 
   /// POST - Track a property view
-  static String trackPropertyView(String propertyId) => '/properties/$propertyId/view';
+  static String trackPropertyView(String propertyId) =>
+      '/properties/$propertyId/view';
 
   /// GET - Get property view stats
-  static String propertyViewStats(String propertyId) => '/properties/$propertyId/views/stats';
+  static String propertyViewStats(String propertyId) =>
+      '/properties/$propertyId/views/stats';
 
   /// GET - Get views by property
-  static String propertyViewsByProperty(String propertyId) => '/property-views/property/$propertyId';
+  static String propertyViewsByProperty(String propertyId) =>
+      '/property-views/property/$propertyId';
 
   /// GET - Get views by user
-  static String propertyViewsByUser(String userId) => '/property-views/user/$userId';
+  static String propertyViewsByUser(String userId) =>
+      '/property-views/user/$userId';
 
   // ==================== CHAT ENDPOINTS ====================
 
@@ -277,16 +288,20 @@ class Endpoints {
   static const String sellerAnalytics = '/seller/analytics';
 
   /// GET - Get views over time (last 30 days)
-  static const String sellerAnalyticsViewsOverTime = '/seller/analytics/views-over-time';
+  static const String sellerAnalyticsViewsOverTime =
+      '/seller/analytics/views-over-time';
 
   /// GET - Get messages over time (last 30 days)
-  static const String sellerAnalyticsMessagesOverTime = '/seller/analytics/messages-over-time';
+  static const String sellerAnalyticsMessagesOverTime =
+      '/seller/analytics/messages-over-time';
 
   /// GET - Get visits over time (last 30 days)
-  static const String sellerAnalyticsVisitsOverTime = '/seller/analytics/visits-over-time';
+  static const String sellerAnalyticsVisitsOverTime =
+      '/seller/analytics/visits-over-time';
 
   /// GET - Get top performing properties
-  static const String sellerAnalyticsTopProperties = '/seller/analytics/top-properties';
+  static const String sellerAnalyticsTopProperties =
+      '/seller/analytics/top-properties';
 
   // ==================== FEEDBACK ENDPOINTS ====================
 
@@ -345,16 +360,6 @@ class Endpoints {
   /// DELETE - Remove from favorites
   static String removeFavorite(String propertyId) => '/favorites/$propertyId';
 
-  // ==================== PROPERTY VIEW TRACKING ====================
-
-  /// POST - Track property view
-  static String trackPropertyView(String propertyId) =>
-      '/properties/$propertyId/view';
-
-  /// GET - Get property view statistics
-  static String propertyViewStats(String propertyId) =>
-      '/properties/$propertyId/views/stats';
-
   // ==================== HELPER METHODS ====================
 
   /// Get full URL for an endpoint
@@ -364,5 +369,4 @@ class Endpoints {
 
   /// Get base URL based on environment
   static String getBaseUrl() => baseUrl;
-
 }

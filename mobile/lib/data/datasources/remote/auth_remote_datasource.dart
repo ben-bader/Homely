@@ -76,7 +76,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       uri,
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
       body: jsonEncode({'token': token}),
-    ).timeout(const Duration(seconds: 10));
+    ).timeout(const Duration(seconds: 30));
     if (resp.statusCode >= 200 && resp.statusCode < 300) {
       try {
         return jsonDecode(resp.body) as Map<String, dynamic>;
