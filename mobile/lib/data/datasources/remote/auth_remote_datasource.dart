@@ -72,11 +72,16 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   Future<Map<String, dynamic>> refreshToken(String token) async {
     // Use direct http call to avoid recursion into ApiClient auth flow
     final uri = Uri.parse(Endpoints.getFullUrl(Endpoints.refreshToken));
-    final resp = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({'token': token}),
-    ).timeout(const Duration(seconds: 10));
+    final resp = await http
+        .post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({'token': token}),
+        )
+        .timeout(const Duration(seconds: 30));
     if (resp.statusCode >= 200 && resp.statusCode < 300) {
       try {
         return jsonDecode(resp.body) as Map<String, dynamic>;

@@ -11,8 +11,9 @@ import 'package:homely/data/datasources/remote/auth_remote_datasource.dart';
 
 class ApiClient {
   static final _storage = SecureStorage();
-  static const _timeout = Duration(seconds: 15);
-  static const _maxRetries = 2;
+  // Increased timeout and retries to be more resilient on slow dev machines/networks
+  static const _timeout = Duration(seconds: 30);
+  static const _maxRetries = 3;
   static const _baseDelay = Duration(seconds: 1);
 
   static String get baseUrl => Endpoints.baseUrl;
@@ -71,7 +72,12 @@ class ApiClient {
           } catch (_) {}
         }
       }
-      if (e is Exception) return ApiFailure<T?>(e, statusCode: e is ApiException ? e.statusCode : null, message: e.toString());
+      if (e is Exception)
+        return ApiFailure<T?>(
+          e,
+          statusCode: e is ApiException ? e.statusCode : null,
+          message: e.toString(),
+        );
       return ApiFailure<T?>(Exception('Unknown error'));
     }
   }
@@ -100,7 +106,12 @@ class ApiClient {
           } catch (_) {}
         }
       }
-      if (e is Exception) return ApiFailure<T?>(e, statusCode: e is ApiException ? e.statusCode : null, message: e.toString());
+      if (e is Exception)
+        return ApiFailure<T?>(
+          e,
+          statusCode: e is ApiException ? e.statusCode : null,
+          message: e.toString(),
+        );
       return ApiFailure<T?>(Exception('Unknown error'));
     }
   }
@@ -112,7 +123,12 @@ class ApiClient {
     bool auth = true,
   }) async {
     try {
-      final res = await put(path, queryParams: queryParams, body: body, auth: auth);
+      final res = await put(
+        path,
+        queryParams: queryParams,
+        body: body,
+        auth: auth,
+      );
       return ApiSuccess<T?>(res as T?);
     } catch (e) {
       if (e is ApiException && e.statusCode == 401 && auth) {
@@ -124,13 +140,23 @@ class ApiClient {
             final newToken = newData['token'] as String?;
             if (newToken != null && newToken.isNotEmpty) {
               await _storage.setToken(newToken);
-              final res = await put(path, queryParams: queryParams, body: body, auth: auth);
+              final res = await put(
+                path,
+                queryParams: queryParams,
+                body: body,
+                auth: auth,
+              );
               return ApiSuccess<T?>(res as T?);
             }
           } catch (_) {}
         }
       }
-      if (e is Exception) return ApiFailure<T?>(e, statusCode: e is ApiException ? e.statusCode : null, message: e.toString());
+      if (e is Exception)
+        return ApiFailure<T?>(
+          e,
+          statusCode: e is ApiException ? e.statusCode : null,
+          message: e.toString(),
+        );
       return ApiFailure<T?>(Exception('Unknown error'));
     }
   }
@@ -245,34 +271,65 @@ class ApiClient {
   }
 
   static Uri _buildUri(String path, [Map<String, String>? queryParams]) {
-    final cleanBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    var cleanBase = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
     final cleanPath = path.startsWith('/') ? path : '/$path';
-    return Uri.parse('$cleanBase$cleanPath').replace(queryParameters: queryParams);
+
+    // If developer used localhost in baseUrl and the app is running on an Android emulator,
+    // map localhost to the emulator's host loopback address so requests reach the host machine.
+    try {
+      if (!kIsWeb && Platform.isAndroid) {
+        if (cleanBase.contains('localhost')) {
+          cleanBase = cleanBase.replaceAll('localhost', '10.0.2.2');
+        } else if (cleanBase.contains('127.0.0.1')) {
+          cleanBase = cleanBase.replaceAll('127.0.0.1', '10.0.2.2');
+        }
+      }
+    } catch (_) {}
+
+    final uri = Uri.parse(
+      '$cleanBase$cleanPath',
+    ).replace(queryParameters: queryParams);
+    debugPrint('[ApiClient] Built URI: ${uri.toString()}');
+    return uri;
   }
 
   static void _logResponse(String method, Uri uri, int statusCode) {
     debugPrint('[ApiClient] $method ${uri.toString()} => $statusCode');
   }
 
-  static Future<T> _withRetry<T>(Future<T> Function() action, {bool retry = false}) async {
+  static Future<T> _withRetry<T>(
+    Future<T> Function() action, {
+    bool retry = false,
+  }) async {
     var attempt = 0;
     while (true) {
       try {
         return await action();
       } on TimeoutException {
         attempt++;
+        debugPrint('[ApiClient] Timeout on attempt $attempt/$_maxRetries');
         if (attempt > _maxRetries) {
           throw NetworkException('Request timed out after $_timeout.');
         }
         await Future.delayed(_backoffDelay(attempt));
       } on SocketException {
         attempt++;
+        debugPrint(
+          '[ApiClient] SocketException on attempt $attempt/$_maxRetries',
+        );
         if (attempt > _maxRetries) {
-          throw NetworkException('Network unavailable. Please check your connection.');
+          throw NetworkException(
+            'Network unavailable. Please check your connection.',
+          );
         }
         await Future.delayed(_backoffDelay(attempt));
       } on http.ClientException {
         attempt++;
+        debugPrint(
+          '[ApiClient] Http client exception on attempt $attempt/$_maxRetries',
+        );
         if (attempt > _maxRetries) {
           throw NetworkException('Network error. Please try again.');
         }
@@ -290,7 +347,9 @@ class ApiClient {
 
   static Duration _backoffDelay(int attempt) {
     final delay = _baseDelay.inMilliseconds * (1 << (attempt - 1));
-    final capped = Duration(milliseconds: delay.clamp(_baseDelay.inMilliseconds, 6000));
+    final capped = Duration(
+      milliseconds: delay.clamp(_baseDelay.inMilliseconds, 6000),
+    );
     return capped;
   }
 
