@@ -23,9 +23,9 @@ export default function AdminDashboardWrapper({
       }
 
       // ✅ load permissions (global system you're currently using)
-const stored = user
-  ? localStorage.getItem(`permissions_${user.id}`)
-  : null;
+      const stored = user
+        ? localStorage.getItem(`permissions_${user.id}`)
+        : null;
 
       if (!stored) {
         // fallback default permissions
@@ -41,11 +41,10 @@ const stored = user
           manage_parameters: true,
           manage_admins: true,
         };
+        // Only store under user-specific key (no duplicates)
         localStorage.setItem(`permissions_${user.id}`, JSON.stringify(defaultPerms));
-        localStorage.setItem("permissions", JSON.stringify(defaultPerms));
-      } else {
-        localStorage.setItem("permissions", stored);
       }
+      // Note: We don't sync to "permissions" key anymore - use user-specific key only
 
       setLoading(false);
     };

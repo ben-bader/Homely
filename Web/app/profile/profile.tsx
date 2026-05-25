@@ -16,7 +16,7 @@ export default function Profile() {
   const user = getUserFromToken()
   const userId = user?.id
 
-  const [form, setForm] = React.useState({ name: user?.name || "", email: user?.sub || "" })
+  const [form, setForm] = React.useState({ name: "", email: user?.username || "" })
   const [passwordData, setPasswordData] = React.useState({
     currentPassword: "",
     newPassword: "",
@@ -120,9 +120,9 @@ export default function Profile() {
           try {
             await api.delete(`/users/${userId}`)
             toast.success(t('danger.successToast'))
-            localStorage.removeItem("jwt")
             localStorage.removeItem("access_token")
             localStorage.removeItem("refresh_token")
+            localStorage.removeItem("jwt")
             localStorage.removeItem("auth_user")
             globalThis.window.location.href = "/"
           } catch {

@@ -56,33 +56,31 @@ protected void doFilterInternal(
 
             User user = userService.getByEmail(email);
 
-            if (user != null &&
-                    jwtService.isTokenValid(token, user) &&
-                    user.isActive()) {
+                if (user != null && jwtService.isTokenValid(token, user) && user.isActive()) {
 
-                var userDetails =
-                        org.springframework.security.core.userdetails.User
-                                .withUsername(user.getEmail())
-                                .password(user.getPasswordHash())
-                                .authorities(user.getAuthorities())
-                                .disabled(!user.isActive())
-                                .build();
+                // Use roles embedded in the token to build authorities so the token is the source of truth
+                var roles = jwtService.extractRoles(token);
+                var authorities = roles.stream()
+                    .map(r -> new org.springframework.security.core.authority.SimpleGrantedAuthority(r))
+                    .toList();
 
-                var authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                var userDetails = org.springframework.security.core.userdetails.User
+                    .withUsername(user.getEmail())
+                    .password(user.getPasswordHash())
+                    .authorities(authorities)
+                    .disabled(!user.isActive())
+                    .build();
 
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request));
+                var authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
+                );
 
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authToken);
-            }
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
         }
 
     } catch (io.jsonwebtoken.ExpiredJwtException e) {

@@ -17,11 +17,24 @@ import Chat from "@/app/chats/Chat";
 import ManageParameters from "@/app/ManageParametres/ManageParametres";
 import AdminManager from "../AdminManager/AdminManager";
 
-import { getUserFromToken } from "@/lib/auth";
+import { getUserFromToken, isAdmin } from "@/lib/auth";
 
 export default function Page() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+
+  const defaultAdminPermissions: Record<string, boolean> = {
+    dashboard: true,
+    users: true,
+    properties: true,
+    reports: true,
+    boosts: true,
+    visit_requests: true,
+    activity_monitoring: true,
+    chats: true,
+    manage_parameters: true,
+    manage_admins: true,
+  };
 
   // ✅ Load permissions per user
   useEffect(() => {
@@ -34,9 +47,18 @@ export default function Page() {
       try {
         setPermissions(JSON.parse(stored));
       } catch {
-        setPermissions({});
+        setPermissions(isAdmin() ? defaultAdminPermissions : {});
       }
+      return;
     }
+
+    if (isAdmin()) {
+      localStorage.setItem(`permissions_${user.id}`, JSON.stringify(defaultAdminPermissions));
+      setPermissions(defaultAdminPermissions);
+      return;
+    }
+
+    setPermissions({});
   }, []);
 
   // ❌ fallback UI

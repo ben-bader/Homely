@@ -11,9 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FaRocketchat } from "react-icons/fa";
 import { useTranslations } from "next-intl";
+import { Conversation, ChatMessageResponse } from "@/types/chat-types";
 
-interface ChatMessageResponse { id: number; conversationId: string; senderId: string; senderName: string; body: string; sentAt: string; }
-interface Conversation { id: string; sellerName: string; sellerId: string; sellerAvatar: string | null; clientName: string; clientId: string; clientAvatar: string | null; propertyId: string; propertyTitle?: string; lastMessage?: string; lastMessageAt?: string; unreadCount?: number; createdAt: string; updatedAt: string; messages?: ChatMessageResponse[]; }
 type DateSort = "" | "newest" | "oldest";
 
 function parseDate(v: string | null | undefined): Date | null { if (!v) return null; if (!v.endsWith("Z") && !v.includes("+")) return new Date(v + "Z"); return new Date(v); }
@@ -77,10 +76,16 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
     if (!isOpen || messages.length > 0) return;
     try {
       setLoading(true);
-      const res = await api.get<ChatMessageResponse[]>(`/chat/messages?conversationId=${conversation.id}`);
-      const newMessages = res.data;
-      setMessages(newMessages);
+      // Use correct endpoint: /chat/conversations/{conversationId}/messages
+      const res = await api.get<any>(`/chat/conversations/${conversation.id}/messages`, {
+        params: { page: 0, size: 50 }
+      });
+      // Backend returns Page object, extract content array
+      const newMessages = res.data.content || res.data;
+      setMessages(Array.isArray(newMessages) ? newMessages : []);
       setConversations((prev) => prev.map((c) => (c.id === conversation.id ? { ...c, messages: newMessages } : c)));
+    } catch (err) {
+      console.error('Failed to fetch messages:', err);
     } finally { setLoading(false); }
   };
 
@@ -91,12 +96,12 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
         <DialogTitle className="hidden">Conversation Drawer</DialogTitle>
         <DrawerHeader className="border-b pb-4">
           <DrawerTitle className="text-base font-semibold">{t('title')}</DrawerTitle>
-          <DrawerDescription className="text-xs text-muted-foreground">{conversation.sellerName} & {conversation.clientName}</DrawerDescription>
+          <DrawerDescription className="text-xs text-muted-foreground">{conversation.participantOneName} & {conversation.participantTwoName}</DrawerDescription>
         </DrawerHeader>
         <div className="px-5 py-4 border-b space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <InfoRow label={t('seller')} value={conversation.sellerName} />
-            <InfoRow label={t('client')} value={conversation.clientName} />
+            <InfoRow label={t('participantOne')} value={conversation.participantOneName} />
+            <InfoRow label={t('participantTwo')} value={conversation.participantTwoName} />
           </div>
           {conversation.propertyTitle && <InfoRow label={t('property')} value={conversation.propertyTitle} />}
         </div>
@@ -104,11 +109,11 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
           {loading ? <p className="text-center text-sm text-muted-foreground py-8">{t('loadingMessages')}</p>
             : messages.length === 0 ? <p className="text-center text-sm text-muted-foreground py-8">{t('noMessages')}</p>
             : messages.map((msg) => {
-              const isSeller = msg.senderId === conversation.sellerId;
+              const isParticipantOne = msg.senderId === conversation.participantOneId;
               return (
-                <div key={msg.id} className={`flex flex-col ${isSeller ? "items-end" : "items-start"}`}>
+                <div key={msg.id} className={`flex flex-col ${isParticipantOne ? "items-end" : "items-start"}`}>
                   <span className="text-[10px] text-muted-foreground mb-0.5 px-1">{msg.senderName}</span>
-                  <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-snug shadow-sm ${isSeller ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-background text-foreground rounded-bl-sm border"}`}>{msg.body}</div>
+                  <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-snug shadow-sm ${isParticipantOne ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-background text-foreground rounded-bl-sm border"}`}>{msg.body}</div>
                   <span className="text-[10px] text-muted-foreground mt-0.5 px-1">{fmtFull(msg.sentAt)}</span>
                 </div>
               );
@@ -138,7 +143,7 @@ export default function ChatPage() {
 
   const filteredData = useMemo(() => {
     const filtered = conversations.filter((c) => {
-      const textMatch = [c.sellerName, c.clientName, c.propertyTitle ?? c.propertyId].filter(Boolean).join(" ").toLowerCase().includes(search.toLowerCase());
+      const textMatch = [c.participantOneName, c.participantTwoName, c.propertyTitle ?? c.propertyId].filter(Boolean).join(" ").toLowerCase().includes(search.toLowerCase());
       const created = parseDate(c.createdAt)?.getTime() ?? null;
       const afterMatch = !createdAfter || (created !== null && created >= new Date(createdAfter + "T00:00:00Z").getTime());
       const beforeMatch = !createdBefore || (created !== null && created <= new Date(createdBefore + "T23:59:59Z").getTime());
@@ -150,8 +155,8 @@ export default function ChatPage() {
   }, [conversations, search, createdAfter, createdBefore, dateSort]);
 
   const columns = useMemo<ColumnDef<Conversation>[]>(() => [
-    { accessorKey: "sellerName", header: t('table.seller'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.sellerName}</p> },
-    { accessorKey: "clientName", header: t('table.client'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.clientName}</p> },
+    { accessorKey: "participantOneName", header: t('table.participantOne'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.participantOneName}</p> },
+    { accessorKey: "participantTwoName", header: t('table.participantTwo'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.participantTwoName}</p> },
     { accessorKey: "propertyTitle", header: t('table.property'), cell: ({ row }) => <p className="text-sm">{row.original.propertyTitle ?? "—"}</p> },
     { accessorKey: "createdAt", header: t('table.startedAt'), cell: ({ row }) => <p className="text-sm">{fmt(row.original.createdAt)}</p> },
     { id: "seeMore", header: "", cell: ({ row }) => <ChatDrawer conversation={row.original} setConversations={setConversations} /> },

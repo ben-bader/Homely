@@ -21,7 +21,8 @@ export function useProperties() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<PaginatedResponse<Property>>("/admin/properties/paginated", {
+      // Use public paginated endpoint - backend returns PageResponse<PropertyDto>
+      const res = await api.get<PaginatedResponse<Property>>("/properties/paginated", {
         params: { page, pageSize },
       });
       

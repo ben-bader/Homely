@@ -1,23 +1,34 @@
 export interface ChatMessageResponse {
-  id: string;
+  id: number;
   conversationId: string;
   senderId: string;
   senderName: string;
   body: string;
-  createdAt: string;
+  messageType?: string | null;
+  propertyId?: string | null;
+  propertyTitle?: string | null;
+  propertyImageUrl?: string | null;
+  propertyPrice?: string | null;
+  propertyLocation?: string | null;
+  readAt?: string | null;
+  sentAt: string;
 }
 
 export interface Conversation {
   id: string;
-  sellerName: string;
-  sellerId: string;
-  sellerActive: boolean;
-  clientName: string;
-  clientId: string;
-  clientActive: boolean;
   propertyId: string;
-  propertyTitle: string;
-  messages?: ChatMessageResponse[]; // optional, will load lazily
-  loadingMessages?: boolean;
+  participantOneId: string;
+  participantTwoId: string;
+  participantOneName: string;
+  participantTwoName: string;
+  participantOneAvatar?: string | null;
+  participantTwoAvatar?: string | null;
+  propertyTitle?: string | null;
+  lastMessage?: string | null;
+  lastMessageType?: string | null;
+  lastMessageAt?: string | null;
+  unreadCount?: number;
   createdAt: string;
+  updatedAt?: string | null;
+  messages?: ChatMessageResponse[];
 }

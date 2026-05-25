@@ -26,7 +26,7 @@ import {
 
 import Logo from "../logo/Logo";
 import { PlusSquareIcon } from "lucide-react";
-import { getUserFromToken } from "@/lib/auth";
+import { getUserFromToken, isAdmin } from "@/lib/auth";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   setActiveSection: (section: string) => void;
@@ -41,6 +41,19 @@ function AppSidebar({
 
   const [permissions, setPermissions] = React.useState<Record<string, boolean> | null>(null);
 
+  const defaultAdminPermissions: Record<string, boolean> = {
+    dashboard: true,
+    users: true,
+    properties: true,
+    reports: true,
+    boosts: true,
+    visit_requests: true,
+    activity_monitoring: true,
+    chats: true,
+    manage_parameters: true,
+    manage_admins: true,
+  };
+
   // ✅ Load permissions safely
   React.useEffect(() => {
     const user = getUserFromToken();
@@ -52,23 +65,21 @@ function AppSidebar({
     const stored = localStorage.getItem(`permissions_${user.id}`);
 
     if (!stored) {
+      if (isAdmin()) {
+        localStorage.setItem(`permissions_${user.id}`, JSON.stringify(defaultAdminPermissions));
+        setPermissions(defaultAdminPermissions);
+        return;
+      }
       setPermissions({});
       return;
     }
 
     try {
       const parsed = JSON.parse(stored);
-
-      // ✅ IMPORTANT FIX:
-      // if permissions are nested (DEFAULT_ADMIN), flatten them
-      const flat =
-        parsed?.dashboard !== undefined
-          ? parsed
-          : parsed?.[user.role] || parsed?.DEFAULT_ADMIN || {};
-
+      const flat = parsed?.dashboard !== undefined ? parsed : parsed?.DEFAULT_ADMIN || {};
       setPermissions(flat);
     } catch {
-      setPermissions({});
+      setPermissions(isAdmin() ? defaultAdminPermissions : {});
     }
   }, []);
 

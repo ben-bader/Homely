@@ -2,10 +2,13 @@ package com.homely.auth.service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import com.homely.user.entity.User;
@@ -29,13 +32,18 @@ public class JwtService {
     // TOKEN GENERATION
     public String generateToken(User user) {
         Key key = getSigningKey();
+        List<String> roles = user.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList());
+
         return Jwts.builder()
-                .setSubject(user.getEmail())
-                .claim("userId", user.getId().toString())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+            .setSubject(user.getEmail())
+            .claim("userId", user.getId().toString())
+            .claim("roles", roles)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
     }
 
     // TOKEN VALIDATION
@@ -56,6 +64,15 @@ public class JwtService {
     public UUID extractUserId(String token) {
         String id = extractClaim(token, claims -> claims.get("userId", String.class));
         return UUID.fromString(id);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(String token) {
+        var rolesObj = extractClaim(token, claims -> claims.get("roles"));
+        if (rolesObj instanceof List<?>) {
+            return ((List<?>) rolesObj).stream().map(Object::toString).collect(Collectors.toList());
+        }
+        return List.of();
     }
 
     public Date extractExpiration(String token) {

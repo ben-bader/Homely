@@ -1,5 +1,8 @@
 package com.homely.config;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
@@ -10,6 +13,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import com.homely.auth.service.JwtService;
@@ -51,21 +55,25 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                     String email = jwtService.extractUsername(token);
                     if (email != null) {
                         User user = userService.getByEmail(email);
-                        if (user != null && jwtService.isTokenValid(token, user) && user.isActive()) {
+                            if (user != null && jwtService.isTokenValid(token, user) && user.isActive()) {
+                            List<String> roles = jwtService.extractRoles(token);
+                            List<SimpleGrantedAuthority> authorities = roles.stream()
+                                .map(SimpleGrantedAuthority::new)
+                                .collect(Collectors.toList());
 
                             UsernamePasswordAuthenticationToken auth =
-                                    new UsernamePasswordAuthenticationToken(
-                                            user.getEmail(),
-                                            null,
-                                            user.getAuthorities()
-                                    );
+                                new UsernamePasswordAuthenticationToken(
+                                    user.getEmail(),
+                                    null,
+                                    authorities
+                                );
 
                             accessor.setUser(auth);
                             log.info("STOMP CONNECT authenticated session={} user={}", sessionId, user.getEmail());
-                        } else {
+                            } else {
                             log.warn("STOMP CONNECT authentication failed for token user={}, session={}", email, sessionId);
                             throw new BadCredentialsException("Invalid STOMP token");
-                        }
+                            }
                     }
                 } catch (Exception e) {
                     log.warn("WebSocket auth validation error for session {}: {}", sessionId, e.getMessage());

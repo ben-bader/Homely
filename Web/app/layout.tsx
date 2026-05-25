@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl"; // ✅ added
 import { getMessages } from "next-intl/server";     // ✅ added
+import { AppInitializer } from "@/components/AppInitializer"; // ✅ Auth init
+import { AuthProvider } from "@/lib/auth-context"; // ✅ Auth context
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,10 +34,16 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* ✅ wrapped children ONLY */}
-        <NextIntlClientProvider locale="en" messages={messages}>
-          {children}
-        </NextIntlClientProvider>
+        {/* ✅ Initialize auth on app startup */}
+        <AppInitializer />
+        
+        {/* ✅ Provide auth context */}
+        <AuthProvider>
+          {/* ✅ wrapped children ONLY */}
+          <NextIntlClientProvider locale="en" messages={messages}>
+            {children}
+          </NextIntlClientProvider>
+        </AuthProvider>
       </body>
     </html>
   );

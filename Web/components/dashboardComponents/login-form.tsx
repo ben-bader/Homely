@@ -35,14 +35,15 @@ export function LoginForm({
 
     const accessToken = res.data.accessToken;
     const refreshToken = res.data.refreshToken;
-    const user = res.data.user;
 
-    localStorage.setItem("jwt", accessToken);
-    localStorage.setItem("access_token", accessToken);
-    localStorage.setItem("refresh_token", refreshToken);
-    localStorage.setItem("auth_user", JSON.stringify(user));
+    if (!accessToken) throw new Error("Missing access token from login response")
 
-    router.push("/dashboard");
+    localStorage.setItem("access_token", accessToken)
+    if (refreshToken) {
+      localStorage.setItem("refresh_token", refreshToken)
+    }
+
+    router.push("/dashboard")
   } catch (err) {
     console.log(err);
     setError("Login failed");

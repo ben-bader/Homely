@@ -17,7 +17,7 @@ Content-Type: application/json
 ###
 
 # Set token variable from login response
-@token = {{auth.response.body.token}}
+@token = {{auth.response.body.accessToken}}
 
 ###
 GET {{baseUrl}}/admin/users

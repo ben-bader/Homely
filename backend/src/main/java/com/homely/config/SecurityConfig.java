@@ -59,7 +59,16 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/ws/**", "/api/auth/**").permitAll()
+                        // Public auth endpoints
+                        .requestMatchers(
+                                "/ws/**",
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/refresh",
+                                "/api/auth/verify-email",
+                                "/api/auth/request-password-reset",
+                                "/api/auth/reset-password"
+                        ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
 

@@ -1,6 +1,12 @@
 package com.homely.auth.controller;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.homely.auth.dto.AuthResponse;
 import com.homely.auth.dto.LoginRequest;
 import com.homely.auth.dto.LogoutRequest;
+import com.homely.auth.dto.MeDto;
 import com.homely.auth.dto.PasswordResetSubmitRequest;
 import com.homely.auth.dto.RefreshTokenRequest;
 import com.homely.auth.dto.RegisterRequest;
@@ -36,6 +43,23 @@ public class AuthController {
             HttpServletRequest servletRequest
     ) {
         return authService.register(request, extractDeviceInfo(servletRequest));
+    }
+
+    @GetMapping("/me")
+    public MeDto me() {
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth == null || auth.getName() == null) {
+        return null;
+      }
+
+      User user = userRepository.findByEmail(auth.getName())
+          .orElseThrow(() -> new RuntimeException("User not found"));
+
+      List<String> roles = auth.getAuthorities().stream()
+          .map(GrantedAuthority::getAuthority)
+          .collect(Collectors.toList());
+
+      return new MeDto(user.getId(), user.getEmail(), roles);
     }
 
     @PostMapping("/login")

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { Conversation, ChatMessageResponse } from "@/types/chat-types";
+import { Conversation } from "@/types/chat-types";
 
 export function useChats() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -11,10 +11,10 @@ export function useChats() {
     const fetchConversations = async () => {
       try {
         setLoading(true);
-        const res = await api.get("/admin/conversations");
+        const res = await api.get<Conversation[]>("/chat/conversations");
         setConversations(res.data);
       } catch (err: any) {
-        setError(err.message || "Failed to fetch conversations");
+        setError(err?.response?.data?.message || err.message || "Failed to fetch conversations");
       } finally {
         setLoading(false);
       }

@@ -32,14 +32,17 @@ interface NavUserProps {
 export function NavUser({ setActiveSection }: NavUserProps) {
   const { isMobile } = useSidebar()
   const [user, setUser] = React.useState<any>(null)
+  const [profile, setProfile] = React.useState<any | null>(null)
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null)
 
-  const fetchAvatar = React.useCallback(async () => {
+  const fetchProfile = React.useCallback(async () => {
     try {
       const res = await api.get("/profile/me")
-      if (res.data?.avatarUrl) setAvatarUrl(res.data.avatarUrl)
-      else setAvatarUrl(null)
+      const data = res.data || {}
+      setProfile(data)
+      setAvatarUrl(data.avatarUrl ?? null)
     } catch {
+      setProfile(null)
       setAvatarUrl(null)
     }
   }, [])
@@ -47,16 +50,16 @@ export function NavUser({ setActiveSection }: NavUserProps) {
   React.useEffect(() => {
     const currentUser = getUserFromToken()
     setUser(currentUser)
-    fetchAvatar()
-  }, [fetchAvatar])
+    fetchProfile()
+  }, [fetchProfile])
 
   // Re-fetch avatar whenever the user navigates back to this component
   // (e.g. after updating it in the Profile page)
   React.useEffect(() => {
-    const handleFocus = () => fetchAvatar()
+    const handleFocus = () => fetchProfile()
     globalThis.window.addEventListener("focus", handleFocus)
     return () => globalThis.window.removeEventListener("focus", handleFocus)
-  }, [fetchAvatar])
+  }, [fetchProfile])
 
   // Listen for a custom event dispatched by Profile.tsx after a successful upload
   React.useEffect(() => {
@@ -69,6 +72,9 @@ export function NavUser({ setActiveSection }: NavUserProps) {
 
   if (!user) return null
 
+  // Extract first letter for avatar initial
+  const userInitial = (profile?.name ?? user?.username)?.[0]?.toUpperCase() ?? "?"
+
   const logout = async () => {
     const refreshToken = localStorage.getItem("refresh_token")
     try {
@@ -76,14 +82,14 @@ export function NavUser({ setActiveSection }: NavUserProps) {
     } catch {
       // ignore
     }
-    localStorage.removeItem("jwt")
     localStorage.removeItem("access_token")
     localStorage.removeItem("refresh_token")
+    // Clear any legacy keys
+    localStorage.removeItem("jwt")
     localStorage.removeItem("auth_user")
-    setActiveSection("dashboard")
+    // Redirect to home
+    window.location.href = "/"
   }
-
-  const userInitial = (user.name ?? "?").charAt(0).toUpperCase()
 
   return (
     <SidebarMenu>
@@ -95,7 +101,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
                 {avatarUrl && (
                   <AvatarImage
                     src={avatarUrl}
-                    alt={user.name}
+                    alt={profile?.name ?? user?.username}
                     className="rounded-lg object-cover"
                   />
                 )}
@@ -105,8 +111,8 @@ export function NavUser({ setActiveSection }: NavUserProps) {
               </Avatar>
 
               <div className="grid flex-1 text-left text-sm ml-2">
-                <span className="font-medium">{user.name}</span>
-                <span className="text-xs text-muted-foreground">{user.email}</span>
+                <span className="font-medium">{profile?.name ?? user?.username}</span>
+                <span className="text-xs text-muted-foreground">{profile?.email ?? ""}</span>
               </div>
 
               <IconDotsVertical className="ml-auto size-4" />
@@ -124,7 +130,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
                   {avatarUrl && (
                     <AvatarImage
                       src={avatarUrl}
-                      alt={user.name}
+                      alt={profile?.name ?? user?.username}
                       className="rounded-lg object-cover"
                     />
                   )}
@@ -133,8 +139,8 @@ export function NavUser({ setActiveSection }: NavUserProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium leading-none">{user.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{user.email}</p>
+                  <p className="text-sm font-medium leading-none">{profile?.name ?? user?.username}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{profile?.email ?? ""}</p>
                 </div>
               </div>
             </DropdownMenuLabel>

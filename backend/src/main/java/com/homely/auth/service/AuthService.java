@@ -172,8 +172,7 @@ public class AuthService {
 
         private AuthResponse buildAuthResponse(User user, RefreshToken refreshToken) {
         var roles = user.getAuthorities().stream()
-            .map(grantedAuthority -> grantedAuthority.getAuthority().replace("ROLE_", ""))
-            .map(String::toUpperCase)
+            .map(grantedAuthority -> grantedAuthority.getAuthority())
             .collect(Collectors.toList());
 
         String accessToken = jwtService.generateToken(user);
@@ -184,7 +183,7 @@ public class AuthService {
             refreshToken.getToken(),
             "Bearer",
             expiresInSeconds,
-            user.getName(),
+            user.getUsername(),
             roles
         );
         }
