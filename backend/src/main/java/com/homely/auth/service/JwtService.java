@@ -32,11 +32,9 @@ public class JwtService {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("userId", user.getId().toString())
-                .claim("name", user.getName())
-                .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(key, SignatureAlgorithm.HS256) // ✅ new order
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -62,6 +60,10 @@ public class JwtService {
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    public long getJwtExpirationMillis() {
+        return jwtExpiration;
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> resolver) {

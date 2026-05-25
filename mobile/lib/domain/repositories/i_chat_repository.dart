@@ -2,7 +2,11 @@ import '../entities/chat/conversation_entity.dart';
 import '../entities/chat/message_entity.dart';
 
 abstract class IChatRepository {
-  Future<List<MessageEntity>> fetchMessages(String conversationId);
+  Future<List<MessageEntity>> fetchMessages(
+    String conversationId, {
+    int page = 0,
+    int size = 50,
+  });
   Future<ConversationEntity> createConversation(String propertyId);
   Future<List<ConversationEntity>> fetchConversations();
   Future<MessageEntity> editMessage({

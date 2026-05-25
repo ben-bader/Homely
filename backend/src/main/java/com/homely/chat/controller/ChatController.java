@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,11 +30,13 @@ import com.homely.property.entity.Property;
 import com.homely.user.entity.User;
 import com.homely.user.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
+@Validated
 public class ChatController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
@@ -63,6 +66,7 @@ public class ChatController {
         return chatService.getUserConversations(user.getId())
                 .stream()
                 .map(conversationMapper::toDto)
+                .peek(dto -> dto.setUnreadCount(chatService.countUnreadForConversation(dto.getId(), user.getId())))
                 .toList();
     }
 
@@ -74,15 +78,22 @@ public class ChatController {
         chatService.deleteConversationIfEmpty(conversationId, user.getId());
     }
 
-    @GetMapping("/messages")
-    public List<ChatMessageResponse> getConversationMessages(
-            @RequestParam UUID conversationId) {
+        @GetMapping("/conversations/{conversationId}/messages")
+        public org.springframework.data.domain.Page<ChatMessageResponse> getConversationMessages(
+            Principal principal,
+            @PathVariable UUID conversationId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
 
-        return chatService.getConversationMessages(conversationId)
-                .stream()
-                .map(this::toChatMessageResponse)
-                .toList();
-    }
+        User user = userService.getByEmail(principal.getName());
+
+        var messagesPage = chatService.getConversationMessagesForUser(
+            conversationId,
+            user.getId(),
+            org.springframework.data.domain.PageRequest.of(page, size));
+
+        return messagesPage.map(this::toChatMessageResponse);
+        }
 
     private ChatMessageResponse toChatMessageResponse(Message message) {
         Property property = message.getProperty() != null
@@ -124,10 +135,13 @@ public class ChatController {
         return property.getPrice().toPlainString();
     }
 
-    @MessageMapping({"/chat.send", "/chat.sendMessage"})
-    public void send(MessageDto mdto, Principal principal) {
+    @MessageMapping("/chat.send")
+    public void send(@Valid MessageDto mdto, Principal principal) {
 
-        log.info("Received STOMP message from principal={} conversationId={} body=" + mdto.getBody(), principal == null ? "anonymous" : principal.getName(), mdto.getConversationId());
+        log.info("Received STOMP message from principal={} conversationId={} body={}",
+                principal == null ? "anonymous" : principal.getName(),
+                mdto.getConversationId(),
+                mdto.getBody());
 
         if (principal == null) {
             throw new RuntimeException("Unauthorized");

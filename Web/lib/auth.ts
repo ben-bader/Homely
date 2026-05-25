@@ -1,36 +1,26 @@
-import { jwtDecode } from "jwt-decode"
-
-export interface JwtPayload {
-  sub: string        // email
-  name: string       // full name
-  role: string
-  exp: number
+export interface AuthUser {
   id: string
-
+  name: string
+  email: string
+  roles: string[]
+  emailVerified: boolean
+  avatarUrl?: string | null
 }
 
-export function getUserFromToken(): JwtPayload | null {
-  if (typeof window === "undefined") return null
-
-  const jwt = localStorage.getItem("jwt")
-  if (!jwt) return null
+export function getUserFromToken(): AuthUser | null {
+  if (globalThis.window === undefined) return null
+  const stored = localStorage.getItem("auth_user")
+  if (!stored) return null
 
   try {
-    const decoded = jwtDecode<JwtPayload>(jwt)
-
-    if (decoded.exp * 1000 < Date.now()) {
-      localStorage.removeItem("jwt")
-      return null
-    }
-
-    return decoded
+    return JSON.parse(stored) as AuthUser
   } catch {
-    localStorage.removeItem("jwt")
+    localStorage.removeItem("auth_user")
     return null
   }
 }
 
 export function isAdmin(): boolean {
   const user = getUserFromToken()
-  return user?.role === "ADMIN"
+  return user?.roles?.includes("ADMIN") ?? false
 }

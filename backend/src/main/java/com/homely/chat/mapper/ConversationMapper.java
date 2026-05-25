@@ -20,8 +20,8 @@ public interface ConversationMapper {
     @Mapping(target = "propertyTitle", expression = "java(entity.getProperty() != null ? entity.getProperty().getTitle() : null)")
     @Mapping(target = "participantTwoName", expression = "java(entity.getParticipantTwo() != null ? entity.getParticipantTwo().getName() : null)")
     @Mapping(target = "participantOneName", expression = "java(entity.getParticipantOne() != null ? entity.getParticipantOne().getName() : null)")
-    @Mapping(target = "participantTwoAvatar", ignore = true)
-    @Mapping(target = "participantOneAvatar", ignore = true)
+    @Mapping(target = "participantTwoAvatar", expression = "java(entity.getParticipantTwo() != null && entity.getParticipantTwo().getProfile() != null ? entity.getParticipantTwo().getProfile().getAvtarUrl() : null)")
+    @Mapping(target = "participantOneAvatar", expression = "java(entity.getParticipantOne() != null && entity.getParticipantOne().getProfile() != null ? entity.getParticipantOne().getProfile().getAvtarUrl() : null)")
     @Mapping(target = "lastMessage", ignore = true)
     @Mapping(target = "lastMessageType", ignore = true)
     @Mapping(target = "lastMessageAt", ignore = true)
@@ -32,15 +32,19 @@ public interface ConversationMapper {
 
     @AfterMapping
     default void mapLastMessage(@MappingTarget ConversationDto dto, Conversation entity) {
+        Message lastMsg = null;
         if (entity.getMessages() != null && !entity.getMessages().isEmpty()) {
-            Message lastMsg = entity.getMessages().stream()
+            lastMsg = entity.getMessages().stream()
                     .max(Comparator.comparing((Message m) -> m.getCreatedAt() != null ? m.getCreatedAt() : entity.getUpdatedAt()))
                     .orElse(null);
-            if (lastMsg != null) {
-                dto.setLastMessage(lastMsg.getText());
-                dto.setLastMessageType(lastMsg.getType() != null ? lastMsg.getType().name() : null);
-                dto.setLastMessageAt(lastMsg.getCreatedAt() != null ? lastMsg.getCreatedAt() : entity.getUpdatedAt());
-            }
+        }
+        if (lastMsg == null && entity.getLastMessage() != null) {
+            lastMsg = entity.getLastMessage();
+        }
+        if (lastMsg != null) {
+            dto.setLastMessage(lastMsg.getText());
+            dto.setLastMessageType(lastMsg.getType() != null ? lastMsg.getType().name() : null);
+            dto.setLastMessageAt(lastMsg.getCreatedAt() != null ? lastMsg.getCreatedAt() : entity.getUpdatedAt());
         }
         if (dto.getPropertyTitle() == null && entity.getLastMessage() != null && entity.getLastMessage().getProperty() != null) {
             dto.setPropertyTitle(entity.getLastMessage().getProperty().getTitle());

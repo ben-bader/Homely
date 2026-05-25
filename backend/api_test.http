@@ -1,27 +1,6 @@
 ### Register a new user
 @baseUrl = http://localhost:8082/api
 
-POST {{baseUrl}}/auth/register
-Content-Type: application/json
-
-{
-    "email": "bichoufarouk@gmail.com",
-    "password": "Farou9123",
-    "name": "Farouk Bichou",
-    "phone": "0601020304",
-    "role": "ADMIN"
-}
-###
-POST {{baseUrl}}/auth/register
-Content-Type: application/json
-
-{
-    "email": "testuser1@example.com",
-    "password": "Password123",
-    "name": "Test User 1",
-    "phone": "1234567890",
-    "role": "CLIENT"
-}
 
 ###
 
@@ -422,3 +401,769 @@ GET {{baseUrl}}/notifications/unread?userId=06dde16f-482d-4965-be69-8b852934c685
 ###
 GET  {{baseUrl}}/admin/dashboard-stats
 Authorization: Bearer {{token}}
+
+
+### Create Apartment
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Luxury 2BR Apartment Downtown",
+  "description": "Modern apartment with balcony, elevator, and city skyline view.",
+  "price": 145000,
+  "address": "22 Hassan II Boulevard, Rabat, Morocco",
+  "listingType": "SELL",
+  "longitude": -6.841650,
+  "latitude": 34.020882,
+  "propertyType": "APARTMENT",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "apartment": {
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "floor": 5,
+    "hasElevator": true
+  }
+}
+
+###
+### Create House
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Traditional Moroccan Family House",
+  "description": "Spacious house with private courtyard and rooftop terrace.",
+  "price": 310000,
+  "address": "15 Rue Al Qods, Fes, Morocco",
+  "listingType": "SELL",
+  "longitude": -5.003338,
+  "latitude": 34.033333,
+  "propertyType": "HOUSE",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "house": {
+    "bedrooms": 4,
+    "bathrooms": 3,
+    "hasGarage": true,
+    "landAreaSqm": 320.0
+  }
+}
+
+###
+### Create Villa
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Sea View Luxury Villa",
+  "description": "Premium villa with infinity pool and private garden near the beach.",
+  "price": 980000,
+  "address": "8 Corniche Road, Tangier, Morocco",
+  "listingType": "SELL",
+  "longitude": -5.812500,
+  "latitude": 35.759465,
+  "propertyType": "VILLA",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "villa": {
+    "bedrooms": 6,
+    "bathrooms": 5,
+    "landAreaSqm": 850.0,
+    "hasPool": true
+  }
+}
+
+###
+### Create Land
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Agricultural Land Outside Marrakech",
+  "description": "Large fertile land ideal for farming or investment projects.",
+  "price": 220000,
+  "address": "Route de l’Ourika, Marrakech, Morocco",
+  "listingType": "SELL",
+  "longitude": -7.981084,
+  "latitude": 31.629472,
+  "propertyType": "LAND",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "land": {
+    "areaSqm": 2400.0,
+    "constructible": false
+  }
+}
+
+###
+### Create Apartment
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Modern Studio Near University",
+  "description": "Affordable furnished studio ideal for students and remote workers.",
+  "price": 650,
+  "address": "Avenue des FAR, Kenitra, Morocco",
+  "listingType": "RENT",
+  "longitude": -6.580200,
+  "latitude": 34.261010,
+  "propertyType": "APARTMENT",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "apartment": {
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "floor": 3,
+    "hasElevator": true
+  }
+}
+
+###
+### Create House
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Cozy Suburban House",
+  "description": "Quiet family home with backyard and renovated kitchen.",
+  "price": 195000,
+  "address": "44 Atlas Street, Agadir, Morocco",
+  "listingType": "SELL",
+  "longitude": -9.598107,
+  "latitude": 30.427755,
+  "propertyType": "HOUSE",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "house": {
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "hasGarage": false,
+    "landAreaSqm": 180.0
+  }
+}
+
+###
+### Create Villa
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Elegant Golf Resort Villa",
+  "description": "High-end villa overlooking golf course with private parking.",
+  "price": 1200000,
+  "address": "Golf City Residence, Bouskoura, Morocco",
+  "listingType": "SELL",
+  "longitude": -7.648900,
+  "latitude": 33.449219,
+  "propertyType": "VILLA",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "villa": {
+    "bedrooms": 7,
+    "bathrooms": 6,
+    "landAreaSqm": 1200.0,
+    "hasPool": true
+  }
+}
+
+###
+### Create Land
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Commercial Development Land",
+  "description": "Prime commercial land near highway access and industrial zone.",
+  "price": 430000,
+  "address": "Industrial Area, Mohammedia, Morocco",
+  "listingType": "SELL",
+  "longitude": -7.384200,
+  "latitude": 33.686100,
+  "propertyType": "LAND",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "land": {
+    "areaSqm": 3500.0,
+    "constructible": true
+  }
+}
+
+###
+### Create Apartment
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Penthouse with Panoramic View",
+  "description": "Exclusive penthouse featuring large terrace and luxury interior.",
+  "price": 540000,
+  "address": "Marina District, Casablanca, Morocco",
+  "listingType": "SELL",
+  "longitude": -7.632100,
+  "latitude": 33.608200,
+  "propertyType": "APARTMENT",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "apartment": {
+    "bedrooms": 4,
+    "bathrooms": 3,
+    "floor": 12,
+    "hasElevator": true
+  }
+}
+
+###
+### Create House
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Affordable Starter Home",
+  "description": "Compact and practical home located near schools and markets.",
+  "price": 110000,
+  "address": "Hay Salam District, Oujda, Morocco",
+  "listingType": "SELL",
+  "longitude": -1.912300,
+  "latitude": 34.681389,
+  "propertyType": "HOUSE",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "house": {
+    "bedrooms": 2,
+    "bathrooms": 1,
+    "hasGarage": true,
+    "landAreaSqm": 140.0
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### seller : omar el amri 2nd seller 
+
+###
+### Create Apartment
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Sunny Apartment Near Medina",
+  "description": "Bright apartment with traditional Moroccan decor and modern kitchen.",
+  "price": 118000,
+  "address": "Rue Talaa Kebira, Fes, Morocco",
+  "listingType": "SELL",
+  "longitude": -5.002200,
+  "latitude": 34.062100,
+  "propertyType": "APARTMENT",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "apartment": {
+    "bedrooms": 2,
+    "bathrooms": 1,
+    "floor": 4,
+    "hasElevator": false
+  }
+}
+
+###
+### Create Villa
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Palm Garden Villa",
+  "description": "Luxury villa with private garden, pool, and mountain views.",
+  "price": 1350000,
+  "address": "Palm Residence, Marrakech, Morocco",
+  "listingType": "SELL",
+  "longitude": -8.018900,
+  "latitude": 31.634200,
+  "propertyType": "VILLA",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "villa": {
+    "bedrooms": 8,
+    "bathrooms": 6,
+    "landAreaSqm": 1400.0,
+    "hasPool": true
+  }
+}
+
+###
+### Create Land
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Residential Plot Near Highway",
+  "description": "Ideal land for building residential apartments or villas.",
+  "price": 280000,
+  "address": "Route Nationale, Meknes, Morocco",
+  "listingType": "SELL",
+  "longitude": -5.547300,
+  "latitude": 33.893500,
+  "propertyType": "LAND",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "land": {
+    "areaSqm": 1900.0,
+    "constructible": true
+  }
+}
+
+###
+### Create House
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Modern Duplex House",
+  "description": "Elegant duplex with spacious living room and rooftop terrace.",
+  "price": 340000,
+  "address": "Hay Riad, Rabat, Morocco",
+  "listingType": "SELL",
+  "longitude": -6.841200,
+  "latitude": 33.969000,
+  "propertyType": "HOUSE",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "house": {
+    "bedrooms": 5,
+    "bathrooms": 4,
+    "hasGarage": true,
+    "landAreaSqm": 410.0
+  }
+}
+
+###
+### Create Apartment
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Minimalist City Apartment",
+  "description": "Compact apartment perfect for young professionals.",
+  "price": 720,
+  "address": "Centre Ville, Tangier, Morocco",
+  "listingType": "RENT",
+  "longitude": -5.803000,
+  "latitude": 35.776500,
+  "propertyType": "APARTMENT",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "apartment": {
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "floor": 6,
+    "hasElevator": true
+  }
+}
+
+###
+### Create House
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Family House with Backyard",
+  "description": "Quiet residential house with garden and outdoor dining area.",
+  "price": 265000,
+  "address": "Quartier Najah, Agadir, Morocco",
+  "listingType": "SELL",
+  "longitude": -9.587000,
+  "latitude": 30.412200,
+  "propertyType": "HOUSE",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "house": {
+    "bedrooms": 4,
+    "bathrooms": 2,
+    "hasGarage": true,
+    "landAreaSqm": 300.0
+  }
+}
+
+###
+### Create Land
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Large Agricultural Field",
+  "description": "Fertile agricultural land suitable for olive and citrus farming.",
+  "price": 390000,
+  "address": "Outskirts of Oujda, Morocco",
+  "listingType": "SELL",
+  "longitude": -1.850000,
+  "latitude": 34.710000,
+  "propertyType": "LAND",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "land": {
+    "areaSqm": 8200.0,
+    "constructible": false
+  }
+}
+
+###
+### Create Villa
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Beachfront Designer Villa",
+  "description": "Modern beachfront villa with luxury amenities and private pool.",
+  "price": 2100000,
+  "address": "Corniche Ain Diab, Casablanca, Morocco",
+  "listingType": "SELL",
+  "longitude": -7.687200,
+  "latitude": 33.588800,
+  "propertyType": "VILLA",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "villa": {
+    "bedrooms": 9,
+    "bathrooms": 8,
+    "landAreaSqm": 1700.0,
+    "hasPool": true
+  }
+}
+
+###
+### Create Apartment
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Student Apartment Near Campus",
+  "description": "Affordable shared-style apartment near university and transport.",
+  "price": 480,
+  "address": "University District, Kenitra, Morocco",
+  "listingType": "RENT",
+  "longitude": -6.585200,
+  "latitude": 34.258000,
+  "propertyType": "APARTMENT",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "apartment": {
+    "bedrooms": 2,
+    "bathrooms": 1,
+    "floor": 1,
+    "hasElevator": false
+  }
+}
+
+###
+### Create House
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Classic Moroccan Riad House",
+  "description": "Authentic riad featuring inner courtyard and handcrafted finishes.",
+  "price": 520000,
+  "address": "Old Medina, Marrakech, Morocco",
+  "listingType": "SELL",
+  "longitude": -7.987500,
+  "latitude": 31.625700,
+  "propertyType": "HOUSE",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "house": {
+    "bedrooms": 6,
+    "bathrooms": 5,
+    "hasGarage": false,
+    "landAreaSqm": 460.0
+  }
+}
+
+###
+### Create Villa
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Private Hillside Villa",
+  "description": "Elegant hillside villa with panoramic city and mountain views.",
+  "price": 890000,
+  "address": "Mountain View Area, Tetouan, Morocco",
+  "listingType": "SELL",
+  "longitude": -5.364500,
+  "latitude": 35.573100,
+  "propertyType": "VILLA",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "villa": {
+    "bedrooms": 5,
+    "bathrooms": 4,
+    "landAreaSqm": 760.0,
+    "hasPool": true
+  }
+}
+
+###
+### Create Land
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Industrial Investment Land",
+  "description": "Strategic industrial land close to logistics and transport routes.",
+  "price": 610000,
+  "address": "Industrial Zone, Tangier, Morocco",
+  "listingType": "SELL",
+  "longitude": -5.870000,
+  "latitude": 35.730000,
+  "propertyType": "LAND",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "land": {
+    "areaSqm": 5000.0,
+    "constructible": true
+  }
+}
+
+###
+### Create Apartment
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Luxury Apartment with Sea View",
+  "description": "Premium apartment with modern interior and balcony facing the ocean.",
+  "price": 390000,
+  "address": "Marina Bay, Tangier, Morocco",
+  "listingType": "SELL",
+  "longitude": -5.799900,
+  "latitude": 35.788200,
+  "propertyType": "APARTMENT",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "apartment": {
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "floor": 9,
+    "hasElevator": true
+  }
+}
+
+###
+### Create House
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Affordable Countryside Home",
+  "description": "Peaceful countryside property surrounded by greenery.",
+  "price": 98000,
+  "address": "Rural Area, Beni Mellal, Morocco",
+  "listingType": "SELL",
+  "longitude": -6.349800,
+  "latitude": 32.339400,
+  "propertyType": "HOUSE",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "house": {
+    "bedrooms": 3,
+    "bathrooms": 1,
+    "hasGarage": false,
+    "landAreaSqm": 520.0
+  }
+}
+
+###
+### Create Villa
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Elite Smart Villa",
+  "description": "Smart home villa with advanced security and automation systems.",
+  "price": 1650000,
+  "address": "Prestige Hills, Rabat, Morocco",
+  "listingType": "SELL",
+  "longitude": -6.825000,
+  "latitude": 33.992000,
+  "propertyType": "VILLA",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "villa": {
+    "bedrooms": 7,
+    "bathrooms": 7,
+    "landAreaSqm": 1300.0,
+    "hasPool": true
+  }
+}
+
+###
+### Create Land
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Tourism Development Land",
+  "description": "Excellent investment land for tourism or eco-lodge projects.",
+  "price": 470000,
+  "address": "Near Desert Camp Area, Merzouga, Morocco",
+  "listingType": "SELL",
+  "longitude": -4.013300,
+  "latitude": 31.080100,
+  "propertyType": "LAND",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "land": {
+    "areaSqm": 6800.0,
+    "constructible": true
+  }
+}
+
+###
+### Create Apartment
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Elegant Downtown Loft",
+  "description": "Open-space loft with industrial style interior and large windows.",
+  "price": 175000,
+  "address": "Downtown Boulevard, Casablanca, Morocco",
+  "listingType": "SELL",
+  "longitude": -7.618200,
+  "latitude": 33.595000,
+  "propertyType": "APARTMENT",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "apartment": {
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "floor": 8,
+    "hasElevator": true
+  }
+}
+
+###
+### Create House
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Newly Renovated Family Home",
+  "description": "Freshly renovated property with spacious kitchen and parking.",
+  "price": 215000,
+  "address": "Hay Salam, Meknes, Morocco",
+  "listingType": "SELL",
+  "longitude": -5.530100,
+  "latitude": 33.901500,
+  "propertyType": "HOUSE",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "house": {
+    "bedrooms": 4,
+    "bathrooms": 3,
+    "hasGarage": true,
+    "landAreaSqm": 270.0
+  }
+}
+
+###
+### Create Villa
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Mediterranean Style Villa",
+  "description": "Beautiful Mediterranean architecture with sea breeze terraces.",
+  "price": 1430000,
+  "address": "Coastal Road, Al Hoceima, Morocco",
+  "listingType": "SELL",
+  "longitude": -3.937000,
+  "latitude": 35.251600,
+  "propertyType": "VILLA",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "villa": {
+    "bedrooms": 6,
+    "bathrooms": 5,
+    "landAreaSqm": 980.0,
+    "hasPool": true
+  }
+}
+
+###
+### Create Land
+POST {{baseUrl}}/properties
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Urban Expansion Plot",
+  "description": "Large urban plot located in a rapidly growing district.",
+  "price": 720000,
+  "address": "New Development Area, Casablanca, Morocco",
+  "listingType": "SELL",
+  "longitude": -7.550000,
+  "latitude": 33.620000,
+  "propertyType": "LAND",
+  "currency": "USD",
+  "status": "AVAILABLE",
+  "land": {
+    "areaSqm": 6100.0,
+    "constructible": true
+  }
+}

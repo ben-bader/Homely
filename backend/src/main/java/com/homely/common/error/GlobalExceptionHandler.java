@@ -23,6 +23,38 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, "Invalid email or password", request);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiError> handleUnauthorized(
+            UnauthorizedException ex,
+            HttpServletRequest request) {
+
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(
+            NotFoundException ex,
+            HttpServletRequest request) {
+
+        return build(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiError> handleForbidden(
+            ForbiddenException ex,
+            HttpServletRequest request) {
+
+        return build(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiError> handleBadRequest(
+            BadRequestException ex,
+            HttpServletRequest request) {
+
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDenied(
             AccessDeniedException ex,
@@ -64,6 +96,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiError> handleBusinessException(
+            BusinessException ex,
+            HttpServletRequest request) {
+
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiError> handleRuntime(
             RuntimeException ex,

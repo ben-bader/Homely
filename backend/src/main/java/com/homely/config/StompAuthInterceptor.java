@@ -8,6 +8,7 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
 
@@ -63,14 +64,22 @@ public class StompAuthInterceptor implements ChannelInterceptor {
                             log.info("STOMP CONNECT authenticated session={} user={}", sessionId, user.getEmail());
                         } else {
                             log.warn("STOMP CONNECT authentication failed for token user={}, session={}", email, sessionId);
+                            throw new BadCredentialsException("Invalid STOMP token");
                         }
                     }
                 } catch (Exception e) {
                     log.warn("WebSocket auth validation error for session {}: {}", sessionId, e.getMessage());
+                    throw new BadCredentialsException("Invalid STOMP authentication");
                 }
             } else {
                 log.debug("STOMP CONNECT without Authorization header for session={}", sessionId);
+                throw new BadCredentialsException("Missing Authorization header for STOMP CONNECT");
             }
+        }
+
+        if ((StompCommand.SUBSCRIBE.equals(command) || StompCommand.SEND.equals(command)) && accessor.getUser() == null) {
+            log.warn("STOMP frame rejected because user is not authenticated: cmd={} session={} dest={}", command, sessionId, destination);
+            throw new BadCredentialsException("STOMP session is not authenticated");
         }
 
         // Log SUBSCRIBE and SEND frames for diagnostics

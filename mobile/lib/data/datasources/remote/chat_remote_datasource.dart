@@ -4,13 +4,13 @@ import 'package:homely/core/network/endpoints.dart';
 abstract class ChatRemoteDatasource {
   Future<List<Map<String, dynamic>>> getChatRooms();
   Future<Map<String, dynamic>> createChatRoom(String participantId);
-  Future<List<Map<String, dynamic>>> getChatMessages(String roomId);
+  Future<List<Map<String, dynamic>>> getChatMessages(String roomId, {int page = 0, int size = 50});
   Future<Map<String, dynamic>> sendMessage(
     String roomId,
     String message,
     String senderId,
   );
-  Future<List<Map<String, dynamic>>> fetchMessages(String conversationId);
+  Future<List<Map<String, dynamic>>> fetchMessages(String conversationId, {int page = 0, int size = 50});
   Future<Map<String, dynamic>> createConversation(String propertyId);
   Future<List<Map<String, dynamic>>> fetchConversations();
   Future<Map<String, dynamic>> editMessage({
@@ -51,13 +51,22 @@ class ChatRemoteDatasourceImpl implements ChatRemoteDatasource {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getChatMessages(String roomId) async {
+  Future<List<Map<String, dynamic>>> getChatMessages(String roomId, {int page = 0, int size = 50}) async {
     try {
       final response = await ApiClient.get(
-        Endpoints.chatMessages,
-        queryParams: {'conversationId': roomId},
+        Endpoints.chatMessagesFor(roomId),
+        queryParams: {'page': page.toString(), 'size': size.toString()},
       );
-      return List<Map<String, dynamic>>.from(response ?? []);
+
+      if (response is List) {
+        return List<Map<String, dynamic>>.from(response);
+      }
+
+      if (response is Map && response['content'] != null) {
+        return List<Map<String, dynamic>>.from(response['content']);
+      }
+
+      return <Map<String, dynamic>>[];
     } catch (_) {
       return <Map<String, dynamic>>[];
     }
@@ -89,8 +98,9 @@ class ChatRemoteDatasourceImpl implements ChatRemoteDatasource {
   @override
   Future<List<Map<String, dynamic>>> fetchMessages(
     String conversationId,
+    {int page = 0, int size = 50}
   ) async {
-    return await getChatMessages(conversationId);
+    return await getChatMessages(conversationId, page: page, size: size);
   }
 
   @override

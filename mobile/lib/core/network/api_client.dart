@@ -62,9 +62,13 @@ class ApiClient {
           try {
             final authRemote = AuthRemoteDatasourceImpl();
             final newData = await authRemote.refreshToken(refresh);
-            final newToken = newData['token'] as String?;
+            final newToken = newData['accessToken'] as String?;
+            final newRefreshToken = newData['refreshToken'] as String?;
             if (newToken != null && newToken.isNotEmpty) {
               await _storage.setToken(newToken);
+              if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
+                await _storage.setRefreshToken(newRefreshToken);
+              }
               // retry original request once
               final res = await get(path, queryParams: queryParams, auth: auth);
               return ApiSuccess<T?>(res as T?);
@@ -97,9 +101,13 @@ class ApiClient {
           try {
             final authRemote = AuthRemoteDatasourceImpl();
             final newData = await authRemote.refreshToken(refresh);
-            final newToken = newData['token'] as String?;
+            final newToken = newData['accessToken'] as String?;
+            final newRefreshToken = newData['refreshToken'] as String?;
             if (newToken != null && newToken.isNotEmpty) {
               await _storage.setToken(newToken);
+              if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
+                await _storage.setRefreshToken(newRefreshToken);
+              }
               final res = await post(path, body: body, auth: auth);
               return ApiSuccess<T?>(res as T?);
             }
@@ -137,9 +145,13 @@ class ApiClient {
           try {
             final authRemote = AuthRemoteDatasourceImpl();
             final newData = await authRemote.refreshToken(refresh);
-            final newToken = newData['token'] as String?;
+            final newToken = newData['accessToken'] as String?;
+            final newRefreshToken = newData['refreshToken'] as String?;
             if (newToken != null && newToken.isNotEmpty) {
               await _storage.setToken(newToken);
+              if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
+                await _storage.setRefreshToken(newRefreshToken);
+              }
               final res = await put(
                 path,
                 queryParams: queryParams,

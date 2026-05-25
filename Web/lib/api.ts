@@ -10,10 +10,10 @@ export const api = axios.create({
 
 
 api.interceptors.request.use((config) => {
-  const jwt = localStorage.getItem("jwt");
+  const accessToken = localStorage.getItem("access_token") || localStorage.getItem("jwt");
 
-  if (jwt) {
-    config.headers.Authorization = `Bearer ${jwt}`;
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
   
   console.log("📤 Sending request to:", config.baseURL + config.url);
@@ -26,9 +26,34 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use((response) => {
   console.log("📥 Response from:", response.config.url, response.data);
   return response;
-}, (error) => {
+}, async (error) => {
+  const originalRequest = error.config;
+  if (error.response?.status === 401 && !originalRequest._retry) {
+    originalRequest._retry = true;
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (refreshToken) {
+      try {
+        const refreshResponse = await api.post("/auth/refresh", { refreshToken });
+        const newAccessToken = refreshResponse.data.accessToken;
+        const newRefreshToken = refreshResponse.data.refreshToken;
+        localStorage.setItem("access_token", newAccessToken);
+        localStorage.setItem("jwt", newAccessToken);
+        if (newRefreshToken) {
+          localStorage.setItem("refresh_token", newRefreshToken);
+        }
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        console.warn("Refresh failed", refreshError);
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("auth_user");
+      }
+    }
+  }
   console.error("❌ Response error:", error.response?.status, error.response?.data || error.message);
-  return Promise.reject(error);
+  throw error;
 });
 
 /**

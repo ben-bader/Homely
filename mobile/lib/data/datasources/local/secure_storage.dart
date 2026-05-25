@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorage {
@@ -8,6 +9,7 @@ class SecureStorage {
   static const String _userEmailKey = 'user_email';
   static const String _userNameKey = 'user_name';
   static const String _userRoleKey = 'user_role';
+  static const String _userRolesKey = 'user_roles';
 
   final _storage = const FlutterSecureStorage();
 
@@ -52,11 +54,26 @@ class SecureStorage {
   }
 
   Future<String?> getUserRole() async {
-    return await _storage.read(key: _userRoleKey);
+    final raw = await _storage.read(key: _userRoleKey);
+    return raw;
   }
 
   Future<void> saveUserRole(String role) async {
     await _storage.write(key: _userRoleKey, value: role);
+  }
+  Future<List<String>?> getUserRoles() async {
+    final raw = await _storage.read(key: _userRolesKey);
+    if (raw == null) return null;
+    try {
+      final parsed = jsonDecode(raw) as List<dynamic>;
+      return parsed.map((e) => e?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveUserRoles(List<String> roles) async {
+    await _storage.write(key: _userRolesKey, value: jsonEncode(roles));
   }
   Future<bool> isLoggedIn() async {
     final token = await getToken();
@@ -64,12 +81,14 @@ class SecureStorage {
   }
   Future<void> saveUserSession({
     required String token,
+    required String refreshToken,
     required String userId,
     required String email,
     required String role,
     required String name,
   }) async {
     await setToken(token);
+    await setRefreshToken(refreshToken);
     await _storage.write(key: _userIdKey, value: userId);
     await _storage.write(key: _userEmailKey, value: email);
     await _storage.write(key: _userNameKey, value: name);

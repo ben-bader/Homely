@@ -9,18 +9,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class AuthResponse {
-
-    private String accessToken;
-
-    private String refreshToken;
-
-    private String tokenType;
-
-    private long expiresIn;
-
-    private String username;
-
+public class UserResponse {
+    private String id;
+    private String name;
+    private String email;
     private List<String> roles;
+    private boolean verified;
+    private String avatarUrl;
 }
-

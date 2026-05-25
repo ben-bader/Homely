@@ -209,6 +209,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       body: Column(
         children: [
+          if (asyncMessages.asData?.value.isNotEmpty == true)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ElevatedButton(
+                onPressed: () {
+                  ref
+                      .read(chatProvider(widget.conversationId).notifier)
+                      .loadMoreMessages();
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                  backgroundColor: AppColors.primary,
+                ),
+                child: Text(
+                  'Load more messages',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           // ── Messages list ───────────────────────────────────────────────
           Expanded(
             child: asyncMessages.when(

@@ -26,7 +26,7 @@ import { getUserFromToken } from "@/lib/auth"
 import { api } from "@/lib/api"
 
 interface NavUserProps {
-  setActiveSection: (section: string) => void
+  readonly setActiveSection: (section: string) => void
 }
 
 export function NavUser({ setActiveSection }: NavUserProps) {
@@ -45,8 +45,8 @@ export function NavUser({ setActiveSection }: NavUserProps) {
   }, [])
 
   React.useEffect(() => {
-    const decoded = getUserFromToken()
-    setUser(decoded)
+    const currentUser = getUserFromToken()
+    setUser(currentUser)
     fetchAvatar()
   }, [fetchAvatar])
 
@@ -54,8 +54,8 @@ export function NavUser({ setActiveSection }: NavUserProps) {
   // (e.g. after updating it in the Profile page)
   React.useEffect(() => {
     const handleFocus = () => fetchAvatar()
-    window.addEventListener("focus", handleFocus)
-    return () => window.removeEventListener("focus", handleFocus)
+    globalThis.window.addEventListener("focus", handleFocus)
+    return () => globalThis.window.removeEventListener("focus", handleFocus)
   }, [fetchAvatar])
 
   // Listen for a custom event dispatched by Profile.tsx after a successful upload
@@ -63,14 +63,23 @@ export function NavUser({ setActiveSection }: NavUserProps) {
     const handleAvatarUpdate = (e: CustomEvent<{ avatarUrl: string | null }>) => {
       setAvatarUrl(e.detail.avatarUrl)
     }
-    window.addEventListener("avatar-updated", handleAvatarUpdate as EventListener)
-    return () => window.removeEventListener("avatar-updated", handleAvatarUpdate as EventListener)
+    globalThis.window.addEventListener("avatar-updated", handleAvatarUpdate as EventListener)
+    return () => globalThis.window.removeEventListener("avatar-updated", handleAvatarUpdate as EventListener)
   }, [])
 
   if (!user) return null
 
-  const logout = () => {
+  const logout = async () => {
+    const refreshToken = localStorage.getItem("refresh_token")
+    try {
+      if (refreshToken) await api.post("/auth/logout", { refreshToken })
+    } catch {
+      // ignore
+    }
     localStorage.removeItem("jwt")
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("refresh_token")
+    localStorage.removeItem("auth_user")
     setActiveSection("dashboard")
   }
 
@@ -97,7 +106,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
 
               <div className="grid flex-1 text-left text-sm ml-2">
                 <span className="font-medium">{user.name}</span>
-                <span className="text-xs text-muted-foreground">{user.sub}</span>
+                <span className="text-xs text-muted-foreground">{user.email}</span>
               </div>
 
               <IconDotsVertical className="ml-auto size-4" />
@@ -125,7 +134,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium leading-none">{user.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{user.sub}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{user.email}</p>
                 </div>
               </div>
             </DropdownMenuLabel>

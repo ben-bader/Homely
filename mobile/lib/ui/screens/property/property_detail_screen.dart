@@ -364,7 +364,7 @@ class _BodyState extends ConsumerState<_Body> {
                         _ContactBtn(property: p)
                       else
                         Text(
-                          'Your PropertyEntity',
+                          'Your Property',
                           style: tt.labelSmall?.copyWith(
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w600,
@@ -380,7 +380,7 @@ class _BodyState extends ConsumerState<_Body> {
                   const SizedBox(height: 20),
                   _OutlineActionBtn(
                     icon: Icons.rocket_launch_rounded,
-                    label: 'Boost this PropertyEntity',
+                    label: 'Boost this Property',
                     color: const Color(0xFFFF9800),
                     onTap: () => BoostSheet.show(
                       context,

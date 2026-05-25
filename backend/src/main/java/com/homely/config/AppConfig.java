@@ -12,8 +12,15 @@ public class AppConfig {
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
+    @Value("${app.mobile-deeplink.url:homely://reset}")
+    private String mobileDeepLinkUrl;
+
     public String getFrontendUrl() {
         return frontendUrl;
+    }
+
+    public String getMobileDeepLinkUrl() {
+        return mobileDeepLinkUrl;
     }
     
     @Bean

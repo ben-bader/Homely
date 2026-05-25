@@ -1,9 +1,9 @@
-import 'dart:convert';
 import '../../../domain/entities/auth/auth_entity.dart';
 
 class AuthResponseModel extends AuthEntity {
   const AuthResponseModel({
     required super.token,
+    required super.refreshToken,
     required super.userId,
     required super.email,
     required super.name,
@@ -11,31 +11,22 @@ class AuthResponseModel extends AuthEntity {
   });
 
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
-    final token = json['token'] ?? '';
-    final payload = _decodeJwt(token);
-    final role = _normalizeRole(payload['role']?.toString());
-    final name = payload['name']?.toString() ?? '';
+    final token = json['accessToken']?.toString() ?? '';
+    final refreshToken = json['refreshToken']?.toString() ?? '';
+    final username = json['username']?.toString() ?? '';
+    final rolesRaw = json['roles'] as List<dynamic>? ?? [];
+    final roles = rolesRaw.map((e) => e?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+    final role = roles.isNotEmpty ? _normalizeRole(roles.first) : 'CLIENT';
+
+    // We intentionally do NOT populate email/userId/name from auth response.
     return AuthResponseModel(
       token: token,
-      userId: payload['userId']?.toString() ??
-          payload['sub']?.toString() ??
-          '',
-      email: payload['email']?.toString() ?? '',
-      name: name,
+      refreshToken: refreshToken,
+      userId: '',
+      email: '',
+      name: username,
       role: role,
     );
-  }
-
-  static Map<String, dynamic> _decodeJwt(String token) {
-    try {
-      final parts = token.split('.');
-      if (parts.length != 3) return {};
-      final normalized = base64Url.normalize(parts[1]);
-      final decoded = utf8.decode(base64Url.decode(normalized));
-      return jsonDecode(decoded);
-    } catch (_) {
-      return {};
-    }
   }
 
   static String _normalizeRole(String? role) {

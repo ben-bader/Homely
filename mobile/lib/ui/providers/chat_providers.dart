@@ -43,6 +43,9 @@ class ChatNotifier extends StateNotifier<AsyncValue<List<MessageEntity>>> {
   final String conversationId;
   bool _subscribed = false;
   late final void Function(Map<String, dynamic>) _wsCallback;
+  int _page = 0;
+  static const int _pageSize = 50;
+  bool _hasMore = true;
 
   ChatNotifier(this._ref, this.conversationId)
     : super(const AsyncValue.loading()) {
@@ -52,13 +55,11 @@ class ChatNotifier extends StateNotifier<AsyncValue<List<MessageEntity>>> {
 
   Future<void> _init() async {
     try {
-      // Fetch initial messages
-      final messages = await _repo.fetchMessages(conversationId);
+      final messages = await _loadPage(_page);
       if (mounted) {
         state = AsyncValue.data(messages);
       }
 
-      // Ensure WebSocket is connected before subscribing
       if (!_ws.isConnected) {
         await _ws.connect(onConnected: () {
           if (mounted) _subscribe();
@@ -69,6 +70,28 @@ class ChatNotifier extends StateNotifier<AsyncValue<List<MessageEntity>>> {
     } catch (e, st) {
       if (mounted) state = AsyncValue.error(e, st);
     }
+  }
+
+  Future<List<MessageEntity>> _loadPage(int page) async {
+    final messages = await _repo.fetchMessages(
+      conversationId,
+      page: page,
+      size: _pageSize,
+    );
+    if (messages.length < _pageSize) {
+      _hasMore = false;
+    }
+    return messages;
+  }
+
+  Future<void> loadMoreMessages() async {
+    if (!_hasMore || !mounted) return;
+    _page += 1;
+    final nextPage = await _loadPage(_page);
+    if (!mounted || nextPage.isEmpty) return;
+    state.whenData((current) {
+      state = AsyncValue.data([...current, ...nextPage]);
+    });
   }
 
   void _subscribe() {

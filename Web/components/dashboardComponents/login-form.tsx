@@ -3,10 +3,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
@@ -23,7 +21,7 @@ export function LoginForm({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
- const login = async (e: React.FormEvent<HTMLFormElement>) => {
+ const login = async (e: React.SyntheticEvent<HTMLFormElement>) => {
   e.preventDefault();
 
   try {
@@ -35,9 +33,14 @@ export function LoginForm({
       password,
     });
 
-    const token = res.data.token;
+    const accessToken = res.data.accessToken;
+    const refreshToken = res.data.refreshToken;
+    const user = res.data.user;
 
-    localStorage.setItem("jwt", token);
+    localStorage.setItem("jwt", accessToken);
+    localStorage.setItem("access_token", accessToken);
+    localStorage.setItem("refresh_token", refreshToken);
+    localStorage.setItem("auth_user", JSON.stringify(user));
 
     router.push("/dashboard");
   } catch (err) {
@@ -72,7 +75,7 @@ export function LoginForm({
           <div className="flex items-center">
             <FieldLabel htmlFor="password">Password</FieldLabel>
             <a
-              href="#"
+              href="/forgot-password"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
               Forgot your password?

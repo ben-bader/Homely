@@ -57,7 +57,7 @@ public class Message {
     private MessageType type = MessageType.TEXT;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "read_status", nullable = false)
     private ReadStatus readStatus = ReadStatus.UNREAD;
 
     @ManyToOne

@@ -12,8 +12,8 @@ class ChatRepositoryImpl implements IChatRepository {
 
   @override
   Future<List<MessageEntity>> fetchMessages(
-      String conversationId) async {
-    final data = await _remote.fetchMessages(conversationId);
+      String conversationId, {int page = 0, int size = 50}) async {
+    final data = await _remote.fetchMessages(conversationId, page: page, size: size);
     return data
         .map((e) =>
             MessageModel.fromJson(e))

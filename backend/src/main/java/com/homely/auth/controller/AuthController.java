@@ -11,11 +11,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.homely.auth.dto.AuthResponse;
 import com.homely.auth.dto.LoginRequest;
+import com.homely.auth.dto.LogoutRequest;
+import com.homely.auth.dto.PasswordResetSubmitRequest;
+import com.homely.auth.dto.RefreshTokenRequest;
 import com.homely.auth.dto.RegisterRequest;
 import com.homely.auth.service.AuthService;
 import com.homely.user.entity.User;
 import com.homely.user.repository.UserRepository;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -27,18 +31,45 @@ public class AuthController {
     private final UserRepository userRepository;
 
     @PostMapping("/register")
-    public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
-        return authService.register(request);
+    public AuthResponse register(
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return authService.register(request, extractDeviceInfo(servletRequest));
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+    public AuthResponse login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return authService.login(request, extractDeviceInfo(servletRequest));
+    }
+
+    @PostMapping("/refresh")
+    public AuthResponse refresh(
+            @RequestBody RefreshTokenRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        return authService.refreshToken(request, extractDeviceInfo(servletRequest));
     }
 
     @PostMapping("/logout")
-    public void logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        authService.logout(authHeader);
+    public void logout(
+            @RequestBody(required = false) LogoutRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        authService.logout(request, authHeader);
+    }
+
+    private String extractDeviceInfo(HttpServletRequest request) {
+        var userAgent = request.getHeader("User-Agent");
+        var ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isBlank()) {
+            ipAddress = request.getRemoteAddr();
+        }
+        return "ua=" + (userAgent == null ? "unknown" : userAgent)
+                + ";ip=" + (ipAddress == null ? "unknown" : ipAddress);
     }
 
     @GetMapping(value = "/verify-email", produces = MediaType.TEXT_HTML_VALUE)
@@ -211,11 +242,11 @@ public class AuthController {
         // Validate token first
         try {
             User user = userRepository.findByResetToken(token)
-                    .orElseThrow(() -> new RuntimeException("Invalid reset token"));
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid reset token"));
             if (user.getResetTokenExpiry().isBefore(java.time.Instant.now())) {
-                throw new RuntimeException("Reset token has expired");
+                throw new IllegalStateException("Reset token has expired");
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return "<!DOCTYPE html><html><head><title>Invalid Link</title></head><body><h1>Invalid Reset Link</h1><p>The password reset link is invalid or has expired.</p><a href='/'>Go to Home</a></body></html>";
         }
         return """
@@ -391,8 +422,8 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public String resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        authService.resetPassword(token, newPassword);
+    public String resetPassword(@RequestBody PasswordResetSubmitRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
         return "Password reset successfully";
     }
 

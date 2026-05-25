@@ -1,9 +1,12 @@
 package com.homely.chat.service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,10 @@ import com.homely.property.entity.Property;
 import com.homely.property.repository.PropertyRepository;
 import com.homely.user.entity.User;
 import com.homely.user.repository.UserRepository;
+import com.homely.common.error.BadRequestException;
+import com.homely.common.error.ForbiddenException;
+import com.homely.common.error.NotFoundException;
+import com.homely.common.error.UnauthorizedException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +45,8 @@ public class ChatService {
     private final ObjectMapper objectMapper;
 
     public Conversation getConversationById(UUID conversationId) {
-        return conversationRepository.findById(conversationId).orElseThrow();
+        return conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new NotFoundException("Conversation not found: " + conversationId));
     }
 
     /**
@@ -48,10 +56,13 @@ public class ChatService {
     @Transactional
     public void deleteConversationIfEmpty(UUID conversationId, UUID userId) {
         Conversation conv = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new RuntimeException("Conversation not found"));
+            .orElseThrow(() -> new NotFoundException("Conversation not found: " + conversationId));
 
-        if (!isParticipant(conv, userRepository.findById(userId).orElseThrow())) {
-            throw new RuntimeException("User not part of conversation");
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+
+        if (!isParticipant(conv, user)) {
+            throw new ForbiddenException("User not part of conversation");
         }
 
         long count = messageRepository.countByConversationId(conversationId);
@@ -62,7 +73,7 @@ public class ChatService {
         conversationRepository.delete(conv);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Conversation> getUserConversations(UUID userId) {
         List<Conversation> conversations = conversationRepository.findByParticipantOneIdOrParticipantTwoId(userId);
         var dedupe = new java.util.LinkedHashMap<String, Conversation>();
@@ -83,9 +94,28 @@ public class ChatService {
         return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
     }
 
+    /**
+     * Returns a page of messages for a conversation after validating the user is a participant.
+     */
+    public Page<Message> getConversationMessagesForUser(UUID conversationId, UUID userId, Pageable pageable) {
+        Conversation conv = getConversationById(conversationId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+
+        if (!isParticipant(conv, user)) {
+            throw new ForbiddenException("User is not a participant of conversation: " + conversationId);
+        }
+
+        var messagesPage = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId, pageable);
+        markConversationMessagesAsRead(conversationId, userId);
+        return messagesPage;
+    }
+
     public Conversation createConversation(UUID propertyId, String clientEmail) {
-        Property property = propertyRepository.findById(propertyId).orElseThrow();
-        User client = userRepository.findByEmail(clientEmail).orElseThrow();
+        Property property = propertyRepository.findById(propertyId)
+            .orElseThrow(() -> new NotFoundException("Property not found: " + propertyId));
+        User client = userRepository.findByEmail(clientEmail)
+            .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
         User seller = property.getSeller();
         Conversation conversation = findOrCreateConversation(client, seller);
         sharePropertyMessage(conversation, client, property);
@@ -95,31 +125,32 @@ public class ChatService {
 
     public Message sendMessage(MessageDto mdto, String senderEmail) {
         Conversation conversation;
-        User sender = userRepository.findByEmail(senderEmail).orElseThrow(() -> new RuntimeException("Sender not found"));
+        User sender = userRepository.findByEmail(senderEmail)
+            .orElseThrow(() -> new UnauthorizedException("Sender not found"));
 
         if (mdto.getConversationId() != null) {
-            // Try to fetch by conversationId; if not found, log and attempt fallback
+            // Try to fetch by conversationId; if not found, fail fast with a standard API error
             try {
                 conversation = getConversationById(mdto.getConversationId());
-            } catch (Exception e) {
-                log.warn("Conversation {} not found, attempting fallback recovery", mdto.getConversationId());
-                // Fallback: if only conversationId is provided but not found, cannot proceed safely
-                throw new RuntimeException("Conversation not found: " + mdto.getConversationId());
+            } catch (NotFoundException e) {
+                log.warn("Conversation {} not found for sender={}", mdto.getConversationId(), senderEmail);
+                throw e;
             }
         } else if (mdto.getPropertyId() != null) {
             // If no conversationId provided, create/find conversation between sender and property seller
-            Property property = propertyRepository.findById(mdto.getPropertyId()).orElseThrow();
+            Property property = propertyRepository.findById(mdto.getPropertyId())
+                    .orElseThrow(() -> new NotFoundException("Property not found: " + mdto.getPropertyId()));
             User seller = property.getSeller();
             conversation = findOrCreateConversation(sender, seller);
         } else {
             // FALLBACK: Both conversationId and propertyId are null.
             // This should not happen in normal flow, but log and reject gracefully.
             log.error("Message send: both conversationId and propertyId are null from sender {}", senderEmail);
-            throw new RuntimeException("Conversation id or property id required");
+            throw new BadRequestException("Either conversationId or propertyId is required");
         }
 
         if (!isParticipant(conversation, sender)) {
-            throw new RuntimeException("User not part of conversation");
+            throw new ForbiddenException("User is not part of the conversation");
         }
 
         Message message = new Message();
@@ -130,8 +161,9 @@ public class ChatService {
                 ? MessageType.valueOf(mdto.getMessageType())
                 : MessageType.TEXT);
         message.setProperty(mdto.getPropertyId() != null
-                ? propertyRepository.findById(mdto.getPropertyId()).orElseThrow()
-                : null);
+            ? propertyRepository.findById(mdto.getPropertyId()).orElseThrow(
+                () -> new NotFoundException("Property not found: " + mdto.getPropertyId()))
+            : null);
         message.setReadStatus(ReadStatus.UNREAD);
         message.setAttachments(mdto.getAttachments());
 
@@ -244,6 +276,27 @@ public class ChatService {
         return first.compareTo(second) <= 0
                 ? first.toString() + ':' + second.toString()
                 : second.toString() + ':' + first.toString();
+    }
+
+    private void markConversationMessagesAsRead(UUID conversationId, UUID currentUserId) {
+        List<Message> unreadMessages = messageRepository.findByConversationIdAndReadStatusAndSenderIdNot(
+                conversationId, ReadStatus.UNREAD, currentUserId);
+
+        if (unreadMessages.isEmpty()) {
+            return;
+        }
+
+        Instant now = Instant.now();
+        for (Message message : unreadMessages) {
+            message.setReadStatus(ReadStatus.READ);
+            message.setReadAt(now);
+        }
+        messageRepository.saveAll(unreadMessages);
+    }
+
+    public int countUnreadForConversation(UUID conversationId, UUID currentUserId) {
+        return Math.toIntExact(messageRepository.countByConversationIdAndReadStatusAndSenderIdNot(
+                conversationId, ReadStatus.UNREAD, currentUserId));
     }
 
     private boolean hasPropertyShared(Conversation conversation, Property property) {

@@ -225,6 +225,9 @@ class Endpoints {
   /// GET - Get chat messages for a conversation
   static const String chatMessages = '/chat/messages';
 
+  /// GET - Get chat messages for a specific conversation (paginated)
+  static String chatMessagesFor(String conversationId) => '/chat/conversations/$conversationId/messages';
+
   /// GET - Get all chat conversations
   static const String chatConversations = '/chat/conversations';
 

@@ -15,7 +15,7 @@ abstract class AuthRemoteDatasource {
     required String phone,
     required String role,
   });
-  Future<Map<String, dynamic>> logout();
+  Future<Map<String, dynamic>> logout({String? refreshToken});
   Future<Map<String, dynamic>> refreshToken(String token);
   Future<Map<String, dynamic>> requestPasswordReset({required String email});
   Future<Map<String, dynamic>> resetPassword({
@@ -63,8 +63,11 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   }
 
   @override
-  Future<Map<String, dynamic>> logout() async {
-    final response = await ApiClient.post(Endpoints.logout);
+  Future<Map<String, dynamic>> logout({String? refreshToken}) async {
+    final response = await ApiClient.post(
+      Endpoints.logout,
+      body: refreshToken != null ? {'refreshToken': refreshToken} : null,
+    );
     return response;
   }
 
@@ -79,7 +82,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          body: jsonEncode({'token': token}),
+          body: jsonEncode({'refreshToken': token}),
         )
         .timeout(const Duration(seconds: 30));
     if (resp.statusCode >= 200 && resp.statusCode < 300) {

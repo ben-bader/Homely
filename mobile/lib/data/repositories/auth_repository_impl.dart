@@ -18,6 +18,14 @@ class AuthRepositoryImpl implements IAuthRepository {
     final data = await _remote.login(email: email, password: password);
     final auth = AuthResponseModel.fromJson(data);
     await _saveSession(auth);
+    // Persist roles array when present in response
+    try {
+      final rolesRaw = data['roles'] as List<dynamic>?;
+      if (rolesRaw != null) {
+        final roles = rolesRaw.map((e) => e?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+        if (roles.isNotEmpty) await _storage.saveUserRoles(roles);
+      }
+    } catch (_) {}
     return auth;
   }
 
@@ -38,13 +46,21 @@ class AuthRepositoryImpl implements IAuthRepository {
     );
     final auth = AuthResponseModel.fromJson(data);
     await _saveSession(auth);
+    try {
+      final rolesRaw = data['roles'] as List<dynamic>?;
+      if (rolesRaw != null) {
+        final roles = rolesRaw.map((e) => e?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+        if (roles.isNotEmpty) await _storage.saveUserRoles(roles);
+      }
+    } catch (_) {}
     return auth;
   }
 
   @override
   Future<void> logout() async {
     try {
-      await _remote.logout();
+      final refresh = await _storage.getRefreshToken();
+      await _remote.logout(refreshToken: refresh);
     } catch (_) {}
     await _storage.clearAll();
   }
@@ -96,12 +112,14 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<AuthEntity?> getCurrentSession() async {
     final token = await _storage.getToken();
     if (token == null) return null;
+    final refreshToken = await _storage.getRefreshToken();
     final email = await _storage.getUserEmail();
     final name = await _storage.getUserName();
     final role = await _storage.getUserRole();
     final userId = await _storage.getUserId();
     return AuthResponseModel(
       token: token,
+      refreshToken: refreshToken ?? '',
       userId: userId ?? '',
       email: email ?? '',
       name: name ?? '',
@@ -112,6 +130,7 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<void> _saveSession(AuthEntity auth) async {
     await _storage.saveUserSession(
       token: auth.token,
+      refreshToken: auth.refreshToken,
       userId: auth.userId,
       email: auth.email,
       role: auth.role,

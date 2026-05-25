@@ -121,7 +121,10 @@ export default function Profile() {
             await api.delete(`/users/${userId}`)
             toast.success(t('danger.successToast'))
             localStorage.removeItem("jwt")
-            window.location.href = "/"
+            localStorage.removeItem("access_token")
+            localStorage.removeItem("refresh_token")
+            localStorage.removeItem("auth_user")
+            globalThis.window.location.href = "/"
           } catch {
             toast.error(t('danger.errorToast'))
           }
