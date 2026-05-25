@@ -12,7 +12,7 @@ class EnvironmentConfig {
     defaultValue: '',
   );
 
-  static const String defaultDevBaseUrl = 'http://localhost:8082/api';
+  static const String defaultDevBaseUrl = 'https://elegant-jasiah-speedfully.ngrok-free.dev/api';
   // Keep the public tunnel as the default production base URL
   static const String defaultProdBaseUrl =
       'https://elegant-jasiah-speedfully.ngrok-free.dev/api';
