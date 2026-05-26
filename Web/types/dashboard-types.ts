@@ -124,6 +124,8 @@ export type VisitRequest = {
   propertyTitle: string;
   requestedDate: string; // ISO string
   status: VisitStatus;
+  createdAt?: string;
+  updatedAt?: string;
 };
 export type BoostStatus = "PENDING" | "COMPLETED" | "FAILED"
 
@@ -138,6 +140,8 @@ export type Boost = {
   currency?: string
   durationDays: number
   status: BoostStatus
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type BoostPackage = {

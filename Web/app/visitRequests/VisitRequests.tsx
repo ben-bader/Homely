@@ -491,9 +491,8 @@ export default function VisitRequests() {
   );
 
   const visitRequestsWithSeller = useMemo(() => {
-    if (!properties || !users) return visitRequests;
-    const propMap = Object.fromEntries(properties.map((p) => [p.id, p]));
-    const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
+    const propMap = properties ? Object.fromEntries(properties.map((p) => [p.id, p])) : {};
+    const userMap = users ? Object.fromEntries(users.map((u) => [u.id, u])) : {};
     return visitRequests.map((req) => {
       const prop = propMap[req.propertyId];
       const seller = prop?.sellerId ? userMap[prop.sellerId] : null;

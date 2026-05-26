@@ -44,6 +44,7 @@ import { Button } from "@/components/ui/button";
 import { useReports } from "@/app/reports/useReports";
 import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
+import { Report, ReportStatus } from "@/types/dashboard-types";
 
 /* ---------------- TRANSLATIONS ---------------- */
 
@@ -128,27 +129,6 @@ const dict = {
 
 /* ---------------- TYPES ---------------- */
 
-export type ReportStatus = "OPEN" | "RESOLVED" | "DISMISSED";
-
-export type Report = {
-  id: string;
-  reason: string;
-  status: ReportStatus;
-  createdAt: string;
-  updatedAt: string;
-  reporterId: string;
-  reporterName: string;
-  reporterEmail: string;
-  reportedUserId: string | null;
-  reportedUserName: string | null;
-  reportedUserEmail: string | null;
-  reportedPropertyId: string | null;
-  reportedPropertyTitle: string | null;
-  reviewedByAdminId: string | null;
-  reviewedByAdminName: string | null;
-  reviewedByAdminEmail: string | null;
-};
-
 type DateSort = "" | "newest" | "oldest";
 
 /* ---------------- HELPERS ---------------- */
@@ -228,9 +208,9 @@ function FilterPanel({
 
   const statusOptions: { value: ReportStatus | "ALL"; label: string }[] = [
     { value: "ALL", label: t.all },
-    { value: "OPEN", label: t.waiting },
-    { value: "RESOLVED", label: t.resolved },
-    { value: "DISMISSED", label: t.dismissed },
+    { value: ReportStatus.OPEN, label: t.waiting },
+    { value: ReportStatus.RESOLVED, label: t.resolved },
+    { value: ReportStatus.DISMISSED, label: t.dismissed },
   ];
 
   const typeOptions: { value: "ALL" | "USER" | "PROPERTY"; label: string }[] = [
@@ -692,11 +672,12 @@ function Field({
 
 function StatusBadge({ status, t }: { status: ReportStatus; t: any }) {
   const map: Record<ReportStatus, { label: string; className: string }> = {
-    OPEN: { label: t.waiting, className: "bg-destructive/10 text-destructive border-destructive/30" },
-    RESOLVED: { label: t.resolved, className: "bg-green-50 text-green-700 border-green-200/50 dark:bg-green-950/30 dark:text-green-400" },
-    DISMISSED: { label: t.dismissed, className: "bg-muted/50 text-muted-foreground border-muted" },
+    [ReportStatus.OPEN]: { label: t.waiting, className: "bg-destructive/10 text-destructive border-destructive/30" },
+    [ReportStatus.REVIEWED]: { label: "Reviewed", className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    [ReportStatus.RESOLVED]: { label: t.resolved, className: "bg-green-50 text-green-700 border-green-200/50 dark:bg-green-950/30 dark:text-green-400" },
+    [ReportStatus.DISMISSED]: { label: t.dismissed, className: "bg-muted/50 text-muted-foreground border-muted" },
   };
-  const { label, className } = map[status];
+  const { label, className } = map[status] || { label: "Unknown", className: "bg-muted text-muted-foreground" };
   return (
     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${className}`}>
       {label}

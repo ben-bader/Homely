@@ -29,7 +29,7 @@ import com.homely.feedback.service.FeedbackService;
 import com.homely.moderation.dto.AuditLogDto;
 import com.homely.moderation.dto.LogActivityDto;
 import com.homely.moderation.dto.ReportDto;
-import com.homely.moderation.entity.DashboardStats;
+import com.homely.moderation.dto.AuditLogDto;
 import com.homely.moderation.entity.LogActivity;
 import com.homely.moderation.entity.Report;
 import com.homely.moderation.mapper.AuditLogMapper;
@@ -278,15 +278,6 @@ public class AdminController {
                 "Changed boost id " + id + " status to " + status);
 
         return updated; // or use a mapper
-    }
-
-    @GetMapping("/dashboard-stats")
-    public DashboardStats stats() {
-        return new DashboardStats(
-                userService.count(),
-                propertyService.count(),
-                moderationService.count(),
-                boostService.count());
     }
 
     @GetMapping("/conversations")

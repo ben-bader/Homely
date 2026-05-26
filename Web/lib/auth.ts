@@ -4,6 +4,7 @@ export interface AuthUser {
   id?: string
   username: string
   roles: string[]
+  name?: string
 }
 
 export interface AccessTokenPayload {
@@ -58,6 +59,7 @@ export function getUserFromToken(): AuthUser | null {
   const username = typeof payload.sub === "string" ? payload.sub : ""
   const roles = Array.isArray(payload.roles) ? payload.roles.map((role) => String(role)) : []
   const id = typeof payload.userId === "string" ? payload.userId : undefined
+  const name = typeof payload.name === "string" ? payload.name : undefined
 
   if (!username || roles.length === 0) return null
 
@@ -65,6 +67,7 @@ export function getUserFromToken(): AuthUser | null {
     id,
     username,
     roles,
+    name,
   }
 }
 

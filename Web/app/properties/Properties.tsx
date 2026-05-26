@@ -278,7 +278,7 @@ function FilterPanel({
   onClear: () => void;
 }) {
   const t = dict[lang].filters;
-  const statuses: (PropertyStatus | "ALL")[] = ["ALL", "AVAILABLE", "SUSPENDED", "DRAFT"];
+  const statuses: (PropertyStatus | "ALL")[] = ["ALL", PropertyStatus.AVAILABLE, PropertyStatus.SUSPENDED, PropertyStatus.DRAFT];
   const activeCount = [
     filterStatus !== "ALL", minPrice !== "", maxPrice !== "",
     city !== "", createdAfter !== "", createdBefore !== "",
@@ -666,6 +666,7 @@ export default function Properties() {
   const {
     properties, loading, error,
     fetchPropertyDetail, selectedProperty, loadingDetail,
+    updatePropertyStatus,
   } = useProperties();
 
   const [search, setSearch] = useState("");
@@ -697,9 +698,7 @@ export default function Properties() {
 
   const handleStatusUpdate = async (id: string, status: PropertyStatus) => {
     try {
-      await api.put(`/admin/properties/${id}/status`, null, { params: { status } });
-      // Update local state
-      setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+      await updatePropertyStatus(id, status);
     } catch (error) {
       console.error("Failed to update property status", error);
     }

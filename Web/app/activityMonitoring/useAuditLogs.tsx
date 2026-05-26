@@ -24,6 +24,11 @@ export type LogActivity = {
 
   description?: string;
   metadata?: string;
+  changes?: string;
+
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
 
   adminId?: string;
   adminName?: string;
