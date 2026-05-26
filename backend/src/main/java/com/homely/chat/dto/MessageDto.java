@@ -24,7 +24,7 @@ public class MessageDto {
     private UUID senderId;
     @JsonProperty("senderName")
     private String senderName;
-    @JsonAlias({"body"})
+    @JsonAlias({"body", "content"})
     @NotBlank(message = "Message content must not be empty")
     private String text;
     private String body;
@@ -39,6 +39,36 @@ public class MessageDto {
     private Instant readAt;
     private Instant createdAt; // Timestamp when message was sent
     private Instant updatedAt;
+
+    public void setConversationId(Object value) {
+        if (value == null) {
+            this.conversationId = null;
+        } else if (value instanceof String) {
+            String str = ((String) value).trim();
+            if (str.isEmpty() || "null".equalsIgnoreCase(str)) {
+                this.conversationId = null;
+            } else {
+                this.conversationId = UUID.fromString(str);
+            }
+        } else if (value instanceof UUID) {
+            this.conversationId = (UUID) value;
+        }
+    }
+
+    public void setPropertyId(Object value) {
+        if (value == null) {
+            this.propertyId = null;
+        } else if (value instanceof String) {
+            String str = ((String) value).trim();
+            if (str.isEmpty() || "null".equalsIgnoreCase(str)) {
+                this.propertyId = null;
+            } else {
+                this.propertyId = UUID.fromString(str);
+            }
+        } else if (value instanceof UUID) {
+            this.propertyId = (UUID) value;
+        }
+    }
 
     public String getText() {
         return text != null ? text : body;

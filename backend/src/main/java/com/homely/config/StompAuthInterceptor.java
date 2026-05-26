@@ -97,7 +97,14 @@ public class StompAuthInterceptor implements ChannelInterceptor {
 
         if (StompCommand.SEND.equals(command)) {
             Object payload = message.getPayload();
-            log.info("STOMP SEND session={} user={} dest={} payloadType={}", sessionId, userInfo, destination, payload != null ? payload.getClass().getSimpleName() : "null");
+            String payloadStr = "";
+            if (payload instanceof byte[]) {
+                payloadStr = new String((byte[]) payload, java.nio.charset.StandardCharsets.UTF_8);
+            } else if (payload != null) {
+                payloadStr = payload.toString();
+            }
+            log.info("STOMP SEND message received. SessionId={}, User={}, Destination={}, Payload={}", 
+                sessionId, userInfo, destination, payloadStr);
         }
 
         return message;

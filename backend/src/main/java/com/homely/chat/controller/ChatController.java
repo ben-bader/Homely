@@ -138,9 +138,10 @@ public class ChatController {
     @MessageMapping("/chat.send")
     public void send(@Valid MessageDto mdto, Principal principal) {
 
-        log.info("Received STOMP message from principal={} conversationId={} body={}",
+        log.info("Received STOMP message from principal={} conversationId={} propertyId={} body={}",
                 principal == null ? "anonymous" : principal.getName(),
                 mdto.getConversationId(),
+                mdto.getPropertyId(),
                 mdto.getBody());
 
         if (principal == null) {

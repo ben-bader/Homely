@@ -45,15 +45,22 @@ class ChatService {
     _subscriptions.remove(conversationId);
   }
 
-  void sendMessage(String conversationId, String content) {
+  void sendMessage(String conversationId, String content, {String? propertyId}) {
     final body = content.trim();
     if (body.isEmpty) return;
 
-    final payload = {
-      'conversationId': conversationId,
+    final Map<String, dynamic> payload = {
+      'content': body,
       'body': body,
       'messageType': 'TEXT',
     };
+
+    if (conversationId.isNotEmpty && conversationId != 'null' && !conversationId.startsWith('new_')) {
+      payload['conversationId'] = conversationId;
+    }
+    if (propertyId != null && propertyId.isNotEmpty && propertyId != 'null') {
+      payload['propertyId'] = propertyId;
+    }
 
     _realtime.send('/app/chat.send', payload);
   }

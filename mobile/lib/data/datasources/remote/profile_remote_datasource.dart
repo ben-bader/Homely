@@ -1,6 +1,8 @@
 import 'package:homely/core/network/api_client.dart';
 import 'package:homely/core/network/endpoints.dart';
 import 'package:flutter/foundation.dart';
+import 'cloudinary_datasource.dart';
+import 'dart:io';
 
 abstract class ProfileRemoteDatasource {
   Future<Map<String, dynamic>> getProfile();
@@ -38,12 +40,19 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
   @override
   Future<Map<String, dynamic>> uploadAvatar(String filePath) async {
     try {
-      final response = await ApiClient.postMultipart(
-        Endpoints.uploadProfilePicture,
-        filePath: filePath,
-        fieldName: 'file',
+      final profile = await getProfile();
+      final userId = profile['userId']?.toString() ?? 'anonymous';
+
+      final cloudinaryResult = await CloudinaryDatasource().uploadAvatar(
+        file: File(filePath),
+        userId: userId,
       );
-      return response as Map<String, dynamic>? ?? <String, dynamic>{};
+      final avatarUrl = cloudinaryResult.url;
+
+      final response = await updateProfile({
+        'avatarUrl': avatarUrl,
+      });
+      return response;
     } catch (e) {
       debugPrint('Upload avatar error: $e');
       return <String, dynamic>{};
