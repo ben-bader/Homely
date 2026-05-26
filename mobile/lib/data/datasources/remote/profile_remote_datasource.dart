@@ -1,5 +1,6 @@
 import 'package:homely/core/network/api_client.dart';
 import 'package:homely/core/network/endpoints.dart';
+import 'package:flutter/foundation.dart';
 
 abstract class ProfileRemoteDatasource {
   Future<Map<String, dynamic>> getProfile();
@@ -24,7 +25,10 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
   @override
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
     try {
-      final response = await ApiClient.put(Endpoints.updateProfileMe, body: data);
+      final response = await ApiClient.put(
+        Endpoints.updateProfileMe,
+        body: data,
+      );
       return response as Map<String, dynamic>? ?? <String, dynamic>{};
     } catch (_) {
       return <String, dynamic>{};
@@ -34,9 +38,14 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
   @override
   Future<Map<String, dynamic>> uploadAvatar(String filePath) async {
     try {
-      final response = await ApiClient.post(Endpoints.uploadProfilePicture, body: {});
+      final response = await ApiClient.postMultipart(
+        Endpoints.uploadProfilePicture,
+        filePath: filePath,
+        fieldName: 'avatarUrl',
+      );
       return response as Map<String, dynamic>? ?? <String, dynamic>{};
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Upload avatar error: $e');
       return <String, dynamic>{};
     }
   }

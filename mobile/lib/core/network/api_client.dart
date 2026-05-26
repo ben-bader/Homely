@@ -45,6 +45,30 @@ class ApiClient {
     }, retry: true);
   }
 
+  static Future<dynamic> postMultipart(
+    String path, {
+    required String filePath,
+    required String fieldName,
+    bool auth = true,
+  }) async {
+    final uri = _buildUri(path);
+    final headers = await _headers(auth: auth);
+
+    // Multipart n'accepte pas Content-Type JSON — on le retire
+    headers.remove('Content-Type');
+
+    final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(headers);
+
+    request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+
+    final streamedResponse = await request.send().timeout(_timeout);
+    final response = await http.Response.fromStream(streamedResponse);
+
+    _logResponse('POST MULTIPART', uri, response.statusCode);
+    return _handle(response);
+  }
+
   // Safe variants that return ApiResult instead of throwing
   static Future<ApiResult<T?>> safeGet<T>(
     String path, {
