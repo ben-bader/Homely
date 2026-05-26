@@ -316,13 +316,13 @@ export default function ActivityMonitoring() {
   /* ---- Dynamic options derived from data ---- */
   const activityTypeOptions = useMemo(() => {
     if (activeTab === "users") {
-      return [...new Set(activities.map((a) => a.activityType).filter(Boolean))];
+      return [...new Set(activities.map((a) => a.activityType).filter((x): x is string => !!x))];
     }
-    return [...new Set(logs.map((l) => l.action).filter(Boolean))];
+    return [...new Set(logs.map((l) => l.action).filter((x): x is string => !!x))];
   }, [activeTab, activities, logs]);
 
   const entityTypeOptions = useMemo(() => {
-    return [...new Set(activities.map((a) => a.entityType).filter(Boolean))];
+    return [...new Set(activities.map((a) => a.entityType).filter((x): x is string => !!x))];
   }, [activities]);
 
   /* ---- Active filter count ---- */
@@ -347,8 +347,8 @@ export default function ActivityMonitoring() {
       return textMatch && typeMatch && entityMatch && afterMatch && beforeMatch;
     });
     return dateSort === "oldest"
-      ? filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-      : filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      ? filtered.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
+      : filtered.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   }, [activities, search, actionFilter, entityTypeFilter, dateSort, createdAfter, createdBefore]);
 
   /* ---- AUDIT LOGS (ADMIN) ---- */
@@ -362,8 +362,8 @@ export default function ActivityMonitoring() {
       return textMatch && actionMatch && afterMatch && beforeMatch;
     });
     return dateSort === "oldest"
-      ? filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-      : filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      ? filtered.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
+      : filtered.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   }, [logs, search, actionFilter, dateSort, createdAfter, createdBefore]);
 
   const isLoading = activeTab === "admin" ? auditLoading : activityLoading;

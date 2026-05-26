@@ -89,7 +89,7 @@ function AppSidebar({
 
   // 🔑 map UI labels → permission keys
   const permissionKeys: Record<string, string> = {
-    dashboard: "dashboard",
+    Analytics: "dashboard",
     Users: "users",
     Properties: "properties",
     Reports: "reports",
@@ -102,7 +102,7 @@ function AppSidebar({
   };
 
   const navMain = [
-    { title: "dashboard", url: "#", icon: IconDashboard },
+    { title: "Analytics", url: "#", icon: IconDashboard },
     { title: "Users", url: "/users", icon: IconUsers },
     { title: "Properties", url: "#", icon: IconHome },
     { title: "Reports", url: "#", icon: IconReport },

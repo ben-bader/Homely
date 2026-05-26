@@ -55,6 +55,7 @@ const ROLES = ["USER", "AGENT", "ADMIN"];
 type PermissionMap = Record<string, boolean>;
 
 interface CreatedUser {
+  id?: string;
   name: string;
   email: string;
   role: string;

@@ -5,7 +5,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboardComponents/app-sidebar";
 import { SiteHeader } from "@/components/dashboardComponents/site-header";
 
-import Dashboard from "@/app/dashboard/Dashboard";
+import Analytics from "@/app/analytics/Analytics";
 import Users from "@/app/users/Users";
 import Properties from "@/app/properties/Properties";
 import Reports from "@/app/reports/Reports";
@@ -20,7 +20,7 @@ import AdminManager from "../AdminManager/AdminManager";
 import { getUserFromToken, isAdmin } from "@/lib/auth";
 
 export default function Page() {
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState("analytics");
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
 
   const defaultAdminPermissions: Record<string, boolean> = {
@@ -49,16 +49,23 @@ export default function Page() {
       } catch {
         setPermissions(isAdmin() ? defaultAdminPermissions : {});
       }
-      return;
-    }
-
-    if (isAdmin()) {
+    } else if (isAdmin()) {
       localStorage.setItem(`permissions_${user.id}`, JSON.stringify(defaultAdminPermissions));
       setPermissions(defaultAdminPermissions);
-      return;
+    } else {
+      setPermissions({});
     }
+  }, []);
 
-    setPermissions({});
+  // ✅ Parse section query param from URL on load for deep linking
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const sec = params.get("section");
+      if (sec) {
+        setActiveSection(sec);
+      }
+    }
   }, []);
 
   // ❌ fallback UI
@@ -74,7 +81,8 @@ export default function Page() {
   function renderSection() {
     switch (activeSection) {
       case "dashboard":
-        return permissions.dashboard ? <Dashboard /> : <NoAccess />;
+      case "analytics":
+        return permissions.dashboard ? <Analytics /> : <NoAccess />;
 
       case "users":
         return permissions.users ? <Users /> : <NoAccess />;
