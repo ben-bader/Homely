@@ -41,7 +41,7 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
       final response = await ApiClient.postMultipart(
         Endpoints.uploadProfilePicture,
         filePath: filePath,
-        fieldName: 'avatarUrl',
+        fieldName: 'file',
       );
       return response as Map<String, dynamic>? ?? <String, dynamic>{};
     } catch (e) {
