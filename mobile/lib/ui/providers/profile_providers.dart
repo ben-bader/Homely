@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/datasources/remote/profile_remote_datasource.dart';
@@ -31,7 +32,22 @@ class LocalAvatarPathNotifier extends FamilyAsyncNotifier<String?, String> {
         await prefs.remove(_prefsKey(userId));
         return null;
       }
+
       await prefs.setString(_prefsKey(userId), localPath);
+      try {
+        final datasource = ref.read(profileRemoteDatasourceProvider);
+        final response = await datasource.uploadAvatar(localPath);
+        debugPrint('Avatar upload response: $response');
+        final newAvatarUrl = response['avatarUrl'] as String?;
+        if (newAvatarUrl != null && newAvatarUrl.isNotEmpty) {
+          ref.invalidate(profileNotifierProvider);
+        }
+      } catch (e) {
+        debugPrint('Avatar upload failed: $e');
+        // Local path still saved — user sees image on their device
+        // but backend upload failed silently
+      }
+
       return localPath;
     });
   }

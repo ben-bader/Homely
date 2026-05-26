@@ -15,14 +15,18 @@ class ProfileRepositoryImpl implements IProfileRepository {
   }
 
   @override
-  Future<ProfileEntity> updateProfileFields(
-      Map<String, dynamic> body) async {
+  Future<ProfileEntity> updateProfileFields(Map<String, dynamic> body) async {
     final data = await _remote.updateProfileFields(body);
     return ProfileModel.fromJson(data);
   }
 
   @override
-  Future<void> updateUserFields(
-          String userId, Map<String, dynamic> body) =>
+  Future<void> updateUserFields(String userId, Map<String, dynamic> body) =>
       _remote.updateUserFields(userId, body);
+
+  @override
+  Future<String?> uploadAvatar(String filePath) async {
+    final response = await _remote.uploadAvatar(filePath);
+    return response['avatarUrl'] as String?;
+  }
 }

@@ -40,18 +40,17 @@ class ProfileEntity {
     String? avatarUrl,
     String? idDocumentUrl,
     bool? verified,
-  }) =>
-      ProfileEntity(
-        userId: userId,
-        name: name ?? this.name,
-        email: email ?? this.email,
-        phone: phone ?? this.phone,
-        bio: bio ?? this.bio,
-        address: address ?? this.address,
-        avatarUrl: avatarUrl ?? this.avatarUrl,
-        idDocumentUrl: idDocumentUrl ?? this.idDocumentUrl,
-        verified: verified ?? this.verified,
-      );
+  }) => ProfileEntity(
+    userId: userId,
+    name: name ?? this.name,
+    email: email ?? this.email,
+    phone: phone ?? this.phone,
+    bio: bio ?? this.bio,
+    address: address ?? this.address,
+    avatarUrl: avatarUrl ?? this.avatarUrl,
+    idDocumentUrl: idDocumentUrl ?? this.idDocumentUrl,
+    verified: verified ?? this.verified,
+  );
 }
 
 class ProfileUpdateRequest {
@@ -70,13 +69,13 @@ class ProfileUpdateRequest {
   });
 
   Map<String, dynamic> toProfileJson() => {
-        if (bio != null) 'bio': bio,
-        if (address != null) 'address': address,
-        if (avatarUrl != null) 'avtarUrl': avatarUrl,
-      };
+    if (bio != null) 'bio': bio,
+    if (address != null) 'address': address,
+    if (avatarUrl != null) 'avatarUrl': avatarUrl,
+  };
 
   Map<String, dynamic> toUserJson() => {
-        'name': name,
-        if (phone != null) 'phone': phone,
-      };
+    'name': name,
+    if (phone != null) 'phone': phone,
+  };
 }
