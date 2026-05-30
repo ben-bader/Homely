@@ -24,12 +24,14 @@ import {
 } from "@/components/ui/sidebar"
 import { getUserFromToken } from "@/lib/auth"
 import { api } from "@/lib/api"
+import { useTranslations } from "next-intl"
 
 interface NavUserProps {
   readonly setActiveSection: (section: string) => void
 }
 
 export function NavUser({ setActiveSection }: NavUserProps) {
+  const t = useTranslations("navUser")
   const { isMobile } = useSidebar()
   const [user, setUser] = React.useState<any>(null)
   const [profile, setProfile] = React.useState<any | null>(null)
@@ -96,26 +98,29 @@ export function NavUser({ setActiveSection }: NavUserProps) {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton size="lg">
-              <Avatar className="h-8 w-8 rounded-lg">
+            <SidebarMenuButton 
+              size="lg" 
+              className="bg-secondary/90 hover:bg-secondary text-secondary-foreground shadow-md hover:shadow-lg transition-all rounded-2xl mx-2 mb-2 p-2 h-auto border border-secondary-foreground/10"
+            >
+              <Avatar className="h-10 w-10 rounded-xl border-2 border-background/20 shadow-sm">
                 {avatarUrl && (
                   <AvatarImage
                     src={avatarUrl}
                     alt={profile?.name ?? user?.username}
-                    className="rounded-lg object-cover"
+                    className="rounded-xl object-cover"
                   />
                 )}
-                <AvatarFallback className="rounded-lg">
+                <AvatarFallback className="rounded-xl bg-primary text-primary-foreground font-bold">
                   {userInitial}
                 </AvatarFallback>
               </Avatar>
 
-              <div className="grid flex-1 text-left text-sm ml-2">
-                <span className="font-medium">{profile?.name ?? user?.username}</span>
-                <span className="text-xs text-muted-foreground">{profile?.email ?? ""}</span>
+              <div className="grid flex-1 text-left text-sm ml-3">
+                <span className="font-bold truncate">{profile?.name ?? user?.username}</span>
+                <span className="text-xs font-medium opacity-80 truncate">{profile?.email ?? ""}</span>
               </div>
 
-              <IconDotsVertical className="ml-auto size-4" />
+              <IconDotsVertical className="ml-auto size-5 opacity-70" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 
@@ -150,7 +155,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setActiveSection("profile")}>
                 <IconUserCircle />
-                Profile
+                {t("profile")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
 
@@ -158,7 +163,7 @@ export function NavUser({ setActiveSection }: NavUserProps) {
 
             <DropdownMenuItem onClick={logout}>
               <IconLogout />
-              Log out
+              {t("logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

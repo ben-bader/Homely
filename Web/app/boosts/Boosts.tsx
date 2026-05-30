@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PaginationFooter } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { Boost, BoostStatus, BoostPackage } from "@/types/dashboard-types";
@@ -286,11 +287,13 @@ export default function Boosts() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>←</Button>
-        <span>{t('page')} {pagination.pageIndex + 1} {t('of')} {Math.max(table.getPageCount(), 1)}</span>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>→</Button>
-      </div>
+      <PaginationFooter
+        pageInfo={`${t('page')} ${pagination.pageIndex + 1} ${t('of')} ${Math.max(table.getPageCount(), 1)}`}
+        onPrevious={() => table.previousPage()}
+        onNext={() => table.nextPage()}
+        canPrevious={table.getCanPreviousPage()}
+        canNext={table.getCanNextPage()}
+      />
     </div>
   );
 }

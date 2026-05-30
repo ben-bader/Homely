@@ -53,16 +53,17 @@ export function LoginForm({
 };
 
   return (
-    <form onSubmit={login} className={cn("flex flex-col gap-6", className)} {...props}>
-      <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Login to your account</h1>
-          <p className="text-muted-foreground text-sm text-balance">
-            Enter your email below to login to your account
-          </p>
-        </div>
-        <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
+    <form onSubmit={login} className={cn("flex flex-col w-full", className)} {...props}>
+      <div className="flex flex-col gap-1 text-left mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Sign in</h1>
+        <p className="text-muted-foreground text-sm font-medium">
+          Enter your email and password to access your dashboard
+        </p>
+      </div>
+      
+      <div className="flex flex-col gap-5">
+        <Field className="space-y-2">
+          <FieldLabel htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</FieldLabel>
           <Input
             id="email"
             type="email"
@@ -70,16 +71,19 @@ export function LoginForm({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="m@example.com"
             required
+            className="h-12 px-4 rounded-xl transition-all duration-300 bg-subtle-background border-border/60 focus:border-primary focus:ring-4 focus:ring-primary/20 hover:border-primary/40 text-base"
           />
         </Field>
-        <Field>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+        
+        <Field className="space-y-2">
+          <div className="flex items-center justify-between">
+            <FieldLabel htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</FieldLabel>
             <a
               href="/forgot-password"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              Forgot your password?
+              className="text-xs font-bold text-[#7D9B76] hover:text-[#6B8A64] transition-colors"
+>
+        
+              Forgot password?
             </a>
           </div>
           <Input
@@ -88,15 +92,33 @@ export function LoginForm({
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="h-12 px-4 rounded-xl transition-all duration-300 bg-subtle-background border-border/60 focus:border-primary focus:ring-4 focus:ring-primary/20 hover:border-primary/40 text-base"
+            placeholder="••••••••"
           />
         </Field>
-        <Field>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </Button>
-        </Field>
-        {error && <p className="text-red-500">{error}</p>}
-      </FieldGroup>
+<div className="pt-2">
+  <Button 
+    type="submit" 
+    disabled={loading} 
+    className="w-full h-12 rounded-xl bg-[#7D9B76] hover:bg-[#6B8A64] text-[#F5F0E8] shadow-[0_4px_14px_0_rgba(125,155,118,0.45)] transition-all duration-300 hover:shadow-[0_6px_20px_rgba(125,155,118,0.3)] hover:-translate-y-0.5 font-bold text-base"
+  >
+    {loading ? (
+      <span className="flex items-center gap-2">
+        <span className="h-4 w-4 rounded-full border-2 border-[#F5F0E8] border-t-transparent animate-spin" />
+        Logging in...
+      </span>
+    ) : (
+      "Login"
+    )}
+  </Button>
+</div>
+
+        {error && (
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 animate-in fade-in slide-in-from-top-2">
+            <p className="text-destructive text-sm font-bold text-center">{error}</p>
+          </div>
+        )}
+      </div>
     </form>
   );
 }

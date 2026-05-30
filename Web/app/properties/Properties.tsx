@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useLocale } from "next-intl";
 import {
   useReactTable,
   getCoreRowModel,
@@ -11,6 +12,7 @@ import {
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PaginationFooter } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -661,7 +663,8 @@ function buildColumns(
 /* ---------------- MAIN PAGE ---------------- */
 
 export default function Properties() {
-  const [lang, setLang] = useState<Language>("en");
+  const locale = useLocale();
+  const lang = (locale === "fr" ? "fr" : "en") as Language;
   const t = dict[lang];
   const {
     properties, loading, error,
@@ -769,9 +772,6 @@ export default function Properties() {
     <div className="px-8 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">{t.pageTitle}</h2>
-        <Button variant="outline" size="sm" onClick={() => setLang(lang === "en" ? "fr" : "en")}>
-          {lang === "en" ? "🇫🇷 FR" : "🇺🇸 EN"}
-        </Button>
       </div>
 
       {/* Summary Cards */}
@@ -874,29 +874,13 @@ export default function Properties() {
         </Table>
       </div>
 
-      <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          ←
-        </Button>
-
-        <span>
-          {t.pagination.pageInfo.replace('{current}', (pagination.pageIndex + 1).toString()).replace('{total}', Math.max(table.getPageCount(), 1).toString())}
-        </span>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          →
-        </Button>
-      </div>
+      <PaginationFooter
+        pageInfo={t.pagination.pageInfo.replace('{current}', (pagination.pageIndex + 1).toString()).replace('{total}', Math.max(table.getPageCount(), 1).toString())}
+        onPrevious={() => table.previousPage()}
+        onNext={() => table.nextPage()}
+        canPrevious={table.getCanPreviousPage()}
+        canNext={table.getCanNextPage()}
+      />
     </div>
   );
 }

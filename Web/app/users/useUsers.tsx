@@ -9,6 +9,7 @@ export type User = {
   role: string;
   active: boolean;
   createdAt: string | number;
+  avatarUrl?: string;
 };
 
 export function useUsers() {

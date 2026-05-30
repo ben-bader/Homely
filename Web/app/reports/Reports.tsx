@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useCallback } from "react";
+import { useLocale } from "next-intl";
 import {
   useReactTable,
   getCoreRowModel,
@@ -41,6 +42,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PaginationFooter } from "@/components/ui/pagination";
 import { useReports } from "@/app/reports/useReports";
 import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
@@ -330,7 +332,8 @@ function FilterPanel({
 /* ---------------- MAIN PAGE ---------------- */
 
 export default function Reports() {
-  const [lang, setLang] = useState<Language>("en");
+  const locale = useLocale();
+  const lang = (locale === "fr" ? "fr" : "en") as Language;
   const t = dict[lang];
 
   const { reports, loading, error, setReports } = useReports();
@@ -478,9 +481,6 @@ export default function Reports() {
     <div className="px-8 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">{t.title}</h2>
-        <Button variant="ghost" size="sm" onClick={() => setLang(lang === "en" ? "fr" : "en")}>
-          {lang === "en" ? "🇫🇷 FR" : "🇺🇸 EN"}
-        </Button>
       </div>
 
       <SummaryCards reports={reports} t={t} />
@@ -547,11 +547,13 @@ export default function Reports() {
         </Table>
       </div>
 
-      <div className="flex justify-center items-center gap-4 py-2">
-        <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>←</Button>
-        <span className="text-sm">{t.page} {pagination.pageIndex + 1} {t.of} {Math.max(table.getPageCount(), 1)}</span>
-        <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>→</Button>
-      </div>
+      <PaginationFooter
+        pageInfo={`${t.page} ${pagination.pageIndex + 1} ${t.of} ${Math.max(table.getPageCount(), 1)}`}
+        onPrevious={() => table.previousPage()}
+        onNext={() => table.nextPage()}
+        canPrevious={table.getCanPreviousPage()}
+        canNext={table.getCanNextPage()}
+      />
     </div>
   );
 }

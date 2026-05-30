@@ -22,15 +22,17 @@ export default function Profile() {
     newPassword: "",
     confirmPassword: "",
   })
+  const [profileData, setProfileData] = React.useState<any>(null)
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null)
   const [avatarLoading, setAvatarLoading] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
-  // Load current avatar on mount
+  // Load current profile & avatar on mount
   React.useEffect(() => {
     api.get("/profile/me")
       .then((res) => {
-        if (res.data?.avtarUrl) setAvatarUrl(res.data.avtarUrl)
+        setProfileData(res.data)
+        if (res.data?.avatarUrl) setAvatarUrl(res.data.avatarUrl)
       })
       .catch(() => {})
   }, [])
@@ -44,23 +46,49 @@ export default function Profile() {
       return
     }
 
+    const cloudinaryUrl = "https://api.cloudinary.com/v1_1/dmnsrbaw9/image/upload"
     const formData = new FormData()
     formData.append("file", file)
+    formData.append("upload_preset", "homely_unsigned")
+    formData.append("folder", `avatars/${userId || "anonymous"}`)
+    formData.append("public_id", `avatar_${userId || "anonymous"}_${Date.now()}`)
 
     setAvatarLoading(true)
-    toast.promise(
-      api.put("/profile/me/avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      }).then((res) => {
-        if (res.data?.avtarUrl) setAvatarUrl(res.data.avtarUrl)
-      }),
-      {
-        loading: "Téléchargement de la photo...",
-        success: "Photo mise à jour !",
-        error: "Échec du téléchargement. Réessayez.",
-      }
-    )
-    setAvatarLoading(false)
+    const uploadPromise = fetch(cloudinaryUrl, {
+      method: "POST",
+      body: formData,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Failed to upload to Cloudinary")
+        }
+        return response.json()
+      })
+      .then(async (data) => {
+        const newAvatarUrl = data.secure_url
+        const payload = {
+          bio: profileData?.bio || "",
+          address: profileData?.address || "",
+          idDocumentUrl: profileData?.idDocumentUrl || "",
+          avatarUrl: newAvatarUrl,
+        }
+        await api.put("/profile/me", payload)
+        setAvatarUrl(newAvatarUrl)
+        setProfileData((prev: any) => ({ ...prev, avatarUrl: newAvatarUrl }))
+
+        // Dispatch event to sync sidebar
+        const event = new CustomEvent("avatar-updated", { detail: { avatarUrl: newAvatarUrl } })
+        window.dispatchEvent(event)
+      })
+      .finally(() => {
+        setAvatarLoading(false)
+      })
+
+    toast.promise(uploadPromise, {
+      loading: "Téléchargement de la photo...",
+      success: "Photo mise à jour !",
+      error: "Échec du téléchargement. Réessayez.",
+    })
 
     // Reset input so the same file can be re-selected if needed
     if (fileInputRef.current) fileInputRef.current.value = ""
@@ -68,7 +96,19 @@ export default function Profile() {
 
   const handleRemoveAvatar = async () => {
     toast.promise(
-      api.delete("/profile/me/avatar").then(() => setAvatarUrl(null)),
+      api.put("/profile/me", {
+        bio: profileData?.bio || "",
+        address: profileData?.address || "",
+        idDocumentUrl: profileData?.idDocumentUrl || "",
+        avatarUrl: null,
+      }).then(() => {
+        setAvatarUrl(null)
+        setProfileData((prev: any) => ({ ...prev, avatarUrl: null }))
+
+        // Dispatch event to sync sidebar
+        const event = new CustomEvent("avatar-updated", { detail: { avatarUrl: null } })
+        window.dispatchEvent(event)
+      }),
       {
         loading: "Suppression de la photo...",
         success: "Photo supprimée.",

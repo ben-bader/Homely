@@ -187,48 +187,68 @@ export function DataTable({ data, onStatusChange }: { data: Report[]; onStatusCh
   })
 
   return (
-    <div className="overflow-auto rounded-lg border">
-      <Table>
-        <TableHeader className="bg-muted sticky top-0 z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
+    <div className="overflow-hidden rounded-2xl bg-card border border-border/40 shadow-[0_10px_40px_-10px_rgba(14,165,233,0.15)] flex flex-col">
+      <div className="overflow-auto flex-1 custom-scrollbar">
+        <Table>
+          <TableHeader className="bg-accent sticky top-0 z-10">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="border-b-accent-foreground/10 hover:bg-transparent">
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="text-xs font-extrabold uppercase tracking-widest text-accent-foreground py-4">
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
                 ))}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="text-center h-24">
-                {t('noReports')}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      <div className="flex items-center justify-between px-4 py-2 border-t text-sm text-muted-foreground">
-        <span>
-          {t('page')} {table.getState().pagination.pageIndex + 1} {t('of')} {table.getPageCount() || 1}
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow 
+                  key={row.id} 
+                  className="border-b-border/30 transition-colors duration-200 hover:bg-primary/5 data-[state=selected]:bg-primary/10 group"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="py-4 font-medium text-foreground transition-colors group-hover:text-primary-dark">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center h-32 text-muted-foreground/60 font-medium">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <span className="text-4xl opacity-40">📭</span>
+                    <span>{t('noReports')}</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-border/40 bg-subtle-background/50">
+        <span className="text-sm font-semibold text-muted-foreground mb-4 sm:mb-0">
+          {t('page')} <span className="text-foreground">{table.getState().pagination.pageIndex + 1}</span> {t('of')} <span className="text-foreground">{table.getPageCount() || 1}</span>
         </span>
-        <div className="space-x-2">
-          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => table.previousPage()} 
+            disabled={!table.getCanPreviousPage()}
+            className="rounded-xl border-border/60 hover:bg-primary/10 hover:text-primary transition-all font-bold"
+          >
             {t('previous')}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => table.nextPage()} 
+            disabled={!table.getCanNextPage()}
+            className="rounded-xl border-border/60 hover:bg-primary/10 hover:text-primary transition-all font-bold"
+          >
             {t('next')}
           </Button>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useCallback } from "react";
+import { useLocale } from "next-intl";
 import { useUsers } from "@/app/users/useUsers";
 import { api } from "@/lib/api";
 
@@ -22,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PaginationFooter } from "@/components/ui/pagination";
 
 import {
   Drawer,
@@ -38,6 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { FaEye } from "react-icons/fa";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 /* ---------------- TRANSLATIONS ---------------- */
 
@@ -127,6 +130,7 @@ export type User = {
   role: string;
   active: boolean;
   createdAt: string | number;
+  avatarUrl?: string;
 };
 
 type DateSort = "" | "newest" | "oldest";
@@ -317,7 +321,8 @@ function FilterPanel({
 /* ---------------- MAIN PAGE ---------------- */
 
 export default function Users() {
-  const [lang, setLang] = useState<Language>("en");
+  const locale = useLocale();
+  const lang = (locale === "fr" ? "fr" : "en") as Language;
   const t = dict[lang];
 
   const { users, loading, error, setUsers } = useUsers();
@@ -398,10 +403,20 @@ export default function Users() {
               <Button variant="ghost" size="icon"><FaEye /></Button>
             </DrawerTrigger>
             <DrawerContent className="max-w-md ml-auto h-full p-6">
-              <DrawerHeader>
+              <DrawerHeader className="pb-2">
                 <DrawerTitle>{t.details.title}</DrawerTitle>
                 <DrawerDescription>{t.details.desc}</DrawerDescription>
               </DrawerHeader>
+              <div className="flex flex-col items-center justify-center py-4 border-b border-border/40">
+                <Avatar className="h-24 w-24 text-3xl font-bold shadow-md border-2 border-background">
+                  {row.original.avatarUrl && (
+                    <AvatarImage src={row.original.avatarUrl} alt={row.original.name} className="object-cover animate-in fade-in duration-300" />
+                  )}
+                  <AvatarFallback className="bg-primary text-primary-foreground font-extrabold">
+                    {(row.original.name || "?")[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
               <div className="space-y-4 mt-6">
                 <InfoRow label={t.details.name} value={row.original.name} />
                 <InfoRow label={t.details.email} value={row.original.email} />
@@ -466,9 +481,6 @@ export default function Users() {
     <div className="px-8 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">{t.title}</h2>
-        <Button variant="outline" size="sm" onClick={() => setLang(lang === "en" ? "fr" : "en")}>
-          {lang === "en" ? "🇫🇷 FR" : "🇺🇸 EN"}
-        </Button>
       </div>
 
       {/* Summary Cards */}

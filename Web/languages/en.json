@@ -1,4 +1,21 @@
 {
+  "sections": {
+    "analytics": "Analytics",
+    "users": "Users",
+    "properties": "Properties",
+    "reports": "Reports",
+    "boosts": "Boosts",
+    "visitRequests": "Visit Requests",
+    "activityMonitoring": "Activity Monitoring",
+    "chats": "Chats",
+    "manageParameters": "Manage Parameters",
+    "manageAdmins": "Manage Admins",
+    "profile": "Profile"
+  },
+  "navUser": {
+    "profile": "Profile",
+    "logout": "Log out"
+  },
   "header": {
     "title": "Admin Dashboard & moderation",
     "github": "GitHub",
@@ -298,6 +315,7 @@
     "filter": "Filter", "clearAll": "Clear all", "previous": "Previous", "next": "Next",
     "page": "Page", "of": "of", "after": "After", "before": "Before",
     "newestFirst": "Newest first", "oldestFirst": "Oldest first",
-    "sortByDate": "Sort by Date", "filters": "Filters"
+    "sortByDate": "Sort by Date", "filters": "Filters",
+    "noAccess": "You don't have permission to access this section"
   }
 }
