@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboardComponents/app-sidebar";
 import { SiteHeader } from "@/components/dashboardComponents/site-header";
@@ -20,8 +21,11 @@ import AdminManager from "../AdminManager/AdminManager";
 import { getUserFromToken, isAdmin } from "@/lib/auth";
 
 export default function Page() {
+  const t = useTranslations("common");
+  const tSections = useTranslations("sections");
   const [activeSection, setActiveSection] = useState("analytics");
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const defaultAdminPermissions: Record<string, boolean> = {
     dashboard: true,
@@ -65,14 +69,55 @@ export default function Page() {
       if (sec) {
         setActiveSection(sec);
       }
+      setIsInitialized(true);
     }
   }, []);
+
+  // ✅ Update URL search param whenever activeSection changes to prevent reset on page reload/refresh
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("section") !== activeSection) {
+        url.searchParams.set("section", activeSection);
+        window.history.replaceState(null, "", url.pathname + url.search);
+      }
+    }
+  }, [activeSection, isInitialized]);
+
+  // ✅ Dynamically update Chrome browser tab title based on active section
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const keyMap: Record<string, string> = {
+        dashboard: "analytics",
+        analytics: "analytics",
+        users: "users",
+        properties: "properties",
+        reports: "reports",
+        boosts: "boosts",
+        "visit requests": "visitRequests",
+        "activity monitoring": "activityMonitoring",
+        "manage admins": "manageAdmins",
+        chats: "chats",
+        "manage parameters": "manageParameters",
+        profile: "profile",
+      };
+      const key = keyMap[activeSection.toLowerCase()] || activeSection;
+      let secTitle = "";
+      try {
+        secTitle = tSections(key);
+      } catch {
+        secTitle = activeSection.charAt(0).toUpperCase() + activeSection.slice(1);
+      }
+      document.title = `Homely | ${secTitle}`;
+    }
+  }, [activeSection, tSections]);
 
   // ❌ fallback UI
   function NoAccess() {
     return (
       <div className="p-6 text-center text-muted-foreground">
-        You don’t have permission to access this section
+        {t("noAccess")}
       </div>
     );
   }
@@ -126,12 +171,22 @@ export default function Page() {
         activeSection={activeSection}
       />
 
-      <SidebarInset>
-        <SiteHeader />
+      <SidebarInset className="relative overflow-hidden bg-background">
+        {/* Ambient Neon Volt Green Glowing Circles */}
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary/12 blur-[130px] pointer-events-none z-0" />
+        <div className="absolute bottom-[-15%] left-[-10%] w-[600px] h-[600px] rounded-full bg-primary/8 blur-[160px] pointer-events-none z-0" />
+        <div className="absolute top-[35%] left-[50%] -translate-x-1/2 w-[350px] h-[350px] rounded-full bg-primary/5 blur-[110px] pointer-events-none z-0" />
 
-        <div className="flex flex-1 flex-col">
-          <div className="flex flex-col gap-4 py-4 md:py-6">
-            {renderSection()}
+        <div className="relative z-10 flex flex-1 flex-col">
+          <SiteHeader activeSection={activeSection} />
+
+          <div className="flex flex-1 flex-col">
+            <div 
+              key={activeSection}
+              className="flex flex-1 flex-col gap-4 py-4 md:py-6 animate-in fade-in slide-in-from-bottom-3 duration-500 ease-out fill-mode-forward"
+            >
+              {renderSection()}
+            </div>
           </div>
         </div>
       </SidebarInset>

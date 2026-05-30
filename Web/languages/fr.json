@@ -1,4 +1,21 @@
 {
+  "sections": {
+    "analytics": "Analyses",
+    "users": "Utilisateurs",
+    "properties": "Propriétés",
+    "reports": "Signalements",
+    "boosts": "Boosts",
+    "visitRequests": "Demandes de visite",
+    "activityMonitoring": "Suivi des activités",
+    "chats": "Chats",
+    "manageParameters": "Gérer les paramètres",
+    "manageAdmins": "Gérer les admins",
+    "profile": "Profil"
+  },
+  "navUser": {
+    "profile": "Profil",
+    "logout": "Se déconnecter"
+  },
   "header": {
     "title": "Tableau de bord & modération",
     "github": "GitHub",
@@ -298,6 +315,7 @@
     "filter": "Filtrer", "clearAll": "Tout effacer", "previous": "Précédent", "next": "Suivant",
     "page": "Page", "of": "sur", "after": "Après", "before": "Avant",
     "newestFirst": "Plus récent d'abord", "oldestFirst": "Plus ancien d'abord",
-    "sortByDate": "Trier par date", "filters": "Filtres"
+    "sortByDate": "Trier par date", "filters": "Filtres",
+    "noAccess": "Vous n'avez pas l'autorisation d'accéder à cette section"
   }
 }

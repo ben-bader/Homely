@@ -18,6 +18,7 @@ public class UserDto {
     private String phone;
     private RoleType role;
     private boolean isActive;
+    private String avatarUrl;
 
     private Instant createdAt;
     private Instant updatedAt;

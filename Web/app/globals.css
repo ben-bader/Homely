@@ -43,6 +43,8 @@
 
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
 
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -60,31 +62,31 @@
 :root {
   --radius: 0.75rem;
 
-  /* Brand */
-  --primary: #0F172A;
-  --primary-foreground: #FFFFFF;
-  --primary-light: #2E4057;
-  --primary-dark: #111D27;
+  /* Brand - Volt Green / Electric Lime */
+  --primary: #84CC16;
+  --primary-foreground: #0F172A; /* Dark text for contrast on bright green */
+  --primary-light: #A3E635;
+  --primary-dark: #65A30D;
 
-  /* Backgrounds */
+  /* Backgrounds - Pure White for glowing contrast */
   --background: #FFFFFF;
   --subtle-background: #F8FAFC;
 
   /* Text */
   --foreground: #0F172A;
-  --muted-foreground: #64748B;
-  --text-tertiary: #AAB8C6;
-  --text-disabled: #CDD5DE;
+  --muted-foreground: #475569;
+  --text-tertiary: #94A3B8;
+  --text-disabled: #CBD5E1;
 
-  /* Secondary */
-  --secondary: #F1F5F9;
-  --secondary-foreground: #0F172A;
+  /* Secondary - Amber/Gold for distinct highlights like Profile */
+  --secondary: #FEF08A;
+  --secondary-foreground: #713F12;
 
-  /* Accent */
-  --accent: #F8FAFC;
-  --accent-foreground: #0F172A;
+  /* Accent - Ice Volt for table headers/cards */
+  --accent: #F7FEE7;
+  --accent-foreground: #3F6212;
 
-  /* Cards */
+  /* Cards - Crisp White */
   --card: #FFFFFF;
   --card-foreground: #0F172A;
 
@@ -93,91 +95,95 @@
   --popover-foreground: #0F172A;
 
   /* Muted */
-  --muted: #F1F5F9;
+  --muted: #F8FAFC;
 
   /* Borders */
   --border: #E2E8F0;
-  --border-medium: #C5D0DC;
-  --border-dark: #A8B8C8;
+  --border-medium: #CBD5E1;
+  --border-dark: #94A3B8;
 
   /* Input */
-  --input: #F8FAFC;
-  --ring: #0F172A;
+  --input: #FFFFFF;
+  --ring: #84CC16;
 
   /* Status */
-  --success: #16A34A;
+  --success: #10B981;
   --warning: #F59E0B;
-  --destructive: #DC2626;
+  --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --info: #0F172A;
+  --info: #3B82F6;
 
   /* Charts */
-  --chart-1: #0F172A;
-  --chart-2: #334155;
-  --chart-3: #64748B;
-  --chart-4: #94A3B8;
-  --chart-5: #CBD5F5;
+  --chart-1: #84CC16;
+  --chart-2: #FEF08A;
+  --chart-3: #10B981;
+  --chart-4: #8B5CF6;
+  --chart-5: #F43F5E;
 
-  /* Sidebar */
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F172A;
-  --sidebar-primary: #0F172A;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1F5F9;
-  --sidebar-accent-foreground: #0F172A;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #0F172A;
+  /* Sidebar - Deep Slate Navy */
+ --sidebar: #1a3a1a;
+--sidebar-border: #1a3a1a;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #84CC16;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #F8FAFC;
+
+  --sidebar-ring: #84CC16;
 }
 
 /* ================= DARK MODE ================= */
 
 .dark {
-  --background: #020617;
-  --foreground: #E2E8F0;
+  /* Dark Mode adapted with similar distinct sections */
+  --background: #0B0F19;
+  --foreground: #F8FAFC;
 
-  --primary: #2E4057;
-  --primary-foreground: #FFFFFF;
-  --primary-light: #3D536E;
-  --primary-dark: #111D27;
+  --primary: #84CC16;
+  --primary-foreground: #0F172A;
+  --primary-light: #A3E635;
+  --primary-dark: #65A30D;
 
-  --secondary: #0F172A;
-  --secondary-foreground: #E2E8F0;
+  --secondary: #B45309; /* Dark Amber */
+  --secondary-foreground: #FEF3C7;
 
-  --accent: #1C2B3A;
-  --accent-foreground: #E6EDF5;
+  --accent: #142502; /* Deep Volt for cards */
+  --accent-foreground: #BEF264;
 
-  --muted: #0F172A;
+  --muted: #1E293B;
   --muted-foreground: #94A3B8;
 
-  --card: #020617;
-  --card-foreground: #E2E8F0;
+  --card: #0F172A;
+  --card-foreground: #F8FAFC;
 
-  --popover: #020617;
-  --popover-foreground: #E2E8F0;
+  --popover: #0F172A;
+  --popover-foreground: #F8FAFC;
 
-  --border: #253444;
-  --input: #253444;
-  --ring: #2E4057;
+  --border: #1E293B;
+  --input: #1E293B;
+  --ring: #84CC16;
 
-  --success: #3DAF87;
-  --warning: #E8A84A;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
 
   /* Charts */
-  --chart-1: #2E4057;
-  --chart-2: #3D536E;
-  --chart-3: #3DAF87;
-  --chart-4: #E8A84A;
-  --chart-5: #E07060;
+  --chart-1: #84CC16;
+  --chart-2: #FEF08A;
+  --chart-3: #10B981;
+  --chart-4: #8B5CF6;
+  --chart-5: #F43F5E;
 
-  /* Sidebar */
-  --sidebar: #111827;
-  --sidebar-foreground: #E6EDF5;
-  --sidebar-primary: #2E4057;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #111D27;
-  --sidebar-accent-foreground: #E6EDF5;
-  --sidebar-border: #253444;
-  --sidebar-ring: #2E4057;
+  /* Sidebar - Even darker navy in dark mode */
+  --sidebar: #0f2410;
+  --sidebar-border: #0f2410;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #84CC16;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #E2E8F0;
+  --sidebar-ring: #84CC16;
 }
 
 /* ================= BASE ================= */

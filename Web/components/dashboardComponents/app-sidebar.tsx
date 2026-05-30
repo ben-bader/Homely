@@ -87,36 +87,36 @@ function AppSidebar({
     return <div className="p-3 text-sm text-muted-foreground">Loading sidebar...</div>;
   }
 
-  // 🔑 map UI labels → permission keys
+  // 🔑 map section IDs → permission keys
   const permissionKeys: Record<string, string> = {
-    Analytics: "dashboard",
-    Users: "users",
-    Properties: "properties",
-    Reports: "reports",
-    Boosts: "boosts",
-    "Visit Requests": "visit_requests",
-    "Activity Monitoring": "activity_monitoring",
+    analytics: "dashboard",
+    users: "users",
+    properties: "properties",
+    reports: "reports",
+    boosts: "boosts",
+    "visit requests": "visit_requests",
+    "activity monitoring": "activity_monitoring",
     chats: "chats",
-    "Manage Parameters": "manage_parameters",
-    "Manage admins": "manage_admins",
+    "manage parameters": "manage_parameters",
+    "manage admins": "manage_admins",
   };
 
   const navMain = [
-    { title: "Analytics", url: "#", icon: IconDashboard },
-    { title: "Users", url: "/users", icon: IconUsers },
-    { title: "Properties", url: "#", icon: IconHome },
-    { title: "Reports", url: "#", icon: IconReport },
-    { title: "Boosts", url: "#", icon: IconRocket },
-    { title: "Visit Requests", url: "#", icon: PlusSquareIcon },
-    { title: "Activity Monitoring", url: "#", icon: IconHistory },
-    { title: "chats", url: "#", icon: IconMessageCircle },
-    { title: "Manage Parameters", url: "#", icon: IconFileAi },
-    { title: "Manage admins", url: "#", icon: IconUsers },
+    { id: "analytics", titleKey: "analytics", url: "#", icon: IconDashboard },
+    { id: "users", titleKey: "users", url: "/users", icon: IconUsers },
+    { id: "properties", titleKey: "properties", url: "#", icon: IconHome },
+    { id: "reports", titleKey: "reports", url: "#", icon: IconReport },
+    { id: "boosts", titleKey: "boosts", url: "#", icon: IconRocket },
+    { id: "visit requests", titleKey: "visitRequests", url: "#", icon: PlusSquareIcon },
+    { id: "activity monitoring", titleKey: "activityMonitoring", url: "#", icon: IconHistory },
+    { id: "chats", titleKey: "chats", url: "#", icon: IconMessageCircle },
+    { id: "manage parameters", titleKey: "manageParameters", url: "#", icon: IconFileAi },
+    { id: "manage admins", titleKey: "manageAdmins", url: "#", icon: IconUsers },
   ];
 
   // ✅ SAFE FILTER (NO BUGS EVER)
   const filteredNavMain = navMain.filter((item) => {
-    const key = permissionKeys[item.title];
+    const key = permissionKeys[item.id];
 
     if (!key) return true;
 
@@ -126,15 +126,15 @@ function AppSidebar({
   return (
     <Sidebar
       collapsible="offcanvas"
-      className="[--sidebar-width:200px]"
+      className="[--sidebar-width:230px] bg-sidebar text-sidebar-foreground border-r-2 border-primary/20 shadow-[12px_0_40px_-10px_rgba(15,23,42,0.35)] transition-all duration-500 ease-in-out"
       {...props}
     >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <div className="scale-90 origin-left">
-                <Logo />
+              <div className="flex justify-center items-center w-full scale-90">
+                <Logo variant="white" />
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

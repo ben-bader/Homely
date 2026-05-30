@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Drawer, DrawerContent, DrawerTrigger, DrawerClose, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PaginationFooter } from "@/components/ui/pagination";
 import { FaRocketchat } from "react-icons/fa";
 import { useTranslations } from "next-intl";
 import { Conversation, ChatMessageResponse } from "@/types/chat-types";
@@ -76,11 +77,9 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
     if (!isOpen || messages.length > 0) return;
     try {
       setLoading(true);
-      // Use correct endpoint: /chat/conversations/{conversationId}/messages
       const res = await api.get<any>(`/chat/conversations/${conversation.id}/messages`, {
         params: { page: 0, size: 50 }
       });
-      // Backend returns Page object, extract content array
       const newMessages = res.data.content || res.data;
       setMessages(Array.isArray(newMessages) ? newMessages : []);
       setConversations((prev) => prev.map((c) => (c.id === conversation.id ? { ...c, messages: newMessages } : c)));
@@ -91,38 +90,53 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
 
   return (
     <Drawer direction="right" onOpenChange={fetchMessages}>
-      <DrawerTrigger asChild><Button variant="ghost" size="icon"><FaRocketchat /></Button></DrawerTrigger>
-      <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
-        <DialogTitle className="hidden">Conversation Drawer</DialogTitle>
-        <DrawerHeader className="border-b pb-4">
-          <DrawerTitle className="text-base font-semibold">{t('title')}</DrawerTitle>
-          <DrawerDescription className="text-xs text-muted-foreground">{conversation.participantOneName} & {conversation.participantTwoName}</DrawerDescription>
-        </DrawerHeader>
-        <div className="px-5 py-4 border-b space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <InfoRow label={t('participantOne')} value={conversation.participantOneName} />
-            <InfoRow label={t('participantTwo')} value={conversation.participantTwoName} />
+      <DrawerTrigger asChild><Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10"><FaRocketchat size={20} /></Button></DrawerTrigger>
+      <DrawerContent className="flex flex-col max-w-lg ml-auto h-full bg-subtle-background border-l-0 shadow-[-10px_0_40px_rgba(0,0,0,0.1)] rounded-l-[2rem] overflow-hidden">
+        <DialogTitle className="hidden">Conversation</DialogTitle>
+        
+        {/* Chat Header */}
+        <DrawerHeader className="border-b border-border/50 bg-background/80 backdrop-blur-md pb-4 pt-6 px-6 z-10 shadow-sm flex items-center gap-4">
+          <div className="flex-1">
+            <DrawerTitle className="text-xl font-extrabold tracking-tight text-foreground">{conversation.participantOneName} & {conversation.participantTwoName}</DrawerTitle>
+            <DrawerDescription className="text-xs font-bold text-primary tracking-widest uppercase mt-1">{conversation.propertyTitle ?? "Direct Conversation"}</DrawerDescription>
           </div>
-          {conversation.propertyTitle && <InfoRow label={t('property')} value={conversation.propertyTitle} />}
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 bg-muted/30">
-          {loading ? <p className="text-center text-sm text-muted-foreground py-8">{t('loadingMessages')}</p>
-            : messages.length === 0 ? <p className="text-center text-sm text-muted-foreground py-8">{t('noMessages')}</p>
-            : messages.map((msg) => {
-              const isParticipantOne = msg.senderId === conversation.participantOneId;
+          <DrawerClose asChild>
+            <Button variant="ghost" size="icon" className="rounded-full bg-muted/50 hover:bg-destructive/10 hover:text-destructive">✕</Button>
+          </DrawerClose>
+        </DrawerHeader>
+
+        {/* Chat Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-gradient-to-b from-subtle-background to-background custom-scrollbar">
+          {loading ? <div className="flex justify-center items-center h-full"><span className="animate-pulse font-bold text-primary">{t('loadingMessages')}</span></div>
+            : messages.length === 0 ? <p className="text-center text-sm text-muted-foreground py-8 italic font-medium">{t('noMessages')}</p>
+            : messages.map((msg, idx) => {
+              const isParticipantTwo = msg.senderId !== conversation.participantOneId;
+              const showHeader = idx === 0 || messages[idx - 1].senderId !== msg.senderId;
+
               return (
-                <div key={msg.id} className={`flex flex-col ${isParticipantOne ? "items-end" : "items-start"}`}>
-                  <span className="text-[10px] text-muted-foreground mb-0.5 px-1">{msg.senderName}</span>
-                  <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm leading-snug shadow-sm ${isParticipantOne ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-background text-foreground rounded-bl-sm border"}`}>{msg.body}</div>
-                  <span className="text-[10px] text-muted-foreground mt-0.5 px-1">{fmtFull(msg.sentAt)}</span>
+                <div key={msg.id} className={`flex flex-col ${isParticipantTwo ? "items-end" : "items-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                  {showHeader && (
+                    <span className={`text-[11px] font-bold tracking-wider uppercase mb-1.5 px-2 ${isParticipantTwo ? "text-primary/70" : "text-muted-foreground"}`}>
+                      {msg.senderName}
+                    </span>
+                  )}
+                  <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${isParticipantTwo ? "bg-gradient-to-br from-primary to-primary-light text-primary-foreground rounded-tr-sm shadow-[0_4px_14px_0_rgba(14,165,233,0.2)]" : "bg-card text-card-foreground rounded-tl-sm border border-border/40"}`}>
+                    {msg.body}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground/60 mt-1.5 px-2 font-medium">{fmtFull(msg.sentAt)}</span>
                 </div>
               );
             })}
           <div ref={bottomRef} />
         </div>
-        <DrawerFooter className="border-t">
-          <DrawerClose asChild><Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t('close')}</Button></DrawerClose>
-        </DrawerFooter>
+
+        {/* Fake Input Footer to look like Messenger */}
+        <div className="p-4 bg-background border-t border-border/50">
+          <div className="flex items-center gap-2 bg-subtle-background rounded-full px-4 py-2 border border-border/60 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+            <span className="text-muted-foreground/50 text-sm font-medium italic flex-1">Messaging is view-only...</span>
+            <Button variant="ghost" size="icon" disabled className="rounded-full h-8 w-8 text-primary opacity-50"><FaRocketchat /></Button>
+          </div>
+        </div>
       </DrawerContent>
     </Drawer>
   );
@@ -193,11 +207,13 @@ export default function ChatPage() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex justify-center items-center gap-2 px-4 py-2 border-t text-sm text-muted-foreground">
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>←</Button>
-        <span>{t('page')} {pagination.pageIndex + 1} {t('of')} {Math.max(table.getPageCount(), 1)}</span>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>→</Button>
-      </div>
+      <PaginationFooter
+        pageInfo={`${t('page')} ${pagination.pageIndex + 1} ${t('of')} ${Math.max(table.getPageCount(), 1)}`}
+        onPrevious={() => table.previousPage()}
+        onNext={() => table.nextPage()}
+        canPrevious={table.getCanPreviousPage()}
+        canNext={table.getCanNextPage()}
+      />
     </div>
   );
 }

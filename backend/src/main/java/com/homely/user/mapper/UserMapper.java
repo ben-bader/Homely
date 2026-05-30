@@ -10,5 +10,6 @@ public interface UserMapper {
 
     @org.mapstruct.Mapping(target = "createdAt", source = "createdAt")
     @org.mapstruct.Mapping(target = "updatedAt", source = "updatedAt")
+    @org.mapstruct.Mapping(target = "avatarUrl", source = "profile.avatarUrl")
     UserDto toDto(User entity);
 }

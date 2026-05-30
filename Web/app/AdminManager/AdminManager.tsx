@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
+import { useLocale } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,7 @@ import {
   flexRender,
   type ColumnDef,
 } from "@tanstack/react-table";
+import { PaginationFooter } from "@/components/ui/pagination";
 import { FaEye } from "react-icons/fa";
 import { api } from "@/lib/api";
 import { useUsers } from "@/app/users/useUsers";
@@ -75,6 +77,127 @@ type AdminUser = {
   permissions?: PermissionMap;
 };
 
+type Language = "en" | "fr";
+
+const dict = {
+  en: {
+    title: "Admin Manager",
+    userDetails: "User Details",
+    permissions: "Permissions",
+    fullName: "Full Name *",
+    emailAddress: "Email Address *",
+    phoneNumber: "Phone Number",
+    password: "Password *",
+    role: "Role",
+    selectRole: "Select role",
+    creating: "Creating...",
+    createBtn: "Create User & Continue →",
+    backBtn: "← Back",
+    finishBtn: "Finish & Save →",
+    successTitle: "User created successfully",
+    successDesc: "{name} ({email}) registered as {role} with {count} permission{plural}.",
+    successEmail: "A verification email has been sent to their inbox.",
+    createAnother: "Create Another User",
+    adminsTitle: "Admins",
+    total: "Total",
+    active: "Active",
+    inactive: "Inactive",
+    searchPlaceholder: "Search admins...",
+    noResults: "No admins found",
+    colName: "Name",
+    colEmail: "Email",
+    colRole: "Role",
+    colJoined: "Joined",
+    colStatus: "Status",
+    colManage: "Manage Permissions",
+    btnOpen: "Manage ▼",
+    btnClose: "Close ▲",
+    page: "Page",
+    of: "of",
+    details: {
+      title: "User Info",
+      desc: "Full details for this admin",
+      yes: "Yes",
+      no: "No",
+      close: "Close"
+    },
+    panel: {
+      selectAll: "Select all",
+      clear: "Clear",
+      saved: "Saved ✓",
+      saveChanges: "Save changes →",
+      grantedInfo: "{count} of {total} permissions granted"
+    },
+    permLabels: {
+      properties: "Properties",
+      reports: "Reports",
+      boosts: "Boosts",
+      visit_requests: "Visit Requests",
+      activity_monitoring: "Activity Monitoring",
+      chats: "Chats",
+      manage_parameters: "Manage Parameters"
+    }
+  },
+  fr: {
+    title: "Gestion des Admins",
+    userDetails: "Détails de l'Utilisateur",
+    permissions: "Autorisations",
+    fullName: "Nom Complet *",
+    emailAddress: "Adresse E-mail *",
+    phoneNumber: "Numéro de Téléphone",
+    password: "Mot de passe *",
+    role: "Rôle",
+    selectRole: "Choisir un rôle",
+    creating: "Création...",
+    createBtn: "Créer l'Utilisateur & Continuer →",
+    backBtn: "← Retour",
+    finishBtn: "Terminer & Enregistrer →",
+    successTitle: "Utilisateur créé avec succès",
+    successDesc: "{name} ({email}) enregistré en tant que {role} avec {count} autorisation{plural}.",
+    successEmail: "Un e-mail de vérification a été envoyé dans sa boîte de réception.",
+    createAnother: "Créer un autre utilisateur",
+    adminsTitle: "Administrateurs",
+    total: "Total",
+    active: "Actif",
+    inactive: "Inactif",
+    searchPlaceholder: "Rechercher des admins...",
+    noResults: "Aucun administrateur trouvé",
+    colName: "Nom",
+    colEmail: "E-mail",
+    colRole: "Rôle",
+    colJoined: "Rejoint le",
+    colStatus: "Statut",
+    colManage: "Gérer les Autorisations",
+    btnOpen: "Gérer ▼",
+    btnClose: "Fermer ▲",
+    page: "Page",
+    of: "sur",
+    details: {
+      title: "Info Utilisateur",
+      desc: "Détails complets de cet administrateur",
+      yes: "Oui",
+      no: "Non",
+      close: "Fermer"
+    },
+    panel: {
+      selectAll: "Tout sélectionner",
+      clear: "Effacer",
+      saved: "Enregistré ✓",
+      saveChanges: "Enregistrer →",
+      grantedInfo: "{count} sur {total} autorisations accordées"
+    },
+    permLabels: {
+      properties: "Propriétés",
+      reports: "Signalements",
+      boosts: "Boosts",
+      visit_requests: "Demandes de visite",
+      activity_monitoring: "Suivi des activités",
+      chats: "Chats",
+      manage_parameters: "Gérer les paramètres"
+    }
+  }
+};
+
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
 /* ------------------------------------------------------------------ */
@@ -107,6 +230,7 @@ function PermissionsPanel({
   onSelectAll,
   onClearAll,
   onSave,
+  t,
 }: {
   user: AdminUser;
   permissions: PermissionMap;
@@ -114,6 +238,7 @@ function PermissionsPanel({
   onSelectAll: () => void;
   onClearAll: () => void;
   onSave: () => void;
+  t: any;
 }) {
   const [saved, setSaved] = useState(false);
   const grantedCount = Object.values(permissions).filter(Boolean).length;
@@ -138,7 +263,7 @@ function PermissionsPanel({
             <p className="text-[11px] text-muted-foreground mt-0.5">{user.email}</p>
           </div>
           <div className="flex items-center gap-2 ml-1">
-            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Permissions</span>
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t.permissions}</span>
             {grantedCount > 0 && (
               <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                 {grantedCount}
@@ -151,14 +276,14 @@ function PermissionsPanel({
             onClick={onSelectAll}
             className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
-            Select all
+            {t.panel.selectAll}
           </button>
           <span className="text-muted-foreground text-[11px]">·</span>
           <button
             onClick={onClearAll}
             className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium"
           >
-            Clear
+            {t.panel.clear}
           </button>
         </div>
       </div>
@@ -168,6 +293,7 @@ function PermissionsPanel({
         <div className="flex flex-wrap gap-2">
           {PERMISSIONS.map((p) => {
             const on = permissions[p.key];
+            const label = t.permLabels[p.key as keyof typeof t.permLabels] || p.label;
             return (
               <button
                 key={p.key}
@@ -183,7 +309,7 @@ function PermissionsPanel({
                     on ? "bg-primary-foreground" : "bg-muted-foreground"
                   }`}
                 />
-                {p.label}
+                {label}
               </button>
             );
           })}
@@ -193,14 +319,14 @@ function PermissionsPanel({
       {/* Footer */}
       <div className="flex items-center justify-between px-4 py-2.5 border-t bg-muted/40">
         <span className="text-[11px] text-muted-foreground">
-          {grantedCount} of {PERMISSIONS.length} permissions granted
+          {t.panel.grantedInfo.replace("{count}", String(grantedCount)).replace("{total}", String(PERMISSIONS.length))}
         </span>
         <div className="flex items-center gap-3">
           {saved && (
-            <span className="text-[11px] text-green-600 font-medium">Saved ✓</span>
+            <span className="text-[11px] text-green-600 font-medium">{t.panel.saved}</span>
           )}
           <Button size="sm" onClick={handleSave}>
-            Save changes →
+            {t.panel.saveChanges}
           </Button>
         </div>
       </div>
@@ -213,6 +339,11 @@ function PermissionsPanel({
 /* ------------------------------------------------------------------ */
 
 export default function AdminManager() {
+  const locale = useLocale();
+  const lang = (locale === "fr" ? "fr" : "en") as Language;
+  const t = dict[lang];
+  const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
+
   /* ---------- Create-user form state ---------- */
   const [step, setStep] = useState<1 | 2>(1);
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", role: "USER" });
@@ -303,7 +434,7 @@ async function handleSavePerms(id: string) {
     () => [
       {
         accessorKey: "name",
-        header: "Name",
+        header: t.colName,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold flex-shrink-0">
@@ -313,21 +444,21 @@ async function handleSavePerms(id: string) {
           </div>
         ),
       },
-      { accessorKey: "email", header: "Email" },
+      { accessorKey: "email", header: t.colEmail },
       {
         id: "role",
-        header: "Role",
+        header: t.colRole,
         cell: () => <Badge variant="outline">ADMIN</Badge>,
       },
       {
         accessorKey: "createdAt",
-        header: "Joined",
+        header: t.colJoined,
         cell: ({ row }) =>
-          parseDate(row.original.createdAt)?.toLocaleDateString("en-US") ?? "—",
+          parseDate(row.original.createdAt)?.toLocaleDateString(dateLocale) ?? "—",
       },
       {
         id: "status",
-        header: "Status",
+        header: t.colStatus,
         cell: ({ row }) => (
           <Switch
             checked={row.original.active}
@@ -348,23 +479,23 @@ async function handleSavePerms(id: string) {
             </DrawerTrigger>
             <DrawerContent className="max-w-md ml-auto h-full p-6">
               <DrawerHeader>
-                <DrawerTitle>User Info</DrawerTitle>
-                <DrawerDescription>Full details for this admin</DrawerDescription>
+                <DrawerTitle>{t.details.title}</DrawerTitle>
+                <DrawerDescription>{t.details.desc}</DrawerDescription>
               </DrawerHeader>
               <div className="space-y-4 mt-6">
-                <InfoRow label="Name" value={row.original.name} />
-                <InfoRow label="Email" value={row.original.email} />
-                <InfoRow label="Role" value={row.original.role} />
+                <InfoRow label={t.colName} value={row.original.name} />
+                <InfoRow label={t.colEmail} value={row.original.email} />
+                <InfoRow label={t.colRole} value={row.original.role} />
                 <InfoRow
-                  label="Joined"
-                  value={parseDate(row.original.createdAt)?.toLocaleString("en-US") ?? "—"}
+                  label={t.colJoined}
+                  value={parseDate(row.original.createdAt)?.toLocaleString(dateLocale) ?? "—"}
                 />
-                <InfoRow label="Active" value={row.original.active ? "Yes" : "No"} />
+                <InfoRow label={t.colStatus} value={row.original.active ? t.details.yes : t.details.no} />
               </div>
               <DrawerFooter className="mt-auto">
                 <DrawerClose asChild>
                   <Button variant="outline" className="bg-black hover:bg-gray-900 text-white border-gray-700">
-                    Close
+                    {t.details.close}
                   </Button>
                 </DrawerClose>
               </DrawerFooter>
@@ -374,7 +505,7 @@ async function handleSavePerms(id: string) {
       },
       {
         id: "manage",
-        header: "Manage Permissions",
+        header: t.colManage,
         cell: ({ row }) => {
           const id = row.original.id;
           const isOpen = expandedId === id;
@@ -384,13 +515,13 @@ async function handleSavePerms(id: string) {
               variant={isOpen ? "default" : "outline"}
               onClick={() => setExpandedId(isOpen ? null : id)}
             >
-              {isOpen ? "Close ▲" : "Manage ▼"}
+              {isOpen ? t.btnClose : t.btnOpen}
             </Button>
           );
         },
       },
     ],
-    [handleToggle, expandedId]
+    [handleToggle, expandedId, t, dateLocale]
   );
 
   const table = useReactTable({
@@ -415,7 +546,7 @@ async function handleSavePerms(id: string) {
   async function handleRegister() {
     const { name, email, phone, password, role } = form;
     if (!name || !email || !password) {
-      setError("Name, email and password are required.");
+      setError(lang === "fr" ? "Le nom, l'e-mail et le mot de passe sont requis." : "Name, email and password are required.");
       return;
     }
     setLoading(true);
@@ -432,7 +563,7 @@ async function handleSavePerms(id: string) {
     }
   }
 
-  function handleFinish() {
+  async function handleFinish() {
     if (createdUser?.id) {
       localStorage.setItem(`permissions_${createdUser.id}`, JSON.stringify(formPermissions));
     }
@@ -457,20 +588,23 @@ async function handleSavePerms(id: string) {
   if (success) {
     return (
       <div className="px-8 space-y-6">
-        <h2 className="text-xl font-semibold">Admin Manager</h2>
+        <h2 className="text-xl font-semibold">{t.title}</h2>
         <div className="rounded-lg border bg-green-50 dark:bg-green-950/30 p-8 flex flex-col items-center text-center gap-3">
           <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center text-green-600 text-xl font-bold">
             ✓
           </div>
-          <p className="font-semibold text-foreground">User created successfully</p>
+          <p className="font-semibold text-foreground">{t.successTitle}</p>
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{createdUser?.name}</span> ({createdUser?.email}) registered as{" "}
-            <Badge variant="outline">{createdUser?.role}</Badge> with {formGrantedCount} permission
-            {formGrantedCount !== 1 ? "s" : ""}.
+            {t.successDesc
+              .replace("{name}", createdUser?.name || "")
+              .replace("{email}", createdUser?.email || "")
+              .replace("{role}", createdUser?.role || "")
+              .replace("{count}", String(formGrantedCount))
+              .replace("{plural}", formGrantedCount !== 1 ? "s" : "")}
           </p>
-          <p className="text-xs text-muted-foreground">A verification email has been sent to their inbox.</p>
+          <p className="text-xs text-muted-foreground">{t.successEmail}</p>
           <Button variant="outline" className="mt-2" onClick={handleReset}>
-            Create Another User
+            {t.createAnother}
           </Button>
         </div>
       </div>
@@ -484,11 +618,11 @@ async function handleSavePerms(id: string) {
       {/* ============================================================ */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Admin Manager</h2>
+          <h2 className="text-xl font-semibold">{t.title}</h2>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className={step === 1 ? "text-foreground font-semibold" : ""}>1. User Details</span>
+            <span className={step === 1 ? "text-foreground font-semibold" : ""}>{t.userDetails}</span>
             <span>→</span>
-            <span className={step === 2 ? "text-foreground font-semibold" : ""}>2. Permissions</span>
+            <span className={step === 2 ? "text-foreground font-semibold" : ""}>{t.permissions}</span>
           </div>
         </div>
 
@@ -497,20 +631,20 @@ async function handleSavePerms(id: string) {
           <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
             <div className="px-4 py-2.5 border-b bg-primary">
               <span className="text-xs font-semibold uppercase tracking-widest text-white">
-                User Details
+                {t.userDetails}
               </span>
             </div>
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                    Full Name *
+                    {t.fullName}
                   </label>
                   <Input name="name" placeholder="John Doe" value={form.name} onChange={handleInput} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                    Email Address *
+                    {t.emailAddress}
                   </label>
                   <Input
                     name="email"
@@ -522,13 +656,13 @@ async function handleSavePerms(id: string) {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                    Phone Number
+                    {t.phoneNumber}
                   </label>
                   <Input name="phone" placeholder="+212 600 000000" value={form.phone} onChange={handleInput} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                    Password *
+                    {t.password}
                   </label>
                   <Input
                     name="password"
@@ -542,11 +676,11 @@ async function handleSavePerms(id: string) {
 
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                  Role
+                  {t.role}
                 </label>
                 <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}>
                   <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue placeholder={t.selectRole} />
                   </SelectTrigger>
                   <SelectContent>
                     {ROLES.map((r) => (
@@ -566,7 +700,7 @@ async function handleSavePerms(id: string) {
 
               <div className="flex justify-end">
                 <Button onClick={handleRegister} disabled={loading}>
-                  {loading ? "Creating…" : "Create User & Continue →"}
+                  {loading ? t.creating : t.createBtn}
                 </Button>
               </div>
             </div>
@@ -591,7 +725,7 @@ async function handleSavePerms(id: string) {
               <div className="flex items-center justify-between px-4 py-2.5 border-b bg-primary">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold uppercase tracking-widest text-white">
-                    Permissions
+                    {t.permissions}
                   </span>
                   {formGrantedCount > 0 && (
                     <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
@@ -604,18 +738,18 @@ async function handleSavePerms(id: string) {
                     onClick={() =>
                       setFormPermissions(Object.fromEntries(PERMISSIONS.map((p) => [p.key, true])))
                     }
-                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium"
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium text-white/90 hover:text-white"
                   >
-                    Select all
+                    {t.panel.selectAll}
                   </button>
-                  <span className="text-muted-foreground text-[11px]">·</span>
+                  <span className="text-white/60 text-[11px]">·</span>
                   <button
                     onClick={() =>
                       setFormPermissions(Object.fromEntries(PERMISSIONS.map((p) => [p.key, false])))
                     }
-                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium"
+                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium text-white/90 hover:text-white"
                   >
-                    Clear
+                    {t.panel.clear}
                   </button>
                 </div>
               </div>
@@ -623,6 +757,7 @@ async function handleSavePerms(id: string) {
                 <div className="flex flex-wrap gap-2">
                   {PERMISSIONS.map((p) => {
                     const on = formPermissions[p.key];
+                    const label = t.permLabels[p.key as keyof typeof t.permLabels] || p.label;
                     return (
                       <button
                         key={p.key}
@@ -638,7 +773,7 @@ async function handleSavePerms(id: string) {
                             on ? "bg-primary-foreground" : "bg-muted-foreground"
                           }`}
                         />
-                        {p.label}
+                        {label}
                       </button>
                     );
                   })}
@@ -648,9 +783,9 @@ async function handleSavePerms(id: string) {
 
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)}>
-                ← Back
+                {t.backBtn}
               </Button>
-              <Button onClick={handleFinish}>Finish & Save →</Button>
+              <Button onClick={handleFinish}>{t.finishBtn}</Button>
             </div>
           </div>
         )}
@@ -661,28 +796,28 @@ async function handleSavePerms(id: string) {
       {/* ============================================================ */}
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Admins</h2>
+          <h2 className="text-xl font-semibold">{t.adminsTitle}</h2>
         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <div className="rounded-lg border p-4 bg-muted/50">
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Total</p>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.total}</p>
             <p className="text-2xl font-bold text-foreground">{allAdmins.length}</p>
           </div>
           <div className="rounded-lg border p-4 bg-green-50 dark:bg-green-950/30">
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Active</p>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.active}</p>
             <p className="text-2xl font-bold text-green-600">{totalActive}</p>
           </div>
           <div className="rounded-lg border p-4 bg-destructive/10">
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Inactive</p>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.inactive}</p>
             <p className="text-2xl font-bold text-destructive">{totalInactive}</p>
           </div>
         </div>
 
         {/* Search */}
         <Input
-          placeholder="Search admins..."
+          placeholder={t.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -708,7 +843,7 @@ async function handleSavePerms(id: string) {
                     colSpan={columns.length}
                     className="text-center text-muted-foreground py-12 text-sm"
                   >
-                    No admins found
+                    {t.noResults}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -717,7 +852,7 @@ async function handleSavePerms(id: string) {
                     <TableRow>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -747,6 +882,7 @@ async function handleSavePerms(id: string) {
                               )
                             }
                             onSave={() => handleSavePerms(row.original.id)}
+                            t={t}
                           />
                         </TableCell>
                       </TableRow>
@@ -758,28 +894,13 @@ async function handleSavePerms(id: string) {
           </Table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex justify-center items-center gap-4 py-2 text-sm">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            ←
-          </Button>
-          <span>
-            Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            →
-          </Button>
-        </div>
+        <PaginationFooter
+          pageInfo={`${t.page} ${pagination.pageIndex + 1} ${t.of} ${Math.max(table.getPageCount(), 1)}`}
+          onPrevious={() => table.previousPage()}
+          onNext={() => table.nextPage()}
+          canPrevious={table.getCanPreviousPage()}
+          canNext={table.getCanNextPage()}
+        />
       </div>
     </div>
   );
