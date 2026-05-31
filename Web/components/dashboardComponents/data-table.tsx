@@ -187,7 +187,7 @@ export function DataTable({ data, onStatusChange }: { data: Report[]; onStatusCh
   })
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-card border border-border/40 shadow-[0_10px_40px_-10px_rgba(14,165,233,0.15)] flex flex-col">
+    <div className="overflow-hidden rounded-lg bg-card border border-border flex flex-col">
       <div className="overflow-auto flex-1 custom-scrollbar">
         <Table>
           <TableHeader className="bg-accent sticky top-0 z-10">

@@ -2,18 +2,17 @@
 
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, getPaginationRowModel, flexRender, type ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PaginationFooter } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { Boost, BoostStatus, BoostPackage } from "@/types/dashboard-types";
-import { FaEye } from "react-icons/fa";
+import { Eye, Rocket, Clock, CheckCircle2, XCircle, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import useBoostPackages from "@/app/boosts/useBoostPackages";
 import { useTranslations } from "next-intl";
+import { StatusBadge } from "@/components/platform/status-badge";
 
 function parseDate(v: string | number | null | undefined): Date | null {
   if (!v) return null;
@@ -23,190 +22,53 @@ function parseDate(v: string | number | null | undefined): Date | null {
 }
 function fmt(v: string | number | null | undefined) { const d = parseDate(v); return d ? d.toLocaleDateString() : "—"; }
 function fmtFull(v: string | number | null | undefined) { const d = parseDate(v); return d ? d.toLocaleString() : "—"; }
-function statusVariant(status: BoostStatus): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "COMPLETED": return "default";
-    case "PENDING": return "secondary";
-    case "FAILED": return "destructive";
-    default: return "outline";
-  }
-}
 
-function InfoRow({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</span>
-      {typeof value === "string" || typeof value === "number" ? (
-        <span className={mono ? "font-mono text-xs break-all text-foreground" : "text-sm font-medium text-foreground"}>{value}</span>
-      ) : <div className="mt-0.5">{value}</div>}
+      <span className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">{label}</span>
+      <span className="text-sm font-medium text-foreground">{typeof value === "string" || typeof value === "number" ? value : <div className="mt-0.5">{value}</div>}</span>
     </div>
   );
 }
 
-function BoostDrawer({ boost, packageName }: { boost: Boost; packageName?: string }) {
-  const t = useTranslations('boosts.drawer');
+function BoostDrawer({ boost, packageName, t }: { boost: Boost; packageName?: string; t: any }) {
   return (
     <Drawer direction="right">
-      <DrawerTrigger asChild><Button variant="ghost" size="icon"><FaEye /></Button></DrawerTrigger>
-      <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
-        <DrawerHeader className="border-b pb-4">
-          <DrawerTitle className="text-base font-semibold">{t('title')}</DrawerTitle>
-          <DrawerDescription className="text-xs text-muted-foreground">{t('description')}</DrawerDescription>
-        </DrawerHeader>
-        <div className="flex-1 overflow-y-auto p-5 space-y-6">
-          <section className="space-y-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionBoost')}</p>
-            <InfoRow label={t('status')} value={<Badge variant={statusVariant(boost.status)}>{boost.status}</Badge>} />
-            <InfoRow label={t('packageName')} value={packageName ?? "—"} />
-          </section>
-          <section className="space-y-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionProperty')}</p>
-            <InfoRow label={t('propertyTitle')} value={boost.propertyTitle} />
-          </section>
-          <section className="space-y-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionSeller')}</p>
-            <InfoRow label={t('sellerName')} value={boost.userName} />
-            <InfoRow label={t('sellerEmail')} value={boost.userEmail} />
-          </section>
-          <section className="space-y-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('sectionTimestamps')}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <InfoRow label={t('createdAt')} value={fmtFull(boost.createdAt)} />
-              <InfoRow label={t('updatedAt')} value={fmtFull(boost.updatedAt)} />
-            </div>
-          </section>
+      <DrawerTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"><Eye className="w-4 h-4" /></Button></DrawerTrigger>
+      <DrawerContent className="max-w-md ml-auto h-full">
+        <div className="flex flex-col h-full p-6">
+          <DrawerHeader className="px-0 pb-4">
+            <DrawerTitle className="text-lg">{t('drawer.title')}</DrawerTitle>
+            <DrawerDescription className="text-sm">{t('drawer.description')}</DrawerDescription>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto space-y-6">
+            <section className="space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('drawer.sectionBoost')}</p>
+              <InfoRow label={t('drawer.status')} value={<StatusBadge status={boost.status} />} />
+              <InfoRow label={t('drawer.packageName')} value={packageName ?? "—"} />
+            </section>
+            <section className="space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('drawer.sectionProperty')}</p>
+              <InfoRow label={t('drawer.propertyTitle')} value={boost.propertyTitle} />
+            </section>
+            <section className="space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('drawer.sectionSeller')}</p>
+              <InfoRow label={t('drawer.sellerName')} value={boost.userName} />
+              <InfoRow label={t('drawer.sellerEmail')} value={boost.userEmail} />
+            </section>
+            <section className="space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t('drawer.sectionTimestamps')}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <InfoRow label={t('drawer.createdAt')} value={fmtFull(boost.createdAt)} />
+                <InfoRow label={t('drawer.updatedAt')} value={fmtFull(boost.updatedAt)} />
+              </div>
+            </section>
+          </div>
+          <DrawerFooter className="mt-auto px-0"><DrawerClose asChild><Button variant="outline" className="w-full">{t('drawer.close')}</Button></DrawerClose></DrawerFooter>
         </div>
-        <DrawerFooter className="border-t">
-          <DrawerClose asChild><Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t('close')}</Button></DrawerClose>
-        </DrawerFooter>
       </DrawerContent>
     </Drawer>
-  );
-}
-
-function SummaryCards({ boosts, t }: { boosts: Boost[]; t: any }) {
-  const pending = boosts.filter((b) => b.status === "PENDING").length;
-  const completed = boosts.filter((b) => b.status === "COMPLETED").length;
-  const failed = boosts.filter((b) => b.status === "FAILED").length;
-
-  const cards = [
-    { label: t('total'), value: boosts.length, colorClass: "text-foreground", bgClass: "bg-muted/50" },
-    { label: t('pending'), value: pending, colorClass: "text-yellow-600", bgClass: "bg-yellow-50 dark:bg-yellow-950/30" },
-    { label: t('completed'), value: completed, colorClass: "text-green-600", bgClass: "bg-green-50 dark:bg-green-950/30" },
-    { label: t('failed'), value: failed, colorClass: "text-destructive", bgClass: "bg-destructive/10" },
-  ];
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {cards.map((card) => (
-        <div key={card.label} className={`rounded-lg border p-4 flex items-center gap-3 ${card.bgClass}`}>
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{card.label}</p>
-            <p className={`text-2xl font-bold ${card.colorClass}`}>{card.value}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function StatusSelect({ boost, onUpdate }: { boost: Boost; onUpdate: (id: string, status: BoostStatus) => Promise<void> }) {
-  const t = useTranslations('boosts');
-  const status = boost.status;
-  let triggerClass = "w-32 h-7 text-xs";
-  if (status === "PENDING") triggerClass += " bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200/50 dark:border-yellow-900/50";
-  else if (status === "COMPLETED") triggerClass += " bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/50";
-  else if (status === "FAILED") triggerClass += " bg-destructive/10 text-destructive border-destructive/30";
-  
-  return (
-    <Select value={status} onValueChange={(value: string) => onUpdate(boost.id, value as BoostStatus)}>
-      <SelectTrigger className={triggerClass}><SelectValue placeholder={t('statusPlaceholder')} /></SelectTrigger>
-      <SelectContent>
-        <SelectItem value="PENDING">PENDING</SelectItem>
-        <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-        <SelectItem value="FAILED">FAILED</SelectItem>
-      </SelectContent>
-    </Select>
-  );
-}
-
-function buildColumns(
-  onUpdate: (id: string, status: BoostStatus) => Promise<void>,
-  boostPackages: BoostPackage[],
-  t: ReturnType<typeof useTranslations>
-): ColumnDef<Boost>[] {
-  const durationToName = Object.fromEntries(boostPackages.map(p => [p.durationDays, p.name]));
-  return [
-    { accessorKey: "propertyTitle", header: t('table.property'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.propertyTitle}</p> },
-    { accessorKey: "userName", header: t('table.seller'), cell: ({ row }) => <div><p className="text-sm font-medium">{row.original.userName}</p><p className="text-xs text-muted-foreground">{row.original.userEmail}</p></div> },
-    { accessorKey: "durationDays", header: t('table.packageName'), cell: ({ row }) => <span className="text-sm">{durationToName[row.original.durationDays] ?? "—"}</span> },
-    { accessorKey: "createdAt", header: t('table.createdAt'), cell: ({ row }) => fmt(row.original.createdAt) },
-    { accessorKey: "status", header: t('table.status'), cell: ({ row }) => <StatusSelect boost={row.original} onUpdate={onUpdate} /> },
-    { id: "seeMore", header: "", cell: ({ row }) => <BoostDrawer boost={row.original} packageName={durationToName[row.original.durationDays]} /> },
-  ];
-}
-
-function FilterPanel({ filterStatus, setFilterStatus, createdAfter, setCreatedAfter, createdBefore, setCreatedBefore, dateSort, setDateSort, onClear }: any) {
-  const t = useTranslations('boosts.filters');
-  const statusOptions = [
-    { value: "ALL", label: "ALL" },
-    { value: "PENDING", label: "PENDING" },
-    { value: "COMPLETED", label: "COMPLETED" },
-    { value: "FAILED", label: "FAILED" },
-  ];
-  const dateSortOptions = [
-    { value: "newest", label: t('newestFirst'), icon: "↓" },
-    { value: "oldest", label: t('oldestFirst'), icon: "↑" },
-  ];
-  const activeCount = [filterStatus !== "ALL", createdAfter !== "", createdBefore !== "", dateSort !== ""].filter(Boolean).length;
-
-  return (
-    <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">{t('label')}</span>
-          {activeCount > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{activeCount}</span>}
-        </div>
-        {activeCount > 0 && <button onClick={onClear} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium">{t('clearAll')}</button>}
-      </div>
-      <div className="p-4 space-y-5">
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Status</label>
-          <div className="flex flex-wrap gap-1.5">
-            {statusOptions.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setFilterStatus(value)}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                  filterStatus === value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('sortByDate')}</label>
-          <div className="flex gap-1.5">
-            {dateSortOptions.map(({ value, label, icon }) => (
-              <button key={value} onClick={() => setDateSort(dateSort === value ? "" : value)} className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${dateSort === value ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"}`}>
-                <span>{icon}</span>{label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('startedBetween')}</label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1"><span className="text-[10px] text-muted-foreground">{t('after')}</span><Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} /></div>
-            <div className="space-y-1"><span className="text-[10px] text-muted-foreground">{t('before')}</span><Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} /></div>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -238,7 +100,29 @@ export default function Boosts() {
 
   const clearFilters = () => { setFilterStatus("ALL"); setCreatedAfter(""); setCreatedBefore(""); setDateSort(""); };
   const activeFilterCount = [filterStatus !== "ALL", createdAfter !== "", createdBefore !== "", dateSort !== ""].filter(Boolean).length;
-  const columns = useMemo(() => buildColumns(handleStatusUpdate, boostPackages, t), [handleStatusUpdate, boostPackages, t]);
+
+  const durationToName = useMemo(() => Object.fromEntries(boostPackages.map(p => [p.durationDays, p.name])), [boostPackages]);
+
+  const columns = useMemo<ColumnDef<Boost>[]>(() => [
+    { accessorKey: "propertyTitle", header: t('table.property'), cell: ({ row }) => <span className="text-sm font-medium">{row.original.propertyTitle}</span> },
+    { accessorKey: "userName", header: t('table.seller'), cell: ({ row }) => <div><p className="text-sm font-medium">{row.original.userName}</p><p className="text-xs text-muted-foreground">{row.original.userEmail}</p></div> },
+    { accessorKey: "durationDays", header: t('table.packageName'), cell: ({ row }) => <span className="text-sm">{durationToName[row.original.durationDays] ?? "—"}</span> },
+    { accessorKey: "createdAt", header: t('table.createdAt'), cell: ({ row }) => <span className="text-sm text-muted-foreground">{fmt(row.original.createdAt)}</span> },
+    {
+      accessorKey: "status", header: t('table.status'),
+      cell: ({ row }) => (
+        <Select value={row.original.status} onValueChange={(v: string) => handleStatusUpdate(row.original.id, v as BoostStatus)}>
+          <SelectTrigger className="w-32 h-7 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="PENDING">PENDING</SelectItem>
+            <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+            <SelectItem value="FAILED">FAILED</SelectItem>
+          </SelectContent>
+        </Select>
+      ),
+    },
+    { id: "view", header: "", cell: ({ row }) => <BoostDrawer boost={row.original} packageName={durationToName[row.original.durationDays]} t={t} /> },
+  ], [handleStatusUpdate, durationToName, t]);
 
   const filteredData = useMemo(() => {
     return boosts.filter(b => {
@@ -257,43 +141,108 @@ export default function Boosts() {
 
   const table = useReactTable({ data: filteredData, columns, state: { pagination }, onPaginationChange: setPagination, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(), getPaginationRowModel: getPaginationRowModel() });
 
-  if (loading || loadingPackages) return <div className="p-8">{t('loading')}</div>;
-  if (error) return <div className="p-8 text-red-500">{error}</div>;
+  const pending = boosts.filter(b => b.status === "PENDING").length;
+  const completed = boosts.filter(b => b.status === "COMPLETED").length;
+  const failed = boosts.filter(b => b.status === "FAILED").length;
+
+  if (loading || loadingPackages) return <div className="px-6 py-12 text-center text-sm text-muted-foreground">{t('loading')}</div>;
+  if (error) return <div className="px-6 py-12 text-center text-sm text-red-500">{error}</div>;
 
   return (
-    <div className="px-8 space-y-6">
-      <h2 className="text-xl font-semibold">{t('title')}</h2>
-      <SummaryCards boosts={boosts} t={t} />
-      <div className="flex gap-2">
-        <Input placeholder={t('searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Button variant="outline" onClick={() => setFilterOpen(v => !v)} className="relative">
-          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-          </svg>
-          {t('filter')}
-          {activeFilterCount > 0 && <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{activeFilterCount}</span>}
+    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6 animate-fade-up">
+      <div><h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1></div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: t('total'), value: boosts.length, icon: <Rocket className="w-4 h-4" />, bg: "bg-blue-50", text: "text-blue-600", valColor: "" },
+          { label: t('pending'), value: pending, icon: <Clock className="w-4 h-4" />, bg: "bg-amber-50", text: "text-amber-600", valColor: "text-amber-600" },
+          { label: t('completed'), value: completed, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-emerald-50", text: "text-emerald-600", valColor: "text-emerald-600" },
+          { label: t('failed'), value: failed, icon: <XCircle className="w-4 h-4" />, bg: "bg-red-50", text: "text-red-600", valColor: "text-red-500" },
+        ].map((c) => (
+          <div key={c.label} className="bg-card border rounded-xl p-5">
+            <div className="flex items-start justify-between">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{c.label}</p>
+              <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.text} flex items-center justify-center`}>{c.icon}</div>
+            </div>
+            <p className={`text-2xl font-bold mt-2 ${c.valColor}`}>{c.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Search + Filter */}
+      <div className="flex items-center gap-2">
+        <input placeholder={t('searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 h-9 px-3 text-sm bg-card border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60 transition-all" />
+        <Button variant="outline" size="sm" onClick={() => setFilterOpen(v => !v)} className="relative h-9 gap-1.5 text-xs font-medium">
+          <SlidersHorizontal className="w-3.5 h-3.5" />{t('filter')}
+          {activeFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-white">{activeFilterCount}</span>}
         </Button>
       </div>
-      {filterOpen && <FilterPanel filterStatus={filterStatus} setFilterStatus={setFilterStatus} createdAfter={createdAfter} setCreatedAfter={setCreatedAfter} createdBefore={createdBefore} setCreatedBefore={setCreatedBefore} dateSort={dateSort} setDateSort={setDateSort} onClear={clearFilters} />}
-      <div className="overflow-auto rounded-lg border">
+
+      {filterOpen && (
+        <div className="bg-card border rounded-xl overflow-hidden animate-fade-up">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/30">
+            <span className="text-xs font-semibold uppercase tracking-wider">{t('filter')}</span>
+            {activeFilterCount > 0 && <button onClick={clearFilters} className="text-xs text-muted-foreground hover:text-foreground">{t('filters.clearAll')}</button>}
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Status</label>
+              <div className="flex flex-wrap gap-1.5">
+                {(["ALL", "PENDING", "COMPLETED", "FAILED"] as const).map(s => (
+                  <button key={s} onClick={() => setFilterStatus(s)} className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${filterStatus === s ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{s}</button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('filters.sortByDate')}</label>
+              <div className="flex gap-1.5">
+                <button onClick={() => setDateSort(dateSort === "newest" ? "" : "newest")} className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${dateSort === "newest" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"}`}>↓ {t('filters.newestFirst')}</button>
+                <button onClick={() => setDateSort(dateSort === "oldest" ? "" : "oldest")} className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${dateSort === "oldest" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"}`}>↑ {t('filters.oldestFirst')}</button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t('filters.startedBetween')}</label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1"><span className="text-[10px] text-muted-foreground">{t('filters.after')}</span><Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} /></div>
+                <div className="space-y-1"><span className="text-[10px] text-muted-foreground">{t('filters.before')}</span><Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} /></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="bg-card border rounded-xl overflow-hidden">
         <Table>
-          <TableHeader className="bg-primary text-white">
-            {table.getHeaderGroups().map(hg => <TableRow key={hg.id}>{hg.headers.map(header => <TableHead key={header.id} className="text-white">{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}</TableRow>)}
+          <TableHeader>
+            {table.getHeaderGroups().map(hg => (
+              <TableRow key={hg.id} className="border-b bg-muted/30 hover:bg-muted/30">
+                {hg.headers.map(header => <TableHead key={header.id} className="text-xs font-medium text-muted-foreground uppercase tracking-wider h-10">{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}
+              </TableRow>
+            ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
-              <TableRow><TableCell colSpan={columns.length} className="text-center text-muted-foreground py-12 text-sm">{t('noMatch')}</TableCell></TableRow>
-            ) : table.getRowModel().rows.map(row => <TableRow key={row.id}>{row.getVisibleCells().map(cell => <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}</TableRow>)}
+              <TableRow><TableCell colSpan={columns.length} className="text-center text-muted-foreground py-16 text-sm">{t('noMatch')}</TableCell></TableRow>
+            ) : table.getRowModel().rows.map(row => (
+              <TableRow key={row.id} className="hover:bg-muted/20 transition-colors">
+                {row.getVisibleCells().map(cell => <TableCell key={cell.id} className="py-3">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
-      <PaginationFooter
-        pageInfo={`${t('page')} ${pagination.pageIndex + 1} ${t('of')} ${Math.max(table.getPageCount(), 1)}`}
-        onPrevious={() => table.previousPage()}
-        onNext={() => table.nextPage()}
-        canPrevious={table.getCanPreviousPage()}
-        canNext={table.getCanNextPage()}
-      />
+
+      <div className="flex justify-between items-center">
+        <span className="text-xs text-muted-foreground">{filteredData.length} boosts</span>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="h-8 w-8 p-0"><ChevronLeft className="w-4 h-4" /></Button>
+          <span className="text-xs text-muted-foreground">{t('page')} {pagination.pageIndex + 1} {t('of')} {Math.max(table.getPageCount(), 1)}</span>
+          <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="h-8 w-8 p-0"><ChevronRight className="w-4 h-4" /></Button>
+        </div>
+      </div>
     </div>
   );
 }

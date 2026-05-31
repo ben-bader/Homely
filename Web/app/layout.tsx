@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { NextIntlClientProvider } from "next-intl"; // ✅ added
-import { getMessages, setRequestLocale } from "next-intl/server";     // ✅ added
-import { AppInitializer } from "@/components/AppInitializer"; // ✅ Auth init
-import { AuthProvider } from "@/lib/auth-context"; // ✅ Auth context
-import { cookies } from "next/headers"; // ✅ read cookie for locale
+import { Inter, JetBrains_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, setRequestLocale } from "next-intl/server";
+import { AppInitializer } from "@/components/AppInitializer";
+import { AuthProvider } from "@/lib/auth-context";
+import { Toaster } from "@/components/ui/sonner";
+import { cookies } from "next/headers";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +25,6 @@ export const metadata: Metadata = {
   description: "Homely admin dashboard and property moderation portal",
 };
 
-// ✅ made async (required to load messages)
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -30,22 +32,19 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const locale = cookieStore.get("locale")?.value === "fr" ? "fr" : "en";
-  setRequestLocale(locale); // ✅ added
-  const messages = await getMessages(); // ✅ added
+  setRequestLocale(locale);
+  const messages = await getMessages();
 
   return (
     <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
-        {/* ✅ Initialize auth on app startup */}
         <AppInitializer />
-        
-        {/* ✅ Provide auth context */}
         <AuthProvider>
-          {/* ✅ wrapped children ONLY */}
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
+            <Toaster position="bottom-right" richColors closeButton />
           </NextIntlClientProvider>
         </AuthProvider>
       </body>

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboardComponents/app-sidebar";
 import { SiteHeader } from "@/components/dashboardComponents/site-header";
 
@@ -19,10 +18,12 @@ import ManageParameters from "@/app/ManageParametres/ManageParametres";
 import AdminManager from "../AdminManager/AdminManager";
 
 import { getUserFromToken, isAdmin } from "@/lib/auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Page() {
   const t = useTranslations("common");
   const tSections = useTranslations("sections");
+  const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState("analytics");
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [isInitialized, setIsInitialized] = useState(false);
@@ -40,13 +41,11 @@ export default function Page() {
     manage_admins: true,
   };
 
-  // ✅ Load permissions per user
+  // Load permissions per user
   useEffect(() => {
     const user = getUserFromToken();
     if (!user) return;
-
     const stored = localStorage.getItem(`permissions_${user.id}`);
-
     if (stored) {
       try {
         setPermissions(JSON.parse(stored));
@@ -61,19 +60,17 @@ export default function Page() {
     }
   }, []);
 
-  // ✅ Parse section query param from URL on load for deep linking
+  // Parse section from URL on load
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const sec = params.get("section");
-      if (sec) {
-        setActiveSection(sec);
-      }
+      if (sec) setActiveSection(sec);
       setIsInitialized(true);
     }
   }, []);
 
-  // ✅ Update URL search param whenever activeSection changes to prevent reset on page reload/refresh
+  // Sync URL param on section change
   useEffect(() => {
     if (!isInitialized) return;
     if (typeof window !== "undefined") {
@@ -85,7 +82,7 @@ export default function Page() {
     }
   }, [activeSection, isInitialized]);
 
-  // ✅ Dynamically update Chrome browser tab title based on active section
+  // Update browser tab title
   useEffect(() => {
     if (typeof window !== "undefined") {
       const keyMap: Record<string, string> = {
@@ -113,83 +110,64 @@ export default function Page() {
     }
   }, [activeSection, tSections]);
 
-  // ❌ fallback UI
   function NoAccess() {
     return (
-      <div className="p-6 text-center text-muted-foreground">
+      <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
         {t("noAccess")}
       </div>
     );
   }
 
-  // ✅ IMPORTANT FIX: only ONE component renders
   function renderSection() {
     switch (activeSection) {
       case "dashboard":
       case "analytics":
         return permissions.dashboard ? <Analytics /> : <NoAccess />;
-
       case "users":
         return permissions.users ? <Users /> : <NoAccess />;
-
       case "properties":
         return permissions.properties ? <Properties /> : <NoAccess />;
-
       case "reports":
         return permissions.reports ? <Reports /> : <NoAccess />;
-
       case "boosts":
         return permissions.boosts ? <Boosts /> : <NoAccess />;
-
       case "visit requests":
         return permissions.visit_requests ? <VisitRequests /> : <NoAccess />;
-
       case "activity monitoring":
         return permissions.activity_monitoring ? <ActivityMonitoring /> : <NoAccess />;
-
       case "manage admins":
         return permissions.manage_admins ? <AdminManager /> : <NoAccess />;
-
       case "chats":
         return permissions.chats ? <Chat /> : <NoAccess />;
-
       case "manage parameters":
         return permissions.manage_parameters ? <ManageParameters /> : <NoAccess />;
-
       case "profile":
         return <Profile />;
-
       default:
         return <NoAccess />;
     }
   }
 
   return (
-    <SidebarProvider>
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Navigation Rail */}
       <AppSidebar
         setActiveSection={setActiveSection}
         activeSection={activeSection}
       />
 
-      <SidebarInset className="relative overflow-hidden bg-background">
-        {/* Ambient Neon Volt Green Glowing Circles */}
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary/12 blur-[130px] pointer-events-none z-0" />
-        <div className="absolute bottom-[-15%] left-[-10%] w-[600px] h-[600px] rounded-full bg-primary/8 blur-[160px] pointer-events-none z-0" />
-        <div className="absolute top-[35%] left-[50%] -translate-x-1/2 w-[350px] h-[350px] rounded-full bg-primary/5 blur-[110px] pointer-events-none z-0" />
-
-        <div className="relative z-10 flex flex-1 flex-col">
-          <SiteHeader activeSection={activeSection} />
-
-          <div className="flex flex-1 flex-col">
-            <div 
-              key={activeSection}
-              className="flex flex-1 flex-col gap-4 py-4 md:py-6 animate-in fade-in slide-in-from-bottom-3 duration-500 ease-out fill-mode-forward"
-            >
-              {renderSection()}
-            </div>
+      {/* Main content area — offset by rail width (56px) on desktop */}
+      <div className={`flex-1 flex flex-col overflow-hidden ${isMobile ? "" : "ml-64"}`}>
+        <SiteHeader activeSection={activeSection} />
+        <main className="flex-1 overflow-y-auto">
+          <div
+            key={activeSection}
+            className="min-h-full"
+          >
+            {renderSection()}
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </main>
+      </div>
+    </div>
   );
 }

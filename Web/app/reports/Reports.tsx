@@ -3,341 +3,123 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { useLocale } from "next-intl";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  flexRender,
-  type ColumnDef,
+  useReactTable, getCoreRowModel, getSortedRowModel, getPaginationRowModel, flexRender, type ColumnDef,
 } from "@tanstack/react-table";
-
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-import {
-  Drawer,
-  DrawerTrigger,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerClose,
-} from "@/components/ui/drawer";
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PaginationFooter } from "@/components/ui/pagination";
 import { useReports } from "@/app/reports/useReports";
 import { api } from "@/lib/api";
-import { FaEye } from "react-icons/fa";
+import { Eye, Flag, AlertCircle, CheckCircle2, XCircle, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import { Report, ReportStatus } from "@/types/dashboard-types";
-
-/* ---------------- TRANSLATIONS ---------------- */
+import { StatusBadge } from "@/components/platform/status-badge";
 
 type Language = "en" | "fr";
+type DateSort = "" | "newest" | "oldest";
 
 const dict = {
   en: {
-    title: "Reports",
+    title: "Reports", subtitle: "Review and manage user-submitted reports",
     searchPlaceholder: "Search by reporter, target, reason...",
-    filters: "Filters",
-    clearAll: "Clear all",
-    status: "Status",
-    type: "Report Type",
-    sortByDate: "Sort by Date",
-    newest: "Newest first",
-    oldest: "Oldest first",
-    createdBetween: "Created Between",
-    after: "After",
-    before: "Before",
-    total: "Total Reports",
-    waiting: "Waiting / Open",
-    resolved: "Resolved",
-    dismissed: "Dismissed",
-    all: "ALL",
-    user: "USER",
-    property: "PROPERTY",
-    noResults: "No reports match your filters",
-    page: "Page",
-    of: "of",
-    next: "Next",
-    prev: "Previous",
-    details: {
-      title: "Report Info",
-      desc: "Full details for this report",
-      overview: "Overview",
-      reporter: "Reporter",
-      target: "Target",
-      reviewedBy: "Reviewed By",
-      notReviewed: "Not yet reviewed",
-      timestamps: "Timestamps",
-      close: "Close",
-    },
+    filters: "Filters", clearAll: "Clear all", status: "Status", type: "Report Type",
+    sortByDate: "Sort by Date", newest: "Newest first", oldest: "Oldest first",
+    createdBetween: "Created Between", after: "After", before: "Before",
+    total: "Total", waiting: "Open", resolved: "Resolved", dismissed: "Dismissed",
+    all: "ALL", user: "USER", property: "PROPERTY",
+    noResults: "No reports match your filters", page: "Page", of: "of",
+    details: { title: "Report Info", desc: "Full details for this report", overview: "Overview", reporter: "Reporter", target: "Target", reviewedBy: "Reviewed By", notReviewed: "Not yet reviewed", timestamps: "Timestamps", close: "Close" },
   },
   fr: {
-    title: "Signalements",
+    title: "Signalements", subtitle: "Examiner et gérer les signalements des utilisateurs",
     searchPlaceholder: "Rechercher par auteur, cible, raison...",
-    filters: "Filtres",
-    clearAll: "Tout effacer",
-    status: "Statut",
-    type: "Type de rapport",
-    sortByDate: "Trier par date",
-    newest: "Plus récent",
-    oldest: "Plus ancien",
-    createdBetween: "Créé entre",
-    after: "Après",
-    before: "Avant",
-    total: "Total des rapports",
-    waiting: "En attente / Ouvert",
-    resolved: "Résolu",
-    dismissed: "Rejeté",
-    all: "TOUT",
-    user: "UTILISATEUR",
-    property: "PROPRIÉTÉ",
-    noResults: "Aucun rapport ne correspond à vos filtres",
-    page: "Page",
-    of: "sur",
-    next: "Suivant",
-    prev: "Précédent",
-    details: {
-      title: "Info du rapport",
-      desc: "Détails complets de ce signalement",
-      overview: "Aperçu",
-      reporter: "Auteur",
-      target: "Cible",
-      reviewedBy: "Examiné par",
-      notReviewed: "Pas encore examiné",
-      timestamps: "Horodatage",
-      close: "Fermer",
-    },
+    filters: "Filtres", clearAll: "Tout effacer", status: "Statut", type: "Type de rapport",
+    sortByDate: "Trier par date", newest: "Plus récent", oldest: "Plus ancien",
+    createdBetween: "Créé entre", after: "Après", before: "Avant",
+    total: "Total des rapports", waiting: "En attente", resolved: "Résolu", dismissed: "Rejeté",
+    all: "TOUT", user: "UTILISATEUR", property: "PROPRIÉTÉ",
+    noResults: "Aucun rapport ne correspond à vos filtres", page: "Page", of: "sur",
+    details: { title: "Info du rapport", desc: "Détails complets de ce signalement", overview: "Aperçu", reporter: "Auteur", target: "Cible", reviewedBy: "Examiné par", notReviewed: "Pas encore examiné", timestamps: "Horodatage", close: "Fermer" },
   },
 };
-
-/* ---------------- TYPES ---------------- */
-
-type DateSort = "" | "newest" | "oldest";
-
-/* ---------------- HELPERS ---------------- */
 
 function parseDate(v: string | number | null | undefined): Date | null {
   if (!v) return null;
   if (typeof v === "number") return new Date(v);
-  if (typeof v === "string" && !v.endsWith("Z") && !v.includes("+"))
-    return new Date(v + "Z");
+  if (typeof v === "string" && !v.endsWith("Z") && !v.includes("+")) return new Date(v + "Z");
   return new Date(v);
 }
+function fmt(v: string | number | null | undefined, locale: string = "en-US") { const d = parseDate(v); return d ? d.toLocaleDateString(locale) : "—"; }
+function fmtFull(v: string | number | null | undefined, locale: string = "en-US") { const d = parseDate(v); return d ? d.toLocaleString(locale) : "—"; }
 
-function fmt(v: string | number | null | undefined, locale: string = "en-US") {
-  const d = parseDate(v);
-  return d ? d.toLocaleDateString(locale) : "—";
-}
-
-function fmtFull(v: string | number | null | undefined, locale: string = "en-US") {
-  const d = parseDate(v);
-  return d ? d.toLocaleString(locale) : "—";
-}
-
-/* ---------------- SUMMARY CARDS ---------------- */
-
-function SummaryCards({ reports, t }: { reports: Report[]; t: any }) {
-  const open = reports.filter((r) => r.status === "OPEN").length;
-  const resolved = reports.filter((r) => r.status === "RESOLVED").length;
-  const dismissed = reports.filter((r) => r.status === "DISMISSED").length;
-
-  const cards = [
-    { label: t.total, value: reports.length, colorClass: "text-foreground", bgClass: "bg-muted/50" },
-    { label: t.waiting, value: open, colorClass: "text-destructive", bgClass: "bg-destructive/10" },
-    { label: t.resolved, value: resolved, colorClass: "text-green-600", bgClass: "bg-green-50 dark:bg-green-950/30" },
-    { label: t.dismissed, value: dismissed, colorClass: "text-muted-foreground", bgClass: "bg-muted/50" },
-  ];
-
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {cards.map((card) => (
-        <div key={card.label} className={`rounded-lg border p-4 flex items-center gap-3 ${card.bgClass}`}>
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{card.label}</p>
-            <p className={`text-2xl font-bold ${card.colorClass}`}>{card.value}</p>
-          </div>
-        </div>
-      ))}
+    <div className="flex justify-between items-start gap-4 text-sm">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="text-right font-medium">{value ?? "—"}</span>
     </div>
   );
 }
 
-/* ---------------- FILTER PANEL ---------------- */
-
-function FilterPanel({
-  t,
-  filterStatus, setFilterStatus,
-  reportType, setReportType,
-  dateSort, setDateSort,
-  createdAfter, setCreatedAfter,
-  createdBefore, setCreatedBefore,
-  onClear,
-}: {
-  t: typeof dict["en"];
-  filterStatus: ReportStatus | "ALL"; setFilterStatus: (v: ReportStatus | "ALL") => void;
-  reportType: "ALL" | "USER" | "PROPERTY"; setReportType: (v: "ALL" | "USER" | "PROPERTY") => void;
-  dateSort: DateSort; setDateSort: (v: DateSort) => void;
-  createdAfter: string; setCreatedAfter: (v: string) => void;
-  createdBefore: string; setCreatedBefore: (v: string) => void;
-  onClear: () => void;
-}) {
-  const activeCount = [
-    filterStatus !== "ALL",
-    reportType !== "ALL",
-    dateSort !== "",
-    createdAfter !== "",
-    createdBefore !== "",
-  ].filter(Boolean).length;
-
-  const statusOptions: { value: ReportStatus | "ALL"; label: string }[] = [
-    { value: "ALL", label: t.all },
-    { value: ReportStatus.OPEN, label: t.waiting },
-    { value: ReportStatus.RESOLVED, label: t.resolved },
-    { value: ReportStatus.DISMISSED, label: t.dismissed },
-  ];
-
-  const typeOptions: { value: "ALL" | "USER" | "PROPERTY"; label: string }[] = [
-    { value: "ALL", label: t.all },
-    { value: "USER", label: t.user },
-    { value: "PROPERTY", label: t.property },
-  ];
-
-  const dateSortOptions: { value: DateSort; label: string; icon: string }[] = [
-    { value: "newest", label: t.newest, icon: "↓" },
-    { value: "oldest", label: t.oldest, icon: "↑" },
-  ];
-
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
-        <div className="flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-          </svg>
-          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">{t.filters}</span>
-          {activeCount > 0 && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {activeCount}
-            </span>
-          )}
-        </div>
-        {activeCount > 0 && (
-          <button onClick={onClear} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium">
-            {t.clearAll}
-          </button>
-        )}
-      </div>
-
-      <div className="p-4 space-y-5">
-        {/* Status */}
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.status}</label>
-          <div className="flex flex-wrap gap-1.5">
-            {statusOptions.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setFilterStatus(value)}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                  filterStatus === value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Report Type */}
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.type}</label>
-          <div className="flex flex-wrap gap-1.5">
-            {typeOptions.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setReportType(value)}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                  reportType === value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Date sort */}
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.sortByDate}</label>
-          <div className="flex gap-1.5">
-            {dateSortOptions.map(({ value, label, icon }) => (
-              <button
-                key={value}
-                onClick={() => setDateSort(dateSort === value ? "" : value)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                  dateSort === value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                }`}
-              >
-                <span>{icon}</span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Date range */}
-        <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.createdBetween}</label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">{t.after}</span>
-              <Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">{t.before}</span>
-              <Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} />
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-2">
+      <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground border-b pb-1">{label}</p>
+      <div className="space-y-2">{children}</div>
     </div>
   );
 }
 
-/* ---------------- MAIN PAGE ---------------- */
+function ReportDrawer({ report, t, lang }: { report: Report; t: any; lang: string }) {
+  const locale = lang === "fr" ? "fr-FR" : "en-US";
+  const isProperty = !!report.reportedPropertyId;
+  return (
+    <Drawer direction="right">
+      <DrawerTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"><Eye className="w-4 h-4" /></Button></DrawerTrigger>
+      <DrawerContent className="max-w-md ml-auto h-full">
+        <div className="flex flex-col h-full p-6">
+          <DrawerHeader className="px-0 pb-4">
+            <DrawerTitle className="text-lg">{t.details.title}</DrawerTitle>
+            <DrawerDescription className="text-sm">{t.details.desc}</DrawerDescription>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto space-y-6">
+            <Section label={t.details.overview}>
+              <InfoRow label="Reason" value={report.reason} />
+              <InfoRow label={t.status} value={<StatusBadge status={report.status} />} />
+              <InfoRow label="Type" value={isProperty ? t.property : t.user} />
+            </Section>
+            <Section label={t.details.reporter}>
+              <InfoRow label="Name" value={report.reporterName} />
+              <InfoRow label="Email" value={report.reporterEmail} />
+            </Section>
+            <Section label={t.details.target}>
+              {isProperty ? <InfoRow label="Property" value={report.reportedPropertyTitle} /> : (
+                <><InfoRow label="Name" value={report.reportedUserName} /><InfoRow label="Email" value={report.reportedUserEmail} /></>
+              )}
+            </Section>
+            <Section label={t.details.reviewedBy}>
+              {report.reviewedByAdminId ? (
+                <><InfoRow label="Name" value={report.reviewedByAdminName} /><InfoRow label="Email" value={report.reviewedByAdminEmail} /></>
+              ) : <p className="text-sm text-muted-foreground italic">{t.details.notReviewed}</p>}
+            </Section>
+            <Section label={t.details.timestamps}>
+              <InfoRow label="Created" value={fmtFull(report.createdAt, locale)} />
+              <InfoRow label="Updated" value={fmtFull(report.updatedAt, locale)} />
+            </Section>
+          </div>
+          <DrawerFooter className="px-0 mt-auto"><DrawerClose asChild><Button variant="outline" className="w-full">{t.details.close}</Button></DrawerClose></DrawerFooter>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
 
 export default function Reports() {
   const locale = useLocale();
   const lang = (locale === "fr" ? "fr" : "en") as Language;
   const t = dict[lang];
-
   const { reports, loading, error, setReports } = useReports();
-
   const [search, setSearch] = useState("");
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [filterStatus, setFilterStatus] = useState<ReportStatus | "ALL">("ALL");
@@ -347,342 +129,155 @@ export default function Reports() {
   const [dateSort, setDateSort] = useState<DateSort>("");
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const clearFilters = () => {
-    setFilterStatus("ALL");
-    setReportType("ALL");
-    setDateSort("");
-    setCreatedAfter("");
-    setCreatedBefore("");
-  };
+  const clearFilters = () => { setFilterStatus("ALL"); setReportType("ALL"); setDateSort(""); setCreatedAfter(""); setCreatedBefore(""); };
+  const activeFilterCount = [filterStatus !== "ALL", reportType !== "ALL", dateSort !== "", createdAfter !== "", createdBefore !== ""].filter(Boolean).length;
 
-  const activeFilterCount = [
-    filterStatus !== "ALL",
-    reportType !== "ALL",
-    dateSort !== "",
-    createdAfter !== "",
-    createdBefore !== "",
-  ].filter(Boolean).length;
+  const handleStatusUpdate = useCallback(async (id: string, status: ReportStatus) => {
+    await api.put(`/admin/reports/${id}/status`, null, { params: { status } });
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+  }, [setReports]);
 
-  const handleStatusUpdate = useCallback(
-    async (id: string, status: ReportStatus) => {
-      await api.put(`/admin/reports/${id}/status`, null, { params: { status } });
-      setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
-    },
-    [setReports]
-  );
-
-  const columns = useMemo<ColumnDef<Report>[]>(
-    () => [
-      {
-        accessorKey: "reporterName",
-        header: t.details.reporter,
-        cell: ({ row }) => (
-          <div>
-            <p className="text-sm font-medium">{row.original.reporterName}</p>
-            <p className="text-xs text-muted-foreground">{row.original.reporterEmail}</p>
-          </div>
-        ),
-      },
-      {
-        id: "target",
-        header: t.details.target,
-        cell: ({ row }) => {
-          const r = row.original;
-          const typeLabel = r.reportedPropertyTitle ? t.property : t.user;
-          const title = r.reportedPropertyTitle || r.reportedUserName || "—";
-          return (
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">{typeLabel}</p>
-              <p className="text-sm font-medium">{title}</p>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "reason",
-        header: "Reason",
-        cell: ({ row }) => <span className="text-sm">{row.original.reason}</span>,
-      },
-      {
-        accessorKey: "status",
-        header: t.status,
-        cell: ({ row }) => {
-          const status = row.original.status;
-          let triggerClass = "h-7 w-[130px] text-xs";
-          if (status === "OPEN") triggerClass += " bg-destructive/10 text-destructive border-destructive/30";
-          else if (status === "RESOLVED") triggerClass += " bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/50";
-          else if (status === "DISMISSED") triggerClass += " bg-muted/50 text-muted-foreground border-muted";
-          
-          return (
-            <Select
-              value={status}
-              onValueChange={(v) => handleStatusUpdate(row.original.id, v as ReportStatus)}
-            >
-              <SelectTrigger className={triggerClass}><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="OPEN">{t.waiting}</SelectItem>
-                <SelectItem value="RESOLVED">{t.resolved}</SelectItem>
-                <SelectItem value="DISMISSED">{t.dismissed}</SelectItem>
-              </SelectContent>
-            </Select>
-          );
-        },
-      },
-      {
-        accessorKey: "createdAt",
-        header: t.sortByDate,
-        cell: ({ row }) => fmt(row.original.createdAt, lang === "fr" ? "fr-FR" : "en-US"),
-      },
-      {
-        id: "seeMore",
-        header: "",
-        cell: ({ row }) => <ReportDrawer report={row.original} t={t} lang={lang} />,
-      },
-    ],
-    [t, lang, handleStatusUpdate]
-  );
+  const columns = useMemo<ColumnDef<Report>[]>(() => [
+    { accessorKey: "reporterName", header: t.details.reporter, cell: ({ row }) => <div><p className="text-sm font-medium">{row.original.reporterName}</p><p className="text-xs text-muted-foreground">{row.original.reporterEmail}</p></div> },
+    { id: "target", header: t.details.target, cell: ({ row }) => { const r = row.original; const typeLabel = r.reportedPropertyTitle ? t.property : t.user; const title = r.reportedPropertyTitle || r.reportedUserName || "—"; return <div><p className="text-[10px] text-muted-foreground uppercase tracking-wide">{typeLabel}</p><p className="text-sm font-medium">{title}</p></div>; } },
+    { accessorKey: "reason", header: "Reason", cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.reason}</span> },
+    { accessorKey: "status", header: t.status, cell: ({ row }) => (
+      <Select value={row.original.status} onValueChange={(v) => handleStatusUpdate(row.original.id, v as ReportStatus)}>
+        <SelectTrigger className="h-7 w-[130px] text-xs"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="OPEN">{t.waiting}</SelectItem>
+          <SelectItem value="RESOLVED">{t.resolved}</SelectItem>
+          <SelectItem value="DISMISSED">{t.dismissed}</SelectItem>
+        </SelectContent>
+      </Select>
+    ) },
+    { accessorKey: "createdAt", header: "Date", cell: ({ row }) => <span className="text-sm text-muted-foreground">{fmt(row.original.createdAt, lang === "fr" ? "fr-FR" : "en-US")}</span> },
+    { id: "view", header: "", cell: ({ row }) => <ReportDrawer report={row.original} t={t} lang={lang} /> },
+  ], [t, lang, handleStatusUpdate]);
 
   const filteredData = useMemo(() => {
     const filtered = reports.filter((r) => {
       const textMatch = [r.reporterName, r.reason].join(" ").toLowerCase().includes(search.toLowerCase());
       const statusMatch = filterStatus === "ALL" || r.status === filterStatus;
-      const typeMatch =
-        reportType === "ALL" ||
-        (reportType === "PROPERTY" && !!r.reportedPropertyId) ||
-        (reportType === "USER" && !!r.reportedUserId);
+      const typeMatch = reportType === "ALL" || (reportType === "PROPERTY" && !!r.reportedPropertyId) || (reportType === "USER" && !!r.reportedUserId);
       const created = parseDate(r.createdAt)?.getTime() ?? null;
       const afterMatch = !createdAfter || (created !== null && created >= new Date(createdAfter + "T00:00:00Z").getTime());
       const beforeMatch = !createdBefore || (created !== null && created <= new Date(createdBefore + "T23:59:59Z").getTime());
       return textMatch && statusMatch && typeMatch && afterMatch && beforeMatch;
     });
-
-    if (dateSort === "newest") {
-      filtered.sort((a, b) => (parseDate(b.createdAt)?.getTime() ?? 0) - (parseDate(a.createdAt)?.getTime() ?? 0));
-    } else if (dateSort === "oldest") {
-      filtered.sort((a, b) => (parseDate(a.createdAt)?.getTime() ?? 0) - (parseDate(b.createdAt)?.getTime() ?? 0));
-    }
-
+    if (dateSort === "newest") filtered.sort((a, b) => (parseDate(b.createdAt)?.getTime() ?? 0) - (parseDate(a.createdAt)?.getTime() ?? 0));
+    else if (dateSort === "oldest") filtered.sort((a, b) => (parseDate(a.createdAt)?.getTime() ?? 0) - (parseDate(b.createdAt)?.getTime() ?? 0));
     return filtered;
   }, [reports, search, filterStatus, reportType, createdAfter, createdBefore, dateSort]);
 
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    state: { pagination },
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
+  const table = useReactTable({ data: filteredData, columns, state: { pagination }, onPaginationChange: setPagination, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(), getPaginationRowModel: getPaginationRowModel() });
 
-  if (loading) return <div className="p-8">...</div>;
+  const openCount = reports.filter(r => r.status === "OPEN").length;
+  const resolvedCount = reports.filter(r => r.status === "RESOLVED").length;
+  const dismissedCount = reports.filter(r => r.status === "DISMISSED").length;
+
+  if (loading) return <div className="px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>;
 
   return (
-    <div className="px-8 space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">{t.title}</h2>
+    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6 animate-fade-up">
+      <div><h1 className="text-2xl font-semibold text-foreground">{t.title}</h1><p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p></div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: t.total, value: reports.length, icon: <Flag className="w-4 h-4" />, bg: "bg-blue-50", tc: "text-blue-600", vc: "" },
+          { label: t.waiting, value: openCount, icon: <AlertCircle className="w-4 h-4" />, bg: "bg-red-50", tc: "text-red-600", vc: "text-red-500" },
+          { label: t.resolved, value: resolvedCount, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-emerald-50", tc: "text-emerald-600", vc: "text-emerald-600" },
+          { label: t.dismissed, value: dismissedCount, icon: <XCircle className="w-4 h-4" />, bg: "bg-slate-100", tc: "text-slate-600", vc: "text-muted-foreground" },
+        ].map(c => (
+          <div key={c.label} className="bg-card border rounded-xl p-5">
+            <div className="flex items-start justify-between">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{c.label}</p>
+              <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.tc} flex items-center justify-center`}>{c.icon}</div>
+            </div>
+            <p className={`text-2xl font-bold mt-2 ${c.vc}`}>{c.value}</p>
+          </div>
+        ))}
       </div>
 
-      <SummaryCards reports={reports} t={t} />
-
-      {/* Search + Filter toggle */}
-      <div className="flex gap-2">
-        <Input placeholder={t.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Button variant="outline" onClick={() => setFilterOpen((v) => !v)} className="relative shrink-0">
-          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-          </svg>
-          {t.filters}
-          {activeFilterCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-              {activeFilterCount}
-            </span>
-          )}
+      <div className="flex items-center gap-2">
+        <input placeholder={t.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 h-9 px-3 text-sm bg-card border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/60 transition-all" />
+        <Button variant="outline" size="sm" onClick={() => setFilterOpen(v => !v)} className="relative h-9 gap-1.5 text-xs font-medium">
+          <SlidersHorizontal className="w-3.5 h-3.5" />{t.filters}
+          {activeFilterCount > 0 && <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-white">{activeFilterCount}</span>}
         </Button>
       </div>
 
-      {/* Filter panel */}
       {filterOpen && (
-        <FilterPanel
-          t={t}
-          filterStatus={filterStatus} setFilterStatus={setFilterStatus}
-          reportType={reportType} setReportType={setReportType}
-          dateSort={dateSort} setDateSort={setDateSort}
-          createdAfter={createdAfter} setCreatedAfter={setCreatedAfter}
-          createdBefore={createdBefore} setCreatedBefore={setCreatedBefore}
-          onClear={clearFilters}
-        />
+        <div className="bg-card border rounded-xl overflow-hidden animate-fade-up">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/30">
+            <span className="text-xs font-semibold uppercase tracking-wider">{t.filters}</span>
+            {activeFilterCount > 0 && <button onClick={clearFilters} className="text-xs text-muted-foreground hover:text-foreground">{t.clearAll}</button>}
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.status}</label>
+              <div className="flex flex-wrap gap-1.5">
+                {(["ALL", "OPEN", "RESOLVED", "DISMISSED"] as const).map(s => (
+                  <button key={s} onClick={() => setFilterStatus(s as any)} className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${filterStatus === s ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{s === "ALL" ? t.all : s === "OPEN" ? t.waiting : s === "RESOLVED" ? t.resolved : t.dismissed}</button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.type}</label>
+              <div className="flex flex-wrap gap-1.5">
+                {(["ALL", "USER", "PROPERTY"] as const).map(s => (
+                  <button key={s} onClick={() => setReportType(s)} className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${reportType === s ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"}`}>{s === "ALL" ? t.all : s === "USER" ? t.user : t.property}</button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.sortByDate}</label>
+              <div className="flex gap-1.5">
+                <button onClick={() => setDateSort(dateSort === "newest" ? "" : "newest")} className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${dateSort === "newest" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"}`}>↓ {t.newest}</button>
+                <button onClick={() => setDateSort(dateSort === "oldest" ? "" : "oldest")} className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${dateSort === "oldest" ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"}`}>↑ {t.oldest}</button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.createdBetween}</label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1"><span className="text-[10px] text-muted-foreground">{t.after}</span><Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} /></div>
+                <div className="space-y-1"><span className="text-[10px] text-muted-foreground">{t.before}</span><Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} /></div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
-      <div className="overflow-auto rounded-lg border">
+      <div className="bg-card border rounded-xl overflow-hidden">
         <Table>
-          <TableHeader className="bg-primary">
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((header) => (
-                  <TableHead key={header.id} className="text-white">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
+          <TableHeader>
+            {table.getHeaderGroups().map(hg => (
+              <TableRow key={hg.id} className="border-b bg-muted/30 hover:bg-muted/30">
+                {hg.headers.map(header => <TableHead key={header.id} className="text-xs font-medium text-muted-foreground uppercase tracking-wider h-10">{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-12 text-sm">
-                  {t.noResults}
-                </TableCell>
+              <TableRow><TableCell colSpan={columns.length} className="text-center text-muted-foreground py-16 text-sm">{t.noResults}</TableCell></TableRow>
+            ) : table.getRowModel().rows.map(row => (
+              <TableRow key={row.id} className="hover:bg-muted/20 transition-colors">
+                {row.getVisibleCells().map(cell => <TableCell key={cell.id} className="py-3">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}
               </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       </div>
 
-      <PaginationFooter
-        pageInfo={`${t.page} ${pagination.pageIndex + 1} ${t.of} ${Math.max(table.getPageCount(), 1)}`}
-        onPrevious={() => table.previousPage()}
-        onNext={() => table.nextPage()}
-        canPrevious={table.getCanPreviousPage()}
-        canNext={table.getCanNextPage()}
-      />
-    </div>
-  );
-}
-
-/* ---------------- DRAWER ---------------- */
-
-function ReportDrawer({ report, t, lang }: { report: Report; t: any; lang: string }) {
-  const locale = lang === "fr" ? "fr-FR" : "en-US";
-  const isProperty = !!report.reportedPropertyId;
-
-  return (
-    <Drawer direction="right">
-      <DrawerTrigger asChild>
-        <Button variant="ghost" size="icon"><FaEye /></Button>
-      </DrawerTrigger>
-      <DrawerContent className="max-w-md ml-auto h-full p-6 overflow-y-auto">
-        <DrawerHeader className="px-0">
-          <DrawerTitle>{t.details.title}</DrawerTitle>
-          <DrawerDescription>{t.details.desc}</DrawerDescription>
-        </DrawerHeader>
-
-        <div className="space-y-5 mt-2">
-
-          {/* Overview */}
-          <Section label={t.details.overview}>
-            <Field label="Reason" value={report.reason} />
-            <Field label={t.status}>
-              <StatusBadge status={report.status} t={t} />
-            </Field>
-            <Field label="Type" value={isProperty ? t.property : t.user} />
-          </Section>
-
-          {/* Reporter */}
-          <Section label={t.details.reporter}>
-            <Field label="Name" value={report.reporterName} />
-            <Field label="Email" value={report.reporterEmail} />
-          </Section>
-
-          {/* Target */}
-          <Section label={t.details.target}>
-            {isProperty ? (
-              <>
-                <Field label="Property" value={report.reportedPropertyTitle} />
-              </>
-            ) : (
-              <>
-                <Field label="Name" value={report.reportedUserName} />
-                <Field label="Email" value={report.reportedUserEmail} />
-              </>
-            )}
-          </Section>
-
-          {/* Reviewed By */}
-          <Section label={t.details.reviewedBy}>
-            {report.reviewedByAdminId ? (
-              <>
-                <Field label="Name" value={report.reviewedByAdminName} />
-                <Field label="Email" value={report.reviewedByAdminEmail} />
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">{t.details.notReviewed}</p>
-            )}
-          </Section>
-
-          {/* Timestamps */}
-          <Section label={t.details.timestamps}>
-            <Field label="Created At" value={fmtFull(report.createdAt, locale)} />
-            <Field label="Updated At" value={fmtFull(report.updatedAt, locale)} />
-          </Section>
-
+      <div className="flex justify-between items-center">
+        <span className="text-xs text-muted-foreground">{filteredData.length} reports</span>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="h-8 w-8 p-0"><ChevronLeft className="w-4 h-4" /></Button>
+          <span className="text-xs text-muted-foreground">{t.page} {pagination.pageIndex + 1} {t.of} {Math.max(table.getPageCount(), 1)}</span>
+          <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="h-8 w-8 p-0"><ChevronRight className="w-4 h-4" /></Button>
         </div>
-
-        <DrawerFooter className="px-0 mt-6">
-          <DrawerClose asChild>
-            <Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t.details.close}</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-  );
-}
-
-/* --- small helpers --- */
-
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border bg-muted/30 overflow-hidden">
-      <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground px-3 py-2 bg-muted/60 border-b">
-        {label}
-      </p>
-      <div className="px-3 py-2 space-y-2">{children}</div>
+      </div>
     </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  mono = false,
-  children,
-}: {
-  label: string;
-  value?: string | null;
-  mono?: boolean;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="flex justify-between items-start gap-4 text-sm">
-      <span className="text-muted-foreground shrink-0">{label}</span>
-      {children ?? (
-        <span className={`text-right break-all ${mono ? "font-mono text-xs text-muted-foreground" : "font-medium"}`}>
-          {value ?? "—"}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function StatusBadge({ status, t }: { status: ReportStatus; t: any }) {
-  const map: Record<ReportStatus, { label: string; className: string }> = {
-    [ReportStatus.OPEN]: { label: t.waiting, className: "bg-destructive/10 text-destructive border-destructive/30" },
-    [ReportStatus.REVIEWED]: { label: "Reviewed", className: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
-    [ReportStatus.RESOLVED]: { label: t.resolved, className: "bg-green-50 text-green-700 border-green-200/50 dark:bg-green-950/30 dark:text-green-400" },
-    [ReportStatus.DISMISSED]: { label: t.dismissed, className: "bg-muted/50 text-muted-foreground border-muted" },
-  };
-  const { label, className } = map[status] || { label: "Unknown", className: "bg-muted text-muted-foreground" };
-  return (
-    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${className}`}>
-      {label}
-    </span>
   );
 }

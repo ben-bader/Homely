@@ -10,39 +10,33 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center w-full bg-background relative overflow-hidden">
-      {/* Decorative colored blobs for the light theme */}
-      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] rounded-full bg-secondary/30 blur-[100px] pointer-events-none" />
+    <div className="flex flex-col min-h-screen items-center justify-center w-full bg-background relative">
+      <div className="relative z-10 w-full max-w-md mx-auto px-6">
+        {/* Logo + branding */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
+            <Logo imageClassName="h-8 w-8 object-contain" />
+          </div>
+          <h1 className="text-xl font-semibold text-foreground">Homely</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Admin Portal</p>
+        </div>
 
-      <div className="grid lg:grid-cols-2 w-full max-w-6xl rounded-3xl border-0 shadow-[0_20px_50px_rgba(14,165,233,0.1)] bg-card overflow-hidden z-10 relative">
-        <div className="flex flex-col justify-center w-full p-8 lg:p-16 bg-card relative z-20">
-          <div className="flex items-center mb-10">
-              <Logo />
+        {/* Login card */}
+        <div className="bg-white border border-border rounded-lg shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.04)] p-8">
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-foreground">Sign in</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Enter your credentials to access the dashboard
+            </p>
           </div>
-          <div className="flex flex-1 items-center justify-center">
-            <div className="w-full max-w-md">
-              <LoginForm />
-            </div>
-          </div>
+          <LoginForm />
         </div>
-        <div className="relative hidden lg:flex flex-col justify-end items-center p-12 overflow-hidden bg-primary/5">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent z-10" />
-          <img
-            src="/login.png?v=4"
-            alt="Beautiful property"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="relative z-20 bg-background/80 backdrop-blur-md p-6 rounded-2xl border border-white/50 shadow-lg max-w-md text-center transform hover:scale-105 transition-transform duration-500">
-            <h2 className="text-xl font-bold text-foreground mb-2">Welcome to Homely</h2>
-            <p className="text-muted-foreground text-sm">Experience the premium property management platform designed for efficiency.</p>
-          </div>
-        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground mt-8">
+          &copy; {new Date().getFullYear()} Homely. All rights reserved.
+        </p>
       </div>
-      
-      <p className="absolute bottom-6 text-sm text-muted-foreground font-medium">
-        &copy; {new Date().getFullYear()} Homely. Engineered with precision.
-      </p>
     </div>
   )
 }

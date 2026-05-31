@@ -91,7 +91,7 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
   return (
     <Drawer direction="right" onOpenChange={fetchMessages}>
       <DrawerTrigger asChild><Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10"><FaRocketchat size={20} /></Button></DrawerTrigger>
-      <DrawerContent className="flex flex-col max-w-lg ml-auto h-full bg-subtle-background border-l-0 shadow-[-10px_0_40px_rgba(0,0,0,0.1)] rounded-l-[2rem] overflow-hidden">
+      <DrawerContent className="flex flex-col max-w-lg ml-auto h-full bg-background border-l border-border rounded-l-lg overflow-hidden">
         <DialogTitle className="hidden">Conversation</DialogTitle>
         
         {/* Chat Header */}
@@ -106,7 +106,7 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
         </DrawerHeader>
 
         {/* Chat Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-gradient-to-b from-subtle-background to-background custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-background custom-scrollbar">
           {loading ? <div className="flex justify-center items-center h-full"><span className="animate-pulse font-bold text-primary">{t('loadingMessages')}</span></div>
             : messages.length === 0 ? <p className="text-center text-sm text-muted-foreground py-8 italic font-medium">{t('noMessages')}</p>
             : messages.map((msg, idx) => {
@@ -114,13 +114,13 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
               const showHeader = idx === 0 || messages[idx - 1].senderId !== msg.senderId;
 
               return (
-                <div key={msg.id} className={`flex flex-col ${isParticipantTwo ? "items-end" : "items-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                <div key={msg.id} className={`flex flex-col ${isParticipantTwo ? "items-end" : "items-start"}`}>
                   {showHeader && (
                     <span className={`text-[11px] font-bold tracking-wider uppercase mb-1.5 px-2 ${isParticipantTwo ? "text-primary/70" : "text-muted-foreground"}`}>
                       {msg.senderName}
                     </span>
                   )}
-                  <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm font-medium ${isParticipantTwo ? "bg-gradient-to-br from-primary to-primary-light text-primary-foreground rounded-tr-sm shadow-[0_4px_14px_0_rgba(14,165,233,0.2)]" : "bg-card text-card-foreground rounded-tl-sm border border-border/40"}`}>
+                  <div className={`max-w-[80%] px-4 py-3 rounded-lg text-sm leading-relaxed font-medium ${isParticipantTwo ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-card text-card-foreground rounded-tl-sm border border-border"}`}>
                     {msg.body}
                   </div>
                   <span className="text-[10px] text-muted-foreground/60 mt-1.5 px-2 font-medium">{fmtFull(msg.sentAt)}</span>
