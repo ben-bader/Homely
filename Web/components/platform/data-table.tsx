@@ -3,6 +3,7 @@
 import * as React from "react"
 import { flexRender, type Table as TanstackTable } from "@tanstack/react-table"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { PaginationFooter } from "@/components/ui/pagination"
 
 import {
   Table,
@@ -32,45 +33,14 @@ export function DataTablePagination<T>({
   const pageCount = table.getPageCount()
 
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between border-t border-border/50 px-4 py-3",
-        className
-      )}
-    >
-      <p className="text-xs text-muted-foreground">
-        Page{" "}
-        <span className="font-medium text-foreground">
-          {pageIndex + 1}
-        </span>{" "}
-        of{" "}
-        <span className="font-medium text-foreground">
-          {pageCount || 1}
-        </span>
-      </p>
-
-      <div className="flex items-center gap-1.5">
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-          className="h-8 w-8 rounded-lg"
-        >
-          <ChevronLeft className="size-4" />
-          <span className="sr-only">Previous page</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-          className="h-8 w-8 rounded-lg"
-        >
-          <ChevronRight className="size-4" />
-          <span className="sr-only">Next page</span>
-        </Button>
-      </div>
+    <div className={className}>
+      <PaginationFooter
+        pageInfo={`Page ${pageIndex + 1} of ${pageCount || 1}`}
+        onPrevious={() => table.previousPage()}
+        onNext={() => table.nextPage()}
+        canPrevious={table.getCanPreviousPage()}
+        canNext={table.getCanNextPage()}
+      />
     </div>
   )
 }

@@ -20,11 +20,13 @@ import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
   DrawerDescription, DrawerFooter, DrawerClose, DrawerTrigger,
 } from "@/components/ui/drawer";
+// KPI cards inlined per UI standardization (no shared KPI component)
+import { PaginationFooter } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Eye, Users as UsersIcon, UserCheck, UserX, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Users as UsersIcon, UserCheck, UserX, SlidersHorizontal } from "lucide-react";
 
 type Language = "en" | "fr";
 const dict = {
@@ -217,26 +219,28 @@ export default function Users() {
         <p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards (kept inline, styling improved) */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="bg-card border rounded-xl p-5">
           <div className="flex items-start justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.resultsPlural}</p>
-            <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><UsersIcon className="w-4 h-4" /></div>
+            <div className="w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center"><UsersIcon className="w-4 h-4" /></div>
           </div>
           <p className="text-2xl font-bold mt-2">{totalMembers}</p>
         </div>
+
         <div className="bg-card border rounded-xl p-5">
           <div className="flex items-start justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.active}</p>
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><UserCheck className="w-4 h-4" /></div>
+            <div className="w-9 h-9 rounded-lg bg-emerald-500 text-white flex items-center justify-center"><UserCheck className="w-4 h-4" /></div>
           </div>
           <p className="text-2xl font-bold text-emerald-600 mt-2">{totalActivated}</p>
         </div>
+
         <div className="bg-card border rounded-xl p-5">
           <div className="flex items-start justify-between">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.inactive}</p>
-            <div className="w-9 h-9 rounded-lg bg-red-50 text-red-600 flex items-center justify-center"><UserX className="w-4 h-4" /></div>
+            <div className="w-9 h-9 rounded-lg bg-red-500 text-white flex items-center justify-center"><UserX className="w-4 h-4" /></div>
           </div>
           <p className="text-2xl font-bold text-red-500 mt-2">{totalDeactivated}</p>
         </div>
@@ -330,14 +334,16 @@ export default function Users() {
         </Table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-between items-center text-sm">
+      {/* Pagination (standardized) */}
+      <div className="flex justify-between items-center">
         <span className="text-xs text-muted-foreground">{filteredData.length} {filteredData.length === 1 ? t.results : t.resultsPlural} {activeFilterCount > 0 ? t.filtered : ""}</span>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="h-8 w-8 p-0"><ChevronLeft className="w-4 h-4" /></Button>
-          <span className="text-xs text-muted-foreground">{t.page} {pagination.pageIndex + 1} {t.of} {Math.max(table.getPageCount(), 1)}</span>
-          <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="h-8 w-8 p-0"><ChevronRight className="w-4 h-4" /></Button>
-        </div>
+        <PaginationFooter
+          pageInfo={`${t.page} ${pagination.pageIndex + 1} ${t.of} ${Math.max(table.getPageCount(), 1)}`}
+          onPrevious={() => table.previousPage()}
+          onNext={() => table.nextPage()}
+          canPrevious={table.getCanPreviousPage()}
+          canNext={table.getCanNextPage()}
+        />
       </div>
     </div>
   );

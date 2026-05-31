@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Report, ReportStatus } from "@/types/dashboard-types"
 import { Button } from "../ui/button"
+import { PaginationFooter } from "@/components/ui/pagination"
 import { useTranslations } from "next-intl"
 
 function reporterDisplay(report: Report) {
@@ -228,30 +229,14 @@ export function DataTable({ data, onStatusChange }: { data: Report[]; onStatusCh
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-border/40 bg-subtle-background/50">
-        <span className="text-sm font-semibold text-muted-foreground mb-4 sm:mb-0">
-          {t('page')} <span className="text-foreground">{table.getState().pagination.pageIndex + 1}</span> {t('of')} <span className="text-foreground">{table.getPageCount() || 1}</span>
-        </span>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => table.previousPage()} 
-            disabled={!table.getCanPreviousPage()}
-            className="rounded-xl border-border/60 hover:bg-primary/10 hover:text-primary transition-all font-bold"
-          >
-            {t('previous')}
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => table.nextPage()} 
-            disabled={!table.getCanNextPage()}
-            className="rounded-xl border-border/60 hover:bg-primary/10 hover:text-primary transition-all font-bold"
-          >
-            {t('next')}
-          </Button>
-        </div>
+      <div className="px-6 py-4 border-t border-border/40 bg-subtle-background/50">
+        <PaginationFooter
+          pageInfo={`${t('page')} ${table.getState().pagination.pageIndex + 1} ${t('of')} ${table.getPageCount() || 1}`}
+          onPrevious={() => table.previousPage()}
+          onNext={() => table.nextPage()}
+          canPrevious={table.getCanPreviousPage()}
+          canNext={table.getCanNextPage()}
+        />
       </div>
     </div>
   )

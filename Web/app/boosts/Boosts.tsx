@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { Boost, BoostStatus, BoostPackage } from "@/types/dashboard-types";
-import { Eye, Rocket, Clock, CheckCircle2, XCircle, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Rocket, Clock, CheckCircle2, XCircle, SlidersHorizontal } from "lucide-react";
+// KPI cards inlined (no shared KPI component)
+import { PaginationFooter } from "@/components/ui/pagination";
 import useBoostPackages from "@/app/boosts/useBoostPackages";
 import { useTranslations } from "next-intl";
 import { StatusBadge } from "@/components/platform/status-badge";
@@ -152,20 +154,20 @@ export default function Boosts() {
     <div className="px-6 py-6 max-w-7xl mx-auto space-y-6 animate-fade-up">
       <div><h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1></div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards (kept inline) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: t('total'), value: boosts.length, icon: <Rocket className="w-4 h-4" />, bg: "bg-blue-50", text: "text-blue-600", valColor: "" },
-          { label: t('pending'), value: pending, icon: <Clock className="w-4 h-4" />, bg: "bg-amber-50", text: "text-amber-600", valColor: "text-amber-600" },
-          { label: t('completed'), value: completed, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-emerald-50", text: "text-emerald-600", valColor: "text-emerald-600" },
-          { label: t('failed'), value: failed, icon: <XCircle className="w-4 h-4" />, bg: "bg-red-50", text: "text-red-600", valColor: "text-red-500" },
+          { label: t('total'), value: boosts.length, icon: <Rocket className="w-4 h-4" />, bg: "bg-blue-50", tc: "text-blue-600" },
+          { label: t('pending'), value: pending, icon: <Clock className="w-4 h-4" />, bg: "bg-amber-50", tc: "text-amber-600" },
+          { label: t('completed'), value: completed, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-emerald-50", tc: "text-emerald-600" },
+          { label: t('failed'), value: failed, icon: <XCircle className="w-4 h-4" />, bg: "bg-red-50", tc: "text-red-600" },
         ].map((c) => (
           <div key={c.label} className="bg-card border rounded-xl p-5">
             <div className="flex items-start justify-between">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{c.label}</p>
-              <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.text} flex items-center justify-center`}>{c.icon}</div>
+              <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.tc} flex items-center justify-center`}>{c.icon}</div>
             </div>
-            <p className={`text-2xl font-bold mt-2 ${c.valColor}`}>{c.value}</p>
+            <p className={`text-2xl font-bold mt-2`}>{c.value}</p>
           </div>
         ))}
       </div>
@@ -237,11 +239,13 @@ export default function Boosts() {
 
       <div className="flex justify-between items-center">
         <span className="text-xs text-muted-foreground">{filteredData.length} boosts</span>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="h-8 w-8 p-0"><ChevronLeft className="w-4 h-4" /></Button>
-          <span className="text-xs text-muted-foreground">{t('page')} {pagination.pageIndex + 1} {t('of')} {Math.max(table.getPageCount(), 1)}</span>
-          <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="h-8 w-8 p-0"><ChevronRight className="w-4 h-4" /></Button>
-        </div>
+        <PaginationFooter
+          pageInfo={`${t('page')} ${pagination.pageIndex + 1} ${t('of')} ${Math.max(table.getPageCount(), 1)}`}
+          onPrevious={() => table.previousPage()}
+          onNext={() => table.nextPage()}
+          canPrevious={table.getCanPreviousPage()}
+          canNext={table.getCanNextPage()}
+        />
       </div>
     </div>
   );

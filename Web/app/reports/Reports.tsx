@@ -12,7 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useReports } from "@/app/reports/useReports";
 import { api } from "@/lib/api";
-import { Eye, Flag, AlertCircle, CheckCircle2, XCircle, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Flag, AlertCircle, CheckCircle2, XCircle, SlidersHorizontal } from "lucide-react";
+// Inline analytics (no shared KPI abstractions)
+import { PaginationFooter } from "@/components/ui/pagination";
 import { Report, ReportStatus } from "@/types/dashboard-types";
 import { StatusBadge } from "@/components/platform/status-badge";
 
@@ -182,19 +184,20 @@ export default function Reports() {
     <div className="px-6 py-6 max-w-7xl mx-auto space-y-6 animate-fade-up">
       <div><h1 className="text-2xl font-semibold text-foreground">{t.title}</h1><p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p></div>
 
+      {/* Inline summary + small list (kept inline per instructions) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: t.total, value: reports.length, icon: <Flag className="w-4 h-4" />, bg: "bg-blue-50", tc: "text-blue-600", vc: "" },
-          { label: t.waiting, value: openCount, icon: <AlertCircle className="w-4 h-4" />, bg: "bg-red-50", tc: "text-red-600", vc: "text-red-500" },
-          { label: t.resolved, value: resolvedCount, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-emerald-50", tc: "text-emerald-600", vc: "text-emerald-600" },
-          { label: t.dismissed, value: dismissedCount, icon: <XCircle className="w-4 h-4" />, bg: "bg-slate-100", tc: "text-slate-600", vc: "text-muted-foreground" },
+          { label: t.total, value: reports.length, icon: <Flag className="w-4 h-4" />, bg: "bg-blue-50", tc: "text-blue-600" },
+          { label: t.waiting, value: openCount, icon: <AlertCircle className="w-4 h-4" />, bg: "bg-red-50", tc: "text-red-600" },
+          { label: t.resolved, value: resolvedCount, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-emerald-50", tc: "text-emerald-600" },
+          { label: t.dismissed, value: dismissedCount, icon: <XCircle className="w-4 h-4" />, bg: "bg-slate-100", tc: "text-slate-600" },
         ].map(c => (
           <div key={c.label} className="bg-card border rounded-xl p-5">
             <div className="flex items-start justify-between">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{c.label}</p>
               <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.tc} flex items-center justify-center`}>{c.icon}</div>
             </div>
-            <p className={`text-2xl font-bold mt-2 ${c.vc}`}>{c.value}</p>
+            <p className={`text-2xl font-bold mt-2`}>{c.value}</p>
           </div>
         ))}
       </div>
@@ -272,11 +275,13 @@ export default function Reports() {
 
       <div className="flex justify-between items-center">
         <span className="text-xs text-muted-foreground">{filteredData.length} reports</span>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="h-8 w-8 p-0"><ChevronLeft className="w-4 h-4" /></Button>
-          <span className="text-xs text-muted-foreground">{t.page} {pagination.pageIndex + 1} {t.of} {Math.max(table.getPageCount(), 1)}</span>
-          <Button size="sm" variant="outline" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="h-8 w-8 p-0"><ChevronRight className="w-4 h-4" /></Button>
-        </div>
+        <PaginationFooter
+          pageInfo={`${t.page} ${pagination.pageIndex + 1} ${t.of} ${Math.max(table.getPageCount(), 1)}`}
+          onPrevious={() => table.previousPage()}
+          onNext={() => table.nextPage()}
+          canPrevious={table.getCanPreviousPage()}
+          canNext={table.getCanNextPage()}
+        />
       </div>
     </div>
   );

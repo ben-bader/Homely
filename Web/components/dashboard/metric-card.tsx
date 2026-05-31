@@ -14,10 +14,10 @@ type MetricCardProps = {
 }
 
 const accents = {
-  indigo: "bg-indigo-50 text-indigo-600",
-  cyan: "bg-cyan-50 text-cyan-600",
-  emerald: "bg-emerald-50 text-emerald-600",
-  amber: "bg-amber-50 text-amber-600",
+  indigo: "bg-indigo-500 text-white",
+  cyan: "bg-cyan-500 text-white",
+  emerald: "bg-emerald-500 text-white",
+  amber: "bg-amber-500 text-white",
 }
 
 export function MetricCard({

@@ -19,26 +19,33 @@ export function PaginationFooter({
   canPrevious,
   canNext,
 }: PaginationFooterProps) {
+  // Normalize common localized connectors ("of", "sur") to a compact "x/y" form
+  const compact = pageInfo
+    .replace(/\b(of|sur)\b/gi, "/")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, " ")
+    .trim();
+
   return (
-    <div className="flex items-center justify-center gap-4 mt-4 px-4 py-2.5 bg-secondary/20 rounded-2xl border border-secondary-foreground/15 shadow-sm text-sm text-foreground w-fit mx-auto">
+    <div className="flex items-center justify-center gap-3 mt-4 text-sm text-muted-foreground">
       <Button
-        variant="outline"
+        variant="ghost"
         size="icon"
         onClick={onPrevious}
         disabled={!canPrevious}
-        className="h-8 w-8 rounded-xl border-secondary-foreground/25 hover:bg-secondary-foreground/10 hover:text-secondary-foreground text-secondary-foreground font-bold transition-all disabled:opacity-40"
+        className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-40"
       >
         <ArrowLeft className="w-4 h-4" />
       </Button>
 
-      <span className="font-extrabold text-sm text-secondary-foreground select-none">{pageInfo}</span>
+      <span className="select-none">{compact}</span>
 
       <Button
-        variant="outline"
+        variant="ghost"
         size="icon"
         onClick={onNext}
         disabled={!canNext}
-        className="h-8 w-8 rounded-xl border-secondary-foreground/25 hover:bg-secondary-foreground/10 hover:text-secondary-foreground text-secondary-foreground font-bold transition-all disabled:opacity-40"
+        className="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-40"
       >
         <ArrowRight className="w-4 h-4" />
       </Button>

@@ -774,31 +774,25 @@ export default function Properties() {
         <h2 className="text-xl font-semibold">{t.pageTitle}</h2>
       </div>
 
-      {/* Summary Cards */}
+      {/* Top properties removed per request */}
+
+      {/* Summary Cards (kept inline) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-lg border p-4 flex items-center gap-3 bg-muted/50">
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.filters.total}</p>
-            <p className="text-2xl font-bold text-foreground">{totalProperties}</p>
-          </div>
+        <div className="bg-card border rounded-xl p-5">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.filters.total}</p>
+          <p className="text-2xl font-bold mt-2">{totalProperties}</p>
         </div>
-        <div className="rounded-lg border p-4 flex items-center gap-3 bg-green-50 dark:bg-green-950/30">
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.filters.available}</p>
-            <p className="text-2xl font-bold text-green-600">{availableProperties}</p>
-          </div>
+        <div className="bg-card border rounded-xl p-5">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.filters.available}</p>
+          <p className="text-2xl font-bold mt-2">{availableProperties}</p>
         </div>
-        <div className="rounded-lg border p-4 flex items-center gap-3 bg-destructive/10">
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.filters.suspended}</p>
-            <p className="text-2xl font-bold text-destructive">{suspendedProperties}</p>
-          </div>
+        <div className="bg-card border rounded-xl p-5">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.filters.suspended}</p>
+          <p className="text-2xl font-bold mt-2">{suspendedProperties}</p>
         </div>
-        <div className="rounded-lg border p-4 flex items-center gap-3 bg-yellow-50 dark:bg-yellow-950/30">
-          <div>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{t.filters.draft}</p>
-            <p className="text-2xl font-bold text-yellow-600">{draftProperties}</p>
-          </div>
+        <div className="bg-card border rounded-xl p-5">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.filters.draft}</p>
+          <p className="text-2xl font-bold mt-2">{draftProperties}</p>
         </div>
       </div>
 
