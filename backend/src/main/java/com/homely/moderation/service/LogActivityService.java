@@ -41,9 +41,19 @@ public class LogActivityService {
         activity.setDescription(description);
         activity.setChanges(changes);
 
-        logActivityRepository.save(activity);
-        log.info("Logged activity: {} - {} for {} with id: {}", activityType, entityType, user.getEmail(),
-                entityId);
+        try {
+            logActivityRepository.save(activity);
+            log.info("Logged activity: {} - {} for {} with id: {}", activityType, entityType, user.getEmail(),
+                    entityId);
+        } catch (Exception ex) {
+            log.error(
+                    "Audit log failure: activityType={} entityType={} userEmail={} entityId={}. Continuing without audit log.",
+                    activityType,
+                    entityType,
+                    user != null ? user.getEmail() : "unknown",
+                    entityId,
+                    ex);
+        }
     }
 
     /**

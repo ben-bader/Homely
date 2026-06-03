@@ -45,7 +45,19 @@ public class User extends BaseEntity implements UserDetails {
     private boolean emailVerified = false;
     
     private String verificationToken;
+    
+    // OTP-based password reset
+    @Column(name = "reset_code", length = 6)
+    private String resetCode;
+    
+    @Column(name = "reset_code_expiry")
+    private java.time.Instant resetCodeExpiry;
+    
+    // Legacy fields - keep for backward compatibility (deprecated)
+    @Deprecated(forRemoval = true)
     private String resetToken;
+    
+    @Deprecated(forRemoval = true)
     private java.time.Instant resetTokenExpiry;
     
     @Column(name = "fcm_token")

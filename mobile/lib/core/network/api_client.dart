@@ -394,7 +394,14 @@ class ApiClient {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       if (res.body.isEmpty) return null;
       try {
-        return jsonDecode(utf8.decode(res.bodyBytes));
+        final decoded = jsonDecode(utf8.decode(res.bodyBytes));
+        if (decoded is Map<String, dynamic>
+            && decoded.containsKey('success')
+            && decoded.containsKey('message')
+            && decoded.containsKey('data')) {
+          return decoded['data'];
+        }
+        return decoded;
       } catch (_) {
         return res.body;
       }
@@ -420,7 +427,7 @@ class ApiClient {
       case 403:
         throw ApiException('Access denied.', 403);
       case 404:
-        throw ApiException('Resource not found.', 404);
+        throw ApiException(message.isNotEmpty ? message : 'Resource not found.', 404);
       case 500:
         throw ApiException('Server error. Please try again.', 500);
       default:

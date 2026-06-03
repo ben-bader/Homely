@@ -36,7 +36,12 @@ public class LogActivity extends BaseEntity {
 
     public enum ActivityType {
         LOGIN,
+        LOGOUT,
         SIGNUP,
+        PASSWORD_RESET_REQUESTED,
+        PASSWORD_RESET_COMPLETED,
+        VERIFY_EMAIL_REQUESTED,
+        VERIFY_EMAIL_COMPLETED,
         CREATE,
         UPDATE,
         DELETE,
