@@ -33,19 +33,25 @@ class LocalAvatarPathNotifier extends FamilyAsyncNotifier<String?, String> {
         return null;
       }
 
+      // Save a temporary local preview while upload proceeds.
       await prefs.setString(_prefsKey(userId), localPath);
+
       try {
         final datasource = ref.read(profileRemoteDatasourceProvider);
         final response = await datasource.uploadAvatar(localPath);
         debugPrint('Avatar upload response: $response');
         final newAvatarUrl = response['avatarUrl'] as String?;
+
         if (newAvatarUrl != null && newAvatarUrl.isNotEmpty) {
+          // Clear the local preview path after successful upload so the
+          // app displays the backend-backed Cloudinary URL instead.
+          await prefs.remove(_prefsKey(userId));
           ref.invalidate(profileNotifierProvider);
+          return null;
         }
-      } catch (e) {
-        debugPrint('Avatar upload failed: $e');
-        // Local path still saved — user sees image on their device
-        // but backend upload failed silently
+      } catch (e, stackTrace) {
+        debugPrint('Avatar upload failed: $e\n$stackTrace');
+        // Keep local preview if upload failed, but don't hide the error.
       }
 
       return localPath;

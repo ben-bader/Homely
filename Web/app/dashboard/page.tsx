@@ -77,10 +77,26 @@ export default function Page() {
       const url = new URL(window.location.href);
       if (url.searchParams.get("section") !== activeSection) {
         url.searchParams.set("section", activeSection);
+        url.searchParams.delete("search");
         window.history.replaceState(null, "", url.pathname + url.search);
       }
     }
   }, [activeSection, isInitialized]);
+
+  // Listen to cross-component section changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleSectionChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setActiveSection(customEvent.detail);
+      }
+    };
+    window.addEventListener("change-section", handleSectionChange);
+    return () => {
+      window.removeEventListener("change-section", handleSectionChange);
+    };
+  }, []);
 
   // Update browser tab title
   useEffect(() => {

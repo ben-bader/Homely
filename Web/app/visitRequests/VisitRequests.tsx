@@ -188,7 +188,7 @@ export default function VisitRequests() {
       )}
 
       <div className="bg-card border rounded-xl overflow-hidden">
-        <Table><TableHeader>{table.getHeaderGroups().map(hg => (<TableRow key={hg.id} className="border-b bg-muted/30 hover:bg-muted/30">{hg.headers.map(h => <TableHead key={h.id} className="text-xs font-medium text-muted-foreground uppercase tracking-wider h-10">{flexRender(h.column.columnDef.header, h.getContext())}</TableHead>)}</TableRow>))}</TableHeader>
+        <Table><TableHeader>{table.getHeaderGroups().map(hg => (<TableRow key={hg.id}>{hg.headers.map(h => <TableHead key={h.id} className="text-xs font-medium uppercase tracking-wider h-10">{flexRender(h.column.columnDef.header, h.getContext())}</TableHead>)}</TableRow>))}</TableHeader>
           <TableBody>{table.getRowModel().rows.length === 0 ? <TableRow><TableCell colSpan={columns.length} className="text-center text-muted-foreground py-16 text-sm">{t.noResults}</TableCell></TableRow> : table.getRowModel().rows.map(row => <TableRow key={row.id} className="hover:bg-muted/20 transition-colors">{row.getVisibleCells().map(cell => <TableCell key={cell.id} className="py-3">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}</TableRow>)}</TableBody>
         </Table>
       </div>

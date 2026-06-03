@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useLocale } from "next-intl";
 import { useUsers } from "@/app/users/useUsers";
 import { api } from "@/lib/api";
@@ -81,6 +81,31 @@ export default function Users() {
   const t = dict[lang];
   const { users, loading, error, setUsers } = useUsers();
   const [search, setSearch] = useState("");
+
+  // Listen to global search events and URL query param
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Load initial search query if present in URL
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("search");
+    const sec = params.get("section");
+    if (q && sec === "users") {
+      setSearch(q);
+    }
+
+    const handleSearchApply = (e: Event) => {
+      const customEvent = e as CustomEvent<{ section: string; query: string }>;
+      if (customEvent.detail && customEvent.detail.section === "users") {
+        setSearch(customEvent.detail.query);
+      }
+    };
+
+    window.addEventListener("global-search-apply", handleSearchApply);
+    return () => {
+      window.removeEventListener("global-search-apply", handleSearchApply);
+    };
+  }, []);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [roleFilter, setRoleFilter] = useState("");
@@ -309,9 +334,9 @@ export default function Users() {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="border-b bg-muted/30 hover:bg-muted/30">
+              <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <TableHead key={header.id} className="text-xs font-medium text-muted-foreground uppercase tracking-wider h-10">
+                  <TableHead key={header.id} className="text-xs font-medium uppercase tracking-wider h-10">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}

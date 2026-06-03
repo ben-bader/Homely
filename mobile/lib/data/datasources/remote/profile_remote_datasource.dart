@@ -39,24 +39,26 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
 
   @override
   Future<Map<String, dynamic>> uploadAvatar(String filePath) async {
-    try {
-      final profile = await getProfile();
-      final userId = profile['userId']?.toString() ?? 'anonymous';
+    final profile = await getProfile();
+    final userId = profile['userId']?.toString() ?? 'anonymous';
 
-      final cloudinaryResult = await CloudinaryDatasource().uploadAvatar(
-        file: File(filePath),
-        userId: userId,
-      );
-      final avatarUrl = cloudinaryResult.url;
+    final cloudinaryResult = await CloudinaryDatasource().uploadAvatar(
+      file: File(filePath),
+      userId: userId,
+    );
+    final avatarUrl = cloudinaryResult.url;
 
-      final response = await updateProfile({
-        'avatarUrl': avatarUrl,
-      });
-      return response;
-    } catch (e) {
-      debugPrint('Upload avatar error: $e');
-      return <String, dynamic>{};
+    debugPrint('[ProfileRemoteDatasource] cloudinary avatarUrl=$avatarUrl');
+
+    final response = await updateProfile({
+      'avatarUrl': avatarUrl,
+    });
+
+    if (response.isEmpty) {
+      throw Exception('Failed to update profile with avatar URL');
     }
+
+    return response;
   }
 
   @override

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useLocale } from "next-intl";
 import {
   useReactTable,
@@ -673,6 +673,31 @@ export default function Properties() {
   } = useProperties();
 
   const [search, setSearch] = useState("");
+
+  // Listen to global search events and URL query param
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Load initial search query if present in URL
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("search");
+    const sec = params.get("section");
+    if (q && sec === "properties") {
+      setSearch(q);
+    }
+
+    const handleSearchApply = (e: Event) => {
+      const customEvent = e as CustomEvent<{ section: string; query: string }>;
+      if (customEvent.detail && customEvent.detail.section === "properties") {
+        setSearch(customEvent.detail.query);
+      }
+    };
+
+    window.addEventListener("global-search-apply", handleSearchApply);
+    return () => {
+      window.removeEventListener("global-search-apply", handleSearchApply);
+    };
+  }, []);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [filterStatus, setFilterStatus] = useState<PropertyStatus | "ALL">("ALL");
   const [minPrice, setMinPrice] = useState<number | "">("");
@@ -835,11 +860,11 @@ export default function Properties() {
 
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader className="bg-primary text-white">
+          <TableHeader>
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <TableHead key={header.id} className="text-white">
+                  <TableHead key={header.id}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}

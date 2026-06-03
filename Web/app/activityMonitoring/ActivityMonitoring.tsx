@@ -538,13 +538,13 @@ export default function ActivityMonitoring() {
       {/* Table */}
       <div className="rounded-lg border overflow-hidden">
         <Table>
-          <TableHeader className="bg-primary hover:bg-primary">
+          <TableHeader>
             <TableRow>
-              <TableHead className="text-white w-[180px]">{t.colTime}</TableHead>
-              <TableHead className="text-white">{t.colUser}</TableHead>
-              <TableHead className="text-white">{activeTab === "users" ? t.activityType : t.action}</TableHead>
-              {activeTab === "users" && <TableHead className="text-white">{t.entityType}</TableHead>}
-              <TableHead className="text-white text-right">{t.colShowMore}</TableHead>
+              <TableHead className="w-[180px]">{t.colTime}</TableHead>
+              <TableHead>{t.colUser}</TableHead>
+              <TableHead>{activeTab === "users" ? t.activityType : t.action}</TableHead>
+              {activeTab === "users" && <TableHead>{t.entityType}</TableHead>}
+              <TableHead className="text-right">{t.colShowMore}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
