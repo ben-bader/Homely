@@ -95,14 +95,12 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
         <DialogTitle className="hidden">Conversation</DialogTitle>
         
         {/* Chat Header */}
-        <DrawerHeader className="border-b border-border/50 bg-background/80 backdrop-blur-md pb-4 pt-6 px-6 z-10 shadow-sm flex items-center gap-4">
+        <DrawerHeader className="border-b border-border/50 bg-background/80 backdrop-blur-md py-4 px-6 z-10 shadow-sm flex items-center justify-between">
           <div className="flex-1">
-            <DrawerTitle className="text-xl font-extrabold tracking-tight text-foreground">{conversation.participantOneName} & {conversation.participantTwoName}</DrawerTitle>
-            <DrawerDescription className="text-xs font-bold text-primary tracking-widest uppercase mt-1">{conversation.propertyTitle ?? "Direct Conversation"}</DrawerDescription>
+            <DrawerTitle className="text-md tracking-tight text-foreground">{conversation.participantOneName} & {conversation.participantTwoName}</DrawerTitle>
+            <DrawerDescription className="text-xs text-primary tracking-widest uppercase mt-1">{conversation.propertyTitle ?? "Direct Conversation"}</DrawerDescription>
           </div>
-          <DrawerClose asChild>
-            <Button variant="ghost" size="icon" className="rounded-full bg-muted/50 hover:bg-destructive/10 hover:text-destructive">✕</Button>
-          </DrawerClose>
+
         </DrawerHeader>
 
         {/* Chat Body */}
@@ -131,11 +129,11 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
         </div>
 
         {/* Fake Input Footer to look like Messenger */}
-        <div className="p-4 bg-background border-t border-border/50">
-          <div className="flex items-center gap-2 bg-subtle-background rounded-full px-4 py-2 border border-border/60 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-            <span className="text-muted-foreground/50 text-sm font-medium italic flex-1">Messaging is view-only...</span>
-            <Button variant="ghost" size="icon" disabled className="rounded-full h-8 w-8 text-primary opacity-50"><FaRocketchat /></Button>
-          </div>
+        <div className="flex items-center justify-center w-full p-2">
+
+          <DrawerClose asChild>
+            <Button variant="secondary"  className="rounded-lg w-full bg-red-500 hover:bg-destructive/90 text-white">Close</Button>
+          </DrawerClose>
         </div>
       </DrawerContent>
     </Drawer>
@@ -207,6 +205,9 @@ export default function ChatPage() {
           </TableBody>
         </Table>
       </div>
+      <div className="flex justify-between items-center">
+          <span className="text-xs text-muted-foreground">{conversations.length } Conversations</span>
+          
       <PaginationFooter
         pageInfo={`${t('page')} ${pagination.pageIndex + 1} ${t('of')} ${Math.max(table.getPageCount(), 1)}`}
         onPrevious={() => table.previousPage()}
@@ -214,6 +215,7 @@ export default function ChatPage() {
         canPrevious={table.getCanPreviousPage()}
         canNext={table.getCanNextPage()}
       />
+      </div>
     </div>
   );
 }

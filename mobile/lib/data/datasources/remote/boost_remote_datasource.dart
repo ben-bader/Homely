@@ -18,7 +18,7 @@ abstract class BoostRemoteDatasource {
 class BoostRemoteDatasourceImpl implements BoostRemoteDatasource {
   @override
   Future<List<Map<String, dynamic>>> getBoostPackages() async {
-    final response = await ApiClient.get('/boosts/packages');
+    final response = await ApiClient.get('/boost/packages');
     return List<Map<String, dynamic>>.from(response ?? []);
   }
 
@@ -28,7 +28,7 @@ class BoostRemoteDatasourceImpl implements BoostRemoteDatasource {
     String propertyId,
   ) async {
     final response = await ApiClient.post(
-      '/boosts/purchase',
+      '/boost',
       body: {'packageId': packageId, 'propertyId': propertyId},
     );
     return response;
@@ -36,7 +36,7 @@ class BoostRemoteDatasourceImpl implements BoostRemoteDatasource {
 
   @override
   Future<List<Map<String, dynamic>>> getMyBoosts() async {
-    final response = await ApiClient.get('/boosts/my-boosts');
+    final response = await ApiClient.get('/boost/my-boosts');
     return List<Map<String, dynamic>>.from(response ?? []);
   }
 
@@ -48,7 +48,7 @@ class BoostRemoteDatasourceImpl implements BoostRemoteDatasource {
     required int durationDays,
   }) async {
     final response = await ApiClient.post(
-      '/boosts/create',
+      '/boost',
       body: {
         'propertyId': propertyId,
         'amount': amount,

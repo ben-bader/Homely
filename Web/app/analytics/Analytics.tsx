@@ -159,7 +159,7 @@ const dict = {
     revenueTab: {
       totalRevenue: "Total Boost Ad Revenue",
       growthMoM: "Revenue Growth MoM",
-      growthDesc: "Month-over-month growth of promotional sales.",
+      growthDesc: "Monthly growth of promotional sales.",
       monetizedSellers: "Monetized Sellers",
       purchasedSpots: "Sellers who purchased premium ad spots.",
       monthlyEarnings: "Monthly Earnings Trend",
@@ -463,8 +463,8 @@ function KpiCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="bg-white border-transparent">
-      <CardHeader className="pb-3">
+    <Card className="bg-white border-transparent h-full flex flex-col">
+      <CardHeader className="pb-3 flex-1">
         <div className="flex flex-col h-full justify-between items-start">
           <div className="flex justify-between items-center w-full">
             <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
@@ -472,8 +472,8 @@ function KpiCard({
             </CardDescription>
             {icon}
           </div>
-          <div className="relative top-8">
-            <CardTitle className="text-6xl font-extrabold tracking-tight">{value}</CardTitle>
+            <div className="relative top-8">
+            <CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{value}</CardTitle>
           </div>
         </div>
       </CardHeader>
@@ -560,6 +560,7 @@ export default function Analytics() {
         { Metric: "Monthly Active Users", Value: overview.activeUsersThisMonth },
       ];
     } else if (activeTab === "users" && userGrowth) {
+  
       dataset = Object.entries(userGrowth.dailyRegistrations).map(([date, val]) => ({ Date: date, Registrations: val }));
     } else if (activeTab === "properties" && properties) {
       dataset = Object.entries(properties.propertiesByType).map(([type, val]) => ({ PropertyType: type, ListingCount: val }));
@@ -709,14 +710,14 @@ export default function Analytics() {
                   </CardContent>
                 </HeroCard>
 
-                <Card className="bg-white border-transparent justify-between">
-                  <CardHeader className="pb-3">
+                <Card className="bg-white border-transparent h-full flex flex-col justify-between">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.listedProperties}</CardDescription>
                         <Home className="size-8 bg-violet-500 p-2 rounded-full text-white" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalProperties.toLocaleString()}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalProperties.toLocaleString()}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -727,66 +728,66 @@ export default function Analytics() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.platformRevenue}</CardDescription>
                         <DollarSign className="size-8 p-2 bg-emerald-500 text-white rounded-full" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">${overview.totalRevenue.toLocaleString()}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">${overview.totalRevenue.toLocaleString()}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground">{t.overviewTab.generatedFrom.replace("{count}", String(overview.totalBoostPurchases))}</p></CardContent>
                 </Card>
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.premiumBoostSales}</CardDescription>
                         <Zap className="size-8 p-2 rounded-full bg-amber-500 text-white" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalBoostPurchases.toLocaleString()}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalBoostPurchases.toLocaleString()}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground font-medium text-foreground">{t.overviewTab.promoAdsDesc}</p></CardContent>
                 </Card>
 
-                <Card className="bg-white border-border">
-                  <CardHeader className="pb-3">
+                <Card className="bg-white border-border h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.propMod}</CardDescription>
                         <AlertTriangle className="size-8 p-2 bg-amber-300 text-white rounded-full" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalPendingProperties}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalPendingProperties}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground">{t.overviewTab.propPendingDesc}</p></CardContent>
                 </Card>
 
-                <Card className="bg-card border-border">
-                  <CardHeader className="pb-3">
+                <Card className="bg-card border-border h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.reportsFlags}</CardDescription>
                         <Flag className="size-8 p-2 bg-red-500 text-white rounded-full" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalReports}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalReports}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground">{t.overviewTab.reportsFlagsDesc}</p></CardContent>
                 </Card>
 
-                <Card className="bg-card border-border">
-                  <CardHeader className="pb-3">
+                <Card className="bg-card border-border h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.convOpened}</CardDescription>
                         <MessageSquare className="size-8 p-2 bg-blue-500 text-white rounded-full" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalChats.toLocaleString()}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalChats.toLocaleString()}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground">{t.overviewTab.convDesc.replace("{count}", String(overview.totalMessages))}</p></CardContent>
@@ -1149,15 +1150,15 @@ export default function Analytics() {
                   </CardContent>
                 </HeroCard>
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col h-full justify-between items-start">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
+                    <div className="flex h-full flex-col justify-between items-start">
                       <div className="flex justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.revenueTab.growthMoM}</CardDescription>
                         {revenue.revenueGrowth >= 0 ? <TrendingUp className="size-8 bg-emerald-500 p-2 rounded-full text-white" /> : <TrendingDown className="size-8 bg-rose-500 p-2 rounded-full text-white" />}
                       </div>
                       <div className="relative top-8">
-                        <CardTitle className={`text-5xl font-extrabold tracking-tight ${revenue.revenueGrowth >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                        <CardTitle className={`text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight ${revenue.revenueGrowth >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                           {revenue.revenueGrowth >= 0 ? "+" : ""}{revenue.revenueGrowth.toFixed(1)}%
                         </CardTitle>
                       </div>
@@ -1168,15 +1169,15 @@ export default function Analytics() {
 
                 <KpiCard label={t.revenueTab.monetizedSellers} value={activeSellersCount} description={t.revenueTab.purchasedSpots} icon={<Users className="size-8 bg-emerald-600 p-2 rounded-full text-white" />} />
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col h-full justify-between items-start">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
+                    <div className="flex h-full flex-col justify-between items-start">
                       <div className="flex justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Avg. Per Seller</CardDescription>
                         <DollarSign className="size-8 bg-teal-600 p-2 rounded-full text-white" />
                       </div>
                       <div className="relative top-8">
-                        <CardTitle className="text-5xl font-extrabold tracking-tight">
+                        <CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">
                           ${activeSellersCount > 0 ? Math.round(revenue.boostPurchaseRevenue / activeSellersCount).toLocaleString() : 0}
                         </CardTitle>
                       </div>
@@ -1271,15 +1272,15 @@ export default function Analytics() {
                 <KpiCard label={t.chatsTab.totalMessages} value={overview.totalMessages.toLocaleString()} description={t.chatsTab.totalMessagesDesc} icon={<MessageSquare className="size-8 bg-blue-500 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.chatsTab.totalFavorites} value={overview.totalFavorites.toLocaleString()} description={t.chatsTab.totalFavoritesDesc} icon={<Heart className="size-8 bg-rose-500 p-2 rounded-full text-white" />} />
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col h-full justify-between items-start">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
+                    <div className="flex h-full flex-col justify-between items-start">
                       <div className="flex justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Avg. Messages / Chat</CardDescription>
                         <Activity className="size-8 bg-indigo-500 p-2 rounded-full text-white" />
                       </div>
                       <div className="relative top-8">
-                        <CardTitle className="text-6xl font-extrabold tracking-tight">
+                        <CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">
                           {overview.totalChats > 0 ? (overview.totalMessages / overview.totalChats).toFixed(1) : "0"}
                         </CardTitle>
                       </div>

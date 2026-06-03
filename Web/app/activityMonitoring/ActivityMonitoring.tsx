@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FaEye, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
+import { PaginationFooter } from "@/components/ui/pagination";
 
 type DateSort = "" | "newest" | "oldest";
 type Tab = "admin" | "users";
@@ -70,12 +71,13 @@ const dict = {
       email: "Email",
       description: "Description",
       dataChanges: "Data Changes / Details",
-      close: "Close"
-    }
+      close: "Close",
+    },
   },
   fr: {
     title: "Suivi des Activités",
-    subtitle: "Consulter les actions système et les activités des utilisateurs.",
+    subtitle:
+      "Consulter les actions système et les activités des utilisateurs.",
     tabUsers: "Activités des Utilisateurs",
     tabAdmin: "Journaux Admin",
     searchUsers: "Rechercher par utilisateur, type ou entité...",
@@ -109,9 +111,9 @@ const dict = {
       email: "E-mail",
       description: "Description",
       dataChanges: "Modifications de Données",
-      close: "Fermer"
-    }
-  }
+      close: "Fermer",
+    },
+  },
 };
 
 /* ---------------- HELPERS ---------------- */
@@ -127,7 +129,9 @@ function fmtFull(v: any, locale: string = "en-US") {
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+        {label}
+      </span>
       <div className="text-sm font-medium text-foreground">{value ?? "—"}</div>
     </div>
   );
@@ -135,7 +139,17 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 /* ---------------- LOG DETAILS DRAWER ---------------- */
 
-function LogDetailsDrawer({ log, type, t, lang }: { log: any; type: Tab; t: any; lang: string }) {
+function LogDetailsDrawer({
+  log,
+  type,
+  t,
+  lang,
+}: {
+  log: any;
+  type: Tab;
+  t: any;
+  lang: string;
+}) {
   const isUserActivity = type === "users";
   const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
 
@@ -159,34 +173,64 @@ function LogDetailsDrawer({ log, type, t, lang }: { log: any; type: Tab; t: any;
       </DrawerTrigger>
       <DrawerContent className="flex flex-col max-w-md ml-auto h-full">
         <DrawerHeader className="border-b">
-          <DrawerTitle>{isUserActivity ? t.details.userTitle : t.details.adminTitle}</DrawerTitle>
+          <DrawerTitle>
+            {isUserActivity ? t.details.userTitle : t.details.adminTitle}
+          </DrawerTitle>
           <DrawerDescription>{t.details.desc}</DrawerDescription>
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <section className="space-y-4">
-            <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">{t.details.coreInfo}</p>
-            <InfoRow label={t.details.timestamp} value={fmtFull(log.createdAt, dateLocale)} />
-            <InfoRow label={isUserActivity ? t.activityType : t.action} value={<Badge variant="outline">{isUserActivity ? log.activityType : log.action}</Badge>} />
-            {isUserActivity && <InfoRow label={t.details.entity} value={log.entityType} />}
+            <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">
+              {t.details.coreInfo}
+            </p>
+            <InfoRow
+              label={t.details.timestamp}
+              value={fmtFull(log.createdAt, dateLocale)}
+            />
+            <InfoRow
+              label={isUserActivity ? t.activityType : t.action}
+              value={
+                <Badge variant="outline">
+                  {isUserActivity ? log.activityType : log.action}
+                </Badge>
+              }
+            />
+            {isUserActivity && (
+              <InfoRow label={t.details.entity} value={log.entityType} />
+            )}
           </section>
 
           <section className="space-y-4">
-            <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">{t.details.userActor}</p>
-            <InfoRow label={t.details.name} value={isUserActivity ? log.userName : log.adminName} />
-            <InfoRow label={t.details.email} value={isUserActivity ? log.userEmail : log.adminEmail} />
+            <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">
+              {t.details.userActor}
+            </p>
+            <InfoRow
+              label={t.details.name}
+              value={isUserActivity ? log.userName : log.adminName}
+            />
+            <InfoRow
+              label={t.details.email}
+              value={isUserActivity ? log.userEmail : log.adminEmail}
+            />
           </section>
 
           {log.description && (
             <section className="space-y-4">
-              <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">{t.details.description}</p>
-              <p className="text-sm text-muted-foreground italic">"{log.description}"</p>
+              <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">
+                {t.details.description}
+              </p>
+              <p className="text-sm text-muted-foreground italic">
+                "{log.description}"
+              </p>
             </section>
           )}
 
           {formattedChanges && (
             <section className="space-y-4">
-              <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">{t.details.dataChanges}</p>
+              <p className="text-[10px] font-bold uppercase tracking-tight text-primary border-b pb-1">
+                {t.details.dataChanges}
+              </p>
               <pre className="bg-muted p-3 rounded text-[11px] font-mono overflow-x-auto whitespace-pre-wrap">
                 {formattedChanges}
               </pre>
@@ -196,7 +240,12 @@ function LogDetailsDrawer({ log, type, t, lang }: { log: any; type: Tab; t: any;
 
         <DrawerFooter className="border-t">
           <DrawerClose asChild>
-            <Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t.details.close}</Button>
+            <Button
+              variant="outline"
+              className="w-full bg-black hover:bg-gray-900 text-white border-gray-700"
+            >
+              {t.details.close}
+            </Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -208,22 +257,32 @@ function LogDetailsDrawer({ log, type, t, lang }: { log: any; type: Tab; t: any;
 
 function FilterPanel({
   tab,
-  actionFilter, setActionFilter,
-  entityTypeFilter, setEntityTypeFilter,
-  dateSort, setDateSort,
-  createdAfter, setCreatedAfter,
-  createdBefore, setCreatedBefore,
+  actionFilter,
+  setActionFilter,
+  entityTypeFilter,
+  setEntityTypeFilter,
+  dateSort,
+  setDateSort,
+  createdAfter,
+  setCreatedAfter,
+  createdBefore,
+  setCreatedBefore,
   onClear,
   activityTypeOptions,
   entityTypeOptions,
   t,
 }: {
   tab: Tab;
-  actionFilter: string; setActionFilter: (v: string) => void;
-  entityTypeFilter: string; setEntityTypeFilter: (v: string) => void;
-  dateSort: DateSort; setDateSort: (v: DateSort) => void;
-  createdAfter: string; setCreatedAfter: (v: string) => void;
-  createdBefore: string; setCreatedBefore: (v: string) => void;
+  actionFilter: string;
+  setActionFilter: (v: string) => void;
+  entityTypeFilter: string;
+  setEntityTypeFilter: (v: string) => void;
+  dateSort: DateSort;
+  setDateSort: (v: DateSort) => void;
+  createdAfter: string;
+  setCreatedAfter: (v: string) => void;
+  createdBefore: string;
+  setCreatedBefore: (v: string) => void;
   onClear: () => void;
   activityTypeOptions: string[];
   entityTypeOptions: string[];
@@ -247,10 +306,22 @@ function FilterPanel({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
         <div className="flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          <svg
+            className="w-3.5 h-3.5 text-muted-foreground"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
+            />
           </svg>
-          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">{t.filters}</span>
+          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">
+            {t.filters}
+          </span>
           {activeCount > 0 && (
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {activeCount}
@@ -258,7 +329,10 @@ function FilterPanel({
           )}
         </div>
         {activeCount > 0 && (
-          <button onClick={onClear} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium">
+          <button
+            onClick={onClear}
+            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium"
+          >
             {t.clearAll}
           </button>
         )}
@@ -284,7 +358,9 @@ function FilterPanel({
             {activityTypeOptions.map((type) => (
               <button
                 key={type}
-                onClick={() => setActionFilter(actionFilter === type ? "" : type)}
+                onClick={() =>
+                  setActionFilter(actionFilter === type ? "" : type)
+                }
                 className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
                   actionFilter === type
                     ? "bg-primary text-primary-foreground border-primary"
@@ -300,7 +376,9 @@ function FilterPanel({
         {/* Entity Type — users tab only */}
         {tab === "users" && entityTypeOptions.length > 0 && (
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.entityType}</label>
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+              {t.entityType}
+            </label>
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setEntityTypeFilter("")}
@@ -315,7 +393,9 @@ function FilterPanel({
               {entityTypeOptions.map((type) => (
                 <button
                   key={type}
-                  onClick={() => setEntityTypeFilter(entityTypeFilter === type ? "" : type)}
+                  onClick={() =>
+                    setEntityTypeFilter(entityTypeFilter === type ? "" : type)
+                  }
                   className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
                     entityTypeFilter === type
                       ? "bg-primary text-primary-foreground border-primary"
@@ -331,7 +411,9 @@ function FilterPanel({
 
         {/* Date sort */}
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.sortByDate}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            {t.sortByDate}
+          </label>
           <div className="flex gap-1.5">
             {dateSortOptions.map(({ value, label, icon }) => (
               <button
@@ -352,15 +434,29 @@ function FilterPanel({
 
         {/* Date range */}
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.createdBetween}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            {t.createdBetween}
+          </label>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">{t.after}</span>
-              <Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} />
+              <span className="text-[10px] text-muted-foreground">
+                {t.after}
+              </span>
+              <Input
+                type="date"
+                value={createdAfter}
+                onChange={(e) => setCreatedAfter(e.target.value)}
+              />
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">{t.before}</span>
-              <Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} />
+              <span className="text-[10px] text-muted-foreground">
+                {t.before}
+              </span>
+              <Input
+                type="date"
+                value={createdBefore}
+                onChange={(e) => setCreatedBefore(e.target.value)}
+              />
             </div>
           </div>
         </div>
@@ -378,7 +474,11 @@ export default function ActivityMonitoring() {
   const dateLocale = lang === "fr" ? "fr-FR" : "en-US";
 
   const { logs, loading: auditLoading, error: auditError } = useAuditLogs();
-  const { activities, loading: activityLoading, error: activityError } = useLogActivities();
+  const {
+    activities,
+    loading: activityLoading,
+    error: activityError,
+  } = useLogActivities();
 
   const [activeTab, setActiveTab] = useState<Tab>("users");
   const [search, setSearch] = useState("");
@@ -393,7 +493,15 @@ export default function ActivityMonitoring() {
   // Reset page when tab, search, or filters change
   useEffect(() => {
     setCurrentPage(0);
-  }, [activeTab, search, actionFilter, entityTypeFilter, dateSort, createdAfter, createdBefore]);
+  }, [
+    activeTab,
+    search,
+    actionFilter,
+    entityTypeFilter,
+    dateSort,
+    createdAfter,
+    createdBefore,
+  ]);
 
   const clearFilters = () => {
     setActionFilter("");
@@ -413,13 +521,23 @@ export default function ActivityMonitoring() {
   /* ---- Dynamic options derived from data ---- */
   const activityTypeOptions = useMemo(() => {
     if (activeTab === "users") {
-      return [...new Set(activities.map((a) => a.activityType).filter((x): x is string => !!x))];
+      return [
+        ...new Set(
+          activities.map((a) => a.activityType).filter((x): x is string => !!x),
+        ),
+      ];
     }
-    return [...new Set(logs.map((l) => l.action).filter((x): x is string => !!x))];
+    return [
+      ...new Set(logs.map((l) => l.action).filter((x): x is string => !!x)),
+    ];
   }, [activeTab, activities, logs]);
 
   const entityTypeOptions = useMemo(() => {
-    return [...new Set(activities.map((a) => a.entityType).filter((x): x is string => !!x))];
+    return [
+      ...new Set(
+        activities.map((a) => a.entityType).filter((x): x is string => !!x),
+      ),
+    ];
   }, [activities]);
 
   /* ---- Active filter count ---- */
@@ -434,43 +552,96 @@ export default function ActivityMonitoring() {
   /* ---- LOG ACTIVITIES (USERS) ---- */
   const filteredActivities = useMemo(() => {
     let filtered = activities.filter((act) => {
-      const textMatch = [act.activityType, act.entityType, act.description, act.userName, act.userEmail]
-        .filter(Boolean).join(" ").toLowerCase().includes(search.toLowerCase());
-      const typeMatch = !actionFilter || act.activityType?.toLowerCase() === actionFilter.toLowerCase();
-      const entityMatch = !entityTypeFilter || act.entityType?.toLowerCase() === entityTypeFilter.toLowerCase();
+      const textMatch = [
+        act.activityType,
+        act.entityType,
+        act.description,
+        act.userName,
+        act.userEmail,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(search.toLowerCase());
+      const typeMatch =
+        !actionFilter ||
+        act.activityType?.toLowerCase() === actionFilter.toLowerCase();
+      const entityMatch =
+        !entityTypeFilter ||
+        act.entityType?.toLowerCase() === entityTypeFilter.toLowerCase();
       const ts = act.createdAt ? new Date(act.createdAt).getTime() : 0;
-      const afterMatch = !createdAfter || ts >= new Date(createdAfter).getTime();
-      const beforeMatch = !createdBefore || ts <= new Date(createdBefore + "T23:59:59Z").getTime();
+      const afterMatch =
+        !createdAfter || ts >= new Date(createdAfter).getTime();
+      const beforeMatch =
+        !createdBefore ||
+        ts <= new Date(createdBefore + "T23:59:59Z").getTime();
       return textMatch && typeMatch && entityMatch && afterMatch && beforeMatch;
     });
     return dateSort === "oldest"
-      ? filtered.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
-      : filtered.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-  }, [activities, search, actionFilter, entityTypeFilter, dateSort, createdAfter, createdBefore]);
+      ? filtered.sort(
+          (a, b) =>
+            new Date(a.createdAt || 0).getTime() -
+            new Date(b.createdAt || 0).getTime(),
+        )
+      : filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime(),
+        );
+  }, [
+    activities,
+    search,
+    actionFilter,
+    entityTypeFilter,
+    dateSort,
+    createdAfter,
+    createdBefore,
+  ]);
 
   /* ---- AUDIT LOGS (ADMIN) ---- */
   const filteredAuditLogs = useMemo(() => {
     let filtered = logs.filter((log) => {
-      const textMatch = [log.action, log.adminName, log.adminEmail].filter(Boolean).join(" ").toLowerCase().includes(search.toLowerCase());
-      const actionMatch = !actionFilter || log.action?.toLowerCase() === actionFilter.toLowerCase();
+      const textMatch = [log.action, log.adminName, log.adminEmail]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(search.toLowerCase());
+      const actionMatch =
+        !actionFilter ||
+        log.action?.toLowerCase() === actionFilter.toLowerCase();
       const ts = log.createdAt ? new Date(log.createdAt).getTime() : 0;
-      const afterMatch = !createdAfter || ts >= new Date(createdAfter).getTime();
-      const beforeMatch = !createdBefore || ts <= new Date(createdBefore + "T23:59:59Z").getTime();
+      const afterMatch =
+        !createdAfter || ts >= new Date(createdAfter).getTime();
+      const beforeMatch =
+        !createdBefore ||
+        ts <= new Date(createdBefore + "T23:59:59Z").getTime();
       return textMatch && actionMatch && afterMatch && beforeMatch;
     });
     return dateSort === "oldest"
-      ? filtered.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
-      : filtered.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      ? filtered.sort(
+          (a, b) =>
+            new Date(a.createdAt || 0).getTime() -
+            new Date(b.createdAt || 0).getTime(),
+        )
+      : filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime(),
+        );
   }, [logs, search, actionFilter, dateSort, createdAfter, createdBefore]);
 
   const isLoading = activeTab === "admin" ? auditLoading : activityLoading;
-  const currentData = activeTab === "admin" ? filteredAuditLogs : filteredActivities;
+  const currentData =
+    activeTab === "admin" ? filteredAuditLogs : filteredActivities;
 
   // Pagination calculations
   const itemsPerPage = 10;
   const totalPages = Math.ceil(currentData.length / itemsPerPage);
   const paginatedData = useMemo(() => {
-    return currentData.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+    return currentData.slice(
+      currentPage * itemsPerPage,
+      (currentPage + 1) * itemsPerPage,
+    );
   }, [currentData, currentPage]);
 
   return (
@@ -487,7 +658,9 @@ export default function ActivityMonitoring() {
             key={tab}
             onClick={() => handleTabChange(tab)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-              activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              activeTab === tab
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab === "users" ? t.tabUsers : t.tabAdmin}
@@ -507,8 +680,18 @@ export default function ActivityMonitoring() {
           onClick={() => setFilterOpen((v) => !v)}
           className="relative shrink-0"
         >
-          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          <svg
+            className="w-3.5 h-3.5 mr-1.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
+            />
           </svg>
           {t.filters}
           {activeFilterCount > 0 && (
@@ -523,11 +706,16 @@ export default function ActivityMonitoring() {
       {filterOpen && (
         <FilterPanel
           tab={activeTab}
-          actionFilter={actionFilter} setActionFilter={setActionFilter}
-          entityTypeFilter={entityTypeFilter} setEntityTypeFilter={setEntityTypeFilter}
-          dateSort={dateSort} setDateSort={setDateSort}
-          createdAfter={createdAfter} setCreatedAfter={setCreatedAfter}
-          createdBefore={createdBefore} setCreatedBefore={setCreatedBefore}
+          actionFilter={actionFilter}
+          setActionFilter={setActionFilter}
+          entityTypeFilter={entityTypeFilter}
+          setEntityTypeFilter={setEntityTypeFilter}
+          dateSort={dateSort}
+          setDateSort={setDateSort}
+          createdAfter={createdAfter}
+          setCreatedAfter={setCreatedAfter}
+          createdBefore={createdBefore}
+          setCreatedBefore={setCreatedBefore}
           onClear={clearFilters}
           activityTypeOptions={activityTypeOptions}
           entityTypeOptions={entityTypeOptions}
@@ -542,16 +730,29 @@ export default function ActivityMonitoring() {
             <TableRow>
               <TableHead className="w-[180px]">{t.colTime}</TableHead>
               <TableHead>{t.colUser}</TableHead>
-              <TableHead>{activeTab === "users" ? t.activityType : t.action}</TableHead>
+              <TableHead>
+                {activeTab === "users" ? t.activityType : t.action}
+              </TableHead>
               {activeTab === "users" && <TableHead>{t.entityType}</TableHead>}
               <TableHead className="text-right">{t.colShowMore}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-10">{t.loading}</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10">
+                  {t.loading}
+                </TableCell>
+              </TableRow>
             ) : currentData.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">{t.noResults}</TableCell></TableRow>
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-10 text-muted-foreground"
+                >
+                  {t.noResults}
+                </TableCell>
+              </TableRow>
             ) : (
               paginatedData.map((item: any) => (
                 <TableRow key={item.id}>
@@ -560,22 +761,38 @@ export default function ActivityMonitoring() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold">{activeTab === "users" ? item.userName : item.adminName}</span>
-                      <span className="text-[11px] text-muted-foreground">{activeTab === "users" ? item.userEmail : item.adminEmail}</span>
+                      <span className="text-sm font-semibold">
+                        {activeTab === "users" ? item.userName : item.adminName}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {activeTab === "users"
+                          ? item.userEmail
+                          : item.adminEmail}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="text-[10px] uppercase tracking-tighter">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] uppercase tracking-tighter"
+                    >
                       {activeTab === "users" ? item.activityType : item.action}
                     </Badge>
                   </TableCell>
                   {activeTab === "users" && (
                     <TableCell>
-                      <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-muted border">{item.entityType}</span>
+                      <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-muted border">
+                        {item.entityType}
+                      </span>
                     </TableCell>
                   )}
                   <TableCell className="text-right">
-                    <LogDetailsDrawer log={item} type={activeTab} t={t} lang={lang} />
+                    <LogDetailsDrawer
+                      log={item}
+                      type={activeTab}
+                      t={t}
+                      lang={lang}
+                    />
                   </TableCell>
                 </TableRow>
               ))
@@ -584,34 +801,19 @@ export default function ActivityMonitoring() {
         </Table>
       </div>
 
-      {/* Pagination Footer */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-4 px-4 py-2.5 bg-secondary/20 rounded-2xl border border-secondary-foreground/15 shadow-sm text-sm text-foreground w-fit mx-auto">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentPage((p) => Math.max(p - 1, 0))}
-            disabled={currentPage === 0}
-            className="h-8 w-8 rounded-xl border-secondary-foreground/25 hover:bg-secondary-foreground/10 hover:text-secondary-foreground text-secondary-foreground font-bold transition-all disabled:opacity-40"
-          >
-            <FaArrowLeft className="size-3.5 text-secondary-foreground" />
-          </Button>
+      <div className="flex justify-between items-center">
+        <span className="text-xs text-muted-foreground">
+          {currentData.length} {activeTab === "users" ? t.tabUsers : t.tabAdmin}
+        </span>
 
-          <span className="font-extrabold text-sm text-secondary-foreground select-none">
-            {currentPage + 1} / {totalPages}
-          </span>
-
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages - 1))}
-            disabled={currentPage >= totalPages - 1}
-            className="h-8 w-8 rounded-xl border-secondary-foreground/25 hover:bg-secondary-foreground/10 hover:text-secondary-foreground text-secondary-foreground font-bold transition-all disabled:opacity-40"
-          >
-            <FaArrowRight className="size-3.5 text-secondary-foreground" />
-          </Button>
-        </div>
-      )}
+        <PaginationFooter
+          pageInfo={`Page ${currentPage + 1} of ${Math.max(totalPages, 1)}`}
+          onPrevious={() => setCurrentPage((p) => Math.max(0, p - 1))}
+          onNext={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+          canPrevious={currentPage > 0}
+          canNext={currentPage < totalPages - 1}
+        />
+      </div>
     </div>
   );
 }
