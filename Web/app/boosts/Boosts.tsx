@@ -220,8 +220,8 @@ export default function Boosts() {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(hg => (
-              <TableRow key={hg.id} className="border-b bg-muted/30 hover:bg-muted/30">
-                {hg.headers.map(header => <TableHead key={header.id} className="text-xs font-medium text-muted-foreground uppercase tracking-wider h-10">{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}
+              <TableRow key={hg.id}>
+                {hg.headers.map(header => <TableHead key={header.id} className="text-xs font-medium uppercase tracking-wider h-10">{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}
               </TableRow>
             ))}
           </TableHeader>

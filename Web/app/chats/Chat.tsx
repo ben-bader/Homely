@@ -198,8 +198,8 @@ export default function ChatPage() {
       <div><span className="text-xs text-muted-foreground">{filteredData.length !== 1 ? t('countPlural', { count: filteredData.length }) : t('count', { count: filteredData.length })}{(search || activeFilterCount > 0) && ` ${t('filtered')}`}</span></div>
       <div className="overflow-auto rounded-lg border">
         <Table>
-          <TableHeader className="bg-primary text-white">
-            {table.getHeaderGroups().map((hg) => <TableRow key={hg.id}>{hg.headers.map((header) => <TableHead key={header.id} className="text-white">{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}</TableRow>)}
+          <TableHeader>
+            {table.getHeaderGroups().map((hg) => <TableRow key={hg.id}>{hg.headers.map((header) => <TableHead key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}</TableRow>)}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length === 0 ? <TableRow><TableCell colSpan={columns.length} className="text-center text-muted-foreground py-12 text-sm">{t('noMatch')}</TableCell></TableRow>

@@ -24,6 +24,7 @@ export function NavUser({
   const router = useRouter();
   const user = getUserFromToken();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const fetchAvatar = useCallback(async () => {
     try {
@@ -35,6 +36,7 @@ export function NavUser({
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     fetchAvatar();
     const handleAvatarUpdate = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -61,29 +63,34 @@ export function NavUser({
     }
   };
 
-  const initials = (user?.name ?? user?.username ?? "?")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = mounted && user
+    ? (user.name ?? user.username ?? "?")
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?";
+
+  const displayName = mounted && user ? (user.name ?? user.username ?? "Admin") : "Admin";
+  const displayEmail = mounted && user ? (user.username ?? "") : "";
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors hover:bg-sidebar-accent">
           <Avatar className="w-7 h-7">
-            {avatarUrl && <AvatarImage src={avatarUrl} alt={user?.name ?? "User"} />}
+            {mounted && avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
             <AvatarFallback className="bg-primary text-white text-[10px] font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium text-foreground">
-              {user?.name ?? user?.username ?? "Admin"}
+              {displayName}
             </span>
             <span className="block truncate text-xs text-muted-foreground">
-              {user?.username ?? ""}
+              {displayEmail}
             </span>
           </span>
         </button>
@@ -96,10 +103,10 @@ export function NavUser({
       >
         <div className="px-3 py-2">
           <p className="text-sm font-medium text-foreground truncate">
-            {user?.name ?? user?.username ?? "Admin"}
+            {displayName}
           </p>
           <p className="text-xs text-muted-foreground truncate">
-            {user?.username ?? ""}
+            {displayEmail}
           </p>
         </div>
         <DropdownMenuSeparator />

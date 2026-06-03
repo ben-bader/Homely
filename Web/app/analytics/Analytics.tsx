@@ -15,7 +15,6 @@ import {
   Activity,
   Printer,
   RefreshCw,
-  Clock,
   FileSpreadsheet,
   Flag,
   ShieldCheck,
@@ -72,7 +71,6 @@ const dict = {
     liveAnalytics: "System Live Analytics",
     title: "Centralized Platform Stats",
     subtitle: "Monitor real-time system metrics.",
-    autoRefresh: "Auto Refresh",
     refresh: "Refresh",
     exportCsv: "Export CSV",
     printReport: "Print Report",
@@ -235,7 +233,6 @@ const dict = {
     liveAnalytics: "Analyses Système en Direct",
     title: "Statistiques Centralisées",
     subtitle: "Suivez en temps réel les indicateurs système.",
-    autoRefresh: "Rafraîchir auto",
     refresh: "Rafraîchir",
     exportCsv: "Exporter CSV",
     printReport: "Imprimer Rapport",
@@ -506,7 +503,6 @@ export default function Analytics() {
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "all">("30d");
   const [activeTab, setActiveTab] = useState("overview");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -539,12 +535,6 @@ export default function Analytics() {
   }, [lang]);
 
   useEffect(() => { fetchAllData(); }, [fetchAllData]);
-
-  useEffect(() => {
-    if (!autoRefresh) return;
-    const interval = setInterval(() => { setIsRefreshing(true); fetchAllData(true); }, 15000);
-    return () => clearInterval(interval);
-  }, [autoRefresh, fetchAllData]);
 
   const handleManualRefresh = () => { setIsRefreshing(true); fetchAllData(); };
 
@@ -656,11 +646,6 @@ export default function Analytics() {
           <p className="text-muted-foreground text-sm leading-relaxed">{t.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2 mr-2 bg-muted/50 border rounded-lg px-3 py-2 text-xs text-muted-foreground">
-            <Clock className="size-3.5" />
-            <span>{t.autoRefresh}</span>
-            <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} className="ml-1 rounded accent-primary cursor-pointer size-3.5" />
-          </div>
           <Button variant="outline" size="sm" onClick={handleManualRefresh} disabled={isRefreshing || loading} className="gap-2 text-xs font-semibold h-8 rounded-full">
             <RefreshCw className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`} /> {t.refresh}
           </Button>
@@ -1563,11 +1548,40 @@ export default function Analytics() {
 
       <style jsx global>{`
         @media print {
-          body * { visibility: hidden; }
-          #nd-sidebar, .print\\:hidden, button, header, nav, .TabsList { display: none !important; }
-          div.print\\:p-0, div.print\\:p-0 * { visibility: visible; }
-          div.print\\:p-0 { position: absolute; left: 0; top: 0; width: 100%; padding: 0px !important; margin: 0px !important; }
-          .recharts-responsive-container { width: 100% !important; height: 350px !important; }
+          /* Hide sidebar, header, tabs list, buttons, and anything marked print:hidden */
+          aside,
+          header,
+          .TabsList,
+          .print\\:hidden,
+          button {
+            display: none !important;
+          }
+
+          /* Reset layout constraints on print */
+          body,
+          html,
+          main,
+          .h-screen,
+          .overflow-hidden {
+            height: auto !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            position: static !important;
+            min-height: auto !important;
+          }
+
+          /* Reset desktop sidebar margin offset */
+          div[class*="ml-64"] {
+            margin-left: 0 !important;
+          }
+
+          /* Ensure charts render with visible dimensions */
+          .recharts-responsive-container {
+            width: 100% !important;
+            height: 350px !important;
+          }
         }
       `}</style>
     </div>
