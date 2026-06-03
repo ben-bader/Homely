@@ -1,5 +1,6 @@
 package com.homely.auth.service;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import com.homely.auth.dto.LogoutRequest;
 import com.homely.auth.dto.RefreshTokenRequest;
 import com.homely.auth.dto.RegisterRequest;
 import com.homely.auth.entity.RefreshToken;
+import com.homely.common.exception.UserNotFoundException;
 import com.homely.common.service.EmailService;
 import com.homely.config.AppConfig;
 import com.homely.moderation.entity.LogActivity;
@@ -35,6 +37,8 @@ public class AuthService {
     private final EmailService emailService;
     private final AppConfig appConfig;
     private final LogActivityService logActivityService;
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public AuthResponse register(RegisterRequest request, String deviceInfo) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
@@ -66,10 +70,8 @@ public class AuthService {
                 "{\"email\":\"" + normalizedEmail + "\",\"role\":\"" + request.getRole() + "\"}"
         );
 
-        String verificationLink = appConfig.getFrontendUrl() + "/verify-email?token=" + savedUser.getVerificationToken();
-        String mobileResetLink = appConfig.getMobileDeepLinkUrl() + "?token=" + savedUser.getVerificationToken();
-        emailService.sendEmail(savedUser.getEmail(), "Verify Your Email",
-                "Verify your account by opening the link in your browser or app:\n" + verificationLink + "\n" + mobileResetLink);
+        String verificationLink = appConfig.getBackendUrl() + "/api/auth/verify-email?token=" + savedUser.getVerificationToken();
+        emailService.sendVerificationEmail(savedUser.getEmail(), verificationLink);
 
         return buildAuthResponse(savedUser, refreshTokenService.createToken(savedUser, deviceInfo));
     }
@@ -144,30 +146,71 @@ public class AuthService {
     public void requestPasswordReset(String email) {
         String normalizedEmail = email.trim().toLowerCase();
         User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(normalizedEmail));
 
-        user.setResetToken(UUID.randomUUID().toString());
-        user.setResetTokenExpiry(Instant.now().plusSeconds(900));
+        // Generate 6-digit OTP code
+        String resetCode = generateOtpCode();
+        user.setResetCode(resetCode);
+        user.setResetCodeExpiry(Instant.now().plusSeconds(900)); // 15 minutes
         userRepository.save(user);
 
-        String mobileDeepLink = appConfig.getMobileDeepLinkUrl() + "?token=" + user.getResetToken();
-        String webResetLink = appConfig.getFrontendUrl() + "/reset-password?token=" + user.getResetToken();
-        emailService.sendEmail(user.getEmail(), "Reset Your Password",
-                "Use the link below to reset your password:\n" + mobileDeepLink + "\n\nIf you are on desktop, open:\n" + webResetLink);
+        logActivityService.log(
+                user,
+                LogActivity.ActivityType.PASSWORD_RESET_REQUESTED,
+                LogActivity.EntityType.USER,
+                user.getId(),
+                "Password reset requested for email: " + normalizedEmail,
+                "{\"email\":\"" + normalizedEmail + "\"}"
+        );
+
+        // Send OTP via email
+        emailService.sendPasswordResetCodeEmail(user.getEmail(), resetCode, 15);
     }
 
-    public void resetPassword(String token, String newPassword) {
-        User user = userRepository.findByResetToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
-
-        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(Instant.now())) {
-            throw new IllegalStateException("Reset token has expired");
+    public void resetPassword(String email, String code, String newPassword) {
+        String normalizedEmail = email.trim().toLowerCase();
+        
+        // Validate inputs
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (code == null || !code.matches("^[0-9]{6}$")) {
+            throw new IllegalArgumentException("Invalid reset code format");
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new IllegalArgumentException("New password is required");
         }
 
+        User user = userRepository.findByResetCodeAndEmailIgnoreCase(code, normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or reset code"));
+
+        // Validate OTP expiration
+        if (user.getResetCodeExpiry() == null || user.getResetCodeExpiry().isBefore(Instant.now())) {
+            throw new IllegalStateException("Reset code has expired. Please request a new one.");
+        }
+
+        // Update password
         user.setPasswordHash(passwordEncoder.encode(newPassword));
-        user.setResetToken(null);
-        user.setResetTokenExpiry(null);
+        user.setResetCode(null);
+        user.setResetCodeExpiry(null);
         userRepository.save(user);
+
+        logActivityService.log(
+                user,
+                LogActivity.ActivityType.PASSWORD_RESET_COMPLETED,
+                LogActivity.EntityType.USER,
+                user.getId(),
+                "Password reset completed for email: " + normalizedEmail,
+                "{\"email\":\"" + normalizedEmail + "\"}"
+        );
+    }
+
+    /**
+     * Generate a 6-digit OTP code
+     */
+    private String generateOtpCode() {
+        int code = SECURE_RANDOM.nextInt(1_000_000);
+        return String.format("%06d", code);
     }
 
         private AuthResponse buildAuthResponse(User user, RefreshToken refreshToken) {

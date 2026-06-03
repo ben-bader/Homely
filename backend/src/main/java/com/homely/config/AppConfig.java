@@ -12,17 +12,17 @@ public class AppConfig {
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
-    @Value("${app.mobile-deeplink.url:homely://reset}")
-    private String mobileDeepLinkUrl;
+    @Value("${app.backend.url:http://localhost:8082}")
+    private String backendUrl;
 
     public String getFrontendUrl() {
         return frontendUrl;
     }
 
-    public String getMobileDeepLinkUrl() {
-        return mobileDeepLinkUrl;
+    public String getBackendUrl() {
+        return backendUrl;
     }
-    
+
     @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper();

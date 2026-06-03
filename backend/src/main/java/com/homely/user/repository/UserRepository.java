@@ -18,5 +18,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
     boolean existsByEmailIgnoreCase(String email);
     Optional<User> findByVerificationToken(String token);
+    
+    // OTP-based password reset
+    Optional<User> findByResetCodeAndEmailIgnoreCase(String resetCode, String email);
+    Optional<User> findByResetCode(String resetCode);
+    
+    // Legacy fields (deprecated - use OTP methods instead)
+    @Deprecated(forRemoval = true)
     Optional<User> findByResetToken(String token);
+    
+    @Deprecated(forRemoval = true)
+    Optional<User> findByResetTokenAndEmailIgnoreCase(String resetToken, String email);
 }

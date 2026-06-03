@@ -71,16 +71,14 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<void> resetPassword({
-    required String token,
     required String email,
+    required String code,
     required String password,
-    required String confirmPassword,
   }) =>
       _remote.resetPassword(
-        token: token,
         email: email,
+        code: code,
         password: password,
-        confirmPassword: confirmPassword,
       );
 
   @override

@@ -19,22 +19,36 @@ class _ForgotPasswordScreenState
   final _emailController = TextEditingController();
 
   bool _isLoading = false;
-  bool _emailSent = false;
 
   Future<void> _requestPasswordReset() async {
     if (!_formKey.currentState!.validate()) return;
+    final email = _emailController.text.trim();
     setState(() => _isLoading = true);
     try {
-      await ref
-          .read(authRepositoryProvider)
-          .requestPasswordReset(
-              _emailController.text.trim());
-      setState(() => _emailSent = true);
+      await ref.read(authRepositoryProvider).requestPasswordReset(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          'A reset code has been sent to $email. Check your inbox.',
+          style: GoogleFonts.outfit(),
+        ),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30)),
+      ));
+      Navigator.pushReplacementNamed(
+        context,
+        '/reset-password',
+        arguments: {
+          'email': email,
+          'resendCooldownSeconds': 60,
+        },
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content:
-              Text(e.toString(), style: GoogleFonts.outfit()),
+          content: Text(e.toString(), style: GoogleFonts.outfit()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -68,9 +82,7 @@ class _ForgotPasswordScreenState
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
               horizontal: 28, vertical: 16),
-          child: _emailSent
-              ? _buildSuccessView()
-              : _buildFormView(),
+          child: _buildFormView(),
         ),
       ),
     );
@@ -93,7 +105,7 @@ class _ForgotPasswordScreenState
           ),
           const SizedBox(height: 12),
           Text(
-            'Enter your email and we\'ll send you a reset link.',
+            'Enter your email and we\'ll send you a 6-digit reset code.',
             style: GoogleFonts.outfit(
               color: AppColors.textSecondary,
               fontSize: 16,
@@ -164,7 +176,7 @@ class _ForgotPasswordScreenState
                           valueColor:
                               AlwaysStoppedAnimation<Color>(
                                   Colors.white)))
-                  : Text('Send Reset Link',
+                  : Text('Send Reset Code',
                       style: GoogleFonts.outfit(
                           fontSize: 16,
                           fontWeight: FontWeight.w600)),
@@ -175,54 +187,5 @@ class _ForgotPasswordScreenState
     );
   }
 
-  Widget _buildSuccessView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const SizedBox(height: 60),
-        Icon(Icons.check_circle_outline,
-            size: 80, color: AppColors.success),
-        const SizedBox(height: 32),
-        Text(
-          'Check Your Email',
-          style: GoogleFonts.outfit(
-            color: AppColors.accent,
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'We\'ve sent a reset link to\n${_emailController.text}',
-          style: GoogleFonts.outfit(
-            color: AppColors.textSecondary,
-            fontSize: 16,
-            height: 1.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 40),
-        SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              side:
-                  BorderSide(color: AppColors.primary, width: 2),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-            ),
-            child: Text('Back to Login',
-                style: GoogleFonts.outfit(
-                    color: AppColors.primary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600)),
-          ),
-        ),
-      ],
-    );
-  }
 }
+

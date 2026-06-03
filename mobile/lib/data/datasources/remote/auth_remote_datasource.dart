@@ -17,14 +17,13 @@ abstract class AuthRemoteDatasource {
   });
   Future<Map<String, dynamic>> logout({String? refreshToken});
   Future<Map<String, dynamic>> refreshToken(String token);
-  Future<Map<String, dynamic>> requestPasswordReset({required String email});
-  Future<Map<String, dynamic>> resetPassword({
-    required String token,
+  Future<void> requestPasswordReset({required String email});
+  Future<void> resetPassword({
     required String email,
+    required String code,
     required String password,
-    required String confirmPassword,
   });
-  Future<Map<String, dynamic>> verifyEmail({required String token});
+  Future<void> verifyEmail({required String token});
   Future<Map<String, dynamic>> resendVerification({required String email});
 }
 
@@ -96,44 +95,40 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   }
 
   @override
-  Future<Map<String, dynamic>> requestPasswordReset({
+  Future<void> requestPasswordReset({
     required String email,
   }) async {
-    final response = await ApiClient.post(
+    await ApiClient.post(
       Endpoints.requestPasswordReset,
+      auth: false,
       body: {'email': email},
     );
-    return response;
   }
 
   @override
-  Future<Map<String, dynamic>> resetPassword({
-    required String token,
+  Future<void> resetPassword({
     required String email,
+    required String code,
     required String password,
-    required String confirmPassword,
   }) async {
-    final response = await ApiClient.post(
+    await ApiClient.post(
       Endpoints.resetPassword,
       auth: false,
       body: {
         'email': email,
-        'token': token,
+        'code': code,
         'newPassword': password,
-        'confirmPassword': confirmPassword,
       },
     );
-    return response;
   }
 
   @override
-  Future<Map<String, dynamic>> verifyEmail({required String token}) async {
-    final response = await ApiClient.get(
+  Future<void> verifyEmail({required String token}) async {
+    await ApiClient.get(
       Endpoints.verifyEmail,
       auth: false,
       queryParams: {'token': token},
     );
-    return response;
   }
 
   @override

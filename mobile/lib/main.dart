@@ -142,22 +142,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     final uri = Uri.parse(link);
 
-    if (uri.pathSegments.contains('reset-password')) {
-      final token = uri.queryParameters['token'];
-      final email = uri.queryParameters['email'];
-      if (token != null && email != null) {
-        _hasNavigated = true;
-        Navigator.pushReplacementNamed(
-          context,
-          '/reset-password',
-          arguments: {
-            'token': token,
-            'email': email,
-          },
-        );
-        return true;
-      }
-    } else if (uri.pathSegments.contains('verify-email')) {
+    if (uri.pathSegments.contains('verify-email')) {
       final token = uri.queryParameters['token'];
       if (token != null) {
         _hasNavigated = true;
@@ -186,15 +171,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         Navigator.pushNamed(
           context,
           '/email-verification',
-          arguments: token,
-        );
-      }
-    } else if (uri.pathSegments.contains('reset-password')) {
-      final token = uri.queryParameters['token'];
-      if (token != null) {
-        Navigator.pushNamed(
-          context,
-          '/reset-password',
           arguments: token,
         );
       }
