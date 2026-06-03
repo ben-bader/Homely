@@ -13,19 +13,23 @@ class ReportRepositoryImpl implements IReportRepository {
     required String reporterId,
     String? reportedUserId,
     String? reportedPropertyId,
-    required String reason,
+    required String reportReasonId,
+    String? details,
   }) async {
     final data = await _remote.createReport(
         reporterId: reporterId,
         reportedUserId: reportedUserId,
         reportedPropertyId: reportedPropertyId,
-        reason: reason);
+        reportReasonId: reportReasonId,
+        details: details);
     return ReportModel.fromJson(data);
   }
 
   @override
-  Future<List<String>> getReportReasons() async {
+  Future<List<Map<String, dynamic>>> getReportReasons() async {
     final data = await _remote.getReportReasons();
-    return data.map((e) => e['reason'] as String).toList();
+    // Return the full reason objects (id, name, active, etc.)
+    // so the UI can work with both ID and display name
+    return data;
   }
 }

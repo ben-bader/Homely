@@ -1,5 +1,6 @@
 package com.homely.user.controller;
 
+import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -14,10 +15,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.homely.common.error.BadRequestException;
+import com.homely.moderation.dto.CreateReportRequest;
 import com.homely.moderation.dto.ReportDto;
 import com.homely.moderation.entity.Report;
+import com.homely.moderation.entity.ReportReason;
 import com.homely.moderation.mapper.ReportMapper;
 import com.homely.moderation.service.ModerationService;
+import com.homely.moderation.service.ReportReasonService;
 import com.homely.property.service.PropertyService;
 import com.homely.user.dto.UserUpdateRequest;
 import com.homely.user.entity.User;
@@ -37,6 +42,7 @@ public class UserController {
     private final UserMapper userMapper;
     private final PropertyService propertyService;
     private final ModerationService moderationService;
+    private final ReportReasonService reportReasonService;
     private final ReportMapper reportMapper;
 
     @GetMapping("/{id}")
@@ -51,11 +57,35 @@ public class UserController {
 
     @PostMapping("/reports")
     public ResponseEntity<ReportDto> createReport(
-            @Valid @RequestBody ReportDto dto) {
+            @Valid @RequestBody CreateReportRequest dto,
+            Principal principal) {
+
+        if (dto.getReportedUserId() == null && dto.getReportedPropertyId() == null) {
+            throw new BadRequestException("A report must target either a user or a property.");
+        }
+
+        User reporter;
+        if (principal != null && principal.getName() != null) {
+            reporter = userService.getByEmail(principal.getName());
+            if (reporter == null) {
+                throw new BadRequestException("Authenticated reporter not found.");
+            }
+        } else if (dto.getReporterId() != null) {
+            reporter = userService.getById(dto.getReporterId());
+        } else {
+            throw new BadRequestException("Reporter ID is required.");
+        }
+
+        ReportReason reportReason = reportReasonService.getReasonById(dto.getReportReasonId());
+        if (reportReason == null) {
+            throw new BadRequestException("Invalid report reason ID: " + dto.getReportReasonId());
+        }
+        if (!reportReason.isActive()) {
+            throw new BadRequestException("Selected report reason is no longer available");
+        }
 
         Report report = new Report();
 
-        User reporter = userService.getById(dto.getReporterId());
         User reportedUser = dto.getReportedUserId() != null
                 ? userService.getById(dto.getReportedUserId())
                 : null;
@@ -67,12 +97,16 @@ public class UserController {
         report.setReporter(reporter);
         report.setReportedUser(reportedUser);
         report.setReportedProperty(reportedProperty);
-        report.setReason(dto.getReason());
-        report.setStatus(dto.getStatus());
-        report.setReviewedByAdmin(
-                dto.getReviewedByAdminId() != null
-                        ? userService.getById(dto.getReviewedByAdminId())
-                        : null);
+        report.setReportReason(reportReason);
+
+        String reasonText = reportReason.getName();
+        if (dto.getDetails() != null && !dto.getDetails().isBlank()) {
+            reasonText = dto.getDetails();
+        }
+        report.setReason(reasonText);
+
+        report.setStatus(com.homely.common.enums.ReportStatus.OPEN);
+        report.setReviewedByAdmin(null);
 
         Report savedReport = moderationService.report(report);
 

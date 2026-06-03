@@ -26,6 +26,12 @@ public class Report extends BaseEntity {
     @ManyToOne
     private Property reportedProperty;
 
+    @ManyToOne(optional = false)
+    private ReportReason reportReason;
+
+    // Legacy field for backward compatibility - will be removed in future migration
+    // Use reportReason instead
+    @Deprecated
     private String reason;
 
     @Enumerated(EnumType.STRING)
@@ -33,4 +39,14 @@ public class Report extends BaseEntity {
 
     @ManyToOne
     private User reviewedByAdmin;
+
+    /**
+     * Get the reason text from the ReportReason entity.
+     * This method provides backward compatibility with code expecting a reason String.
+     * 
+     * @return the reason name, or null if reportReason is not set
+     */
+    public String getReasonText() {
+        return reportReason != null ? reportReason.getName() : null;
+    }
 }

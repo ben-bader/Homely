@@ -50,8 +50,9 @@ api.interceptors.response.use(
         try {
           // Use axios directly or configure to bypass response interceptor on error for refresh call
           const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken })
-          const newAccessToken = refreshResponse.data.accessToken
-          const newRefreshToken = refreshResponse.data.refreshToken
+          const refreshPayload = refreshResponse.data?.data ?? refreshResponse.data
+          const newAccessToken = refreshPayload?.accessToken
+          const newRefreshToken = refreshPayload?.refreshToken
 
           if (newAccessToken) {
             localStorage.setItem("access_token", newAccessToken)

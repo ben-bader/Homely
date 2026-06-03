@@ -14,11 +14,10 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md mx-auto px-6">
         {/* Logo + branding */}
         <div className="flex flex-col items-center mb-8">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-border bg-white">
-            <Logo imageClassName="h-8 w-8 object-contain" />
+          <div className="flex items-center justify-center overflow-hidden">
+            <Logo imageClassName="h-30 w-30 object-contain" />
           </div>
-          <h1 className="text-xl font-semibold text-foreground">Homely</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Admin Portal</p>
+          <p className="text-sm text-muted-foreground -mt-10">Admin Portal</p>
         </div>
 
         {/* Login card */}

@@ -23,8 +23,9 @@ export function LoginForm({
       setLoading(true);
       setError("");
       const res = await api.post("/auth/login", { email, password });
-      const accessToken = res.data.accessToken;
-      const refreshToken = res.data.refreshToken;
+      const responsePayload = res.data?.data ?? res.data;
+      const accessToken = responsePayload?.accessToken;
+      const refreshToken = responsePayload?.refreshToken;
       if (!accessToken) throw new Error("Missing access token from login response");
       localStorage.setItem("access_token", accessToken);
       if (refreshToken) localStorage.setItem("refresh_token", refreshToken);

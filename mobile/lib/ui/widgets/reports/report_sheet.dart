@@ -45,7 +45,7 @@ class ReportSheet extends ConsumerStatefulWidget {
 }
 
 class _ReportSheetState extends ConsumerState<ReportSheet> {
-  String? _selectedReason;
+  String? _selectedReasonId;  // Now storing reason ID instead of name
   final _customReasonCtrl = TextEditingController();
   bool _showCustomField = false;
   bool _loading = false;
@@ -57,15 +57,11 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
   }
 
   Future<void> _submit() async {
-    final reason = _selectedReason == 'Other'
-        ? _customReasonCtrl.text.trim()
-        : _selectedReason;
-
-    if (reason == null || reason.isEmpty) {
+    if (_selectedReasonId == null || _selectedReasonId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please select or enter a reason',
+            'Please select a reason',
             style: GoogleFonts.outfit(),
           ),
           backgroundColor: AppColors.error,
@@ -89,6 +85,7 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
         throw Exception('You must be logged in to submit a report');
       }
 
+      // Pass the selected reason ID (not reason text)
       await ref
           .read(reportNotifierProvider.notifier)
           .submit(
@@ -99,7 +96,8 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
             reportedUserId: widget.targetType == ReportTargetType.user
                 ? widget.targetId
                 : null,
-            reason: reason,
+            reportReasonId: _selectedReasonId!,  // Pass reason ID
+            details: _showCustomField ? _customReasonCtrl.text.trim() : null,
           );
 
       if (!mounted) return;
@@ -157,11 +155,21 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
         ),
       ),
       data: (reasons) {
-        final resolvedReasons = reasons.isEmpty
-            ? ['Other']
-            : reasons.contains('Other')
-            ? reasons
-            : [...reasons, 'Other'];
+        // Ensure we have reason objects with id and name
+        List<Map<String, dynamic>> reasonsList = reasons.cast<Map<String, dynamic>>();
+        
+
+        if (reasonsList.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(40),
+            child: Center(
+              child: Text(
+                'No report reasons are available at this time.',
+                style: GoogleFonts.outfit(color: AppColors.error),
+              ),
+            ),
+          );
+        }
 
         return Padding(
           padding: EdgeInsets.fromLTRB(
@@ -241,94 +249,98 @@ class _ReportSheetState extends ConsumerState<ReportSheet> {
                 ),
                 const SizedBox(height: 12),
 
-                ...resolvedReasons.map((reason) {
-                  final selected = _selectedReason == reason;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedReason = reason;
-                        _showCustomField = reason == 'Other';
-                        if (reason != 'Other') _customReasonCtrl.clear();
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? AppColors.error.withValues(alpha: 0.08)
-                            : AppColors.subtleBackground,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: selected
-                              ? AppColors.error
-                              : AppColors.borderLight,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              reason,
-                              style: GoogleFonts.outfit(
-                                fontSize: 14,
-                                fontWeight: selected
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                color: selected
-                                    ? AppColors.error
-                                    : AppColors.accent,
-                              ),
+                // Display reasons from the API response
+                ...reasonsList.map((reasonObj) {
+                  final reasonId = reasonObj['id']?.toString() ?? '';
+                  final reasonName = reasonObj['name']?.toString() ?? 'Unknown';
+                  final reasonActive = reasonObj['active'] ?? true;
+                  final selected = _selectedReasonId == reasonId;
+                  final isOther = reasonName.toLowerCase() == 'other';
+                  
+                  return Column(
+                    children: [
+                      GestureDetector(
+                        onTap: reasonActive ? () {
+                          setState(() {
+                            _selectedReasonId = reasonId;
+                            _showCustomField = isOther;
+                            if (!isOther) _customReasonCtrl.clear();
+                          });
+                        } : null,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? AppColors.error.withValues(alpha: 0.08)
+                                : AppColors.subtleBackground,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: selected
+                                  ? AppColors.error
+                                  : AppColors.borderLight,
+                              width: 1.5,
                             ),
                           ),
-                          if (selected)
-                            Icon(
-                              Icons.check_circle_rounded,
-                              size: 18,
-                              color: AppColors.error,
-                            ),
-                        ],
+                          foregroundDecoration: BoxDecoration(
+                            color: reasonActive
+                                ? Colors.transparent
+                                : Colors.white.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  reasonName,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 14,
+                                    fontWeight: selected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                    color: selected
+                                        ? AppColors.error
+                                        : AppColors.accent,
+                                  ),
+                                ),
+                              ),
+                              if (selected)
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 18,
+                                  color: AppColors.error,
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      // Show custom reason text field only if "Other" is selected
+                      if (isOther && selected) ...[
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _customReasonCtrl,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: 'Describe the issue...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ],
                   );
                 }),
 
-                if (_showCustomField) ...[
-                  const SizedBox(height: 4),
-                  TextField(
-                    controller: _customReasonCtrl,
-                    maxLines: 3,
-                    maxLength: 300,
-                    autofocus: true,
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      color: AppColors.accent,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Describe the issue...',
-                      hintStyle: GoogleFonts.outfit(
-                        color: AppColors.textTertiary,
-                        fontSize: 13,
-                      ),
-                      filled: true,
-                      fillColor: AppColors.subtleBackground,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.all(14),
-                      counterStyle: GoogleFonts.outfit(
-                        fontSize: 11,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                  ),
-                ],
 
                 const SizedBox(height: 24),
 

@@ -84,6 +84,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
+                "http://localhost:3001",
                 "http://localhost:8082",
                 "https://elegant-jasiah-speedfully.ngrok-free.dev"));
 

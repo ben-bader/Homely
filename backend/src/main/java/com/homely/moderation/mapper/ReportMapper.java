@@ -19,6 +19,7 @@ public interface ReportMapper {
     @Mapping(target = "reportedUserEmail", expression = "java(entity.getReportedUser() != null ? entity.getReportedUser().getEmail() : null)")
     @Mapping(target = "reportedPropertyId", expression = "java(reportToReportedPropertyId(entity))")
     @Mapping(target = "reportedPropertyTitle", expression = "java(entity.getReportedProperty() != null ? entity.getReportedProperty().getTitle() : null)")
+    @Mapping(target = "reason", expression = "java(entity.getReportReason() != null ? entity.getReportReason().getName() : entity.getReason())")
     @Mapping(target = "reviewedByAdminId", expression = "java(reportToReviewedByAdminId(entity))")
     @Mapping(target = "reviewedByAdminName", expression = "java(entity.getReviewedByAdmin() != null ? entity.getReviewedByAdmin().getName() : null)")
     @Mapping(target = "reviewedByAdminEmail", expression = "java(entity.getReviewedByAdmin() != null ? entity.getReviewedByAdmin().getEmail() : null)")

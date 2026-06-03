@@ -30,11 +30,14 @@ class ReportNotifier extends Notifier<ReportState> {
   @override
   ReportState build() => const ReportState();
 
+  /// Submit a report with the selected reason ID
+  /// reasonId must be a valid active report reason ID from the reasons list
   Future<void> submit({
     required String reporterId,
     String? reportedUserId,
     String? reportedPropertyId,
-    required String reason,
+    required String reportReasonId,  // Changed from reason to reportReasonId
+    String? details,
   }) async {
     state = state.copyWith(status: ReportSubmitStatus.loading);
     try {
@@ -44,7 +47,8 @@ class ReportNotifier extends Notifier<ReportState> {
             reporterId: reporterId,
             reportedUserId: reportedUserId,
             reportedPropertyId: reportedPropertyId,
-            reason: reason,
+            reportReasonId: reportReasonId,  // Pass reason ID
+            details: details,
           );
       state = state.copyWith(status: ReportSubmitStatus.success);
     } catch (e) {
@@ -63,6 +67,8 @@ final reportNotifierProvider = NotifierProvider<ReportNotifier, ReportState>(
   ReportNotifier.new,
 );
 
-final reportReasonsProvider = FutureProvider<List<String>>((ref) async {
+/// Provider for fetching active report reasons
+/// Returns list of reason objects with id, name, active status
+final reportReasonsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.read(reportRepositoryProvider).getReportReasons();
 });
