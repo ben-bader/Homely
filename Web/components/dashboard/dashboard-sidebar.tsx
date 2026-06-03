@@ -1,5 +1,7 @@
 "use client"
 
+import * as React from "react"
+import { useState, useEffect } from "react"
 import {
   Activity,
   BarChart3,
@@ -57,6 +59,11 @@ const groups = [
 
 export function DashboardSidebar({ activeSection, onSectionChange }: DashboardSidebarProps) {
   const user = getUserFromToken()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <aside className="sticky top-6 hidden h-[calc(100vh-48px)] w-[260px] shrink-0 rounded-lg border border-sidebar-border bg-sidebar p-4 text-sidebar-foreground lg:flex lg:flex-col">
@@ -105,11 +112,11 @@ export function DashboardSidebar({ activeSection, onSectionChange }: DashboardSi
       <div className="rounded-lg border border-sidebar-border bg-white p-3">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
-            {(user?.name || user?.username || "A").charAt(0).toUpperCase()}
+            {mounted && user ? (user.name || user.username || "A").charAt(0).toUpperCase() : "A"}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">{user?.name || "Admin"}</p>
-            <p className="truncate text-xs text-muted-foreground">{user?.username || "admin@homely"}</p>
+            <p className="truncate text-sm font-semibold text-foreground">{mounted && user ? (user.name || "Admin") : "Admin"}</p>
+            <p className="truncate text-xs text-muted-foreground">{mounted && user ? (user.username || "admin@homely") : "admin@homely"}</p>
           </div>
         </div>
       </div>

@@ -191,11 +191,11 @@ export function DataTable({ data, onStatusChange }: { data: Report[]; onStatusCh
     <div className="overflow-hidden rounded-lg bg-card border border-border flex flex-col">
       <div className="overflow-auto flex-1 custom-scrollbar">
         <Table>
-          <TableHeader className="bg-accent sticky top-0 z-10">
+          <TableHeader className="sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="border-b-accent-foreground/10 hover:bg-transparent">
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-xs font-extrabold uppercase tracking-widest text-accent-foreground py-4">
+                  <TableHead key={header.id} className="text-xs font-extrabold uppercase tracking-widest py-4">
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}

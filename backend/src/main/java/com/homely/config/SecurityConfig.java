@@ -85,7 +85,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "http://localhost:8082",
-                "https://unparrying-christene-reductively.ngrok-free.dev"));
+                "https://elegant-jasiah-speedfully.ngrok-free.dev"));
 
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT",

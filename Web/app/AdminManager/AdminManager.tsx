@@ -825,11 +825,11 @@ async function handleSavePerms(id: string) {
         {/* Table */}
         <div className="overflow-auto rounded-lg border">
           <Table>
-            <TableHeader className="bg-primary">
+            <TableHeader>
               {table.getHeaderGroups().map((hg) => (
                 <TableRow key={hg.id}>
                   {hg.headers.map((header) => (
-                    <TableHead key={header.id} className="text-white">
+                    <TableHead key={header.id}>
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}

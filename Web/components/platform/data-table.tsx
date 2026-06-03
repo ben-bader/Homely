@@ -76,12 +76,12 @@ export function DataTable<T>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
               key={headerGroup.id}
-              className="border-b border-border/50 bg-muted/40 hover:bg-muted/40"
+              className="border-b border-border/50"
             >
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
-                  className="h-10 px-4 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                  className="h-10 px-4 text-xs font-medium uppercase tracking-wider"
                 >
                   {header.isPlaceholder
                     ? null
