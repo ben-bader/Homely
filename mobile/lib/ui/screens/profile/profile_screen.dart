@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -188,8 +189,11 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
 
   Future<void> _logout() async {
     try {
-      await ref.read(authRepositoryProvider).logout();
-    } catch (_) {}
+      // Use LogoutNotifier for comprehensive state cleanup
+      await ref.read(logoutNotifierProvider.notifier).logout();
+    } catch (e) {
+      debugPrint('Logout error: $e');
+    }
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
