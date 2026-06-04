@@ -3,10 +3,14 @@ package com.homely.analytics.repository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+
 import org.springframework.stereotype.Repository;
+
+import com.homely.common.enums.MediaType;
 import com.homely.common.enums.PropertyStatus;
 import com.homely.common.enums.RoleType;
 import com.homely.moderation.entity.LogActivity;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -59,6 +63,45 @@ public class AnalyticsRepository {
 
     public long countBoostPurchases() {
         return entityManager.createQuery("SELECT COUNT(bp) FROM BoostPurchase bp WHERE bp.status = com.homely.common.enums.PurchaseStatus.COMPLETED", Long.class)
+                .getSingleResult();
+    }
+
+    public long countMediaFiles() {
+        return entityManager.createQuery("SELECT COUNT(m) FROM PropertyMedia m", Long.class)
+                .getSingleResult();
+    }
+
+    public long countMediaByType(MediaType mediaType) {
+        return entityManager.createQuery("SELECT COUNT(m) FROM PropertyMedia m WHERE m.mediaType = :mediaType", Long.class)
+                .setParameter("mediaType", mediaType)
+                .getSingleResult();
+    }
+
+    public long countDistinctMediaPropertyIds() {
+        return entityManager.createQuery("SELECT COUNT(DISTINCT m.property.id) FROM PropertyMedia m", Long.class)
+                .getSingleResult();
+    }
+
+    public List<Object[]> getMediaCountByType() {
+        return entityManager.createQuery("SELECT m.mediaType, COUNT(m) FROM PropertyMedia m GROUP BY m.mediaType", Object[].class)
+                .getResultList();
+    }
+
+    public List<Instant> getMediaCreationTimestamps() {
+        return entityManager.createQuery("SELECT m.createdAt FROM PropertyMedia m WHERE m.createdAt IS NOT NULL", Instant.class)
+                .getResultList();
+    }
+
+    public List<Object[]> getTopPropertiesByMediaCount() {
+        TypedQuery<Object[]> query = entityManager.createQuery(
+                "SELECT m.property, COUNT(m) FROM PropertyMedia m GROUP BY m.property ORDER BY COUNT(m) DESC",
+                Object[].class);
+        query.setMaxResults(10);
+        return query.getResultList();
+    }
+
+    public long countPropertiesWithoutMedia() {
+        return entityManager.createQuery("SELECT COUNT(p) FROM Property p WHERE p.id NOT IN (SELECT m.property.id FROM PropertyMedia m)", Long.class)
                 .getSingleResult();
     }
 

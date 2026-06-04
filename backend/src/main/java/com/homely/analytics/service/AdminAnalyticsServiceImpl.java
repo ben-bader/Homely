@@ -11,13 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.homely.analytics.dto.AdminActivityDto;
 import com.homely.analytics.dto.AuditLogItem;
 import com.homely.analytics.dto.ChatAnalyticsResponse;
 import com.homely.analytics.dto.EngagementAnalyticsResponse;
+import com.homely.analytics.dto.MediaPropertyCountDto;
+import com.homely.analytics.dto.MediaStatsResponse;
 import com.homely.analytics.dto.ModerationAnalyticsResponse;
 import com.homely.analytics.dto.OverviewStatsResponse;
 import com.homely.analytics.dto.PropertyAnalyticsResponse;
@@ -28,7 +32,6 @@ import com.homely.analytics.dto.UserActivityDto;
 import com.homely.analytics.dto.UserGrowthResponse;
 import com.homely.analytics.repository.AnalyticsRepository;
 import com.homely.common.enums.PropertyStatus;
-import com.homely.common.enums.RoleType;
 import com.homely.moderation.entity.LogActivity;
 import com.homely.property.entity.Property;
 import com.homely.user.entity.User;
@@ -141,6 +144,51 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
                 .propertiesByCity(propertiesByCity)
                 .propertiesByListingType(propertiesByListingType)
                 .propertiesCreatedOverTime(propertiesCreatedOverTime)
+                .build();
+    }
+
+    @Override
+    public MediaStatsResponse getMediaStats() {
+        long totalMediaFiles = analyticsRepository.countMediaFiles();
+        long totalImages = analyticsRepository.countMediaByType(com.homely.common.enums.MediaType.IMAGE);
+        long totalVideos = analyticsRepository.countMediaByType(com.homely.common.enums.MediaType.VIDEO);
+        long distinctProperties = analyticsRepository.countDistinctMediaPropertyIds();
+
+        Map<String, Long> mediaByType = new TreeMap<>();
+        for (Object[] row : analyticsRepository.getMediaCountByType()) {
+            if (row[0] != null) {
+                mediaByType.put(row[0].toString().toLowerCase(), (Long) row[1]);
+            }
+        }
+
+        Map<String, Long> mediaUploadedOverTime = groupDaily(analyticsRepository.getMediaCreationTimestamps());
+
+        List<MediaPropertyCountDto> topPropertiesByMediaCount = new java.util.ArrayList<>();
+        for (Object[] row : analyticsRepository.getTopPropertiesByMediaCount()) {
+            com.homely.property.entity.Property property = (com.homely.property.entity.Property) row[0];
+            Long count = (Long) row[1];
+            if (property != null) {
+                topPropertiesByMediaCount.add(MediaPropertyCountDto.builder()
+                        .propertyId(property.getId())
+                        .propertyTitle(property.getTitle())
+                        .mediaCount(count != null ? count : 0L)
+                        .build());
+            }
+        }
+
+        long propertiesWithNoMedia = analyticsRepository.countPropertiesWithoutMedia();
+
+        double averageMediaPerProperty = distinctProperties > 0 ? (double) totalMediaFiles / distinctProperties : 0.0;
+
+        return MediaStatsResponse.builder()
+                .totalMediaFiles(totalMediaFiles)
+                .totalImages(totalImages)
+                .totalVideos(totalVideos)
+                .averageMediaPerProperty(averageMediaPerProperty)
+                .mediaByType(mediaByType)
+                .mediaUploadedOverTime(mediaUploadedOverTime)
+                .topPropertiesByMediaCount(topPropertiesByMediaCount)
+                .propertiesWithNoMedia(propertiesWithNoMedia)
                 .build();
     }
 
