@@ -42,19 +42,19 @@ public class VisitRequestController {
     @GetMapping("/requests")
     public List<VisitRequestDto> getVisitRequests(Principal principal) {
         String email = principal.getName();
-        return visitRequestService.getByUserEmail(email).stream()
+        return visitRequestService.getBySellerEmail(email).stream()
                 .map(visitRequestMapper::toDto)
                 .toList();
     }
 
     @PutMapping("/{id}/status")
-    public VisitRequestDto updateStatus(@PathVariable UUID id, @RequestParam VisitStatus status) {
-        return visitRequestService.updateStatus(id, status);
+    public VisitRequestDto updateStatus(@PathVariable UUID id, @RequestParam VisitStatus status, Principal principal) {
+        return visitRequestService.updateStatus(id, status, principal.getName());
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) {
-        visitRequestService.delete(id);
+    public void delete(@PathVariable UUID id, Principal principal) {
+        visitRequestService.delete(id, principal.getName());
     }
 
     // ✅ Get authenticated user's visit requests (as client)

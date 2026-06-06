@@ -13,15 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.homely.boost.dto.BoostPurchaseDto;
-import com.homely.boost.entity.BoostPurchase;
-import com.homely.boost.mapper.BoostPurchaseMapper;
-import com.homely.boost.service.BoostService;
 import com.homely.chat.dto.ConversationDto;
 import com.homely.chat.mapper.ConversationMapper;
 import com.homely.chat.service.ChatService;
 import com.homely.common.enums.PropertyStatus;
-import com.homely.common.enums.PurchaseStatus;
 import com.homely.common.enums.ReportStatus;
 import com.homely.feedback.dto.FeedbackDto;
 import com.homely.feedback.mapper.FeedbackMapper;
@@ -29,7 +24,6 @@ import com.homely.feedback.service.FeedbackService;
 import com.homely.moderation.dto.AuditLogDto;
 import com.homely.moderation.dto.LogActivityDto;
 import com.homely.moderation.dto.ReportDto;
-import com.homely.moderation.dto.AuditLogDto;
 import com.homely.moderation.entity.LogActivity;
 import com.homely.moderation.entity.Report;
 import com.homely.moderation.mapper.AuditLogMapper;
@@ -51,9 +45,6 @@ import com.homely.user.mapper.ProfileMapper;
 import com.homely.user.mapper.UserMapper;
 import com.homely.user.service.ProfileService;
 import com.homely.user.service.UserService;
-import com.homely.visitrequest.dto.VisitRequestDto;
-import com.homely.visitrequest.mapper.VisitRequestMapper;
-import com.homely.visitrequest.service.VisitRequestService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -68,11 +59,9 @@ public class AdminController {
     private final UserService userService;
     private final PropertyService propertyService;
     private final ProfileService profileService;
-    private final BoostService boostService;
     private final ChatService chatService;
     private final PropertyViewService propertyViewService;
     private final FeedbackService feedbackService;
-    private final VisitRequestService visitRequestService;
     private final PropertyRepository propertyRepository;
 
     private final ReportMapper reportMapper;
@@ -81,10 +70,8 @@ public class AdminController {
     private final UserMapper userMapper;
     private final ProfileMapper profileMapper;
     private final PropertyMapper propertyMapper;
-    private final BoostPurchaseMapper boostPurchaseMapper;
     private final PropertyViewMapper propertyViewMapper;
     private final FeedbackMapper feedbackMapper;
-    private final VisitRequestMapper visitRequestMapper;
     private final ConversationMapper conversationMapper;
 
     @GetMapping("/reports")
@@ -189,13 +176,6 @@ public class AdminController {
         return profileService.getAll().stream().map(profileMapper::toDto).toList();
     }
 
-    @GetMapping("/boosts")
-    public List<BoostPurchaseDto> getAllBoosts() {
-        return boostService.getAll().stream()
-                        .map(boostPurchaseMapper::toDto)
-                        .toList();
-    }
-
     @GetMapping("/properties")
     public List<PropertyDto> getAllProperties() {
         return propertyService.getAll();
@@ -217,11 +197,6 @@ public class AdminController {
     @GetMapping("/feedbacks")
     public List<FeedbackDto> getAllFeedbacks() {
         return feedbackService.getAll().stream().map(feedbackMapper::toDto).toList();
-    }
-
-    @GetMapping("/visit-requests")
-    public List<VisitRequestDto> getAllVisitRequests() {
-        return visitRequestService.getAll().stream().map(visitRequestMapper::toDto).toList();
     }
 
     @PutMapping("/properties/{id}/status")
@@ -254,38 +229,12 @@ public class AdminController {
         return updated;
     }
 
-    @PutMapping("/boosts/{id}/status")
-    public BoostPurchaseDto updateBoostStatus(
-            @PathVariable UUID id,
-            @RequestParam PurchaseStatus status,
-            Principal principal) {
-
-        // Get admin user
-        User admin = userService.getByEmail(principal.getName());
-        if (admin == null)
-            throw new RuntimeException("Admin not found");
-
-        // Update the boost purchase status
-        BoostPurchase boost = boostService.getById(id);
-        boost.setStatus(status);
-        BoostPurchaseDto updated = boostService.updateStatus(boost.getId(), status); // make sure save method exists in
-                                                                                     // your service
-
-        // Log audit
-        moderationService.logAction(
-                "UPDATE_BOOST_STATUS",
-                admin,
-                "Changed boost id " + id + " status to " + status);
-
-        return updated; // or use a mapper
-    }
-
     @GetMapping("/conversations")
-public List<ConversationDto> getAllConversations() {
-    return chatService.getAllConversations()
-            .stream()
-            .map(conversationMapper::toDto)
-            .toList();
-}
+    public List<ConversationDto> getAllConversations() {
+        return chatService.getAllConversations()
+                .stream()
+                .map(conversationMapper::toDto)
+                .toList();
+    }
     
 }

@@ -66,9 +66,23 @@ class ChatService {
   }
 
   void disconnect() {
-    _realtime.disconnect();
+    // Clear all subscriptions
+    for (var conversationId in _subscriptions.keys.toList()) {
+      final callback = _subscriptions[conversationId];
+      if (callback != null) {
+        _realtime.unsubscribe('/topic/chat/$conversationId', callback);
+      }
+    }
+    _subscriptions.clear();
+    
+    // Close message stream
     if (!_messageController.isClosed) {
       _messageController.close();
     }
+  }
+  
+  /// Reset service for new session
+  void reset() {
+    disconnect();
   }
 }

@@ -41,8 +41,10 @@ class AppInitializer {
     }
   }
 
-  /// Reset the initialization state (useful for logout)
+  /// Reset the initialization state and cleanup services (useful for logout)
   void reset() {
+    debugPrint('[AppInitializer] Resetting initialization state');
     _initialized = false;
+    // Additional cleanup could be added here if needed
   }
 }

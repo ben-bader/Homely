@@ -75,6 +75,7 @@ const dict = {
       available: "Available",
       suspended: "Suspended",
       draft: "Draft",
+      filtered: "filtered",
     },
     drawer: {
       title: "Property Details",
@@ -155,6 +156,7 @@ const dict = {
       available: "Disponible",
       suspended: "Suspendu",
       draft: "Brouillon",
+      filtered: "filtrés",
     },
     drawer: {
       title: "Détails de la propriété",
@@ -234,19 +236,38 @@ function fmt(v: string | number | null | undefined, locale: string = "en-US") {
   return d ? d.toLocaleDateString(locale) : "—";
 }
 
-function fmtFull(v: string | number | null | undefined, locale: string = "en-US") {
+function fmtFull(
+  v: string | number | null | undefined,
+  locale: string = "en-US",
+) {
   const d = parseDate(v);
   return d ? d.toLocaleString(locale) : "—";
 }
 
 /* ---------------- INFO ROW ---------------- */
 
-function InfoRow({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
+function InfoRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="text-[11px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
       {typeof value === "string" || typeof value === "number" ? (
-        <span className={mono ? "font-mono text-xs break-all text-foreground" : "text-sm font-medium text-foreground"}>
+        <span
+          className={
+            mono
+              ? "font-mono text-xs break-all text-foreground"
+              : "text-sm font-medium text-foreground"
+          }
+        >
           {value}
         </span>
       ) : (
@@ -260,30 +281,53 @@ function InfoRow({ label, value, mono = false }: { label: string; value: React.R
 
 function FilterPanel({
   lang,
-  filterStatus, setFilterStatus,
-  minPrice, setMinPrice,
-  maxPrice, setMaxPrice,
-  city, setCity,
-  createdAfter, setCreatedAfter,
-  createdBefore, setCreatedBefore,
-  dateSort, setDateSort,
+  filterStatus,
+  setFilterStatus,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
+  city,
+  setCity,
+  createdAfter,
+  setCreatedAfter,
+  createdBefore,
+  setCreatedBefore,
+  dateSort,
+  setDateSort,
   onClear,
 }: {
   lang: Language;
-  filterStatus: PropertyStatus | "ALL"; setFilterStatus: (v: PropertyStatus | "ALL") => void;
-  minPrice: number | ""; setMinPrice: (v: number | "") => void;
-  maxPrice: number | ""; setMaxPrice: (v: number | "") => void;
-  city: string; setCity: (v: string) => void;
-  createdAfter: string; setCreatedAfter: (v: string) => void;
-  createdBefore: string; setCreatedBefore: (v: string) => void;
-  dateSort: DateSort; setDateSort: (v: DateSort) => void;
+  filterStatus: PropertyStatus | "ALL";
+  setFilterStatus: (v: PropertyStatus | "ALL") => void;
+  minPrice: number | "";
+  setMinPrice: (v: number | "") => void;
+  maxPrice: number | "";
+  setMaxPrice: (v: number | "") => void;
+  city: string;
+  setCity: (v: string) => void;
+  createdAfter: string;
+  setCreatedAfter: (v: string) => void;
+  createdBefore: string;
+  setCreatedBefore: (v: string) => void;
+  dateSort: DateSort;
+  setDateSort: (v: DateSort) => void;
   onClear: () => void;
 }) {
   const t = dict[lang].filters;
-  const statuses: (PropertyStatus | "ALL")[] = ["ALL", PropertyStatus.AVAILABLE, PropertyStatus.SUSPENDED, PropertyStatus.DRAFT];
+  const statuses: (PropertyStatus | "ALL")[] = [
+    "ALL",
+    PropertyStatus.AVAILABLE,
+    PropertyStatus.SUSPENDED,
+    PropertyStatus.DRAFT,
+  ];
   const activeCount = [
-    filterStatus !== "ALL", minPrice !== "", maxPrice !== "",
-    city !== "", createdAfter !== "", createdBefore !== "",
+    filterStatus !== "ALL",
+    minPrice !== "",
+    maxPrice !== "",
+    city !== "",
+    createdAfter !== "",
+    createdBefore !== "",
     dateSort !== "",
   ].filter(Boolean).length;
 
@@ -296,10 +340,22 @@ function FilterPanel({
     <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
         <div className="flex items-center gap-2">
-          <svg className="w-3.5 h-3.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          <svg
+            className="w-3.5 h-3.5 text-muted-foreground"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
+            />
           </svg>
-          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">{t.title}</span>
+          <span className="text-xs font-semibold text-foreground uppercase tracking-widest">
+            {t.title}
+          </span>
           {activeCount > 0 && (
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {activeCount}
@@ -307,7 +363,10 @@ function FilterPanel({
           )}
         </div>
         {activeCount > 0 && (
-          <button onClick={onClear} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium">
+          <button
+            onClick={onClear}
+            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium"
+          >
             {t.clearAll}
           </button>
         )}
@@ -315,7 +374,9 @@ function FilterPanel({
 
       <div className="p-4 space-y-5">
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.statusLabel}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            {t.statusLabel}
+          </label>
           <div className="flex flex-wrap gap-1.5">
             {statuses.map((s) => (
               <button
@@ -334,26 +395,36 @@ function FilterPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.priceRangeLabel}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            {t.priceRangeLabel}
+          </label>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                $
+              </span>
               <Input
                 type="number"
                 placeholder={t.minPricePlaceholder}
                 value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setMinPrice(e.target.value ? Number(e.target.value) : "")
+                }
                 className="pl-6"
               />
             </div>
             <span className="text-muted-foreground text-xs font-medium">—</span>
             <div className="relative flex-1">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                $
+              </span>
               <Input
                 type="number"
                 placeholder={t.maxPricePlaceholder}
                 value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setMaxPrice(e.target.value ? Number(e.target.value) : "")
+                }
                 className="pl-6"
               />
             </div>
@@ -361,11 +432,27 @@ function FilterPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.locationLabel}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            {t.locationLabel}
+          </label>
           <div className="relative">
-            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             <Input
               placeholder={t.locationPlaceholder}
@@ -377,7 +464,9 @@ function FilterPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.dateSortLabel}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            {t.dateSortLabel}
+          </label>
           <div className="flex gap-1.5">
             {dateSortOptions.map(({ value, label, icon }) => (
               <button
@@ -397,15 +486,29 @@ function FilterPanel({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{t.createdBetweenLabel}</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            {t.createdBetweenLabel}
+          </label>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">{t.dateAfter}</span>
-              <Input type="date" value={createdAfter} onChange={(e) => setCreatedAfter(e.target.value)} />
+              <span className="text-[10px] text-muted-foreground">
+                {t.dateAfter}
+              </span>
+              <Input
+                type="date"
+                value={createdAfter}
+                onChange={(e) => setCreatedAfter(e.target.value)}
+              />
             </div>
             <div className="space-y-1">
-              <span className="text-[10px] text-muted-foreground">{t.dateBefore}</span>
-              <Input type="date" value={createdBefore} onChange={(e) => setCreatedBefore(e.target.value)} />
+              <span className="text-[10px] text-muted-foreground">
+                {t.dateBefore}
+              </span>
+              <Input
+                type="date"
+                value={createdBefore}
+                onChange={(e) => setCreatedBefore(e.target.value)}
+              />
             </div>
           </div>
         </div>
@@ -434,7 +537,13 @@ function PropertyDrawer({
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const { media, loading: mediaLoading, error: mediaError, fetchMedia, deleteMedia } = useMedia();
+  const {
+    media,
+    loading: mediaLoading,
+    error: mediaError,
+    fetchMedia,
+    deleteMedia,
+  } = useMedia();
 
   const handleDelete = async () => {
     if (!p) {
@@ -462,16 +571,27 @@ function PropertyDrawer({
   return (
     <Drawer
       direction="right"
-      onOpenChange={(open) => { if (open) { fetchDetail(property.id); fetchMedia(property.id); } }}
+      onOpenChange={(open) => {
+        if (open) {
+          fetchDetail(property.id);
+          fetchMedia(property.id);
+        }
+      }}
     >
       <DrawerTrigger asChild>
-        <Button variant="ghost" size="icon"><FaEye /></Button>
+        <Button variant="ghost" size="icon">
+          <FaEye />
+        </Button>
       </DrawerTrigger>
 
       <DrawerContent className="flex flex-col max-w-lg ml-auto h-full">
         <DrawerHeader className="border-b pb-4">
-          <DrawerTitle className="text-base font-semibold">{t.title}</DrawerTitle>
-          <DrawerDescription className="text-xs text-muted-foreground">{t.description}</DrawerDescription>
+          <DrawerTitle className="text-base font-semibold">
+            {t.title}
+          </DrawerTitle>
+          <DrawerDescription className="text-xs text-muted-foreground">
+            {t.description}
+          </DrawerDescription>
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
@@ -480,21 +600,56 @@ function PropertyDrawer({
           ) : p ? (
             <>
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionListing}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                  {t.sectionListing}
+                </p>
                 <InfoRow label={t.labelTitle} value={p.title} />
-                <InfoRow label={t.labelStatus} value={<Badge variant={p.status === "AVAILABLE" ? "default" : p.status === "SUSPENDED" ? "destructive" : "secondary"}>{p.status}</Badge>} />
+                <InfoRow
+                  label={t.labelStatus}
+                  value={
+                    <Badge
+                      variant={
+                        p.status === "AVAILABLE"
+                          ? "default"
+                          : p.status === "SUSPENDED"
+                            ? "destructive"
+                            : "secondary"
+                      }
+                    >
+                      {p.status}
+                    </Badge>
+                  }
+                />
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label={t.labelListingType} value={p.listingType ?? "—"} />
-                  <InfoRow label={t.labelPropertyType} value={p.propertyType ?? "—"} />
+                  <InfoRow
+                    label={t.labelListingType}
+                    value={p.listingType ?? "—"}
+                  />
+                  <InfoRow
+                    label={t.labelPropertyType}
+                    value={p.propertyType ?? "—"}
+                  />
                 </div>
-                <InfoRow label={t.labelPrice} value={p.price ? `${p.price.toLocaleString()} ${p.currency}` : "—"} />
-                <InfoRow label={t.labelBoosted} value={p.isBoosted ? t.yes : t.no} />
+                <InfoRow
+                  label={t.labelPrice}
+                  value={
+                    p.price ? `${p.price.toLocaleString()} ${p.currency}` : "—"
+                  }
+                />
+                <InfoRow
+                  label={t.labelBoosted}
+                  value={p.isBoosted ? t.yes : t.no}
+                />
               </section>
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionLocation}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                  {t.sectionLocation}
+                </p>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[11px] uppercase tracking-widest text-muted-foreground">{t.labelAddress}</span>
+                  <span className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                    {t.labelAddress}
+                  </span>
                   <AddressMapPopover address={p.address} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -504,39 +659,74 @@ function PropertyDrawer({
               </section>
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionDescription}</p>
-                <p className="text-sm text-foreground leading-relaxed">{p.description || "—"}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                  {t.sectionDescription}
+                </p>
+                <p className="text-sm text-foreground leading-relaxed">
+                  {p.description || "—"}
+                </p>
               </section>
 
               {p.apartment && (
                 <section className="space-y-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionApartment}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                    {t.sectionApartment}
+                  </p>
                   <div className="grid grid-cols-2 gap-3">
-                    <InfoRow label={t.labelBedrooms} value={p.apartment.bedrooms} />
-                    <InfoRow label={t.labelBathrooms} value={p.apartment.bathrooms} />
+                    <InfoRow
+                      label={t.labelBedrooms}
+                      value={p.apartment.bedrooms}
+                    />
+                    <InfoRow
+                      label={t.labelBathrooms}
+                      value={p.apartment.bathrooms}
+                    />
                     <InfoRow label={t.labelFloor} value={p.apartment.floor} />
-                    <InfoRow label={t.labelElevator} value={p.apartment.hasElevator ? t.yes : t.no} />
+                    <InfoRow
+                      label={t.labelElevator}
+                      value={p.apartment.hasElevator ? t.yes : t.no}
+                    />
                   </div>
                 </section>
               )}
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionSeller}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                  {t.sectionSeller}
+                </p>
                 <InfoRow label={t.labelSellerName} value={p.sellerName} />
               </section>
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionTimestamps}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                  {t.sectionTimestamps}
+                </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label={t.labelCreatedAt} value={fmtFull(p.createdAt, lang === "fr" ? "fr-FR" : "en-US")} />
-                  <InfoRow label={t.labelUpdatedAt} value={fmtFull(p.updatedAt, lang === "fr" ? "fr-FR" : "en-US")} />
+                  <InfoRow
+                    label={t.labelCreatedAt}
+                    value={fmtFull(
+                      p.createdAt,
+                      lang === "fr" ? "fr-FR" : "en-US",
+                    )}
+                  />
+                  <InfoRow
+                    label={t.labelUpdatedAt}
+                    value={fmtFull(
+                      p.updatedAt,
+                      lang === "fr" ? "fr-FR" : "en-US",
+                    )}
+                  />
                 </div>
               </section>
 
               <section className="space-y-4">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">{t.sectionMedia}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b pb-1">
+                  {t.sectionMedia}
+                </p>
                 {mediaLoading ? (
-                  <p className="text-sm text-muted-foreground">{t.loadingMedia}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t.loadingMedia}
+                  </p>
                 ) : mediaError ? (
                   <p className="text-sm text-destructive">{mediaError}</p>
                 ) : media.length === 0 ? (
@@ -545,7 +735,7 @@ function PropertyDrawer({
                   <div className="grid grid-cols-2 gap-3">
                     {media.map((m) => (
                       <div key={m.id} className="relative group">
-                        {m.type === 'video' ? (
+                        {m.type === "video" ? (
                           <video
                             src={m.url}
                             controls
@@ -577,7 +767,9 @@ function PropertyDrawer({
 
         {message && (
           <div className="px-5 pb-2">
-            <p className="text-sm text-center text-muted-foreground">{message}</p>
+            <p className="text-sm text-center text-muted-foreground">
+              {message}
+            </p>
           </div>
         )}
 
@@ -592,7 +784,12 @@ function PropertyDrawer({
           </Button>
 
           <DrawerClose asChild>
-            <Button variant="outline" className="w-full bg-black hover:bg-gray-900 text-white border-gray-700">{t.btnClose}</Button>
+            <Button
+              variant="outline"
+              className="w-full bg-black hover:bg-gray-900 text-white border-gray-700"
+            >
+              {t.btnClose}
+            </Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
@@ -611,31 +808,60 @@ function buildColumns(
 ): ColumnDef<Property>[] {
   const t = dict[lang];
   return [
-    { accessorKey: "title", header: t.colTitle, cell: ({ row }) => row.original.title },
+    {
+      accessorKey: "title",
+      header: t.colTitle,
+      cell: ({ row }) => row.original.title,
+    },
     {
       accessorKey: "address",
       header: t.colAddress,
       maxSize: 100,
       cell: ({ row }) => <AddressMapPopover address={row.original.address} />,
     },
-    { accessorKey: "price", header: t.colPrice, cell: ({ row }) => `$${row.original.price.toLocaleString()} ${row.original.currency}` },
-    { accessorKey: "createdAt", header: t.colDate, cell: ({ row }) => fmt(row.original.createdAt, lang === "fr" ? "fr-FR" : "en-US") },
-    { accessorKey: "sellerName", header: t.colSeller, cell: ({ row }) => row.original.sellerName },
     {
-      accessorKey: "status", header: t.colStatus,
+      accessorKey: "price",
+      header: t.colPrice,
+      cell: ({ row }) =>
+        `$${row.original.price.toLocaleString()} ${row.original.currency}`,
+    },
+    {
+      accessorKey: "createdAt",
+      header: t.colDate,
+      cell: ({ row }) =>
+        fmt(row.original.createdAt, lang === "fr" ? "fr-FR" : "en-US"),
+    },
+    {
+      accessorKey: "sellerName",
+      header: t.colSeller,
+      cell: ({ row }) => row.original.sellerName,
+    },
+    {
+      accessorKey: "status",
+      header: t.colStatus,
       cell: ({ row }) => {
         const status = row.original.status;
         let triggerClass = "h-7 w-[130px] text-xs";
-        if (status === "AVAILABLE") triggerClass += " bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/50";
-        else if (status === "SUSPENDED") triggerClass += " bg-destructive/10 text-destructive border-destructive/30";
-        else if (status === "DRAFT") triggerClass += " bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200/50 dark:border-yellow-900/50";
-        
+        if (status === "AVAILABLE")
+          triggerClass +=
+            " bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200/50 dark:border-green-900/50";
+        else if (status === "SUSPENDED")
+          triggerClass +=
+            " bg-destructive/10 text-destructive border-destructive/30";
+        else if (status === "DRAFT")
+          triggerClass +=
+            " bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 border-yellow-200/50 dark:border-yellow-900/50";
+
         return (
           <Select
             value={status}
-            onValueChange={(v) => handleStatusUpdate(row.original.id, v as PropertyStatus)}
+            onValueChange={(v) =>
+              handleStatusUpdate(row.original.id, v as PropertyStatus)
+            }
           >
-            <SelectTrigger className={triggerClass}><SelectValue /></SelectTrigger>
+            <SelectTrigger className={triggerClass}>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="AVAILABLE">AVAILABLE</SelectItem>
               <SelectItem value="SUSPENDED">SUSPENDED</SelectItem>
@@ -646,7 +872,8 @@ function buildColumns(
       },
     },
     {
-      id: "seeMore", header: t.colActions,
+      id: "seeMore",
+      header: t.colActions,
       cell: ({ row }) => (
         <PropertyDrawer
           lang={lang}
@@ -667,8 +894,12 @@ export default function Properties() {
   const lang = (locale === "fr" ? "fr" : "en") as Language;
   const t = dict[lang];
   const {
-    properties, loading, error,
-    fetchPropertyDetail, selectedProperty, loadingDetail,
+    properties,
+    loading,
+    error,
+    fetchPropertyDetail,
+    selectedProperty,
+    loadingDetail,
     updatePropertyStatus,
   } = useProperties();
 
@@ -699,7 +930,9 @@ export default function Properties() {
     };
   }, []);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [filterStatus, setFilterStatus] = useState<PropertyStatus | "ALL">("ALL");
+  const [filterStatus, setFilterStatus] = useState<PropertyStatus | "ALL">(
+    "ALL",
+  );
   const [minPrice, setMinPrice] = useState<number | "">("");
   const [maxPrice, setMaxPrice] = useState<number | "">("");
   const [city, setCity] = useState("");
@@ -719,8 +952,12 @@ export default function Properties() {
   };
 
   const activeFilterCount = [
-    filterStatus !== "ALL", minPrice !== "", maxPrice !== "",
-    city !== "", createdAfter !== "", createdBefore !== "",
+    filterStatus !== "ALL",
+    minPrice !== "",
+    maxPrice !== "",
+    city !== "",
+    createdAfter !== "",
+    createdBefore !== "",
     dateSort !== "",
   ].filter(Boolean).length;
 
@@ -733,14 +970,29 @@ export default function Properties() {
   };
 
   const columns = useMemo(
-    () => buildColumns(lang, selectedProperty, loadingDetail, fetchPropertyDetail, handleStatusUpdate),
-    [lang, selectedProperty, loadingDetail, fetchPropertyDetail, handleStatusUpdate]
+    () =>
+      buildColumns(
+        lang,
+        selectedProperty,
+        loadingDetail,
+        fetchPropertyDetail,
+        handleStatusUpdate,
+      ),
+    [
+      lang,
+      selectedProperty,
+      loadingDetail,
+      fetchPropertyDetail,
+      handleStatusUpdate,
+    ],
   );
 
   const filteredData = useMemo(() => {
     const filtered = properties.filter((p) => {
       const textMatch = [p.title, p.address, p.sellerName]
-        .join(" ").toLowerCase().includes(search.toLowerCase());
+        .join(" ")
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
       const statusMatch = filterStatus === "ALL" || p.status === filterStatus;
 
@@ -748,13 +1000,28 @@ export default function Properties() {
       const minPriceMatch = minPrice === "" || price >= Number(minPrice);
       const maxPriceMatch = maxPrice === "" || price <= Number(maxPrice);
 
-      const cityMatch = city === "" || p.address.toLowerCase().includes(city.toLowerCase());
+      const cityMatch =
+        city === "" || p.address.toLowerCase().includes(city.toLowerCase());
 
       const created = parseDate(p.createdAt)?.getTime() ?? null;
-      const afterMatch = !createdAfter || (created !== null && created >= new Date(createdAfter + "T00:00:00Z").getTime());
-      const beforeMatch = !createdBefore || (created !== null && created <= new Date(createdBefore + "T23:59:59Z").getTime());
+      const afterMatch =
+        !createdAfter ||
+        (created !== null &&
+          created >= new Date(createdAfter + "T00:00:00Z").getTime());
+      const beforeMatch =
+        !createdBefore ||
+        (created !== null &&
+          created <= new Date(createdBefore + "T23:59:59Z").getTime());
 
-      return textMatch && statusMatch && minPriceMatch && maxPriceMatch && cityMatch && afterMatch && beforeMatch;
+      return (
+        textMatch &&
+        statusMatch &&
+        minPriceMatch &&
+        maxPriceMatch &&
+        cityMatch &&
+        afterMatch &&
+        beforeMatch
+      );
     });
 
     if (dateSort === "newest") {
@@ -772,7 +1039,17 @@ export default function Properties() {
     }
 
     return filtered;
-  }, [properties, search, filterStatus, minPrice, maxPrice, city, createdAfter, createdBefore, dateSort]);
+  }, [
+    properties,
+    search,
+    filterStatus,
+    minPrice,
+    maxPrice,
+    city,
+    createdAfter,
+    createdBefore,
+    dateSort,
+  ]);
 
   const table = useReactTable({
     data: filteredData,
@@ -786,15 +1063,19 @@ export default function Properties() {
 
   // Summary calculations
   const totalProperties = properties.length;
-  const availableProperties = properties.filter(p => p.status === "AVAILABLE").length;
-  const suspendedProperties = properties.filter(p => p.status === "SUSPENDED").length;
-  const draftProperties = properties.filter(p => p.status === "DRAFT").length;
+  const availableProperties = properties.filter(
+    (p) => p.status === "AVAILABLE",
+  ).length;
+  const suspendedProperties = properties.filter(
+    (p) => p.status === "SUSPENDED",
+  ).length;
+  const draftProperties = properties.filter((p) => p.status === "DRAFT").length;
 
   if (loading) return <div className="p-8">{t.loadingMain}</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
 
   return (
-    <div className="px-8 space-y-6">
+    <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">{t.pageTitle}</h2>
       </div>
@@ -804,19 +1085,27 @@ export default function Properties() {
       {/* Summary Cards (kept inline) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-card border rounded-xl p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.filters.total}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t.filters.total}
+          </p>
           <p className="text-2xl font-bold mt-2">{totalProperties}</p>
         </div>
         <div className="bg-card border rounded-xl p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.filters.available}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t.filters.available}
+          </p>
           <p className="text-2xl font-bold mt-2">{availableProperties}</p>
         </div>
         <div className="bg-card border rounded-xl p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.filters.suspended}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t.filters.suspended}
+          </p>
           <p className="text-2xl font-bold mt-2">{suspendedProperties}</p>
         </div>
         <div className="bg-card border rounded-xl p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.filters.draft}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t.filters.draft}
+          </p>
           <p className="text-2xl font-bold mt-2">{draftProperties}</p>
         </div>
       </div>
@@ -832,8 +1121,18 @@ export default function Properties() {
           onClick={() => setFilterOpen((v) => !v)}
           className="relative"
         >
-          <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+          <svg
+            className="w-3.5 h-3.5 mr-1.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
+            />
           </svg>
           {t.filterButton}
           {activeFilterCount > 0 && (
@@ -847,13 +1146,20 @@ export default function Properties() {
       {filterOpen && (
         <FilterPanel
           lang={lang}
-          filterStatus={filterStatus} setFilterStatus={setFilterStatus}
-          minPrice={minPrice} setMinPrice={setMinPrice}
-          maxPrice={maxPrice} setMaxPrice={setMaxPrice}
-          city={city} setCity={setCity}
-          createdAfter={createdAfter} setCreatedAfter={setCreatedAfter}
-          createdBefore={createdBefore} setCreatedBefore={setCreatedBefore}
-          dateSort={dateSort} setDateSort={setDateSort}
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
+          minPrice={minPrice}
+          setMinPrice={setMinPrice}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          city={city}
+          setCity={setCity}
+          createdAfter={createdAfter}
+          setCreatedAfter={setCreatedAfter}
+          createdBefore={createdBefore}
+          setCreatedBefore={setCreatedBefore}
+          dateSort={dateSort}
+          setDateSort={setDateSort}
           onClear={clearFilters}
         />
       )}
@@ -865,7 +1171,10 @@ export default function Properties() {
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -874,7 +1183,10 @@ export default function Properties() {
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center text-muted-foreground py-12 text-sm">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center text-muted-foreground py-12 text-sm"
+                >
                   {t.noResults}
                 </TableCell>
               </TableRow>
@@ -883,7 +1195,10 @@ export default function Properties() {
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -892,14 +1207,22 @@ export default function Properties() {
           </TableBody>
         </Table>
       </div>
-
-      <PaginationFooter
-        pageInfo={t.pagination.pageInfo.replace('{current}', (pagination.pageIndex + 1).toString()).replace('{total}', Math.max(table.getPageCount(), 1).toString())}
-        onPrevious={() => table.previousPage()}
-        onNext={() => table.nextPage()}
-        canPrevious={table.getCanPreviousPage()}
-        canNext={table.getCanNextPage()}
-      />
+      {/* Pagination (standardized) */}
+      <div className="flex justify-between items-center">
+         <span className="text-xs text-muted-foreground">
+  {filteredData.length} {t.title}
+  {activeFilterCount > 0 ? ` (${t.filters.filtered})` : ""}
+</span>
+        <PaginationFooter
+          pageInfo={t.pagination.pageInfo
+            .replace("{current}", (pagination.pageIndex + 1).toString())
+            .replace("{total}", Math.max(table.getPageCount(), 1).toString())}
+          onPrevious={() => table.previousPage()}
+          onNext={() => table.nextPage()}
+          canPrevious={table.getCanPreviousPage()}
+          canNext={table.getCanNextPage()}
+        />
+      </div>
     </div>
   );
 }

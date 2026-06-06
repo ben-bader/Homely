@@ -19,6 +19,10 @@ import {
   Flag,
   ShieldCheck,
   Building2,
+  Image,
+  Video,
+  FileImage,
+  LayoutGrid,
 } from "lucide-react";
 import {
   Card,
@@ -62,6 +66,7 @@ import {
   ChatAnalytics,
   EngagementStats,
   ModerationAnalytics,
+  MediaStats,
 } from "@/services/adminStats";
 
 type Language = "en" | "fr";
@@ -84,6 +89,7 @@ const dict = {
       revenue: "Revenue",
       chats: "Chats & Engagement",
       moderation: "Moderation",
+      media: "Media",
     },
     overviewTab: {
       platformUsers: "Platform Users",
@@ -159,7 +165,7 @@ const dict = {
     revenueTab: {
       totalRevenue: "Total Boost Ad Revenue",
       growthMoM: "Revenue Growth MoM",
-      growthDesc: "Month-over-month growth of promotional sales.",
+      growthDesc: "Monthly growth of promotional sales.",
       monetizedSellers: "Monetized Sellers",
       purchasedSpots: "Sellers who purchased premium ad spots.",
       monthlyEarnings: "Monthly Earnings Trend",
@@ -226,6 +232,29 @@ const dict = {
       activeAdmins: "Active Moderators",
       activeAdminsDesc: "Admins who have performed at least one action.",
     },
+    mediaTab: {
+      totalMedia: "Total Media Files",
+      totalMediaDesc: "All images and videos uploaded to the platform.",
+      totalImages: "Total Images",
+      totalImagesDesc: "All image files uploaded across all properties.",
+      totalVideos: "Total Videos",
+      totalVideosDesc: "All video files uploaded across all properties.",
+      avgPerProperty: "Avg. Media / Property",
+      avgPerPropertyDesc: "Average number of media files per listed property.",
+      noMediaProperties: "Properties Without Media",
+      noMediaPropertiesDesc: "Properties that have no images or videos attached.",
+      uploadTrend: "Media Upload Trend",
+      uploadTrendDesc: "Daily media file uploads over time.",
+      uploadChartName: "Uploads",
+      byType: "Media Breakdown by Type",
+      byTypeDesc: "Distribution of media files by type.",
+      topProperties: "Top Properties by Media",
+      topPropertiesDesc: "Properties with the highest number of uploaded files.",
+      colProperty: "Property",
+      colCount: "Files",
+      noTopProperties: "No media records found.",
+      noRecords: "No media statistics found.",
+    },
     errorTitle: "Analytics Loading Failed",
     retryBtn: "Retry Loading",
   },
@@ -246,6 +275,7 @@ const dict = {
       revenue: "Revenus",
       chats: "Chats & Engagement",
       moderation: "Modération",
+      media: "Médias",
     },
     overviewTab: {
       platformUsers: "Utilisateurs",
@@ -388,6 +418,29 @@ const dict = {
       activeAdmins: "Modérateurs Actifs",
       activeAdminsDesc: "Admins ayant effectué au moins une action.",
     },
+    mediaTab: {
+      totalMedia: "Total Fichiers Médias",
+      totalMediaDesc: "Toutes les images et vidéos téléchargées sur la plateforme.",
+      totalImages: "Total Images",
+      totalImagesDesc: "Toutes les images téléchargées pour toutes les propriétés.",
+      totalVideos: "Total Vidéos",
+      totalVideosDesc: "Toutes les vidéos téléchargées pour toutes les propriétés.",
+      avgPerProperty: "Moy. Médias / Propriété",
+      avgPerPropertyDesc: "Nombre moyen de fichiers médias par propriété.",
+      noMediaProperties: "Propriétés Sans Médias",
+      noMediaPropertiesDesc: "Propriétés sans images ni vidéos attachées.",
+      uploadTrend: "Tendance des Téléchargements",
+      uploadTrendDesc: "Téléchargements quotidiens de fichiers médias au fil du temps.",
+      uploadChartName: "Téléchargements",
+      byType: "Répartition par Type",
+      byTypeDesc: "Distribution des fichiers médias par type.",
+      topProperties: "Top Propriétés par Médias",
+      topPropertiesDesc: "Propriétés avec le plus grand nombre de fichiers téléchargés.",
+      colProperty: "Propriété",
+      colCount: "Fichiers",
+      noTopProperties: "Aucun enregistrement média trouvé.",
+      noRecords: "Aucune statistique média trouvée.",
+    },
     errorTitle: "Échec du Chargement des Analyses",
     retryBtn: "Réessayer le Chargement",
   },
@@ -398,41 +451,41 @@ const COLORS = ["#4f46e5", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#3b82f6"
 
 // ─── Per-tab hero gradient + accent color ────────────────────────────────────
 const HERO_STYLES = {
-  // Overview: classic indigo — the visual anchor for the whole dashboard
   overview: {
     gradient: "linear-gradient(135deg, #3730a3 0%, #4f46e5 60%, #6366f1 100%)",
     chartStroke: "#2e54ff",
     chartGradientId: "colorRegs",
   },
-  // Users: deep teal — growth, people, life
   users: {
     gradient: "linear-gradient(135deg, #064e3b 0%, #0f766e 55%, #14b8a6 100%)",
     chartStroke: "#0f766e",
     chartGradientId: "colorUsers",
   },
-  // Properties: rich violet — real estate prestige
   properties: {
     gradient: "linear-gradient(135deg, #581c87 0%, #7e22ce 55%, #a855f7 100%)",
     chartStroke: "#7e22ce",
     chartGradientId: "colorProps",
   },
-  // Revenue: forest green → emerald — money, profit
   revenue: {
     gradient: "linear-gradient(135deg, #022c22 0%, #065f46 50%, #059669 100%)",
     chartStroke: "#059669",
     chartGradientId: "colorRev",
   },
-  // Chats: navy → royal blue — communication, trust
   chats: {
     gradient: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 55%, #3b82f6 100%)",
     chartStroke: "#1d4ed8",
     chartGradientId: "colorMsgs",
   },
-  // Moderation: burnt amber → gold — authority, vigilance
   moderation: {
     gradient: "linear-gradient(135deg, #451a03 0%, #92400e 50%, #d97706 100%)",
     chartStroke: "#d97706",
     chartGradientId: "colorApps",
+  },
+  // Media: deep slate → cyan — storage, files, digital assets
+  media: {
+    gradient: "linear-gradient(135deg, #0f172a 0%, #0e7490 55%, #06b6d4 100%)",
+    chartStroke: "#06b6d4",
+    chartGradientId: "colorMedia",
   },
 } as const;
 
@@ -463,8 +516,8 @@ function KpiCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card className="bg-white border-transparent">
-      <CardHeader className="pb-3">
+    <Card className="bg-white border-transparent h-full flex flex-col">
+      <CardHeader className="pb-3 flex-1">
         <div className="flex flex-col h-full justify-between items-start">
           <div className="flex justify-between items-center w-full">
             <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
@@ -473,7 +526,7 @@ function KpiCard({
             {icon}
           </div>
           <div className="relative top-8">
-            <CardTitle className="text-6xl font-extrabold tracking-tight">{value}</CardTitle>
+            <CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{value}</CardTitle>
           </div>
         </div>
       </CardHeader>
@@ -498,6 +551,7 @@ export default function Analytics() {
   const [chats, setChats] = useState<ChatAnalytics | null>(null);
   const [engagement, setEngagement] = useState<EngagementStats | null>(null);
   const [moderation, setModeration] = useState<ModerationAnalytics | null>(null);
+  const [media, setMedia] = useState<MediaStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "all">("30d");
@@ -510,7 +564,7 @@ export default function Analytics() {
     if (!isSilent) setLoading(true);
     setError(null);
     try {
-      const [overviewRes, growthRes, propsRes, revRes, chatsRes, engRes, modRes] = await Promise.all([
+      const [overviewRes, growthRes, propsRes, revRes, chatsRes, engRes, modRes, mediaRes] = await Promise.all([
         adminStatsService.getOverview(),
         adminStatsService.getUserGrowth(),
         adminStatsService.getProperties(),
@@ -518,6 +572,7 @@ export default function Analytics() {
         adminStatsService.getChats(),
         adminStatsService.getEngagement(),
         adminStatsService.getModeration(),
+        adminStatsService.getMedia(),
       ]);
       setOverview(overviewRes);
       setUserGrowth(growthRes);
@@ -526,6 +581,7 @@ export default function Analytics() {
       setChats(chatsRes);
       setEngagement(engRes);
       setModeration(modRes);
+      setMedia(mediaRes);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || (lang === "fr" ? "Échec du chargement." : "Failed to load analytics."));
     } finally {
@@ -569,6 +625,8 @@ export default function Analytics() {
       dataset = chats.mostActiveUsers.map((u, i) => ({ Rank: i + 1, UserName: u.userName, UserEmail: u.userEmail, MessagesSent: u.messageCount }));
     } else if (activeTab === "moderation" && moderation) {
       dataset = moderation.adminActivityLogs.map((l) => ({ Time: new Date(l.createdAt).toLocaleString(dateLocale), AdminName: l.userName, Action: l.activityType, Entity: l.entityType, Description: l.description }));
+    } else if (activeTab === "media" && media) {
+      dataset = media.topPropertiesByMediaCount.map((p, i) => ({ Rank: i + 1, PropertyTitle: p.propertyTitle, MediaFiles: p.mediaCount }));
     }
     if (!dataset.length) { alert(lang === "fr" ? "Aucune donnée disponible." : "No data available for export."); return; }
     const headers = Object.keys(dataset[0]).join(",");
@@ -670,7 +728,7 @@ export default function Analytics() {
       {/* ── Tabs ── */}
       <Tabs defaultValue="overview" onValueChange={setActiveTab} className="w-full">
         <TabsList className="flex flex-1 items-center justify-center gap-1 bg-white p-1 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_rgba(16,24,40,0.04)] border h-16 mb-8 print:hidden">
-          {(["overview", "users", "properties", "revenue", "chats", "moderation"] as const).map((tab) => (
+          {(["overview", "users", "properties", "revenue", "chats", "moderation", "media"] as const).map((tab) => (
             <TabsTrigger key={tab} value={tab} className="text-xs cursor-pointer data-[state=active]:text-white py-2 px-3 font-semibold data-[state=active]:bg-indigo-700">
               {t.tabs[tab]}
             </TabsTrigger>
@@ -678,13 +736,12 @@ export default function Analytics() {
         </TabsList>
 
         {/* ══════════════════════════════════════════════════════════════════
-            1. OVERVIEW — indigo hero
+            1. OVERVIEW
         ══════════════════════════════════════════════════════════════════ */}
         <TabsContent value="overview" className="flex flex-col gap-6">
           {loading ? <SkeletonGrid /> : overview ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,200px)]">
-                {/* Hero */}
                 <HeroCard tab="overview">
                   <CardHeader className="-pb-6">
                     <div className="flex justify-between items-start">
@@ -709,14 +766,14 @@ export default function Analytics() {
                   </CardContent>
                 </HeroCard>
 
-                <Card className="bg-white border-transparent justify-between">
-                  <CardHeader className="pb-3">
+                <Card className="bg-white border-transparent h-full flex flex-col justify-between">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.listedProperties}</CardDescription>
                         <Home className="size-8 bg-violet-500 p-2 rounded-full text-white" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalProperties.toLocaleString()}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalProperties.toLocaleString()}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -727,66 +784,66 @@ export default function Analytics() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.platformRevenue}</CardDescription>
                         <DollarSign className="size-8 p-2 bg-emerald-500 text-white rounded-full" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">${overview.totalRevenue.toLocaleString()}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">${overview.totalRevenue.toLocaleString()}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground">{t.overviewTab.generatedFrom.replace("{count}", String(overview.totalBoostPurchases))}</p></CardContent>
                 </Card>
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.premiumBoostSales}</CardDescription>
                         <Zap className="size-8 p-2 rounded-full bg-amber-500 text-white" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalBoostPurchases.toLocaleString()}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalBoostPurchases.toLocaleString()}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground font-medium text-foreground">{t.overviewTab.promoAdsDesc}</p></CardContent>
                 </Card>
 
-                <Card className="bg-white border-border">
-                  <CardHeader className="pb-3">
+                <Card className="bg-white border-border h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.propMod}</CardDescription>
                         <AlertTriangle className="size-8 p-2 bg-amber-300 text-white rounded-full" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalPendingProperties}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalPendingProperties}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground">{t.overviewTab.propPendingDesc}</p></CardContent>
                 </Card>
 
-                <Card className="bg-card border-border">
-                  <CardHeader className="pb-3">
+                <Card className="bg-card border-border h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.reportsFlags}</CardDescription>
                         <Flag className="size-8 p-2 bg-red-500 text-white rounded-full" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalReports}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalReports}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground">{t.overviewTab.reportsFlagsDesc}</p></CardContent>
                 </Card>
 
-                <Card className="bg-card border-border">
-                  <CardHeader className="pb-3">
+                <Card className="bg-card border-border h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
                     <div className="flex flex-col h-full justify-between items-start">
                       <div className="flex flex-1 justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.overviewTab.convOpened}</CardDescription>
                         <MessageSquare className="size-8 p-2 bg-blue-500 text-white rounded-full" />
                       </div>
-                      <div className="relative top-8"><CardTitle className="text-6xl font-extrabold tracking-tight">{overview.totalChats.toLocaleString()}</CardTitle></div>
+                      <div className="relative top-8"><CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">{overview.totalChats.toLocaleString()}</CardTitle></div>
                     </div>
                   </CardHeader>
                   <CardContent><p className="text-xs text-muted-foreground">{t.overviewTab.convDesc.replace("{count}", String(overview.totalMessages))}</p></CardContent>
@@ -854,13 +911,12 @@ export default function Analytics() {
         </TabsContent>
 
         {/* ══════════════════════════════════════════════════════════════════
-            2. USERS — teal hero
+            2. USERS
         ══════════════════════════════════════════════════════════════════ */}
         <TabsContent value="users" className="flex flex-col gap-6">
           {loading ? <SkeletonGrid /> : userGrowth && overview ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,200px)]">
-                {/* Hero — teal */}
                 <HeroCard tab="users">
                   <CardHeader className="-pb-6">
                     <div className="flex justify-between items-start">
@@ -884,7 +940,6 @@ export default function Analytics() {
                     </div>
                   </CardContent>
                 </HeroCard>
-
                 <KpiCard label={t.usersTab.dailyActiveUsers} value={overview.activeUsersToday.toLocaleString()} description={t.usersTab.loggedInToday} icon={<Activity className="size-8 bg-emerald-500 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.usersTab.weeklyActiveUsers} value={overview.activeUsersThisWeek.toLocaleString()} description={t.usersTab.activeThisWeek} icon={<Users className="size-8 bg-teal-500 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.usersTab.monthlyActiveUsers} value={overview.activeUsersThisMonth.toLocaleString()} description={t.usersTab.activeThisMonth} icon={<Users className="size-8 bg-cyan-600 p-2 rounded-full text-white" />} />
@@ -961,13 +1016,12 @@ export default function Analytics() {
         </TabsContent>
 
         {/* ══════════════════════════════════════════════════════════════════
-            3. PROPERTIES — violet hero
+            3. PROPERTIES
         ══════════════════════════════════════════════════════════════════ */}
         <TabsContent value="properties" className="flex flex-col gap-6">
           {loading ? <SkeletonGrid /> : properties && overview ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,200px)]">
-                {/* Hero — violet */}
                 <HeroCard tab="properties">
                   <CardHeader className="-pb-6">
                     <div className="flex justify-between items-start">
@@ -996,7 +1050,6 @@ export default function Analytics() {
                     </div>
                   </CardContent>
                 </HeroCard>
-
                 <KpiCard label={t.propertiesTab.approvedListings} value={overview.totalApprovedProperties.toLocaleString()} description={t.propertiesTab.approvedDesc} icon={<Home className="size-8 bg-emerald-500 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.propertiesTab.pendingReview} value={overview.totalPendingProperties.toLocaleString()} description={t.propertiesTab.pendingDesc} icon={<AlertTriangle className="size-8 bg-amber-400 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.propertiesTab.rejectedListings} value={overview.totalRejectedProperties.toLocaleString()} description={t.propertiesTab.rejectedDesc} icon={<Home className="size-8 bg-rose-500 p-2 rounded-full text-white" />} />
@@ -1118,13 +1171,12 @@ export default function Analytics() {
         </TabsContent>
 
         {/* ══════════════════════════════════════════════════════════════════
-            4. REVENUE — forest green hero
+            4. REVENUE
         ══════════════════════════════════════════════════════════════════ */}
         <TabsContent value="revenue" className="flex flex-col gap-6">
           {loading ? <SkeletonGrid /> : revenue ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,200px)]">
-                {/* Hero — forest green */}
                 <HeroCard tab="revenue">
                   <CardHeader className="-pb-6">
                     <div className="flex justify-between items-start">
@@ -1149,15 +1201,15 @@ export default function Analytics() {
                   </CardContent>
                 </HeroCard>
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col h-full justify-between items-start">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
+                    <div className="flex h-full flex-col justify-between items-start">
                       <div className="flex justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{t.revenueTab.growthMoM}</CardDescription>
                         {revenue.revenueGrowth >= 0 ? <TrendingUp className="size-8 bg-emerald-500 p-2 rounded-full text-white" /> : <TrendingDown className="size-8 bg-rose-500 p-2 rounded-full text-white" />}
                       </div>
                       <div className="relative top-8">
-                        <CardTitle className={`text-5xl font-extrabold tracking-tight ${revenue.revenueGrowth >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                        <CardTitle className={`text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight ${revenue.revenueGrowth >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                           {revenue.revenueGrowth >= 0 ? "+" : ""}{revenue.revenueGrowth.toFixed(1)}%
                         </CardTitle>
                       </div>
@@ -1168,15 +1220,15 @@ export default function Analytics() {
 
                 <KpiCard label={t.revenueTab.monetizedSellers} value={activeSellersCount} description={t.revenueTab.purchasedSpots} icon={<Users className="size-8 bg-emerald-600 p-2 rounded-full text-white" />} />
 
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col h-full justify-between items-start">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
+                    <div className="flex h-full flex-col justify-between items-start">
                       <div className="flex justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Avg. Per Seller</CardDescription>
                         <DollarSign className="size-8 bg-teal-600 p-2 rounded-full text-white" />
                       </div>
                       <div className="relative top-8">
-                        <CardTitle className="text-5xl font-extrabold tracking-tight">
+                        <CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">
                           ${activeSellersCount > 0 ? Math.round(revenue.boostPurchaseRevenue / activeSellersCount).toLocaleString() : 0}
                         </CardTitle>
                       </div>
@@ -1237,13 +1289,12 @@ export default function Analytics() {
         </TabsContent>
 
         {/* ══════════════════════════════════════════════════════════════════
-            5. CHATS & ENGAGEMENT — navy/blue hero
+            5. CHATS & ENGAGEMENT
         ══════════════════════════════════════════════════════════════════ */}
         <TabsContent value="chats" className="flex flex-col gap-6">
           {loading ? <SkeletonGrid /> : chats && engagement && overview ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,200px)]">
-                {/* Hero — navy blue */}
                 <HeroCard tab="chats">
                   <CardHeader className="-pb-6">
                     <div className="flex justify-between items-start">
@@ -1267,19 +1318,17 @@ export default function Analytics() {
                     </div>
                   </CardContent>
                 </HeroCard>
-
                 <KpiCard label={t.chatsTab.totalMessages} value={overview.totalMessages.toLocaleString()} description={t.chatsTab.totalMessagesDesc} icon={<MessageSquare className="size-8 bg-blue-500 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.chatsTab.totalFavorites} value={overview.totalFavorites.toLocaleString()} description={t.chatsTab.totalFavoritesDesc} icon={<Heart className="size-8 bg-rose-500 p-2 rounded-full text-white" />} />
-
-                <Card className="bg-white border-transparent">
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col h-full justify-between items-start">
+                <Card className="bg-white border-transparent h-full flex flex-col">
+                  <CardHeader className="pb-3 flex-1">
+                    <div className="flex h-full flex-col justify-between items-start">
                       <div className="flex justify-between items-center w-full">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Avg. Messages / Chat</CardDescription>
                         <Activity className="size-8 bg-indigo-500 p-2 rounded-full text-white" />
                       </div>
                       <div className="relative top-8">
-                        <CardTitle className="text-6xl font-extrabold tracking-tight">
+                        <CardTitle className="text-3xl sm:text-4xl lg:text-4xl font-extrabold tracking-tight">
                           {overview.totalChats > 0 ? (overview.totalMessages / overview.totalChats).toFixed(1) : "0"}
                         </CardTitle>
                       </div>
@@ -1389,13 +1438,12 @@ export default function Analytics() {
         </TabsContent>
 
         {/* ══════════════════════════════════════════════════════════════════
-            6. MODERATION — burnt amber hero
+            6. MODERATION
         ══════════════════════════════════════════════════════════════════ */}
         <TabsContent value="moderation" className="flex flex-col gap-6">
           {loading ? <SkeletonGrid /> : moderation && overview ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,200px)]">
-                {/* Hero — amber/gold */}
                 <HeroCard tab="moderation">
                   <CardHeader className="-pb-6">
                     <div className="flex justify-between items-start">
@@ -1419,7 +1467,6 @@ export default function Analytics() {
                     </div>
                   </CardContent>
                 </HeroCard>
-
                 <KpiCard label={t.moderationTab.totalApprovals} value={overview.totalApprovedProperties.toLocaleString()} description={t.moderationTab.totalApprovalsDesc} icon={<Activity className="size-8 bg-emerald-500 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.moderationTab.totalRejections} value={overview.totalRejectedProperties.toLocaleString()} description={t.moderationTab.totalRejectionsDesc} icon={<Flag className="size-8 bg-rose-500 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.moderationTab.activeAdmins} value={moderation.moderationActivity.length} description={t.moderationTab.activeAdminsDesc} icon={<ShieldCheck className="size-8 bg-amber-500 p-2 rounded-full text-white" />} />
@@ -1544,44 +1591,222 @@ export default function Analytics() {
             </>
           ) : <div className="text-center p-6 text-muted-foreground">{t.moderationTab.noRecords}</div>}
         </TabsContent>
+
+        {/* ══════════════════════════════════════════════════════════════════
+            7. MEDIA — slate/cyan hero
+        ══════════════════════════════════════════════════════════════════ */}
+        <TabsContent value="media" className="flex flex-col gap-6">
+          {loading ? <SkeletonGrid /> : media ? (
+            <>
+              {/* ── KPI Row ── */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(150px,200px)]">
+                {/* Hero card — slate/cyan */}
+                <HeroCard tab="media">
+                  <CardHeader className="-pb-6">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <CardDescription className="text-xs font-semibold uppercase tracking-wider text-white/90">
+                          {t.mediaTab.totalMedia}
+                        </CardDescription>
+                        <CardTitle className="text-4xl font-extrabold tracking-tight text-white">
+                          {media.totalMediaFiles.toLocaleString()}
+                        </CardTitle>
+                      </div>
+                      <div className="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
+                        <LayoutGrid className="size-4 text-white" />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <FileImage className="size-4 text-cyan-300" />
+                      <span className="text-white/90">
+                        {media.totalImages.toLocaleString()} images · {media.totalVideos.toLocaleString()} videos
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 pt-1 border-t border-white/20">
+                      <div>
+                        <p className="text-xs text-white/70">{t.mediaTab.avgPerProperty}</p>
+                        <p className="text-lg font-semibold text-white">{media.averageMediaPerProperty.toFixed(1)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/70">{t.mediaTab.noMediaProperties}</p>
+                        <p className="text-lg font-semibold text-white">{media.propertiesWithNoMedia.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </HeroCard>
+
+                <KpiCard
+                  label={t.mediaTab.totalImages}
+                  value={media.totalImages.toLocaleString()}
+                  description={t.mediaTab.totalImagesDesc}
+                  icon={<Image className="size-8 bg-cyan-500 p-2 rounded-full text-white" />}
+                />
+                <KpiCard
+                  label={t.mediaTab.totalVideos}
+                  value={media.totalVideos.toLocaleString()}
+                  description={t.mediaTab.totalVideosDesc}
+                  icon={<Video className="size-8 bg-indigo-500 p-2 rounded-full text-white" />}
+                />
+                <KpiCard
+                  label={t.mediaTab.noMediaProperties}
+                  value={media.propertiesWithNoMedia.toLocaleString()}
+                  description={t.mediaTab.noMediaPropertiesDesc}
+                  icon={<AlertTriangle className="size-8 bg-rose-500 p-2 rounded-full text-white" />}
+                />
+              </div>
+
+              {/* ── Charts Row ── */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Upload trend area chart */}
+                <Card className="col-span-2">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">{t.mediaTab.uploadTrend}</CardTitle>
+                    <CardDescription>{t.mediaTab.uploadTrendDesc}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {mounted ? (
+                      <div className="w-full h-[300px] min-h-[250px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={filterTrends(media.mediaUploadedOverTime)}>
+                            <defs>
+                              <linearGradient id="colorMedia" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
+                                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                            <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
+                            <YAxis tickLine={false} axisLine={false} />
+                            <Tooltip {...tooltipStyle} />
+                            <Area
+                              name={t.mediaTab.uploadChartName}
+                              type="monotone"
+                              dataKey="value"
+                              stroke="#06b6d4"
+                              strokeWidth={2}
+                              fillOpacity={1}
+                              fill="url(#colorMedia)"
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : <Skeleton className="w-full h-[300px] rounded-xl" />}
+                  </CardContent>
+                </Card>
+
+                {/* Media by type pie */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">{t.mediaTab.byType}</CardTitle>
+                    <CardDescription>{t.mediaTab.byTypeDesc}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col justify-center items-center h-[300px]">
+                    {mounted ? (
+                      <>
+                        <div className="w-full h-[200px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={Object.entries(media.mediaByType).map(([name, value]) => ({ name, value }))}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={55}
+                                outerRadius={80}
+                                paddingAngle={4}
+                                dataKey="value"
+                              >
+                                {Object.entries(media.mediaByType).map((_, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-3 text-xs mt-2">
+                          {Object.entries(media.mediaByType).map(([name, value], i) => (
+                            <div key={name} className="flex items-center gap-1.5">
+                              <span className="size-3 rounded-full inline-block" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                              <span className="capitalize font-medium">{name}</span>
+                              <span className="text-muted-foreground">({value.toLocaleString()})</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : <Skeleton className="size-[200px] rounded-full" />}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* ── Top Properties Table ── */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold">{t.mediaTab.topProperties}</CardTitle>
+                  <CardDescription>{t.mediaTab.topPropertiesDesc}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-8">#</TableHead>
+                        <TableHead>{t.mediaTab.colProperty}</TableHead>
+                        <TableHead className="text-right">{t.mediaTab.colCount}</TableHead>
+                        <TableHead className="w-[200px]">Distribution</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {media.topPropertiesByMediaCount.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground text-xs py-6">
+                            {t.mediaTab.noTopProperties}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        (() => {
+                          const maxCount = Math.max(...media.topPropertiesByMediaCount.map((p) => p.mediaCount), 1);
+                          return media.topPropertiesByMediaCount.map((p, i) => (
+                            <TableRow key={p.propertyId}>
+                              <TableCell className="text-xs font-mono text-muted-foreground py-2">{i + 1}</TableCell>
+                              <TableCell className="py-2">
+                                <span className="font-semibold text-xs text-foreground truncate max-w-[280px] block">{p.propertyTitle}</span>
+                              </TableCell>
+                              <TableCell className="text-right font-mono font-bold text-xs text-cyan-600 py-2">{p.mediaCount}</TableCell>
+                              <TableCell className="py-2">
+                                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      width: `${(p.mediaCount / maxCount) * 100}%`,
+                                      backgroundColor: COLORS[i % COLORS.length],
+                                    }}
+                                  />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ));
+                        })()
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </>
+          ) : <div className="text-center p-6 text-muted-foreground">{t.mediaTab.noRecords}</div>}
+        </TabsContent>
       </Tabs>
 
       <style jsx global>{`
         @media print {
-          /* Hide sidebar, header, tabs list, buttons, and anything marked print:hidden */
-          aside,
-          header,
-          .TabsList,
-          .print\\:hidden,
-          button {
-            display: none !important;
+          aside, header, .TabsList, .print\\:hidden, button { display: none !important; }
+          body, html, main, .h-screen, .overflow-hidden {
+            height: auto !important; overflow: visible !important;
+            margin: 0 !important; padding: 0 !important;
+            width: 100% !important; position: static !important; min-height: auto !important;
           }
-
-          /* Reset layout constraints on print */
-          body,
-          html,
-          main,
-          .h-screen,
-          .overflow-hidden {
-            height: auto !important;
-            overflow: visible !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            position: static !important;
-            min-height: auto !important;
-          }
-
-          /* Reset desktop sidebar margin offset */
-          div[class*="ml-64"] {
-            margin-left: 0 !important;
-          }
-
-          /* Ensure charts render with visible dimensions */
-          .recharts-responsive-container {
-            width: 100% !important;
-            height: 350px !important;
-          }
+          div[class*="ml-64"] { margin-left: 0 !important; }
+          .recharts-responsive-container { width: 100% !important; height: 350px !important; }
         }
       `}</style>
     </div>

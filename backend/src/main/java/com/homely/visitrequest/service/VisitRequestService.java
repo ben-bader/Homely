@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.homely.common.enums.RoleType;
 import com.homely.common.enums.VisitStatus;
 import com.homely.notification.dto.NotificationCreateRequest;
 import com.homely.notification.service.NotificationService;
@@ -67,6 +68,10 @@ public class VisitRequestService {
         return visitRequestRepository.findByPropertyId(propertyId);
     }
 
+    public List<VisitRequest> getBySellerEmail(String sellerEmail) {
+        return visitRequestRepository.findByPropertySellerEmail(sellerEmail);
+    }
+
     public List<VisitRequest> getByUser(User user) {
         return visitRequestRepository.findByUser(user);
     }
@@ -79,13 +84,44 @@ public class VisitRequestService {
         VisitRequest request = get(id);
         request.setStatus(status);
         VisitRequest saved = visitRequestRepository.save(request);
-        
+
         // Send notification to the user who created the visit request
         sendVisitRequestStatusNotification(request, status);
-        
+
+        return visitRequestMapper.toDto(saved);
+    }
+
+    public VisitRequestDto updateStatus(UUID id, VisitStatus status, String userEmail) {
+        VisitRequest request = get(id);
+        validateSellerOrAdmin(request, userEmail);
+        request.setStatus(status);
+        VisitRequest saved = visitRequestRepository.save(request);
+
+        // Send notification to the user who created the visit request
+        sendVisitRequestStatusNotification(request, status);
+
         return visitRequestMapper.toDto(saved);
     }
     
+    private void validateSellerOrAdmin(VisitRequest request, String userEmail) {
+        if (userEmail == null) {
+            return;
+        }
+
+        User currentUser = userService.getByEmail(userEmail);
+        if (currentUser == null) {
+            throw new RuntimeException("User not found: " + userEmail);
+        }
+
+        boolean isAdmin = currentUser.getRole() == RoleType.ADMIN;
+        boolean isPropertySeller = request.getProperty() != null && request.getProperty().getSeller() != null
+                && request.getProperty().getSeller().getEmail().equals(userEmail);
+
+        if (!isAdmin && !isPropertySeller) {
+            throw new RuntimeException("Unauthorized: only the property seller or admin can update this visit request");
+        }
+    }
+
     private void sendVisitRequestNotification(User user, Property property, VisitRequest visitRequest, java.time.LocalDateTime requestedDate) {
         try {
             String payload = objectMapper.writeValueAsString(new java.util.HashMap<String, Object>() {{
@@ -148,7 +184,22 @@ public class VisitRequestService {
         return getByProperty(property.getId());
     }
 
-    public void delete(UUID id) {
-        visitRequestRepository.deleteById(id);
+    public void delete(UUID id, String userEmail) {
+        VisitRequest request = get(id);
+        User currentUser = userService.getByEmail(userEmail);
+        if (currentUser == null) {
+            throw new RuntimeException("User not found: " + userEmail);
+        }
+
+        boolean isAdmin = currentUser.getRole() == RoleType.ADMIN;
+        boolean isRequestOwner = request.getUser() != null && request.getUser().getEmail().equals(userEmail);
+        boolean isPropertySeller = request.getProperty() != null && request.getProperty().getSeller() != null
+                && request.getProperty().getSeller().getEmail().equals(userEmail);
+
+        if (!isAdmin && !isRequestOwner && !isPropertySeller) {
+            throw new RuntimeException("Unauthorized: only the request owner, property seller, or admin can delete this visit request");
+        }
+
+        visitRequestRepository.delete(request);
     }
 }

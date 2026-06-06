@@ -260,6 +260,9 @@ class Endpoints {
   /// GET - Get active boosts for current seller
   static const String activeBoosts = '/boost/my-boosts';
 
+  /// GET - Get boost packages
+  static const String boostPackages = '/boost/packages';
+
   /// GET - Check if property is currently boosted
   static String isPropertyBoosted(String propertyId) =>
       '/boost/property/$propertyId/is-boosted';

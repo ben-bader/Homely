@@ -11,6 +11,7 @@ import com.homely.visitrequest.entity.VisitRequest;
 
 public interface VisitRequestRepository extends JpaRepository<VisitRequest, UUID> {
     List<VisitRequest> findByPropertyId(UUID propertyId);
+    List<VisitRequest> findByPropertySellerEmail(String sellerEmail);
     List<VisitRequest> findByUser(User userId);
 
     List<VisitRequest> findByStatus(VisitStatus status);

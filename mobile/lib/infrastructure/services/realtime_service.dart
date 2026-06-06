@@ -245,12 +245,30 @@ class RealtimeService {
   }
 
   void disconnect() {
+    debugPrint('[RealtimeService] Disconnecting...');
     _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _reconnectAttempts = 0;
     _stompClient?.deactivate();
     _stompClient = null;
     _isConnecting = false;
     _activeDestinations.clear();
     _destinationCallbacks.clear();
     _pendingMessages.clear();
+    if (!_notificationController.isClosed) {
+      _notificationController.close();
+    }
+    // Reset completer
+    if (!(_connectCompleter?.isCompleted ?? true)) {
+      _connectCompleter?.completeError('Service disconnected');
+    }
+    _connectCompleter = null;
+    debugPrint('[RealtimeService] Disconnected and cleaned up');
+  }
+  
+  /// Reset the service for new session (useful after logout/login)
+  void reset() {
+    disconnect();
+    // Service streams are closed on disconnect and will be recreated on next init
   }
 }

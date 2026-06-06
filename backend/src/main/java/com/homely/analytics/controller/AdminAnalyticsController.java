@@ -5,8 +5,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.homely.analytics.dto.ChatAnalyticsResponse;
 import com.homely.analytics.dto.EngagementAnalyticsResponse;
+import com.homely.analytics.dto.MediaStatsResponse;
 import com.homely.analytics.dto.ModerationAnalyticsResponse;
 import com.homely.analytics.dto.OverviewStatsResponse;
 import com.homely.analytics.dto.PropertyAnalyticsResponse;
@@ -55,5 +57,10 @@ public class AdminAnalyticsController {
     @GetMapping("/moderation")
     public ModerationAnalyticsResponse getModeration() {
         return adminAnalyticsService.getModerationStats();
+    }
+
+    @GetMapping("/media")
+    public MediaStatsResponse getMedia() {
+        return adminAnalyticsService.getMediaStats();
     }
 }

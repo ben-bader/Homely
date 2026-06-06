@@ -61,6 +61,23 @@ export interface ChatAnalytics {
   mostActiveUsers: UserActivity[];
 }
 
+export interface MediaPropertyCount {
+  propertyId: string;
+  propertyTitle: string;
+  mediaCount: number;
+}
+
+export interface MediaStats {
+  totalMediaFiles: number;
+  totalImages: number;
+  totalVideos: number;
+  averageMediaPerProperty: number;
+  mediaByType: Record<string, number>;
+  mediaUploadedOverTime: Record<string, number>;
+  topPropertiesByMediaCount: MediaPropertyCount[];
+  propertiesWithNoMedia: number;
+}
+
 export interface PropertyEngagement {
   propertyId: string;
   propertyTitle: string;
@@ -136,6 +153,11 @@ export const adminStatsService = {
 
   getModeration: async (): Promise<ModerationAnalytics> => {
     const res = await api.get<ModerationAnalytics>("/admin/stats/moderation");
+    return res.data;
+  },
+
+  getMedia: async (): Promise<MediaStats> => {
+    const res = await api.get<MediaStats>("/admin/stats/media");
     return res.data;
   },
 };

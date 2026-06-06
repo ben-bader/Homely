@@ -39,6 +39,10 @@ public class BoostService {
 
         var property = propertyService.getEntityById(request.getPropertyId());
 
+        if (property.getSeller() == null || !property.getSeller().getId().equals(seller.getId())) {
+            throw new RuntimeException("Only the property seller can boost this property.");
+        }
+
         BoostPurchase entity = boostPurchaseMapper.toEntity(request);
         entity.setSeller(seller);
         entity.setProperty(property);
@@ -137,16 +141,16 @@ public class BoostService {
     // ✅ Helper method to check if a boost is currently active
     public boolean isBoostActive(UUID propertyId) {
         Instant now = Instant.now();
-        return boostPurchaseRepository.findActiveBoostByProperty(propertyId, now) != null;
+        return boostPurchaseRepository.findFirstByPropertyIdAndStatusAndExpiryAtAfterOrderByCreatedAtDesc(propertyId, PurchaseStatus.COMPLETED, now) != null;
     }
     
     // ✅ Get active boost for a property
     public BoostPurchase getActiveBoost(UUID propertyId, Instant now) {
-        return boostPurchaseRepository.findActiveBoostByProperty(propertyId, now);
+        return boostPurchaseRepository.findFirstByPropertyIdAndStatusAndExpiryAtAfterOrderByCreatedAtDesc(propertyId, PurchaseStatus.COMPLETED, now);
     }
     
     // ✅ Get all active boosts (for admin/analytics)
     public List<BoostPurchase> getAllActiveBoosts() {
-        return boostPurchaseRepository.findAllActiveBoosts(Instant.now());
+        return boostPurchaseRepository.findByStatusAndExpiryAtAfter(PurchaseStatus.COMPLETED, Instant.now());
     }
 }

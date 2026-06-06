@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -237,7 +238,7 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
 
   Future<void> _logout() async {
     try {
-      await ref.read(auth_providers.authRepositoryProvider).logout();
+      await ref.read(authRepositoryProvider).logout();
     } catch (_) {}
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
