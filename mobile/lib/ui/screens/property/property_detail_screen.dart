@@ -329,9 +329,8 @@ class _BodyState extends ConsumerState<_Body> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => ProfileScreen(
-                                    userId: p.sellerId,
-                                  ),
+                                  builder: (_) =>
+                                      ProfileScreen(userId: p.sellerId),
                                 ),
                               );
                             },
@@ -577,11 +576,9 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Widget _sellerAvatarFallback(PropertyEntity p) {
-    if (p.sellerAvatar != null && p.sellerAvatar!.isNotEmpty) return const SizedBox.shrink();
-    return const Icon(
-      Icons.person,
-      color: AppColors.textSecondary,
-    );
+    if (p.sellerAvatar != null && p.sellerAvatar!.isNotEmpty)
+      return const SizedBox.shrink();
+    return const Icon(Icons.person, color: AppColors.textSecondary);
   }
 }
 
@@ -693,7 +690,9 @@ class _PropertyMap extends StatelessWidget {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -1180,7 +1179,7 @@ class _ContactBtn extends ConsumerWidget {
           final conv = await repo.createConversation(property.id);
           final currentUserId =
               ref.read(profileNotifierProvider).valueOrNull?.userId ??
-                  conv.participantOneId;
+              conv.participantOneId;
           if (!context.mounted) return;
           Navigator.push(
             context,

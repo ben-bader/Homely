@@ -73,26 +73,26 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   Widget build(BuildContext context) {
     if (!_hasRegisteredListeners) {
       _hasRegisteredListeners = true;
-      ref.listen<AsyncValue<Map<String, dynamic>>>(
-        notificationStreamProvider,
-        (previous, next) {
-          next.whenData((event) {
-            final type = event['type']?.toString();
-            if (type == 'NEW_CHAT_MESSAGE' || type == 'NEW_CONVERSATION') {
-              ref.invalidate(conversationsProvider);
-            }
-          });
-        },
-      );
-
-      ref.listen<AsyncValue<Map<String, dynamic>>>(
-        chatEventStreamProvider,
-        (previous, next) {
-          next.whenData((_) {
+      ref.listen<AsyncValue<Map<String, dynamic>>>(notificationStreamProvider, (
+        previous,
+        next,
+      ) {
+        next.whenData((event) {
+          final type = event['type']?.toString();
+          if (type == 'NEW_CHAT_MESSAGE' || type == 'NEW_CONVERSATION') {
             ref.invalidate(conversationsProvider);
-          });
-        },
-      );
+          }
+        });
+      });
+
+      ref.listen<AsyncValue<Map<String, dynamic>>>(chatEventStreamProvider, (
+        previous,
+        next,
+      ) {
+        next.whenData((_) {
+          ref.invalidate(conversationsProvider);
+        });
+      });
     }
 
     final convsAsync = ref.watch(conversationsProvider);
@@ -302,7 +302,9 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                                   false;
                             },
                             onDismissed: (direction) async {
-                              final scaffoldMessenger = ScaffoldMessenger.of(context);
+                              final scaffoldMessenger = ScaffoldMessenger.of(
+                                context,
+                              );
                               try {
                                 await ref
                                     .read(chatRepositoryProvider)
@@ -344,7 +346,10 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     );
   }
 
-  ImageProvider<Object>? _conversationAvatar(ConversationEntity conv, String currentUserId) {
+  ImageProvider<Object>? _conversationAvatar(
+    ConversationEntity conv,
+    String currentUserId,
+  ) {
     final otherAvatar = currentUserId == conv.participantOneId
         ? conv.participantTwoAvatar
         : conv.participantOneAvatar;
@@ -354,13 +359,17 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     return null;
   }
 
-  Widget convAvatarFallback(ConversationEntity conv, String currentUserId, bool hasUnread) {
+  Widget convAvatarFallback(
+    ConversationEntity conv,
+    String currentUserId,
+    bool hasUnread,
+  ) {
     final otherName = conv.otherPersonName(currentUserId);
     final initials = conv.otherPersonInitials(currentUserId);
-        final otherAvatarVal = (currentUserId == conv.participantOneId
-          ? conv.participantTwoAvatar
-          : conv.participantOneAvatar);
-        if (otherAvatarVal != null && otherAvatarVal.isNotEmpty) {
+    final otherAvatarVal = (currentUserId == conv.participantOneId
+        ? conv.participantTwoAvatar
+        : conv.participantOneAvatar);
+    if (otherAvatarVal != null && otherAvatarVal.isNotEmpty) {
       // Network image will be used; no fallback text needed.
       return const SizedBox.shrink();
     }
@@ -434,21 +443,27 @@ class _ConversationTile extends ConsumerWidget {
         ? ref.watch(profileByIdProvider(otherUserId))
         : null;
 
-    final ImageProvider<Object>? avatarImage = profileAsync?.maybeWhen(
-      data: (p) => (p != null && p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
-          ? NetworkImage(p.avatarUrl!)
-          : null,
-      orElse: () => null,
-    ) ??
+    final ImageProvider<Object>? avatarImage =
+        profileAsync?.maybeWhen(
+          data: (p) =>
+              (p != null && p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
+              ? NetworkImage(p.avatarUrl!)
+              : null,
+          orElse: () => null,
+        ) ??
         ((currentUserId == conv.participantOneId
-                ? conv.participantTwoAvatar
-                : conv.participantOneAvatar) !=
-            null && (currentUserId == conv.participantOneId
-                ? conv.participantTwoAvatar
-                : conv.participantOneAvatar)!.isNotEmpty
-            ? NetworkImage(currentUserId == conv.participantOneId
-                ? conv.participantTwoAvatar!
-                : conv.participantOneAvatar!)
+                        ? conv.participantTwoAvatar
+                        : conv.participantOneAvatar) !=
+                    null &&
+                (currentUserId == conv.participantOneId
+                        ? conv.participantTwoAvatar
+                        : conv.participantOneAvatar)!
+                    .isNotEmpty
+            ? NetworkImage(
+                currentUserId == conv.participantOneId
+                    ? conv.participantTwoAvatar!
+                    : conv.participantOneAvatar!,
+              )
             : null);
 
     return InkWell(
@@ -498,7 +513,9 @@ class _ConversationTile extends ConsumerWidget {
                     ? Text(
                         initials,
                         style: GoogleFonts.outfit(
-                          color: hasUnread ? Colors.white : AppColors.textSecondary,
+                          color: hasUnread
+                              ? Colors.white
+                              : AppColors.textSecondary,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),

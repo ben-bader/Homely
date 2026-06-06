@@ -11,7 +11,10 @@ class ProfileOwnershipHelper {
 
 /// Riverpod provider (family) that resolves whether the current authenticated
 /// user owns the given `viewedUserId` profile.
-final isOwnProfileProvider = FutureProvider.family<bool, String?>((ref, viewedUserId) async {
+final isOwnProfileProvider = FutureProvider.family<bool, String?>((
+  ref,
+  viewedUserId,
+) async {
   final authId = await ref.watch(auth_providers.currentUserIdProvider.future);
   return ProfileOwnershipHelper.isOwnProfile(authId, viewedUserId);
 });

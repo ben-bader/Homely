@@ -273,33 +273,45 @@ class _SellerRequestCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Builder(builder: (ctx) {
-                final avatar = (request.userId != null && request.userId!.isNotEmpty)
-                    ? ref.watch(profileByIdProvider(request.userId!)).maybeWhen(
-                        data: (p) => (p != null && p.avatarUrl != null && p.avatarUrl!.isNotEmpty) ? NetworkImage(p.avatarUrl!) : null,
-                        orElse: () => null,
-                      )
-                    : null;
-                if (avatar != null) {
+              Builder(
+                builder: (ctx) {
+                  final avatar =
+                      (request.userId != null && request.userId!.isNotEmpty)
+                      ? ref
+                            .watch(profileByIdProvider(request.userId!))
+                            .maybeWhen(
+                              data: (p) =>
+                                  (p != null &&
+                                      p.avatarUrl != null &&
+                                      p.avatarUrl!.isNotEmpty)
+                                  ? NetworkImage(p.avatarUrl!)
+                                  : null,
+                              orElse: () => null,
+                            )
+                      : null;
+                  if (avatar != null) {
+                    return CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.15,
+                      ),
+                      foregroundImage: avatar,
+                    );
+                  }
                   return CircleAvatar(
                     radius: 20,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                    foregroundImage: avatar,
-                  );
-                }
-                return CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                  child: Text(
-                    _initials(request.userName ?? 'U'),
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                    child: Text(
+                      _initials(request.userName ?? 'U'),
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                },
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

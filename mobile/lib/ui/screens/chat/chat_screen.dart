@@ -199,8 +199,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     // Prefer canonical profile avatar
     final otherProfileAsync = (otherUserId?.isNotEmpty == true)
-      ? ref.watch(profileByIdProvider(otherUserId!))
-      : null;
+        ? ref.watch(profileByIdProvider(otherUserId!))
+        : null;
     otherAvatarUrl =
         otherProfileAsync?.maybeWhen(
           data: (p) =>

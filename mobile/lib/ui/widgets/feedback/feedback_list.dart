@@ -189,32 +189,43 @@ class _FeedbackCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Builder(builder: (ctx) {
-                final profileAsync = ref.watch(profileByIdProvider(feedback.userId));
-                final avatar = profileAsync.maybeWhen(
-                  data: (p) => (p != null && p.avatarUrl != null && p.avatarUrl!.isNotEmpty) ? NetworkImage(p.avatarUrl!) : null,
-                  orElse: () => null,
-                );
-                if (avatar != null) {
+              Builder(
+                builder: (ctx) {
+                  final profileAsync = ref.watch(
+                    profileByIdProvider(feedback.userId),
+                  );
+                  final avatar = profileAsync.maybeWhen(
+                    data: (p) =>
+                        (p != null &&
+                            p.avatarUrl != null &&
+                            p.avatarUrl!.isNotEmpty)
+                        ? NetworkImage(p.avatarUrl!)
+                        : null,
+                    orElse: () => null,
+                  );
+                  if (avatar != null) {
+                    return CircleAvatar(
+                      radius: 16,
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.15,
+                      ),
+                      foregroundImage: avatar,
+                    );
+                  }
                   return CircleAvatar(
                     radius: 16,
                     backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                    foregroundImage: avatar,
-                  );
-                }
-                return CircleAvatar(
-                  radius: 16,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                  child: Text(
-                    isOwn ? 'Me' : '★',
-                    style: GoogleFonts.outfit(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                    child: Text(
+                      isOwn ? 'Me' : '★',
+                      style: GoogleFonts.outfit(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                },
+              ),
               const SizedBox(width: 10),
               _StarRow(rating: feedback.rating.toDouble(), size: 14),
               const Spacer(),
