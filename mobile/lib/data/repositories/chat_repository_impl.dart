@@ -28,6 +28,12 @@ class ChatRepositoryImpl implements IChatRepository {
   }
 
   @override
+  Future<ConversationEntity> createChatRoom(String participantId) async {
+    final data = await _remote.createChatRoom(participantId);
+    return ConversationModel.fromJson(data);
+  }
+
+  @override
   Future<List<ConversationEntity>> fetchConversations() async {
     final data = await _remote.fetchConversations();
     return data

@@ -31,6 +31,31 @@ final conversationsProvider = FutureProvider<List<ConversationEntity>>(
   },
 );
 
+/// Find an existing conversation between current user and [otherUserId],
+/// or create one (by property or direct chat) and return its id.
+Future<String?> findOrCreateConversation(WidgetRef ref, String currentUserId, String otherUserId, {String? propertyId}) async {
+  try {
+    final repo = ref.read(chatRepositoryProvider);
+    final convs = await repo.fetchConversations();
+    for (final c in convs) {
+      if ((c.participantOneId == currentUserId && c.participantTwoId == otherUserId) ||
+          (c.participantOneId == otherUserId && c.participantTwoId == currentUserId)) {
+        return c.id;
+      }
+    }
+
+    if (propertyId != null && propertyId.isNotEmpty) {
+      final conv = await repo.createConversation(propertyId);
+      return conv.id;
+    }
+
+    final conv = await repo.createChatRoom(otherUserId);
+    return conv.id;
+  } catch (_) {
+    return null;
+  }
+}
+
 final chatProvider =
     StateNotifierProvider.family<
       ChatNotifier,

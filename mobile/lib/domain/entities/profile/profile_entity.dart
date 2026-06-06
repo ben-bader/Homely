@@ -8,6 +8,7 @@ class ProfileEntity {
   final String? avatarUrl;
   final String? idDocumentUrl;
   final bool verified;
+  final String? role;
 
   const ProfileEntity({
     required this.userId,
@@ -19,6 +20,7 @@ class ProfileEntity {
     this.avatarUrl,
     this.idDocumentUrl,
     this.verified = false,
+    this.role,
   });
 
   String get firstName {
@@ -40,6 +42,7 @@ class ProfileEntity {
     String? avatarUrl,
     String? idDocumentUrl,
     bool? verified,
+    String? role,
   }) => ProfileEntity(
     userId: userId,
     name: name ?? this.name,
@@ -50,6 +53,7 @@ class ProfileEntity {
     avatarUrl: avatarUrl ?? this.avatarUrl,
     idDocumentUrl: idDocumentUrl ?? this.idDocumentUrl,
     verified: verified ?? this.verified,
+    role: role ?? this.role,
   );
 }
 

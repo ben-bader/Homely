@@ -4,7 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:homely/core/theme/app_colors.dart';
 import '../../../domain/entities/chat/message_entity.dart';
 import '../../providers/chat_providers.dart';
+import 'package:homely/ui/providers/profile_providers.dart';
 import '../property/property_detail_screen.dart';
+import '../../helpers/profile_ownership_helper.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -176,6 +178,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final asyncMessages = ref.watch(chatProvider(widget.conversationId));
 
+    // Attempt to set other user avatar/name from messages if available.
+
+    final convsAsync = ref.watch(conversationsProvider);
+    String? otherAvatarUrl;
+    String? otherUserId;
+    convsAsync.whenData((convs) {
+      try {
+        final conv = convs.firstWhere((c) => c.id == widget.conversationId);
+        otherUserId = widget.currentUserId == conv.participantOneId
+            ? conv.participantTwoId
+            : conv.participantOneId;
+        if (_otherUserName == null) {
+          _otherUserName = conv.otherPersonName(widget.currentUserId);
+        }
+      } catch (_) {
+        otherUserId = null;
+      }
+    });
+
+    // Prefer canonical profile avatar
+    final otherProfileAsync = (otherUserId?.isNotEmpty == true)
+      ? ref.watch(profileByIdProvider(otherUserId!))
+      : null;
+    otherAvatarUrl =
+        otherProfileAsync?.maybeWhen(
+          data: (p) =>
+              (p != null && p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
+              ? p.avatarUrl
+              : null,
+          orElse: () => null,
+        ) ??
+        otherAvatarUrl;
+
+    // Fallback: use conversation participant avatar if profile avatar missing
+    if (otherAvatarUrl == null && convsAsync.asData?.value != null) {
+      try {
+        final conv = convsAsync.asData!.value.firstWhere(
+          (c) => c.id == widget.conversationId,
+        );
+        otherAvatarUrl = widget.currentUserId == conv.participantOneId
+            ? conv.participantTwoAvatar
+            : conv.participantOneAvatar;
+      } catch (_) {}
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -186,23 +233,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.accent),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Column(
+        title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              _otherUserName ?? widget.chatTitle,
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: AppColors.accent,
-              ),
-            ),
-            Text(
-              widget.chatSubtitle,
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+            if (otherAvatarUrl != null && otherAvatarUrl!.isNotEmpty)
+              CircleAvatar(
+                radius: 16,
+                backgroundImage: NetworkImage(otherAvatarUrl!),
+                backgroundColor: AppColors.subtleBackground,
+              )
+            else
+              const SizedBox.shrink(),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _otherUserName ?? widget.chatTitle,
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: AppColors.accent,
+                  ),
+                ),
+                Text(
+                  widget.chatSubtitle,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -278,85 +339,99 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     final isMe = msg.senderId == widget.currentUserId;
 
                     final isPropertyShare = msg.isPropertyShare;
-                return Align(
-                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: isPropertyShare
-                        ? _buildPropertyShareCard(msg, isMe)
-                        : GestureDetector(
-                            onLongPress: isMe
-                                ? () => _showMessageOptions(
-                                    context,
-                                    msg.id,
-                                    msg.body,
-                                  )
-                                : null,
-                            child: Container(
-                              constraints: const BoxConstraints(maxWidth: 280),
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
-                              decoration: BoxDecoration(
-                                color: isMe ? AppColors.primary : AppColors.accent,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(18),
-                                  topRight: const Radius.circular(18),
-                                  bottomLeft: isMe
-                                      ? const Radius.circular(18)
-                                      : const Radius.circular(4),
-                                  bottomRight: isMe
-                                      ? const Radius.circular(4)
-                                      : const Radius.circular(18),
+                    return Align(
+                      alignment: isMe
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: isPropertyShare
+                            ? _buildPropertyShareCard(msg, isMe)
+                            : GestureDetector(
+                                onLongPress: isMe
+                                    ? () => _showMessageOptions(
+                                        context,
+                                        msg.id,
+                                        msg.body,
+                                      )
+                                    : null,
+                                child: Container(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 280,
+                                  ),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    8,
+                                    12,
+                                    6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isMe
+                                        ? AppColors.primary
+                                        : AppColors.accent,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: const Radius.circular(18),
+                                      topRight: const Radius.circular(18),
+                                      bottomLeft: isMe
+                                          ? const Radius.circular(18)
+                                          : const Radius.circular(4),
+                                      bottomRight: isMe
+                                          ? const Radius.circular(4)
+                                          : const Radius.circular(18),
+                                    ),
+                                  ),
+                                  // ── WhatsApp layout: time floats bottom-right ──
+                                  child: Wrap(
+                                    alignment: WrapAlignment.end,
+                                    crossAxisAlignment: WrapCrossAlignment.end,
+                                    spacing: 6,
+                                    children: [
+                                      Text(
+                                        msg.body,
+                                        style: GoogleFonts.outfit(
+                                          color: AppColors.background,
+                                          fontSize: 14,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      // Timestamp + checkmark — sits at end of
+                                      // last line, slightly lower
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 1,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              _formatTime(msg.sentAt),
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 10,
+                                                color: AppColors.background
+                                                    .withValues(alpha: 0.6),
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                            ),
+                                            if (isMe) ...[
+                                              const SizedBox(width: 3),
+                                              Icon(
+                                                Icons.done_all_rounded,
+                                                size: 13,
+                                                color: AppColors.background
+                                                    .withValues(alpha: 0.6),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              // ── WhatsApp layout: time floats bottom-right ──
-                              child: Wrap(
-                                alignment: WrapAlignment.end,
-                                crossAxisAlignment: WrapCrossAlignment.end,
-                                spacing: 6,
-                                children: [
-                                  Text(
-                                    msg.body,
-                                    style: GoogleFonts.outfit(
-                                      color: AppColors.background,
-                                      fontSize: 14,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                  // Timestamp + checkmark — sits at end of
-                                  // last line, slightly lower
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 1),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          _formatTime(msg.sentAt),
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 10,
-                                            color: AppColors.background
-                                                .withValues(alpha: 0.6),
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                        if (isMe) ...[
-                                          const SizedBox(width: 3),
-                                          Icon(
-                                            Icons.done_all_rounded,
-                                            size: 13,
-                                            color: AppColors.background
-                                                .withValues(alpha: 0.6),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                  ),
-                );
+                      ),
+                    );
                   },
                 );
               },
@@ -433,17 +508,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildPropertyShareCard(MessageEntity msg, bool isMe) {
-    final title = msg.propertyTitle?.isNotEmpty == true ? msg.propertyTitle! : msg.body;
+    final title = msg.propertyTitle?.isNotEmpty == true
+        ? msg.propertyTitle!
+        : msg.body;
     return GestureDetector(
       onTap: msg.propertyId != null
           ? () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PropertyDetailScreen(
-                    propertyId: msg.propertyId!,
-                  ),
-                ),
-              )
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    PropertyDetailScreen(propertyId: msg.propertyId!),
+              ),
+            )
           : null,
       child: Container(
         width: 280,
@@ -454,7 +530,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (msg.propertyImageUrl != null && msg.propertyImageUrl!.isNotEmpty)
+            if (msg.propertyImageUrl != null &&
+                msg.propertyImageUrl!.isNotEmpty)
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(18),
@@ -504,7 +581,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (msg.propertyLocation != null && msg.propertyLocation!.isNotEmpty)
+                  if (msg.propertyLocation != null &&
+                      msg.propertyLocation!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
@@ -515,7 +593,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ),
                       ),
                     ),
-                  if (msg.propertyPrice != null && msg.propertyPrice!.isNotEmpty)
+                  if (msg.propertyPrice != null &&
+                      msg.propertyPrice!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(

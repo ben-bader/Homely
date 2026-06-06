@@ -9,11 +9,16 @@ import 'package:homely/core/theme/app_colors.dart';
 import 'package:homely/ui/widgets/skeletons.dart';
 import 'package:homely/ui/providers/property_providers.dart';
 import 'package:homely/ui/providers/profile_providers.dart';
-import 'package:homely/ui/providers/auth_providers.dart';
+import 'package:homely/ui/providers/favorite_providers.dart';
+import 'package:homely/ui/providers/visit_request_providers.dart';
+import 'package:homely/ui/providers/auth_providers.dart' as auth_providers;
+import '../../helpers/profile_ownership_helper.dart';
 import 'package:homely/domain/entities/profile/profile_entity.dart';
 import 'package:homely/domain/entities/property/property_entity.dart';
 import 'package:homely/ui/screens/visit_requests/my_visit_requests_screen.dart';
 import 'package:homely/ui/screens/boost/my_boosts_screen.dart';
+import 'package:homely/ui/providers/chat_providers.dart';
+import 'package:homely/ui/screens/chat/chat_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROFILE STATS ENTITY
@@ -23,30 +28,46 @@ import 'package:homely/ui/screens/boost/my_boosts_screen.dart';
 class ProfileStats {
   // Seller stats
   final int? listingCount;
-  final int? soldCount;
-  final int? visitsCount;
+  final int? toursCount;
+  final int? followersCount;
+  final double? rating;
 
   // Client stats
   final int? favoritesCount;
+  final int? propertyVisitsCount;
+  final int? scheduledToursCount;
+  final int? reviewsCount;
   final int? savedSearchesCount;
-  final int? viewedCount;
+  // Visits metrics (seller)
+  final int? totalVisitRequests;
+  final int? uniqueVisitRequesters;
 
   const ProfileStats({
     this.listingCount,
-    this.soldCount,
-    this.visitsCount,
+    this.toursCount,
+    this.followersCount,
+    this.rating,
     this.favoritesCount,
+    this.propertyVisitsCount,
+    this.scheduledToursCount,
+    this.reviewsCount,
     this.savedSearchesCount,
-    this.viewedCount,
+    this.totalVisitRequests,
+    this.uniqueVisitRequesters,
   });
 
   factory ProfileStats.empty() => const ProfileStats(
         listingCount: 0,
-        soldCount: 0,
-        visitsCount: 0,
+        toursCount: 0,
+        followersCount: 0,
+        rating: 0,
         favoritesCount: 0,
+        propertyVisitsCount: 0,
+        scheduledToursCount: 0,
+        reviewsCount: 0,
         savedSearchesCount: 0,
-        viewedCount: 0,
+        totalVisitRequests: 0,
+        uniqueVisitRequesters: 0,
       );
 }
 
@@ -56,68 +77,77 @@ class ProfileStats {
 
 enum UserRole { seller, client }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PROVIDERS (wire these to your real backend providers)
-// ─────────────────────────────────────────────────────────────────────────────
+UserRole _normalizeRole(String? role) {
+  if (role == null) return UserRole.client;
+  final normalized = role.toUpperCase().replaceAll('ROLE_', '');
+  return normalized == 'SELLER' ? UserRole.seller : UserRole.client;
+}
 
-/// Replace with your real role provider.
-/// Should read the authenticated user's role from auth state.
-final userRoleProvider = Provider<UserRole>((ref) {
-  // Example: derive from auth state
-  // final authState = ref.watch(authStateProvider);
-  // return authState.user?.role == 'SELLER' ? UserRole.seller : UserRole.client;
-  return UserRole.seller; // ← replace with real auth role
+final profileAuthRoleProvider = Provider<UserRole>((ref) {
+  final roleAsync = ref.watch(auth_providers.userRoleProvider);
+  return roleAsync.maybeWhen(
+    data: (role) => _normalizeRole(role),
+    orElse: () => UserRole.client,
+  );
 });
 
 /// Provider for profile stats — replace with real backend calls.
-/// For seller: call your stats endpoint (listings count, sold, visits).
-/// For client: call your client stats endpoint (favorites, saved searches, viewed).
+/// For seller: call your stats endpoint (listings count, tours, followers).
+/// For client: call your client stats endpoint (favorites, visits, tours).
 final profileStatsProvider =
-    FutureProvider.autoDispose<ProfileStats>((ref) async {
-  final role = ref.watch(userRoleProvider);
-
-  // TODO: replace with real API calls
-  // Example for seller:
-  // final statsData = await ref.read(sellerStatsRepositoryProvider).getStats();
-  // return ProfileStats(
-  //   listingCount: statsData.totalListings,
-  //   soldCount: statsData.totalSold,
-  //   visitsCount: statsData.totalVisits,
-  // );
-  //
-  // Example for client:
-  // final statsData = await ref.read(clientStatsRepositoryProvider).getStats();
-  // return ProfileStats(
-  //   favoritesCount: statsData.favorites,
-  //   savedSearchesCount: statsData.savedSearches,
-  //   viewedCount: statsData.recentlyViewed,
-  // );
-
+    FutureProvider.autoDispose.family<ProfileStats, UserRole>((ref, role) async {
+  // Seller: compute listings + visit metrics (requests & unique requesters)
   if (role == UserRole.seller) {
-    // ── Derive listing count from existing sellerListingsProvider
     final listings = await ref.watch(sellerListingsProvider.future);
-    // Sold count and visits MUST come from a dedicated backend stats endpoint.
-    // Placeholder zeros until endpoint is wired:
+    final visitRepo = ref.read(visitRequestRepositoryProvider);
+    int totalRequests = 0;
+    final uniqueUsers = <String>{};
+    for (final p in listings) {
+      try {
+        final requests = await visitRepo.getRequestsForProperty(p.id);
+        totalRequests += requests.length;
+        for (final r in requests) {
+          if (r.userId != null && r.userId!.isNotEmpty) uniqueUsers.add(r.userId!);
+        }
+      } catch (_) {}
+    }
+
     return ProfileStats(
       listingCount: listings.length,
-      soldCount: 0,   // ← wire to backend: GET /seller/stats or similar
-      visitsCount: 0, // ← wire to backend: GET /seller/stats or similar
-    );
-  } else {
-    // Client stats — all from backend
-    return ProfileStats(
-      favoritesCount: 0,    // ← wire to backend: GET /client/favorites/count
-      savedSearchesCount: 0, // ← wire to backend: GET /client/saved-searches/count
-      viewedCount: 0,        // ← wire to backend: GET /client/recently-viewed/count
+      toursCount: 0,
+      followersCount: 0,
+      rating: 0,
+      totalVisitRequests: totalRequests,
+      uniqueVisitRequesters: uniqueUsers.length,
     );
   }
+
+  // Client: favorites count and number of visit requests made by this user
+  final favorites = await ref.watch(favoritesProvider.future);
+  final myRequests = await ref.watch(myVisitRequestsProvider.future);
+  return ProfileStats(
+    favoritesCount: favorites.length,
+    propertyVisitsCount: myRequests.length,
+    scheduledToursCount: 0,
+    reviewsCount: 0,
+    savedSearchesCount: 0,
+  );
 });
 
 /// Provider for client favorites — wire to your favorites repository.
 final clientFavoritesProvider =
     FutureProvider.autoDispose<List<PropertyEntity>>((ref) async {
-  // TODO: return await ref.read(favoritesRepositoryProvider).getFavorites();
-  return [];
+  final favs = await ref.watch(favoritesProvider.future);
+  final propertyRepo = ref.read(propertyRepositoryProvider);
+  final futures = favs.map((f) async {
+    try {
+      return await propertyRepo.getById(f.propertyId);
+    } catch (_) {
+      return null;
+    }
+  }).toList();
+  final results = await Future.wait(futures);
+  return results.whereType<PropertyEntity>().toList();
 });
 
 /// Provider for recently viewed properties — wire to your repository.
@@ -132,11 +162,16 @@ final recentlyViewedProvider =
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key});
+  final String? userId;
+
+  const ProfileScreen({super.key, this.userId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(profileNotifierProvider);
+    final profileAsync = userId == null
+        ? ref.watch(profileNotifierProvider)
+        : ref.watch(profileByIdProvider(userId!));
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -149,7 +184,13 @@ class ProfileScreen extends ConsumerWidget {
           loading: () => const SimpleListSkeleton(),
           error: (e, _) => _ErrorView(
             message: e.toString(),
-            onRetry: () => ref.invalidate(profileNotifierProvider),
+            onRetry: () {
+              if (userId == null) {
+                ref.invalidate(profileNotifierProvider);
+              } else {
+                ref.invalidate(profileByIdProvider(userId!));
+              }
+            },
           ),
           data: (profile) => _ProfileContent(profile: profile),
         ),
@@ -177,7 +218,10 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    final role = widget.profile.role != null
+        ? _normalizeRole(widget.profile.role)
+        : UserRole.client;
+    _tabController = TabController(length: role == UserRole.seller ? 2 : 1, vsync: this);
   }
 
   @override
@@ -188,7 +232,7 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
 
   Future<void> _logout() async {
     try {
-      await ref.read(authRepositoryProvider).logout();
+      await ref.read(auth_providers.authRepositoryProvider).logout();
     } catch (_) {}
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
@@ -230,72 +274,60 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
 
   @override
   Widget build(BuildContext context) {
-    final role = ref.watch(userRoleProvider);
-    final statsAsync = ref.watch(profileStatsProvider);
+    final authRole = ref.watch(profileAuthRoleProvider);
+    final role = widget.profile.role != null
+        ? _normalizeRole(widget.profile.role)
+        : authRole;
+    final statsAsync = ref.watch(profileStatsProvider(role));
 
     // Bottom nav bar height — ensures content is never hidden behind it
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final navBarHeight = kBottomNavigationBarHeight + bottomPadding;
 
+    final isOwnAsync = ref.watch(isOwnProfileProvider(widget.profile.userId));
+    final isOwn = isOwnAsync.maybeWhen(data: (v) => v, orElse: () => false);
+
+    final tabBar = TabBar(
+      controller: _tabController,
+      indicatorColor: AppColors.accent,
+      indicatorWeight: 1.5,
+      labelColor: AppColors.accent,
+      unselectedLabelColor: AppColors.textSecondary,
+      tabs: role == UserRole.seller
+          ? const [
+              Tab(icon: Icon(Icons.grid_on_rounded, size: 22)),
+              Tab(icon: Icon(Icons.play_circle_outline_rounded, size: 22)),
+            ]
+          : const [
+              Tab(icon: Icon(Icons.favorite_border_rounded, size: 22)),
+              Tab(icon: Icon(Icons.history_rounded, size: 22)),
+            ],
+    );
+
     return NestedScrollView(
       physics: const BouncingScrollPhysics(),
       headerSliverBuilder: (context, innerBoxIsScrolled) => [
         SliverToBoxAdapter(
-          child: Column(
-            children: [
-              _TopBar(
-                username: widget.profile.name,
-                onMoreTap: () => _showMoreOptions(role),
-                onLogoutTap: _showLogoutConfirmation,
-              ),
-              _ProfileHeader(
-                profile: widget.profile,
-                role: role,
-                statsAsync: statsAsync,
-                onEditProfile: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        EditProfileScreen(profile: widget.profile),
-                  ),
-                ),
-                onShareProfile: role == UserRole.seller
-                    ? () => _shareProfile(context, widget.profile)
-                    : null,
-              ),
-              const SizedBox(height: 4),
-            ],
+          child: _TopBar(
+            username: widget.profile.name.trim().isNotEmpty ? widget.profile.name : 'Profile',
+            onMoreTap: () => _showMoreOptions(role),
+            onLogoutTap: _showLogoutConfirmation,
+            isOwnProfile: ref.watch(isOwnProfileProvider(widget.profile.userId)).maybeWhen(data: (v) => v, orElse: () => false),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: _ProfileHeader(
+            profile: widget.profile,
+            role: role,
+            statsAsync: statsAsync,
+            onEditProfile: () {},
+            onShareProfile: null,
+            isOwnProfile: isOwn,
           ),
         ),
         SliverPersistentHeader(
           pinned: true,
-          delegate: _StickyTabBarDelegate(
-            role == UserRole.seller
-                ? TabBar(
-                    controller: _tabController,
-                    indicatorColor: AppColors.accent,
-                    indicatorWeight: 1.5,
-                    labelColor: AppColors.accent,
-                    unselectedLabelColor: AppColors.textSecondary,
-                    tabs: const [
-                      Tab(icon: Icon(Icons.grid_on_rounded, size: 22)),
-                      Tab(
-                          icon:
-                              Icon(Icons.play_circle_outline_rounded, size: 22)),
-                    ],
-                  )
-                : TabBar(
-                    controller: _tabController,
-                    indicatorColor: AppColors.accent,
-                    indicatorWeight: 1.5,
-                    labelColor: AppColors.accent,
-                    unselectedLabelColor: AppColors.textSecondary,
-                    tabs: const [
-                      Tab(icon: Icon(Icons.favorite_border_rounded, size: 22)),
-                      Tab(icon: Icon(Icons.history_rounded, size: 22)),
-                    ],
-                  ),
-          ),
+          delegate: _StickyTabBarDelegate(tabBar),
         ),
       ],
       body: Padding(
@@ -305,36 +337,13 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
           controller: _tabController,
           children: role == UserRole.seller
               ? [
-                  _SellerPropertiesTab(),
+                  const _SellerPropertiesTab(),
                   _ReelsTab(profile: widget.profile),
                 ]
-              : [
+              : const [
                   _ClientFavoritesTab(),
-                  _ClientRecentlyViewedTab(),
                 ],
         ),
-      ),
-    );
-  }
-
-  void _shareProfile(BuildContext context, ProfileEntity profile) {
-    final link = 'https://homely.app/seller/${profile.userId}';
-    Clipboard.setData(ClipboardData(text: link));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.link_rounded, color: Colors.white, size: 18),
-            const SizedBox(width: 10),
-            Text('Profile link copied!',
-                style: GoogleFonts.outfit(color: Colors.white)),
-          ],
-        ),
-        backgroundColor: AppColors.accent,
-        behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -348,11 +357,13 @@ class _TopBar extends StatelessWidget {
   final String username;
   final VoidCallback onMoreTap;
   final VoidCallback onLogoutTap;
+  final bool isOwnProfile;
 
   const _TopBar({
     required this.username,
     required this.onMoreTap,
     required this.onLogoutTap,
+    this.isOwnProfile = false,
   });
 
   @override
@@ -375,12 +386,14 @@ class _TopBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            _IconBtn(
-              icon: Icons.logout_rounded,
-              color: AppColors.error,
-              onTap: onLogoutTap,
-            ),
-            const SizedBox(width: 4),
+            if (isOwnProfile) ...[
+              _IconBtn(
+                icon: Icons.logout_rounded,
+                color: AppColors.error,
+                onTap: onLogoutTap,
+              ),
+              const SizedBox(width: 4),
+            ],
             _IconBtn(
               icon: Icons.more_horiz_rounded,
               color: AppColors.accent,
@@ -426,12 +439,13 @@ class _IconBtn extends StatelessWidget {
 // PROFILE HEADER — role-aware statistics
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends ConsumerWidget {
   final ProfileEntity profile;
   final UserRole role;
   final AsyncValue<ProfileStats> statsAsync;
   final VoidCallback onEditProfile;
   final VoidCallback? onShareProfile;
+  final bool isOwnProfile;
 
   const _ProfileHeader({
     required this.profile,
@@ -439,10 +453,11 @@ class _ProfileHeader extends StatelessWidget {
     required this.statsAsync,
     required this.onEditProfile,
     this.onShareProfile,
+    this.isOwnProfile = false,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -454,7 +469,7 @@ class _ProfileHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _LargeAvatar(profile: profile),
+              _LargeAvatar(profile: profile, isOwn: isOwnProfile),
               const SizedBox(width: 24),
               Expanded(
                 child: statsAsync.when(
@@ -523,12 +538,40 @@ class _ProfileHeader extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ── Action Buttons ─────────────────────────────────────────────────
+          // ── Action Buttons: only allow owner actions when viewing own profile
           Row(
             children: [
-              Expanded(
-                child: _ActionButton(label: 'Edit Profile', onTap: onEditProfile),
-              ),
+              if (isOwnProfile) ...[
+                Expanded(
+                  child: _ActionButton(label: 'Edit Profile', onTap: onEditProfile),
+                ),
+              ] else ...[
+                Expanded(
+                  child: _ActionButton(label: 'Message', onTap: () async {
+                    final auth = await ref.read(auth_providers.currentSessionProvider.future);
+                    final currentUserId = auth?.userId ?? '';
+                    final targetUserId = profile.userId;
+                    if (currentUserId.isEmpty || targetUserId.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to start conversation')));
+                      return;
+                    }
+
+                    final convId = await findOrCreateConversation(ref, currentUserId, targetUserId);
+                    if (convId == null || convId.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to open chat')));
+                      return;
+                    }
+
+                    if (!context.mounted) return;
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(
+                          conversationId: convId,
+                          currentUserId: currentUserId,
+                          chatTitle: profile.name,
+                          chatSubtitle: profile.email,
+                        )));
+                  }),
+                ),
+              ],
               if (onShareProfile != null) ...[
                 const SizedBox(width: 10),
                 Expanded(
@@ -560,20 +603,19 @@ class _StatsRow extends StatelessWidget {
             _StatColumn(
                 value: '${stats.listingCount ?? 0}', label: 'Listings'),
             _StatDivider(),
-            _StatColumn(value: '${stats.soldCount ?? 0}', label: 'Sold'),
-            _StatDivider(),
-            _StatColumn(
-                value: '${stats.visitsCount ?? 0}', label: 'Visits'),
+          _StatColumn(value: '${stats.totalVisitRequests ?? 0}', label: 'Total Visits'),
+          _StatDivider(),
+          _StatColumn(value: '${stats.uniqueVisitRequesters ?? 0}', label: 'Visitors'),
           ]
         : [
             _StatColumn(
                 value: '${stats.favoritesCount ?? 0}', label: 'Favorites'),
             _StatDivider(),
             _StatColumn(
-                value: '${stats.savedSearchesCount ?? 0}', label: 'Saved'),
+                value: '${stats.propertyVisitsCount ?? 0}', label: 'Visits'),
             _StatDivider(),
             _StatColumn(
-                value: '${stats.viewedCount ?? 0}', label: 'Viewed'),
+                value: '${stats.scheduledToursCount ?? 0}', label: 'Tours'),
           ];
 
     return Row(
@@ -626,7 +668,8 @@ class _StatsRowSkeleton extends StatelessWidget {
 
 class _LargeAvatar extends ConsumerWidget {
   final ProfileEntity profile;
-  const _LargeAvatar({required this.profile});
+  final bool isOwn;
+  const _LargeAvatar({required this.profile, this.isOwn = false});
 
   String _initials() {
     final src =
@@ -643,7 +686,9 @@ class _LargeAvatar extends ConsumerWidget {
         ref.watch(localAvatarPathProvider(profile.userId));
 
     return GestureDetector(
-      onTap: () => _pickImage(context, ref),
+      onTap: () {
+        if (isOwn) _pickImage(context, ref);
+      },
       child: Stack(
         children: [
           Container(
@@ -691,29 +736,29 @@ class _LargeAvatar extends ConsumerWidget {
               ),
             ),
           ),
-          Positioned(
-            bottom: 2,
-            right: 2,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-                border:
-                    Border.all(color: AppColors.background, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.4),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+          if (isOwn)
+            Positioned(
+              bottom: 2,
+              right: 2,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.background, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.camera_alt_rounded,
+                    size: 12, color: Colors.white),
               ),
-              child: const Icon(Icons.camera_alt_rounded,
-                  size: 12, color: Colors.white),
             ),
-          ),
         ],
       ),
     );

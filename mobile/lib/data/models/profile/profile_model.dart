@@ -11,6 +11,7 @@ class ProfileModel extends ProfileEntity {
     super.avatarUrl,
     super.idDocumentUrl,
     super.verified,
+    super.role,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) => ProfileModel(
@@ -30,6 +31,7 @@ class ProfileModel extends ProfileEntity {
     idDocumentUrl: (json['idDocumentUrl'] ?? json['user']?['idDocumentUrl'])
         ?.toString(),
     verified: (json['verified'] ?? json['user']?['verified']) as bool? ?? false,
+    role: (json['role'] ?? json['user']?['role'])?.toString(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -41,6 +43,7 @@ class ProfileModel extends ProfileEntity {
     if (address != null) 'address': address,
     if (avatarUrl != null) 'avatarUrl': avatarUrl,
     if (idDocumentUrl != null) 'idDocumentUrl': idDocumentUrl,
+    if (role != null) 'role': role,
     'verified': verified,
   };
 }

@@ -70,6 +70,12 @@ final profileRepositoryProvider = Provider<IProfileRepository>((ref) {
 final profileNotifierProvider =
     AsyncNotifierProvider<ProfileNotifier, ProfileEntity>(ProfileNotifier.new);
 
+final profileByIdProvider = FutureProvider.family<ProfileEntity, String>(
+  (ref, userId) async {
+    return ref.read(profileRepositoryProvider).getProfileById(userId);
+  },
+);
+
 final currentProfileProvider = Provider<ProfileEntity?>((ref) {
   return ref.watch(profileNotifierProvider).valueOrNull;
 });

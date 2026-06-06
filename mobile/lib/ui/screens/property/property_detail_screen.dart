@@ -12,6 +12,7 @@ import '../../../ui/providers/property_providers.dart'
 import '../../../ui/providers/auth_providers.dart';
 import '../../../ui/screens/chat/chat_screen.dart';
 import '../../../ui/providers/chat_providers.dart';
+import '../../../ui/screens/profile/profile_screen.dart';
 import '../../../ui/widgets/visit_requests/request_visit_sheet.dart';
 import '../../../ui/widgets/feedback/feedback_list.dart';
 import '../../../ui/widgets/reports/report_sheet.dart';
@@ -223,15 +224,8 @@ class _BodyState extends ConsumerState<_Body> {
                         letterSpacing: -0.5,
                       ),
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                // Location
-                Row(
-                  children: [
-                    const Icon(
+                    const SizedBox(width: 4),
+                    Icon(
                       Icons.location_on_outlined,
                       size: 15,
                       color: AppColors.textSecondary,
@@ -325,72 +319,66 @@ class _BodyState extends ConsumerState<_Body> {
                     color: AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppColors.borderLight,
-                        backgroundImage: p.sellerAvatar != null
-                            ? NetworkImage(p.sellerAvatar!)
-                            : null,
-                        child: p.sellerAvatar == null
-                            ? const Icon(
-                                Icons.person,
-                                color: AppColors.textSecondary,
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: p.sellerId == null
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProfileScreen(
+                                    userId: p.sellerId,
+                                  ),
+                                ),
+                              );
+                            },
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: AppColors.borderLight,
+                            foregroundImage: _sellerAvatarProvider(p),
+                            child: _sellerAvatarFallback(p),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  p.sellerName,
+                                  style: tt.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                if (p.sellerAgency != null &&
+                                    p.sellerAgency!.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(p.sellerAgency!, style: tt.bodySmall),
+                                ],
+                              ],
+                            ),
+                          ),
+                          if (!isOwner)
+                            _ContactBtn(property: p)
+                          else
                             Text(
-                              p.sellerName,
-                              style: tt.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
+                              'Your Property',
+                              style: tt.labelSmall?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
                               ),
                             ),
-                            if (p.sellerAgency != null &&
-                                p.sellerAgency!.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(p.sellerAgency!, style: tt.bodySmall),
-                            ],
-                          ],
-                        ),
+                        ],
                       ),
-                      if (!isOwner)
-                        _ContactBtn(property: p)
-                      else
-                        Text(
-                          'Your Property',
-                          style: tt.labelSmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                // Boost (owner only)
-                if (isOwner) ...[
-                  const SizedBox(height: 20),
-                  _OutlineActionBtn(
-                    icon: Icons.rocket_launch_rounded,
-                    label: 'Boost this Property',
-                    color: const Color(0xFFFF9800),
-                    onTap: () => BoostSheet.show(
-                      context,
-                      propertyId: p.id,
-                      propertyTitle: p.title,
                     ),
                   ),
-                ],
-
-                const SizedBox(height: 32),
+                ),
                 FeedbackList(
                   propertyId: p.id,
                   currentUserId: currentUserIdAsync.maybeWhen(
@@ -579,6 +567,21 @@ class _BodyState extends ConsumerState<_Body> {
     if (p >= 1000000) return '${(p / 1000000).toStringAsFixed(2)}M';
     if (p >= 1000) return '${(p / 1000).toStringAsFixed(0)}K';
     return p.toStringAsFixed(0);
+  }
+
+  ImageProvider<Object>? _sellerAvatarProvider(PropertyEntity p) {
+    if (p.sellerAvatar != null && p.sellerAvatar!.isNotEmpty) {
+      return NetworkImage(p.sellerAvatar!);
+    }
+    return null;
+  }
+
+  Widget _sellerAvatarFallback(PropertyEntity p) {
+    if (p.sellerAvatar != null && p.sellerAvatar!.isNotEmpty) return const SizedBox.shrink();
+    return const Icon(
+      Icons.person,
+      color: AppColors.textSecondary,
+    );
   }
 }
 

@@ -5,6 +5,8 @@ import 'package:homely/core/theme/app_colors.dart';
 import '../../../domain/entities/chat/conversation_entity.dart';
 import '../../providers/chat_providers.dart';
 import '../../providers/profile_providers.dart';
+import '../../helpers/profile_ownership_helper.dart';
+import '../profile/profile_screen.dart';
 import 'chat_screen.dart';
 
 class ConversationsScreen extends ConsumerStatefulWidget {
@@ -341,6 +343,36 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       ),
     );
   }
+
+  ImageProvider<Object>? _conversationAvatar(ConversationEntity conv, String currentUserId) {
+    final otherAvatar = currentUserId == conv.participantOneId
+        ? conv.participantTwoAvatar
+        : conv.participantOneAvatar;
+    if (otherAvatar != null && otherAvatar.isNotEmpty) {
+      return NetworkImage(otherAvatar);
+    }
+    return null;
+  }
+
+  Widget convAvatarFallback(ConversationEntity conv, String currentUserId, bool hasUnread) {
+    final otherName = conv.otherPersonName(currentUserId);
+    final initials = conv.otherPersonInitials(currentUserId);
+        final otherAvatarVal = (currentUserId == conv.participantOneId
+          ? conv.participantTwoAvatar
+          : conv.participantOneAvatar);
+        if (otherAvatarVal != null && otherAvatarVal.isNotEmpty) {
+      // Network image will be used; no fallback text needed.
+      return const SizedBox.shrink();
+    }
+    return Text(
+      initials,
+      style: GoogleFonts.outfit(
+        color: hasUnread ? Colors.white : AppColors.textSecondary,
+        fontWeight: FontWeight.w700,
+        fontSize: 15,
+      ),
+    );
+  }
 }
 
 // ── Filter Chip ───────────────────────────────────────────────────────────────
@@ -380,17 +412,44 @@ class _FilterChip extends StatelessWidget {
 }
 
 // ── Conversation Tile ─────────────────────────────────────────────────────────
-class _ConversationTile extends StatelessWidget {
+class _ConversationTile extends ConsumerWidget {
   final ConversationEntity conv;
   final String currentUserId;
 
   const _ConversationTile({required this.conv, required this.currentUserId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final hasUnread = conv.unread > 0;
     final displayName = conv.otherPersonName(currentUserId);
     final initials = conv.otherPersonInitials(currentUserId);
+
+    // Determine other user id
+    final otherUserId = currentUserId == conv.participantOneId
+        ? conv.participantTwoId
+        : conv.participantOneId;
+
+    // Prefer canonical profile avatar, fallback to conversation avatar
+    final profileAsync = otherUserId != null && otherUserId.isNotEmpty
+        ? ref.watch(profileByIdProvider(otherUserId))
+        : null;
+
+    final ImageProvider<Object>? avatarImage = profileAsync?.maybeWhen(
+      data: (p) => (p != null && p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
+          ? NetworkImage(p.avatarUrl!)
+          : null,
+      orElse: () => null,
+    ) ??
+        ((currentUserId == conv.participantOneId
+                ? conv.participantTwoAvatar
+                : conv.participantOneAvatar) !=
+            null && (currentUserId == conv.participantOneId
+                ? conv.participantTwoAvatar
+                : conv.participantOneAvatar)!.isNotEmpty
+            ? NetworkImage(currentUserId == conv.participantOneId
+                ? conv.participantTwoAvatar!
+                : conv.participantOneAvatar!)
+            : null);
 
     return InkWell(
       onTap: () => Navigator.push(
@@ -417,18 +476,34 @@ class _ConversationTile extends StatelessWidget {
         child: Row(
           children: [
             // ── Avatar ──────────────────────────────────────────────
-            CircleAvatar(
-              radius: 26,
-              backgroundColor: hasUnread
-                  ? AppColors.primary
-                  : AppColors.subtleBackground,
-              child: Text(
-                initials,
-                style: GoogleFonts.outfit(
-                  color: hasUnread ? Colors.white : AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
+            GestureDetector(
+              onTap: () {
+                final otherUserId = currentUserId == conv.participantOneId
+                    ? conv.participantTwoId
+                    : conv.participantOneId;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProfileScreen(userId: otherUserId),
+                  ),
+                );
+              },
+              child: CircleAvatar(
+                radius: 26,
+                backgroundColor: hasUnread
+                    ? AppColors.primary
+                    : AppColors.subtleBackground,
+                foregroundImage: avatarImage,
+                child: avatarImage == null
+                    ? Text(
+                        initials,
+                        style: GoogleFonts.outfit(
+                          color: hasUnread ? Colors.white : AppColors.textSecondary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
 

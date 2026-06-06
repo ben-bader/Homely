@@ -15,6 +15,12 @@ class ProfileRepositoryImpl implements IProfileRepository {
   }
 
   @override
+  Future<ProfileEntity> getProfileById(String userId) async {
+    final data = await _remote.getProfileById(userId);
+    return ProfileModel.fromJson(data);
+  }
+
+  @override
   Future<ProfileEntity> updateProfileFields(Map<String, dynamic> body) async {
     final data = await _remote.updateProfileFields(body);
     return ProfileModel.fromJson(data);
