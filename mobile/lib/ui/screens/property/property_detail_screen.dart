@@ -12,7 +12,7 @@ import '../../../ui/providers/property_providers.dart'
 import '../../../ui/providers/auth_providers.dart';
 import '../../../ui/screens/chat/chat_screen.dart';
 import '../../../ui/providers/chat_providers.dart';
-import '../../../ui/screens/profile/profile_screen.dart';
+import '../../../ui/screens/profile/user_profile_screen.dart';
 import '../../../ui/widgets/visit_requests/request_visit_sheet.dart';
 import '../../../ui/widgets/feedback/feedback_list.dart';
 import '../../../ui/widgets/reports/report_sheet.dart';
@@ -330,7 +330,7 @@ class _BodyState extends ConsumerState<_Body> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) =>
-                                      ProfileScreen(userId: p.sellerId),
+                                      UserProfileScreen(userId: p.sellerId!),
                                 ),
                               );
                             },

@@ -54,6 +54,14 @@ class PropertyRepositoryImpl implements IPropertyRepository {
   }
 
   @override
+  Future<List<PropertyEntity>> getByUserId(String userId) async {
+    final data = await _remote.getPropertiesByUserId(userId);
+    return data
+        .map((e) => PropertyModel.fromJson(e))
+        .toList();
+  }
+
+  @override
   Future<PropertyEntity> create(Map<String, dynamic> body) async {
     final data = await _remote.create(body);
     return PropertyModel.fromJson(data);

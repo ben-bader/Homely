@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:homely/ui/providers/auth_providers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:homely/core/theme/app_colors.dart';
 import 'package:homely/ui/widgets/skeletons.dart';
@@ -22,82 +23,23 @@ import 'package:homely/ui/providers/chat_providers.dart';
 import 'package:homely/ui/screens/chat/chat_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROFILE STATS ENTITY
-// Holds role-specific statistics fetched from the backend.
+// Types imported from profile_providers.dart:
+//   ProfileStats, UserRole, normalizeRole
 // ─────────────────────────────────────────────────────────────────────────────
-
-class ProfileStats {
-  // Seller stats
-  final int? listingCount;
-  final int? toursCount;
-  final int? followersCount;
-  final double? rating;
-
-  // Client stats
-  final int? favoritesCount;
-  final int? propertyVisitsCount;
-  final int? scheduledToursCount;
-  final int? reviewsCount;
-  final int? savedSearchesCount;
-  // Visits metrics (seller)
-  final int? totalVisitRequests;
-  final int? uniqueVisitRequesters;
-
-  const ProfileStats({
-    this.listingCount,
-    this.toursCount,
-    this.followersCount,
-    this.rating,
-    this.favoritesCount,
-    this.propertyVisitsCount,
-    this.scheduledToursCount,
-    this.reviewsCount,
-    this.savedSearchesCount,
-    this.totalVisitRequests,
-    this.uniqueVisitRequesters,
-  });
-
-  factory ProfileStats.empty() => const ProfileStats(
-    listingCount: 0,
-    toursCount: 0,
-    followersCount: 0,
-    rating: 0,
-    favoritesCount: 0,
-    propertyVisitsCount: 0,
-    scheduledToursCount: 0,
-    reviewsCount: 0,
-    savedSearchesCount: 0,
-    totalVisitRequests: 0,
-    uniqueVisitRequesters: 0,
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// USER ROLE ENUM
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum UserRole { seller, client }
-
-UserRole _normalizeRole(String? role) {
-  if (role == null) return UserRole.client;
-  final normalized = role.toUpperCase().replaceAll('ROLE_', '');
-  return normalized == 'SELLER' ? UserRole.seller : UserRole.client;
-}
 
 final profileAuthRoleProvider = Provider<UserRole>((ref) {
   final roleAsync = ref.watch(auth_providers.userRoleProvider);
   return roleAsync.maybeWhen(
-    data: (role) => _normalizeRole(role),
+    data: (role) => normalizeRole(role),
     orElse: () => UserRole.client,
   );
 });
 
-/// Provider for profile stats — replace with real backend calls.
-/// For seller: call your stats endpoint (listings count, tours, followers).
-/// For client: call your client stats endpoint (favorites, visits, tours).
+/// Provider for profile stats — own-user stats (MyProfileScreen).
+/// For seller: listings count, visits, unique visitors.
+/// For client: favorites count, visit requests, tours.
 final profileStatsProvider = FutureProvider.autoDispose
     .family<ProfileStats, UserRole>((ref, role) async {
-      // Seller: compute listings + visit metrics (requests & unique requesters)
       if (role == UserRole.seller) {
         final listings = await ref.watch(sellerListingsProvider.future);
         final visitRepo = ref.read(visitRequestRepositoryProvider);
@@ -113,7 +55,6 @@ final profileStatsProvider = FutureProvider.autoDispose
             }
           } catch (_) {}
         }
-
         return ProfileStats(
           listingCount: listings.length,
           toursCount: 0,
@@ -124,7 +65,6 @@ final profileStatsProvider = FutureProvider.autoDispose
         );
       }
 
-      // Client: favorites count and number of visit requests made by this user
       final favorites = await ref.watch(favoritesProvider.future);
       final myRequests = await ref.watch(myVisitRequestsProvider.future);
       return ProfileStats(
@@ -152,13 +92,13 @@ final clientFavoritesProvider =
       return results.whereType<PropertyEntity>().toList();
     });
 
-/// Provider for recently viewed properties — wire to your repository.
+/// Provider for recently viewed properties.
 final recentlyViewedProvider = FutureProvider.autoDispose<List<PropertyEntity>>((
   ref,
 ) async {
-  // TODO: return await ref.read(recentlyViewedRepositoryProvider).getRecentlyViewed();
   return [];
 });
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROFILE SCREEN ROOT
@@ -222,7 +162,7 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
   void initState() {
     super.initState();
     final role = widget.profile.role != null
-        ? _normalizeRole(widget.profile.role)
+        ? normalizeRole(widget.profile.role)
         : UserRole.client;
     _tabController = TabController(
       length: role == UserRole.seller ? 2 : 1,
@@ -282,7 +222,7 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
   Widget build(BuildContext context) {
     final authRole = ref.watch(profileAuthRoleProvider);
     final role = widget.profile.role != null
-        ? _normalizeRole(widget.profile.role)
+        ? normalizeRole(widget.profile.role)
         : authRole;
     final statsAsync = ref.watch(profileStatsProvider(role));
 
@@ -634,18 +574,20 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Seller  → Listings | Visits | Tours
+    // Client  → Favorites | Visits | Tours
     final columns = role == UserRole.seller
         ? [
             _StatColumn(value: '${stats.listingCount ?? 0}', label: 'Listings'),
             _StatDivider(),
             _StatColumn(
               value: '${stats.totalVisitRequests ?? 0}',
-              label: 'Total Visits',
+              label: 'Visits',
             ),
             _StatDivider(),
             _StatColumn(
-              value: '${stats.uniqueVisitRequesters ?? 0}',
-              label: 'Visitors',
+              value: '${stats.toursCount ?? 0}',
+              label: 'Tours',
             ),
           ]
         : [

@@ -5,6 +5,9 @@ import '../../data/datasources/remote/profile_remote_datasource.dart';
 import '../../data/repositories/profile_repository_impl.dart';
 import '../../domain/entities/profile/profile_entity.dart';
 import '../../domain/repositories/i_profile_repository.dart';
+import '../../domain/entities/property/property_entity.dart';
+import '../providers/property_providers.dart';
+import '../providers/visit_request_providers.dart';
 
 final profileRemoteDatasourceProvider = Provider<ProfileRemoteDatasource>(
   (ref) => ProfileRemoteDatasourceImpl(),
@@ -105,3 +108,120 @@ class ProfileNotifier extends AsyncNotifier<ProfileEntity> {
     if (state.hasError) state = previous;
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROFILE STATS — shared entity (used by both screens)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class ProfileStats {
+  // Seller stats
+  final int? listingCount;
+  final int? toursCount;
+  final int? followersCount;
+  final double? rating;
+
+  // Client stats
+  final int? favoritesCount;
+  final int? propertyVisitsCount;
+  final int? scheduledToursCount;
+  final int? reviewsCount;
+  final int? savedSearchesCount;
+
+  // Visit metrics (seller)
+  final int? totalVisitRequests;
+  final int? uniqueVisitRequesters;
+
+  const ProfileStats({
+    this.listingCount,
+    this.toursCount,
+    this.followersCount,
+    this.rating,
+    this.favoritesCount,
+    this.propertyVisitsCount,
+    this.scheduledToursCount,
+    this.reviewsCount,
+    this.savedSearchesCount,
+    this.totalVisitRequests,
+    this.uniqueVisitRequesters,
+  });
+
+  factory ProfileStats.empty() => const ProfileStats(
+        listingCount: 0,
+        toursCount: 0,
+        followersCount: 0,
+        rating: 0,
+        favoritesCount: 0,
+        propertyVisitsCount: 0,
+        scheduledToursCount: 0,
+        reviewsCount: 0,
+        savedSearchesCount: 0,
+        totalVisitRequests: 0,
+        uniqueVisitRequesters: 0,
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER ROLE ENUM
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum UserRole { seller, client }
+
+UserRole normalizeRole(String? role) {
+  if (role == null) return UserRole.client;
+  final normalized = role.toUpperCase().replaceAll('ROLE_', '');
+  return normalized == 'SELLER' ? UserRole.seller : UserRole.client;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// sellerListingsByUserIdProvider
+// Fetches listings for any seller by their userId.
+// Used only by UserProfileScreen — never call sellerListingsProvider here.
+// Not autoDispose so the data persists while the profile screen is in the stack.
+// ─────────────────────────────────────────────────────────────────────────────
+
+final sellerListingsByUserIdProvider =
+    FutureProvider.family<List<PropertyEntity>, String>((ref, userId) async {
+  return ref.read(propertyRepositoryProvider).getByUserId(userId);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// profileStatsByUserIdProvider
+// Fetches stats for any userId. Used only by UserProfileScreen header.
+// Role is derived from the fetched profile entity, NOT from auth state.
+// Not autoDispose — same reason as above.
+// ─────────────────────────────────────────────────────────────────────────────
+
+final profileStatsByUserIdProvider =
+    FutureProvider.family<ProfileStats, String>((ref, userId) async {
+  final profile =
+      await ref.read(profileRepositoryProvider).getProfileById(userId);
+  final role = normalizeRole(profile.role);
+
+  if (role == UserRole.seller) {
+    final listings =
+        await ref.watch(sellerListingsByUserIdProvider(userId).future);
+    final visitRepo = ref.read(visitRequestRepositoryProvider);
+    int totalRequests = 0;
+    for (final p in listings) {
+      try {
+        final requests = await visitRepo.getRequestsForProperty(p.id);
+        totalRequests += requests.length;
+      } catch (_) {}
+    }
+    return ProfileStats(
+      listingCount: listings.length,
+      // Visits column reads totalVisitRequests; Tours defaults to 0 until wired.
+      totalVisitRequests: totalRequests,
+      toursCount: 0,
+      followersCount: 0,
+      rating: 0,
+    );
+  }
+
+  // Client — no public stats API yet.
+  return ProfileStats(
+    favoritesCount: 0,
+    propertyVisitsCount: 0,
+    scheduledToursCount: 0,
+  );
+});

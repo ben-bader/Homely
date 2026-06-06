@@ -6,7 +6,7 @@ import '../../../domain/entities/chat/conversation_entity.dart';
 import '../../providers/chat_providers.dart';
 import '../../providers/profile_providers.dart';
 import '../../helpers/profile_ownership_helper.dart';
-import '../profile/profile_screen.dart';
+import '../profile/user_profile_screen.dart';
 import 'chat_screen.dart';
 
 class ConversationsScreen extends ConsumerStatefulWidget {
@@ -499,7 +499,7 @@ class _ConversationTile extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ProfileScreen(userId: otherUserId),
+                    builder: (_) => UserProfileScreen(userId: otherUserId ?? ''),
                   ),
                 );
               },

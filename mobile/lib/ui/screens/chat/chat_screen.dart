@@ -7,6 +7,7 @@ import '../../providers/chat_providers.dart';
 import 'package:homely/ui/providers/profile_providers.dart';
 import '../property/property_detail_screen.dart';
 import '../../helpers/profile_ownership_helper.dart';
+import '../profile/user_profile_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -233,39 +234,50 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.accent),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (otherAvatarUrl != null && otherAvatarUrl!.isNotEmpty)
-              CircleAvatar(
-                radius: 16,
-                backgroundImage: NetworkImage(otherAvatarUrl!),
-                backgroundColor: AppColors.subtleBackground,
-              )
-            else
-              const SizedBox.shrink(),
-            const SizedBox(width: 8),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _otherUserName ?? widget.chatTitle,
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: AppColors.accent,
+        title: GestureDetector(
+          onTap: (otherUserId != null && otherUserId!.isNotEmpty)
+              ? () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          UserProfileScreen(userId: otherUserId!),
+                    ),
+                  )
+              : null,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (otherAvatarUrl != null && otherAvatarUrl!.isNotEmpty)
+                CircleAvatar(
+                  radius: 16,
+                  backgroundImage: NetworkImage(otherAvatarUrl!),
+                  backgroundColor: AppColors.subtleBackground,
+                )
+              else
+                const SizedBox.shrink(),
+              const SizedBox(width: 8),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _otherUserName ?? widget.chatTitle,
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: AppColors.accent,
+                    ),
                   ),
-                ),
-                Text(
-                  widget.chatSubtitle,
-                  style: GoogleFonts.outfit(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                  Text(
+                    widget.chatSubtitle,
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(
