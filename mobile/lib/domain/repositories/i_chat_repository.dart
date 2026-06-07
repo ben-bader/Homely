@@ -8,6 +8,7 @@ abstract class IChatRepository {
     int size = 50,
   });
   Future<ConversationEntity> createConversation(String propertyId);
+  Future<ConversationEntity> createChatRoom(String participantId);
   Future<List<ConversationEntity>> fetchConversations();
   Future<MessageEntity> editMessage({
     required String messageId,

@@ -6,11 +6,11 @@ import 'dart:io';
 
 abstract class ProfileRemoteDatasource {
   Future<Map<String, dynamic>> getProfile();
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data);
-  Future<Map<String, dynamic>> uploadAvatar(String filePath);
+  Future<Map<String, dynamic>> getProfileById(String userId);
   Future<Map<String, dynamic>> getMyProfile();
   Future<Map<String, dynamic>> updateProfileFields(Map<String, dynamic> body);
   Future<void> updateUserFields(String userId, Map<String, dynamic> body);
+  Future<Map<String, dynamic>> uploadAvatar(String filePath);
 }
 
 class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
@@ -59,6 +59,15 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
     }
 
     return response;
+  }
+
+  @override
+  Future<Map<String, dynamic>> getProfileById(String userId) async {
+    final response = await ApiClient.get(Endpoints.userById(userId));
+    if (response is Map<String, dynamic> && response.isNotEmpty) {
+      return response;
+    }
+    throw Exception('Profile for user $userId not found');
   }
 
   @override

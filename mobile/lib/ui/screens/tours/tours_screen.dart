@@ -281,7 +281,7 @@ class _ReelItemState extends ConsumerState<_ReelItem>
             conversationId: conv.id,
               currentUserId: conv.participantOneId,
             chatTitle: property.sellerName,
-            chatSubtitle: property.title,
+            chatSubtitle: '',
           ),
         ),
       );

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:homely/core/theme/app_colors.dart';
 import 'package:homely/domain/entities/feedback/feedback_entity.dart' as fb;
 import '../../../ui/providers/feedback_providers.dart';
+import 'package:homely/ui/providers/profile_providers.dart';
 import '../../../ui/widgets/feedback/submit_feedback_sheet.dart';
 
 class FeedbackList extends ConsumerWidget {
@@ -28,7 +29,8 @@ class FeedbackList extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Reviews', style: tt.titleSmall),
+                  Text('Reviews', style: tt.titleSmall?.copyWith(fontSize: 17, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
                   if (reviewCount > 0)
                     Row(
                       children: [
@@ -175,9 +177,10 @@ class _FeedbackCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -188,17 +191,42 @@ class _FeedbackCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                child: Text(
-                  isOwn ? 'Me' : '★',
-                  style: GoogleFonts.outfit(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
+              Builder(
+                builder: (ctx) {
+                  final profileAsync = ref.watch(
+                    profileByIdProvider(feedback.userId),
+                  );
+                  final avatar = profileAsync.maybeWhen(
+                    data: (p) =>
+                        (p != null &&
+                            p.avatarUrl != null &&
+                            p.avatarUrl!.isNotEmpty)
+                        ? NetworkImage(p.avatarUrl!)
+                        : null,
+                    orElse: () => null,
+                  );
+                  if (avatar != null) {
+                    return CircleAvatar(
+                      radius: 16,
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.15,
+                      ),
+                      foregroundImage: avatar,
+                    );
+                  }
+                  return CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                    child: Text(
+                      isOwn ? 'Me' : '★',
+                      style: GoogleFonts.outfit(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(width: 10),
               _StarRow(rating: feedback.rating.toDouble(), size: 14),

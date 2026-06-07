@@ -12,6 +12,7 @@ import '../../../ui/providers/property_providers.dart'
 import '../../../ui/providers/auth_providers.dart';
 import '../../../ui/screens/chat/chat_screen.dart';
 import '../../../ui/providers/chat_providers.dart';
+import '../../../ui/screens/profile/user_profile_screen.dart';
 import '../../../ui/widgets/visit_requests/request_visit_sheet.dart';
 import '../../../ui/widgets/feedback/feedback_list.dart';
 import '../../../ui/widgets/reports/report_sheet.dart';
@@ -226,26 +227,6 @@ class _BodyState extends ConsumerState<_Body> {
                   ],
                 ),
 
-                const SizedBox(height: 10),
-
-                // Location
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 15,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        p.location,
-                        style: tt.bodySmall?.copyWith(fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
-
                 const SizedBox(height: 24),
 
                 // Spec chips
@@ -307,7 +288,10 @@ class _BodyState extends ConsumerState<_Body> {
 
                 // Description
                 if (p.description.isNotEmpty) ...[
-                  Text('Description', style: tt.titleSmall),
+                  // ── Address ──────────────────────────────────────────────
+                  const SizedBox(height: 20),
+                 
+                  Text('Description', style: tt.titleMedium?.copyWith(fontSize: 17, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
                   Text(
                     p.description,
@@ -317,80 +301,72 @@ class _BodyState extends ConsumerState<_Body> {
                 ],
 
                 // Listing agent
-                Text('Listing Agent', style: tt.titleSmall),
-                const SizedBox(height: 12),
+                Text('Listing Agent', style: tt.titleMedium?.copyWith(fontSize: 17, fontWeight: FontWeight.w600)),
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 24),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppColors.borderLight,
-                        backgroundImage: p.sellerAvatar != null
-                            ? NetworkImage(p.sellerAvatar!)
-                            : null,
-                        child: p.sellerAvatar == null
-                            ? const Icon(
-                                Icons.person,
-                                color: AppColors.textSecondary,
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: p.sellerId == null
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      UserProfileScreen(userId: p.sellerId!),
+                                ),
+                              );
+                            },
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: AppColors.borderLight,
+                            foregroundImage: _sellerAvatarProvider(p),
+                            child: _sellerAvatarFallback(p),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  p.sellerName,
+                                  style: tt.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                if (p.sellerAgency != null &&
+                                    p.sellerAgency!.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(p.sellerAgency!, style: tt.bodySmall),
+                                ],
+                              ],
+                            ),
+                          ),
+                          if (!isOwner)
+                            _ContactBtn(property: p)
+                          else
                             Text(
-                              p.sellerName,
-                              style: tt.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
+                              'Your Property',
+                              style: tt.labelSmall?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
                               ),
                             ),
-                            if (p.sellerAgency != null &&
-                                p.sellerAgency!.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(p.sellerAgency!, style: tt.bodySmall),
-                            ],
-                          ],
-                        ),
+                        ],
                       ),
-                      if (!isOwner)
-                        _ContactBtn(property: p)
-                      else
-                        Text(
-                          'Your Property',
-                          style: tt.labelSmall?.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                // Boost (owner only)
-                if (isOwner) ...[
-                  const SizedBox(height: 20),
-                  _OutlineActionBtn(
-                    icon: Icons.rocket_launch_rounded,
-                    label: 'Boost this Property',
-                    color: const Color(0xFFFF9800),
-                    onTap: () => BoostSheet.show(
-                      context,
-                      propertyId: p.id,
-                      propertyTitle: p.title,
                     ),
                   ),
-                ],
-
-                const SizedBox(height: 32),
+                ),
                 FeedbackList(
                   propertyId: p.id,
                   currentUserId: currentUserIdAsync.maybeWhen(
@@ -401,7 +377,7 @@ class _BodyState extends ConsumerState<_Body> {
                 const SizedBox(height: 32),
 
                 // ── Location map ─────────────────────────────────────────
-                Text('Location', style: tt.titleSmall),
+                Text('Location', style: tt.titleSmall?.copyWith(fontSize: 17, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 _PropertyMap(
                   latitude: p.latitude,
@@ -440,7 +416,7 @@ class _BodyState extends ConsumerState<_Body> {
         ],
       ),
 
-      bottomNavigationBar: isClient
+      bottomNavigationBar: isOwner
           ? Container(
               padding: EdgeInsets.fromLTRB(
                 20,
@@ -458,36 +434,75 @@ class _BodyState extends ConsumerState<_Body> {
                   ),
                 ],
               ),
-              child: ElevatedButton.icon(
-                onPressed: () => RequestVisitSheet.show(
-                  context,
-                  propertyId: p.id,
-                  propertyTitle: p.title,
-                ),
-                icon: const Icon(
-                  Icons.calendar_today_outlined,
-                  size: 18,
-                  color: Colors.white,
-                ),
-                label: Text(
-                  'Request a Visit',
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    fontSize: 15,
-                  ),
-                ),
+              child: ElevatedButton(
+                onPressed: null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.subtleBackground,
+                  disabledBackgroundColor: AppColors.subtleBackground,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
+                child: Text(
+                  'Your property',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    fontSize: 15,
+                  ),
+                ),
               ),
             )
-          : null,
+          : isClient
+              ? Container(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    12,
+                    20,
+                    MediaQuery.of(context).padding.bottom + 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () => RequestVisitSheet.show(
+                      context,
+                      propertyId: p.id,
+                      propertyTitle: p.title,
+                    ),
+                    icon: const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      'Request a Visit',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontSize: 15,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                )
+              : null,
     );
   }
 
@@ -580,6 +595,19 @@ class _BodyState extends ConsumerState<_Body> {
     if (p >= 1000) return '${(p / 1000).toStringAsFixed(0)}K';
     return p.toStringAsFixed(0);
   }
+
+  ImageProvider<Object>? _sellerAvatarProvider(PropertyEntity p) {
+    if (p.sellerAvatar != null && p.sellerAvatar!.isNotEmpty) {
+      return NetworkImage(p.sellerAvatar!);
+    }
+    return null;
+  }
+
+  Widget _sellerAvatarFallback(PropertyEntity p) {
+    if (p.sellerAvatar != null && p.sellerAvatar!.isNotEmpty)
+      return const SizedBox.shrink();
+    return const Icon(Icons.person, color: AppColors.textSecondary);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -614,7 +642,14 @@ class _PropertyMap extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.subtleBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: AppColors.borderDark),
         ),
         child: Center(
           child: Column(
@@ -690,7 +725,9 @@ class _PropertyMap extends StatelessWidget {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -734,9 +771,10 @@ class _PropertyMap extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.cardBackground,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.borderLight),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1177,7 +1215,7 @@ class _ContactBtn extends ConsumerWidget {
           final conv = await repo.createConversation(property.id);
           final currentUserId =
               ref.read(profileNotifierProvider).valueOrNull?.userId ??
-                  conv.participantOneId;
+              conv.participantOneId;
           if (!context.mounted) return;
           Navigator.push(
             context,
@@ -1186,7 +1224,7 @@ class _ContactBtn extends ConsumerWidget {
                 conversationId: conv.id,
                 currentUserId: currentUserId,
                 chatTitle: property.sellerName,
-                chatSubtitle: property.title,
+                chatSubtitle: '',
               ),
             ),
           );

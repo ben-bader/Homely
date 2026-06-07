@@ -91,7 +91,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       data['senderName'] as String? ??
                       data['clientName'] as String? ??
                       'Chat',
-                  chatSubtitle: data['propertyTitle'] as String? ?? '',
+                  chatSubtitle: '',
                 ),
               ),
             );

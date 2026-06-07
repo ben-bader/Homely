@@ -142,6 +142,16 @@ public class PropertyController {
         return propertyService.getBySellerEmail(principal.getName());
     }
 
+    // ✅ Public: listings for any seller by their user UUID
+    // Used by UserProfileScreen to display another seller's properties.
+    // No @PreAuthorize — any authenticated user may call this.
+    @GetMapping("/seller/{userId}")
+    public ResponseEntity<List<PropertyDto>> getPropertiesBySeller(
+            @PathVariable UUID userId) {
+        List<PropertyDto> listings = propertyService.getByUserId(userId);
+        return ResponseEntity.ok(listings);
+    }
+
     // ✅ Update status
     @PreAuthorize("hasRole('SELLER')")
     @PatchMapping("/{id}/status")

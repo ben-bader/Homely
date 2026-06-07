@@ -18,6 +18,7 @@ abstract class PropertyRemoteDatasource {
   Future<Map<String, dynamic>> getById(String id);
   Future<List<Map<String, dynamic>>> filter(Map<String, String> params);
   Future<List<Map<String, dynamic>>> getMyListedProperties();
+  Future<List<Map<String, dynamic>>> getPropertiesByUserId(String userId);
   Future<Map<String, dynamic>> create(Map<String, dynamic> data);
   Future<Map<String, dynamic>> update(String id, Map<String, dynamic> data);
   Future<Map<String, dynamic>> updateStatus(String id, String status);
@@ -96,6 +97,15 @@ class PropertyRemoteDatasourceImpl implements PropertyRemoteDatasource {
   Future<List<Map<String, dynamic>>> getMyListedProperties() async {
     final response = await ApiClient.get('/properties/my-listed');
     return List<Map<String, dynamic>>.from(response ?? []);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getPropertiesByUserId(String userId) async {
+    final response = await ApiClient.get('/properties/seller/$userId');
+    final raw = response is List
+        ? response
+        : (response['content'] ?? response['data'] ?? response ?? []);
+    return List<Map<String, dynamic>>.from(raw);
   }
 
   @override

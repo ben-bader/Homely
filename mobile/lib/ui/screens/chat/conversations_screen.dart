@@ -5,6 +5,7 @@ import 'package:homely/core/theme/app_colors.dart';
 import '../../../domain/entities/chat/conversation_entity.dart';
 import '../../providers/chat_providers.dart';
 import '../../providers/profile_providers.dart';
+import '../profile/user_profile_screen.dart';
 import 'chat_screen.dart';
 
 class ConversationsScreen extends ConsumerStatefulWidget {
@@ -71,26 +72,26 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   Widget build(BuildContext context) {
     if (!_hasRegisteredListeners) {
       _hasRegisteredListeners = true;
-      ref.listen<AsyncValue<Map<String, dynamic>>>(
-        notificationStreamProvider,
-        (previous, next) {
-          next.whenData((event) {
-            final type = event['type']?.toString();
-            if (type == 'NEW_CHAT_MESSAGE' || type == 'NEW_CONVERSATION') {
-              ref.invalidate(conversationsProvider);
-            }
-          });
-        },
-      );
-
-      ref.listen<AsyncValue<Map<String, dynamic>>>(
-        chatEventStreamProvider,
-        (previous, next) {
-          next.whenData((_) {
+      ref.listen<AsyncValue<Map<String, dynamic>>>(notificationStreamProvider, (
+        previous,
+        next,
+      ) {
+        next.whenData((event) {
+          final type = event['type']?.toString();
+          if (type == 'NEW_CHAT_MESSAGE' || type == 'NEW_CONVERSATION') {
             ref.invalidate(conversationsProvider);
-          });
-        },
-      );
+          }
+        });
+      });
+
+      ref.listen<AsyncValue<Map<String, dynamic>>>(chatEventStreamProvider, (
+        previous,
+        next,
+      ) {
+        next.whenData((_) {
+          ref.invalidate(conversationsProvider);
+        });
+      });
     }
 
     final convsAsync = ref.watch(conversationsProvider);
@@ -300,7 +301,9 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                                   false;
                             },
                             onDismissed: (direction) async {
-                              final scaffoldMessenger = ScaffoldMessenger.of(context);
+                              final scaffoldMessenger = ScaffoldMessenger.of(
+                                context,
+                              );
                               try {
                                 await ref
                                     .read(chatRepositoryProvider)
@@ -341,6 +344,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
       ),
     );
   }
+
 }
 
 // ── Filter Chip ───────────────────────────────────────────────────────────────
@@ -380,17 +384,43 @@ class _FilterChip extends StatelessWidget {
 }
 
 // ── Conversation Tile ─────────────────────────────────────────────────────────
-class _ConversationTile extends StatelessWidget {
+class _ConversationTile extends ConsumerWidget {
   final ConversationEntity conv;
   final String currentUserId;
 
   const _ConversationTile({required this.conv, required this.currentUserId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final hasUnread = conv.unread > 0;
     final displayName = conv.otherPersonName(currentUserId);
     final initials = conv.otherPersonInitials(currentUserId);
+
+    // Determine other user id
+    final otherUserId = currentUserId == conv.participantOneId
+        ? conv.participantTwoId
+        : conv.participantOneId;
+
+    // Prefer canonical profile avatar, fallback to conversation avatar
+    final profileAsync = otherUserId.isNotEmpty
+        ? ref.watch(profileByIdProvider(otherUserId))
+        : null;
+
+    final String? convAvatar = currentUserId == conv.participantOneId
+        ? conv.participantTwoAvatar
+        : conv.participantOneAvatar;
+
+    final ImageProvider<Object>? avatarImage =
+        profileAsync?.maybeWhen(
+          data: (p) =>
+              (p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
+              ? NetworkImage(p.avatarUrl!)
+              : null,
+          orElse: () => null,
+        ) ??
+        (convAvatar != null && convAvatar.isNotEmpty
+            ? NetworkImage(convAvatar)
+            : null);
 
     return InkWell(
       onTap: () => Navigator.push(
@@ -400,7 +430,7 @@ class _ConversationTile extends StatelessWidget {
             conversationId: conv.id,
             currentUserId: currentUserId,
             chatTitle: displayName,
-            chatSubtitle: conv.propertyTitle ?? '',
+            chatSubtitle: '',
           ),
         ),
       ),
@@ -417,18 +447,36 @@ class _ConversationTile extends StatelessWidget {
         child: Row(
           children: [
             // ── Avatar ──────────────────────────────────────────────
-            CircleAvatar(
-              radius: 26,
-              backgroundColor: hasUnread
-                  ? AppColors.primary
-                  : AppColors.subtleBackground,
-              child: Text(
-                initials,
-                style: GoogleFonts.outfit(
-                  color: hasUnread ? Colors.white : AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
+            GestureDetector(
+              onTap: () {
+                final otherUserId = currentUserId == conv.participantOneId
+                    ? conv.participantTwoId
+                    : conv.participantOneId;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => UserProfileScreen(userId: otherUserId),
+                  ),
+                );
+              },
+              child: CircleAvatar(
+                radius: 26,
+                backgroundColor: hasUnread
+                    ? AppColors.primary
+                    : AppColors.subtleBackground,
+                foregroundImage: avatarImage,
+                child: avatarImage == null
+                    ? Text(
+                        initials,
+                        style: GoogleFonts.outfit(
+                          color: hasUnread
+                              ? Colors.white
+                              : AppColors.textSecondary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
 

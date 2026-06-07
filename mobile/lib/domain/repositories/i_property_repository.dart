@@ -7,6 +7,7 @@ abstract class IPropertyRepository {
   Future<List<PropertyEntity>> filter(Map<String, String> params);
   Future<List<PropertyEntity>> search(String keyword);
   Future<List<PropertyEntity>> getMyListedProperties();
+  Future<List<PropertyEntity>> getByUserId(String userId);
   Future<PropertyEntity> create(Map<String, dynamic> body);
   Future<PropertyEntity> update(String id, Map<String, dynamic> body);
   Future<PropertyEntity> updateStatus(String id, PropertyStatus status);

@@ -17,19 +17,53 @@ final chatRepositoryProvider = Provider<IChatRepository>((ref) {
 
 final chatServiceProvider = Provider<ChatService>((ref) => ChatService());
 
-final notificationStreamProvider = StreamProvider.autoDispose<Map<String, dynamic>>(
-  (ref) => NotificationService().notificationStream,
-);
+final notificationStreamProvider =
+    StreamProvider.autoDispose<Map<String, dynamic>>(
+      (ref) => NotificationService().notificationStream,
+    );
 
-final chatEventStreamProvider = StreamProvider.autoDispose<Map<String, dynamic>>(
-  (ref) => ref.read(chatServiceProvider).messageStream,
-);
+final chatEventStreamProvider =
+    StreamProvider.autoDispose<Map<String, dynamic>>(
+      (ref) => ref.read(chatServiceProvider).messageStream,
+    );
 
-final conversationsProvider = FutureProvider<List<ConversationEntity>>(
-  (ref) async {
-    return ref.read(chatRepositoryProvider).fetchConversations();
-  },
-);
+final conversationsProvider = FutureProvider<List<ConversationEntity>>((
+  ref,
+) async {
+  return ref.read(chatRepositoryProvider).fetchConversations();
+});
+
+/// Find an existing conversation between current user and [otherUserId],
+/// or create one (by property or direct chat) and return its id.
+Future<String?> findOrCreateConversation(
+  WidgetRef ref,
+  String currentUserId,
+  String otherUserId, {
+  String? propertyId,
+}) async {
+  try {
+    final repo = ref.read(chatRepositoryProvider);
+    final convs = await repo.fetchConversations();
+    for (final c in convs) {
+      if ((c.participantOneId == currentUserId &&
+              c.participantTwoId == otherUserId) ||
+          (c.participantOneId == otherUserId &&
+              c.participantTwoId == currentUserId)) {
+        return c.id;
+      }
+    }
+
+    if (propertyId != null && propertyId.isNotEmpty) {
+      final conv = await repo.createConversation(propertyId);
+      return conv.id;
+    }
+
+    final conv = await repo.createChatRoom(otherUserId);
+    return conv.id;
+  } catch (_) {
+    return null;
+  }
+}
 
 final chatProvider =
     StateNotifierProvider.family<
@@ -61,9 +95,11 @@ class ChatNotifier extends StateNotifier<AsyncValue<List<MessageEntity>>> {
       }
 
       if (!_ws.isConnected) {
-        await _ws.connect(onConnected: () {
-          if (mounted) _subscribe();
-        });
+        await _ws.connect(
+          onConnected: () {
+            if (mounted) _subscribe();
+          },
+        );
       } else {
         if (mounted) _subscribe();
       }
@@ -107,7 +143,8 @@ class ChatNotifier extends StateNotifier<AsyncValue<List<MessageEntity>>> {
       senderId: incoming['senderId']?.toString() ?? '',
       senderName: incoming['senderName']?.toString() ?? '',
       body: incoming['body']?.toString() ?? '',
-      sentAt: DateTime.tryParse(incoming['sentAt']?.toString() ?? '') ??
+      sentAt:
+          DateTime.tryParse(incoming['sentAt']?.toString() ?? '') ??
           DateTime.now(),
       messageType: incoming['messageType']?.toString(),
       propertyId: incoming['propertyId']?.toString(),

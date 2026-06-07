@@ -8,7 +8,7 @@ import 'package:homely/ui/screens/chat/conversations_screen.dart';
 import 'package:homely/ui/screens/notifications/notifications_screen.dart';
 import 'package:homely/domain/entities/property/property_entity.dart';
 import 'package:homely/ui/providers/property_providers.dart';
-import 'package:homely/ui/screens/profile/profile_screen.dart';
+import 'package:homely/ui/screens/profile/my_profile_screen.dart';
 import 'package:homely/core/theme/app_colors.dart';
 import 'package:homely/ui/screens/property/property_detail_screen.dart';
 import 'package:homely/ui/screens/seller/create_property_screen.dart';
@@ -141,7 +141,7 @@ class HomeScreen extends ConsumerWidget {
     const ToursScreen(),
     const ConversationsScreen(),
     const FavoritesScreen(),
-    const ProfileScreen(),
+    const MyProfileScreen(),
   ];
 
   List<Widget> _buildSellerTabs() => [
@@ -149,7 +149,7 @@ class HomeScreen extends ConsumerWidget {
     const ConversationsScreen(),
     const _CreatePropertyPlaceholder(),
     const _ExploreTab(isSeller: true),
-    const ProfileScreen(),
+    const MyProfileScreen(),
   ];
 }
 

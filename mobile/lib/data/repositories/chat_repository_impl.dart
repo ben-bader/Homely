@@ -12,28 +12,34 @@ class ChatRepositoryImpl implements IChatRepository {
 
   @override
   Future<List<MessageEntity>> fetchMessages(
-      String conversationId, {int page = 0, int size = 50}) async {
-    final data = await _remote.fetchMessages(conversationId, page: page, size: size);
-    return data
-        .map((e) =>
-            MessageModel.fromJson(e))
-        .toList();
+    String conversationId, {
+    int page = 0,
+    int size = 50,
+  }) async {
+    final data = await _remote.fetchMessages(
+      conversationId,
+      page: page,
+      size: size,
+    );
+    return data.map((e) => MessageModel.fromJson(e)).toList();
   }
 
   @override
-  Future<ConversationEntity> createConversation(
-      String propertyId) async {
+  Future<ConversationEntity> createConversation(String propertyId) async {
     final data = await _remote.createConversation(propertyId);
+    return ConversationModel.fromJson(data);
+  }
+
+  @override
+  Future<ConversationEntity> createChatRoom(String participantId) async {
+    final data = await _remote.createChatRoom(participantId);
     return ConversationModel.fromJson(data);
   }
 
   @override
   Future<List<ConversationEntity>> fetchConversations() async {
     final data = await _remote.fetchConversations();
-    return data
-        .map((e) =>
-            ConversationModel.fromJson(e))
-        .toList();
+    return data.map((e) => ConversationModel.fromJson(e)).toList();
   }
 
   @override
@@ -43,7 +49,10 @@ class ChatRepositoryImpl implements IChatRepository {
     required String userId,
   }) async {
     final data = await _remote.editMessage(
-        messageId: messageId, content: content, userId: userId);
+      messageId: messageId,
+      content: content,
+      userId: userId,
+    );
     return MessageModel.fromJson(data);
   }
 
@@ -51,8 +60,7 @@ class ChatRepositoryImpl implements IChatRepository {
   Future<void> deleteMessage({
     required String messageId,
     required String userId,
-  }) =>
-      _remote.deleteMessage(messageId: messageId, userId: userId);
+  }) => _remote.deleteMessage(messageId: messageId, userId: userId);
 
   @override
   Future<void> deleteConversation(String conversationId) =>

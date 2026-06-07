@@ -35,6 +35,9 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>, JpaSp
 
     // ✅ Seller properties
     List<Property> findBySellerEmail(String email);
+
+    // ✅ Seller properties by seller's UUID — used by the public /seller/{userId} endpoint
+    List<Property> findBySeller_Id(UUID sellerId);
     @Query("""
   select new com.homely.property.dto.PropertyDto(
     p.id, p.address, p.price, p.listingType, s.id

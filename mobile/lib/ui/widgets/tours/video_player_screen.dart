@@ -128,7 +128,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen>
             conversationId: conv.id,
             currentUserId: conv.participantOneId,
             chatTitle: property.sellerName,
-            chatSubtitle: property.title,
+            chatSubtitle: '',
           ),
         ),
       );

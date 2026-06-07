@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:homely/core/theme/app_colors.dart';
 import 'package:homely/domain/entities/visit_request/visit_request_entity.dart';
 import '../../../ui/providers/visit_request_providers.dart';
+import 'package:homely/ui/providers/profile_providers.dart';
 
 class SellerVisitRequestsScreen extends ConsumerWidget {
   final String propertyId;
@@ -272,17 +273,44 @@ class _SellerRequestCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                child: Text(
-                  _initials(request.userName ?? 'U'),
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
+              Builder(
+                builder: (ctx) {
+                  final avatar =
+                      (request.userId != null && request.userId!.isNotEmpty)
+                      ? ref
+                            .watch(profileByIdProvider(request.userId!))
+                            .maybeWhen(
+                              data: (p) =>
+                                  (p != null &&
+                                      p.avatarUrl != null &&
+                                      p.avatarUrl!.isNotEmpty)
+                                  ? NetworkImage(p.avatarUrl!)
+                                  : null,
+                              orElse: () => null,
+                            )
+                      : null;
+                  if (avatar != null) {
+                    return CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.15,
+                      ),
+                      foregroundImage: avatar,
+                    );
+                  }
+                  return CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                    child: Text(
+                      _initials(request.userName ?? 'U'),
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(width: 12),
               Expanded(

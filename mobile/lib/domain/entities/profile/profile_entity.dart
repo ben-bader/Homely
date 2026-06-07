@@ -8,6 +8,7 @@ class ProfileEntity {
   final String? avatarUrl;
   final String? idDocumentUrl;
   final bool verified;
+  final String? role;
 
   const ProfileEntity({
     required this.userId,
@@ -19,6 +20,7 @@ class ProfileEntity {
     this.avatarUrl,
     this.idDocumentUrl,
     this.verified = false,
+    this.role,
   });
 
   String get firstName {
@@ -40,6 +42,7 @@ class ProfileEntity {
     String? avatarUrl,
     String? idDocumentUrl,
     bool? verified,
+    String? role,
   }) => ProfileEntity(
     userId: userId,
     name: name ?? this.name,
@@ -50,6 +53,7 @@ class ProfileEntity {
     avatarUrl: avatarUrl ?? this.avatarUrl,
     idDocumentUrl: idDocumentUrl ?? this.idDocumentUrl,
     verified: verified ?? this.verified,
+    role: role ?? this.role,
   );
 }
 
@@ -58,7 +62,12 @@ class ProfileUpdateRequest {
   final String? phone;
   final String? bio;
   final String? address;
+  // Fields the form does not edit — preserved from the current profile
+  // so the backend does not null them out on a partial update.
   final String? avatarUrl;
+  final String? email;
+  final String? role;
+  final bool? verified;
 
   const ProfileUpdateRequest({
     required this.name,
@@ -66,6 +75,9 @@ class ProfileUpdateRequest {
     this.bio,
     this.address,
     this.avatarUrl,
+    this.email,
+    this.role,
+    this.verified,
   });
 
   Map<String, dynamic> toProfileJson() => {
