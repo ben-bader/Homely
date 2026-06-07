@@ -15,6 +15,7 @@ import { PaginationFooter } from "@/components/ui/pagination";
 import useBoostPackages from "@/app/boosts/useBoostPackages";
 import { useTranslations } from "next-intl";
 import { StatusBadge } from "@/components/platform/status-badge";
+import { MetricCard } from "@/components/platform/metric-card";
 
 function parseDate(v: string | number | null | undefined): Date | null {
   if (!v) return null;
@@ -146,6 +147,8 @@ export default function Boosts() {
   const pending = boosts.filter(b => b.status === "PENDING").length;
   const completed = boosts.filter(b => b.status === "COMPLETED").length;
   const failed = boosts.filter(b => b.status === "FAILED").length;
+  const percentOfBoosts = (value: number) =>
+    boosts.length > 0 ? Math.round((value / boosts.length) * 100) : 0;
 
   if (loading || loadingPackages) return <div className="px-6 py-12 text-center text-sm text-muted-foreground">{t('loading')}</div>;
   if (error) return <div className="px-6 py-12 text-center text-sm text-red-500">{error}</div>;
@@ -155,21 +158,11 @@ export default function Boosts() {
       <div><h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1></div>
 
       {/* Summary Cards (kept inline) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: t('total'), value: boosts.length, icon: <Rocket className="w-4 h-4" />, bg: "bg-blue-50", tc: "text-blue-600" },
-          { label: t('pending'), value: pending, icon: <Clock className="w-4 h-4" />, bg: "bg-amber-50", tc: "text-amber-600" },
-          { label: t('completed'), value: completed, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-emerald-50", tc: "text-emerald-600" },
-          { label: t('failed'), value: failed, icon: <XCircle className="w-4 h-4" />, bg: "bg-red-50", tc: "text-red-600" },
-        ].map((c) => (
-          <div key={c.label} className="bg-card border rounded-xl p-5">
-            <div className="flex items-start justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{c.label}</p>
-              <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.tc} flex items-center justify-center`}>{c.icon}</div>
-            </div>
-            <p className={`text-2xl font-bold mt-2`}>{c.value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <MetricCard label={t('total')} value={boosts.length} detail={t('title')} icon={<Rocket className="w-5 h-5" />} accent="blue" progress={100} />
+        <MetricCard label={t('pending')} value={pending} detail={`${percentOfBoosts(pending)}% ${t('pending')}`} icon={<Clock className="w-5 h-5" />} accent="amber" progress={percentOfBoosts(pending)} />
+        <MetricCard label={t('completed')} value={completed} detail={`${percentOfBoosts(completed)}% ${t('completed')}`} icon={<CheckCircle2 className="w-5 h-5" />} accent="emerald" progress={percentOfBoosts(completed)} />
+        <MetricCard label={t('failed')} value={failed} detail={`${percentOfBoosts(failed)}% ${t('failed')}`} icon={<XCircle className="w-5 h-5" />} accent="red" progress={percentOfBoosts(failed)} />
       </div>
 
       {/* Search + Filter */}

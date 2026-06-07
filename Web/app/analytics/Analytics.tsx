@@ -651,6 +651,18 @@ export default function Analytics() {
   };
 
   const activeSellersCount = useMemo(() => (revenue ? revenue.topSellers.length : 0), [revenue]);
+  const moderationDecisionStats = useMemo(() => {
+    const approvals = overview?.totalApprovedProperties ?? 0;
+    const rejections = overview?.totalRejectedProperties ?? 0;
+    const total = approvals + rejections;
+
+    return {
+      approvals,
+      rejections,
+      approvalRate: total > 0 ? (approvals / total) * 100 : 0,
+      rejectionRate: total > 0 ? (rejections / total) * 100 : 0,
+    };
+  }, [overview]);
 
   const tooltipStyle = {
     contentStyle: {
@@ -1449,7 +1461,7 @@ export default function Analytics() {
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
                         <CardDescription className="text-xs font-semibold uppercase tracking-wider text-white/90">{t.moderationTab.approvalRateLabel}</CardDescription>
-                        <CardTitle className="text-4xl font-extrabold tracking-tight text-white">{(100 - moderation.rejectionRate).toFixed(1)}%</CardTitle>
+                        <CardTitle className="text-4xl font-extrabold tracking-tight text-white">{moderationDecisionStats.approvalRate.toFixed(1)}%</CardTitle>
                       </div>
                       <div className="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
                         <ShieldCheck className="size-4 text-white" />
@@ -1459,16 +1471,16 @@ export default function Analytics() {
                   <CardContent className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <span className="inline-flex size-2 rounded-full bg-red-300" />
-                      <span className="text-white/90">{t.moderationTab.rejectionLabel}: {moderation.rejectionRate.toFixed(1)}%</span>
+                      <span className="text-white/90">{t.moderationTab.rejectionLabel}: {moderationDecisionStats.rejectionRate.toFixed(1)}%</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-1 border-t border-white/20">
-                      <div><p className="text-xs text-white/70">{t.moderationTab.totalApprovals}</p><p className="text-lg font-semibold text-white">{overview.totalApprovedProperties.toLocaleString()}</p></div>
-                      <div><p className="text-xs text-white/70">{t.moderationTab.totalRejections}</p><p className="text-lg font-semibold text-white">{overview.totalRejectedProperties.toLocaleString()}</p></div>
+                      <div><p className="text-xs text-white/70">{t.moderationTab.totalApprovals}</p><p className="text-lg font-semibold text-white">{moderationDecisionStats.approvals.toLocaleString()}</p></div>
+                      <div><p className="text-xs text-white/70">{t.moderationTab.totalRejections}</p><p className="text-lg font-semibold text-white">{moderationDecisionStats.rejections.toLocaleString()}</p></div>
                     </div>
                   </CardContent>
                 </HeroCard>
-                <KpiCard label={t.moderationTab.totalApprovals} value={overview.totalApprovedProperties.toLocaleString()} description={t.moderationTab.totalApprovalsDesc} icon={<Activity className="size-8 bg-emerald-500 p-2 rounded-full text-white" />} />
-                <KpiCard label={t.moderationTab.totalRejections} value={overview.totalRejectedProperties.toLocaleString()} description={t.moderationTab.totalRejectionsDesc} icon={<Flag className="size-8 bg-rose-500 p-2 rounded-full text-white" />} />
+                <KpiCard label={t.moderationTab.totalApprovals} value={moderationDecisionStats.approvals.toLocaleString()} description={t.moderationTab.totalApprovalsDesc} icon={<Activity className="size-8 bg-emerald-500 p-2 rounded-full text-white" />} />
+                <KpiCard label={t.moderationTab.totalRejections} value={moderationDecisionStats.rejections.toLocaleString()} description={t.moderationTab.totalRejectionsDesc} icon={<Flag className="size-8 bg-rose-500 p-2 rounded-full text-white" />} />
                 <KpiCard label={t.moderationTab.activeAdmins} value={moderation.moderationActivity.length} description={t.moderationTab.activeAdminsDesc} icon={<ShieldCheck className="size-8 bg-amber-500 p-2 rounded-full text-white" />} />
               </div>
 
@@ -1509,17 +1521,17 @@ export default function Analytics() {
                   <CardContent className="flex flex-col gap-4 pt-2">
                     <div className="flex items-center justify-between border-b pb-3">
                       <span className="text-xs font-semibold text-muted-foreground">{t.moderationTab.approvalRate}</span>
-                      <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20">{(100 - moderation.rejectionRate).toFixed(1)}%</Badge>
+                      <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20">{moderationDecisionStats.approvalRate.toFixed(1)}%</Badge>
                     </div>
                     <div className="flex items-center justify-between border-b pb-3">
                       <span className="text-xs font-semibold text-muted-foreground">{t.moderationTab.rejectionLabel}</span>
-                      <Badge className={moderation.rejectionRate > 20 ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"}>
-                        {moderation.rejectionRate.toFixed(1)}%
+                      <Badge className={moderationDecisionStats.rejectionRate > 20 ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"}>
+                        {moderationDecisionStats.rejectionRate.toFixed(1)}%
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between border-b pb-3">
                       <span className="text-xs font-semibold text-muted-foreground">{t.moderationTab.totalApprovals}</span>
-                      <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20">{overview.totalApprovedProperties}</Badge>
+                      <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20">{moderationDecisionStats.approvals}</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-muted-foreground">{t.moderationTab.activeAdmins}</span>

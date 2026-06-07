@@ -40,9 +40,11 @@ import {
 } from "@tanstack/react-table";
 import { PaginationFooter } from "@/components/ui/pagination";
 import { FaEye } from "react-icons/fa";
+import { ShieldCheck, UserCheck, UserX } from "lucide-react";
 import { api } from "@/lib/api";
 import { useUsers } from "@/app/users/useUsers";
 import { getUserFromToken } from "@/lib/auth";
+import { MetricCard } from "@/components/platform/metric-card";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                           */
@@ -414,6 +416,8 @@ export default function AdminManager() {
   );
   const totalActive = allAdmins.filter((u) => u.active).length;
   const totalInactive = allAdmins.filter((u) => !u.active).length;
+  const percentOfAdmins = (value: number) =>
+    allAdmins.length > 0 ? Math.round((value / allAdmins.length) * 100) : 0;
 
   /* ---------- Per-admin permissions helpers ---------- */
   function getPerms(id: string): PermissionMap {
@@ -898,29 +902,31 @@ export default function AdminManager() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <div className="rounded-lg border p-4 bg-muted/50">
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-              {t.total}
-            </p>
-            <p className="text-2xl font-bold text-foreground">
-              {allAdmins.length}
-            </p>
-          </div>
-          <div className="rounded-lg border p-4 bg-green-50 dark:bg-green-950/30">
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-              {t.active}
-            </p>
-            <p className="text-2xl font-bold text-green-600">{totalActive}</p>
-          </div>
-          <div className="rounded-lg border p-4 bg-destructive/10">
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-              {t.inactive}
-            </p>
-            <p className="text-2xl font-bold text-destructive">
-              {totalInactive}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <MetricCard
+            label={t.total}
+            value={allAdmins.length}
+            detail={t.adminsTitle}
+            icon={<ShieldCheck className="w-5 h-5" />}
+            accent="blue"
+            progress={100}
+          />
+          <MetricCard
+            label={t.active}
+            value={totalActive}
+            detail={`${percentOfAdmins(totalActive)}% ${t.active}`}
+            icon={<UserCheck className="w-5 h-5" />}
+            accent="emerald"
+            progress={percentOfAdmins(totalActive)}
+          />
+          <MetricCard
+            label={t.inactive}
+            value={totalInactive}
+            detail={`${percentOfAdmins(totalInactive)}% ${t.inactive}`}
+            icon={<UserX className="w-5 h-5" />}
+            accent="red"
+            progress={percentOfAdmins(totalInactive)}
+          />
         </div>
 
         {/* Search */}

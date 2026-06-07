@@ -77,7 +77,7 @@
     "loading": "Loading conversations…",
     "error": "Failed to load conversations",
     "title": "Conversations",
-    "searchPlaceholder": "Search by seller, client, property…",
+    "searchPlaceholder": "Search by seller, buyer, property…",
     "filter": "Filter",
     "noMatch": "No conversations found",
     "page": "Page", "of": "of", "previous": "Previous", "next": "Next",
@@ -85,12 +85,12 @@
     "countPlural": "{count} conversations",
     "filtered": "(filtered)",
     "drawer": {
-      "title": "Conversation", "seller": "Seller", "client": "Client", "property": "Property",
+      "title": "Conversation", "seller": "Seller", "client": "Buyer", "property": "Property",
       "participantOne": "Participant One", "participantTwo": "Participant Two",
       "loadingMessages": "Loading messages…", "noMessages": "No messages yet", "close": "Close"
     },
     "table": {
-      "seller": "Seller", "client": "Client", "property": "Property", "startedAt": "Started At",
+      "seller": "Seller", "client": "Buyer", "property": "Property", "startedAt": "Started At",
       "participantOne": "Participant One", "participantTwo": "Participant Two"
     },
     "filters": {

@@ -17,6 +17,7 @@ import { Eye, Flag, AlertCircle, CheckCircle2, XCircle, SlidersHorizontal } from
 import { PaginationFooter } from "@/components/ui/pagination";
 import { Report, ReportStatus } from "@/types/dashboard-types";
 import { StatusBadge } from "@/components/platform/status-badge";
+import { MetricCard } from "@/components/platform/metric-card";
 
 type Language = "en" | "fr";
 type DateSort = "" | "newest" | "oldest";
@@ -202,6 +203,8 @@ export default function Reports() {
   const openCount = reports.filter(r => r.status === "OPEN").length;
   const resolvedCount = reports.filter(r => r.status === "RESOLVED").length;
   const dismissedCount = reports.filter(r => r.status === "DISMISSED").length;
+  const percentOfReports = (value: number) =>
+    reports.length > 0 ? Math.round((value / reports.length) * 100) : 0;
 
   if (loading) return <div className="px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>;
 
@@ -210,21 +213,39 @@ export default function Reports() {
       <div><h1 className="text-2xl font-semibold text-foreground">{t.title}</h1><p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p></div>
 
       {/* Inline summary + small list (kept inline per instructions) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: t.total, value: reports.length, icon: <Flag className="w-4 h-4" />, bg: "bg-blue-50", tc: "text-blue-600" },
-          { label: t.waiting, value: openCount, icon: <AlertCircle className="w-4 h-4" />, bg: "bg-red-50", tc: "text-red-600" },
-          { label: t.resolved, value: resolvedCount, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-emerald-50", tc: "text-emerald-600" },
-          { label: t.dismissed, value: dismissedCount, icon: <XCircle className="w-4 h-4" />, bg: "bg-slate-100", tc: "text-slate-600" },
-        ].map(c => (
-          <div key={c.label} className="bg-card border rounded-xl p-5">
-            <div className="flex items-start justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{c.label}</p>
-              <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.tc} flex items-center justify-center`}>{c.icon}</div>
-            </div>
-            <p className={`text-2xl font-bold mt-2`}>{c.value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <MetricCard
+          label={t.total}
+          value={reports.length}
+          detail={t.subtitle}
+          icon={<Flag className="w-5 h-5" />}
+          accent="blue"
+          progress={100}
+        />
+        <MetricCard
+          label={t.waiting}
+          value={openCount}
+          detail={`${percentOfReports(openCount)}% ${t.waiting}`}
+          icon={<AlertCircle className="w-5 h-5" />}
+          accent="rose"
+          progress={percentOfReports(openCount)}
+        />
+        <MetricCard
+          label={t.resolved}
+          value={resolvedCount}
+          detail={`${percentOfReports(resolvedCount)}% ${t.resolved}`}
+          icon={<CheckCircle2 className="w-5 h-5" />}
+          accent="emerald"
+          progress={percentOfReports(resolvedCount)}
+        />
+        <MetricCard
+          label={t.dismissed}
+          value={dismissedCount}
+          detail={`${percentOfReports(dismissedCount)}% ${t.dismissed}`}
+          icon={<XCircle className="w-5 h-5" />}
+          accent="slate"
+          progress={percentOfReports(dismissedCount)}
+        />
       </div>
 
       <div className="flex items-center gap-2">

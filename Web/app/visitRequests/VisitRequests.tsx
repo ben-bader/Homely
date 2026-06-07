@@ -17,6 +17,7 @@ import { useProperties } from "@/app/properties/useProperties";
 import { useUsers } from "@/app/users/useUsers";
 import { VisitStatus, type VisitRequest } from "@/types/dashboard-types";
 import { StatusBadge } from "@/components/platform/status-badge";
+import { MetricCard } from "@/components/platform/metric-card";
 
 type Language = "en" | "fr";
 type DateSort = "" | "newest" | "oldest";
@@ -58,7 +59,7 @@ export default function VisitRequests() {
   const { properties } = useProperties();
   const { users } = useUsers();
   const [search, setSearch] = useState("");
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 8 });
   const [filterStatus, setFilterStatus] = useState<VisitStatus | "ALL">("ALL");
   const [createdAfter, setCreatedAfter] = useState("");
   const [createdBefore, setCreatedBefore] = useState("");
@@ -138,6 +139,8 @@ export default function VisitRequests() {
   const approvedCount = visitRequestsWithSeller.filter(r => r.status === VisitStatus.APPROVED).length;
   const completedCount = visitRequestsWithSeller.filter(r => r.status === VisitStatus.COMPLETED).length;
   const rejectedCount = visitRequestsWithSeller.filter(r => r.status === VisitStatus.REJECTED).length;
+  const percentOfRequests = (value: number) =>
+    visitRequestsWithSeller.length > 0 ? Math.round((value / visitRequestsWithSeller.length) * 100) : 0;
 
   if (loading) return <div className="px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>;
 
@@ -145,21 +148,12 @@ export default function VisitRequests() {
     <div className="px-6 py-6 max-w-7xl mx-auto space-y-6 animate-fade-up">
       <div><h1 className="text-2xl font-semibold text-foreground">{t.title}</h1><p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p></div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {[ { label: t.total, value: visitRequestsWithSeller.length, icon: <CalendarCheck className="w-4 h-4" />, bg: "bg-blue-50", tc: "text-blue-600" },
-           { label: t.pending, value: pendingCount, icon: <Clock className="w-4 h-4" />, bg: "bg-amber-50", tc: "text-amber-600" },
-           { label: t.approved, value: approvedCount, icon: <ThumbsUp className="w-4 h-4" />, bg: "bg-emerald-50", tc: "text-emerald-600" },
-           { label: t.completed, value: completedCount, icon: <CheckCircle2 className="w-4 h-4" />, bg: "bg-violet-50", tc: "text-violet-600" },
-           { label: t.rejected, value: rejectedCount, icon: <XCircle className="w-4 h-4" />, bg: "bg-red-50", tc: "text-red-600" },
-        ].map(c => (
-          <div key={c.label} className="bg-card border rounded-xl p-5">
-            <div className="flex items-start justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{c.label}</p>
-              <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.tc} flex items-center justify-center`}>{c.icon}</div>
-            </div>
-            <p className={`text-2xl font-bold mt-2`}>{c.value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <MetricCard label={t.total} value={visitRequestsWithSeller.length} detail={t.subtitle} icon={<CalendarCheck className="w-5 h-5" />} accent="blue" progress={100} />
+        <MetricCard label={t.pending} value={pendingCount} detail={`${percentOfRequests(pendingCount)}% ${t.pending}`} icon={<Clock className="w-5 h-5" />} accent="amber" progress={percentOfRequests(pendingCount)} />
+        <MetricCard label={t.approved} value={approvedCount} detail={`${percentOfRequests(approvedCount)}% ${t.approved}`} icon={<ThumbsUp className="w-5 h-5" />} accent="emerald" progress={percentOfRequests(approvedCount)} />
+        <MetricCard label={t.completed} value={completedCount} detail={`${percentOfRequests(completedCount)}% ${t.completed}`} icon={<CheckCircle2 className="w-5 h-5" />} accent="violet" progress={percentOfRequests(completedCount)} />
+        <MetricCard label={t.rejected} value={rejectedCount} detail={`${percentOfRequests(rejectedCount)}% ${t.rejected}`} icon={<XCircle className="w-5 h-5" />} accent="red" progress={percentOfRequests(rejectedCount)} />
       </div>
 
       <div className="flex items-center gap-2">

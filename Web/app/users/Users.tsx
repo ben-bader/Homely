@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Eye, Users as UsersIcon, UserCheck, UserX, SlidersHorizontal } from "lucide-react";
+import { MetricCard } from "@/components/platform/metric-card";
 
 type Language = "en" | "fr";
 const dict = {
@@ -233,6 +234,8 @@ export default function Users() {
   const totalMembers = users.length;
   const totalActivated = users.filter((u) => u.active).length;
   const totalDeactivated = users.filter((u) => !u.active).length;
+  const percentOfUsers = (value: number) =>
+    totalMembers > 0 ? Math.round((value / totalMembers) * 100) : 0;
 
   if (loading) return <div className="px-6 py-12 text-center text-sm text-muted-foreground">Loading…</div>;
 
@@ -245,30 +248,31 @@ export default function Users() {
       </div>
 
       {/* Summary Cards (kept inline, styling improved) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="bg-card border rounded-xl p-5">
-          <div className="flex items-start justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.resultsPlural}</p>
-            <div className="w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center"><UsersIcon className="w-4 h-4" /></div>
-          </div>
-          <p className="text-2xl font-bold mt-2">{totalMembers}</p>
-        </div>
-
-        <div className="bg-card border rounded-xl p-5">
-          <div className="flex items-start justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.active}</p>
-            <div className="w-9 h-9 rounded-lg bg-emerald-500 text-white flex items-center justify-center"><UserCheck className="w-4 h-4" /></div>
-          </div>
-          <p className="text-2xl font-bold text-emerald-600 mt-2">{totalActivated}</p>
-        </div>
-
-        <div className="bg-card border rounded-xl p-5">
-          <div className="flex items-start justify-between">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t.inactive}</p>
-            <div className="w-9 h-9 rounded-lg bg-red-500 text-white flex items-center justify-center"><UserX className="w-4 h-4" /></div>
-          </div>
-          <p className="text-2xl font-bold text-red-500 mt-2">{totalDeactivated}</p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <MetricCard
+          label={t.resultsPlural}
+          value={totalMembers}
+          detail={t.subtitle}
+          icon={<UsersIcon className="w-5 h-5" />}
+          accent="blue"
+          progress={100}
+        />
+        <MetricCard
+          label={t.active}
+          value={totalActivated}
+          detail={`${percentOfUsers(totalActivated)}% ${t.active}`}
+          icon={<UserCheck className="w-5 h-5" />}
+          accent="emerald"
+          progress={percentOfUsers(totalActivated)}
+        />
+        <MetricCard
+          label={t.inactive}
+          value={totalDeactivated}
+          detail={`${percentOfUsers(totalDeactivated)}% ${t.inactive}`}
+          icon={<UserX className="w-5 h-5" />}
+          accent="red"
+          progress={percentOfUsers(totalDeactivated)}
+        />
       </div>
 
       {/* Search + Filter */}

@@ -645,9 +645,9 @@ export default function ActivityMonitoring() {
   }, [currentData, currentPage]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6 animate-fade-up">
       <div>
-        <h2 className="text-xl font-bold">{t.title}</h2>
+        <h1 className="text-2xl font-semibold text-foreground">{t.title}</h1>
         <p className="text-muted-foreground text-sm">{t.subtitle}</p>
       </div>
 
@@ -669,16 +669,18 @@ export default function ActivityMonitoring() {
       </div>
 
       {/* Search + Filter toggle */}
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <Input
           placeholder={activeTab === "users" ? t.searchUsers : t.searchAdmin}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          className="h-9"
         />
         <Button
           variant="outline"
+          size="sm"
           onClick={() => setFilterOpen((v) => !v)}
-          className="relative shrink-0"
+          className="relative h-9 shrink-0 gap-1.5 text-xs font-medium"
         >
           <svg
             className="w-3.5 h-3.5 mr-1.5"
@@ -724,17 +726,17 @@ export default function ActivityMonitoring() {
       )}
 
       {/* Table */}
-      <div className="rounded-lg border overflow-hidden">
+      <div className="bg-card border rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[180px]">{t.colTime}</TableHead>
-              <TableHead>{t.colUser}</TableHead>
-              <TableHead>
+              <TableHead className="h-10 w-[170px] text-xs font-medium uppercase tracking-wider">{t.colTime}</TableHead>
+              <TableHead className="h-10 text-xs font-medium uppercase tracking-wider">{t.colUser}</TableHead>
+              <TableHead className="h-10 text-xs font-medium uppercase tracking-wider">
                 {activeTab === "users" ? t.activityType : t.action}
               </TableHead>
-              {activeTab === "users" && <TableHead>{t.entityType}</TableHead>}
-              <TableHead className="text-right">{t.colShowMore}</TableHead>
+              {activeTab === "users" && <TableHead className="h-10 text-xs font-medium uppercase tracking-wider">{t.entityType}</TableHead>}
+              <TableHead className="h-10 text-right text-xs font-medium uppercase tracking-wider">{t.colShowMore}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -755,11 +757,11 @@ export default function ActivityMonitoring() {
               </TableRow>
             ) : (
               paginatedData.map((item: any) => (
-                <TableRow key={item.id}>
-                  <TableCell className="text-xs font-medium">
+                <TableRow key={item.id} className="hover:bg-muted/20 transition-colors">
+                  <TableCell className="py-3 text-xs font-medium text-muted-foreground">
                     {fmtFull(item.createdAt, dateLocale)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-3">
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold">
                         {activeTab === "users" ? item.userName : item.adminName}
@@ -771,7 +773,7 @@ export default function ActivityMonitoring() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-3">
                     <Badge
                       variant="secondary"
                       className="text-[10px] uppercase tracking-tighter"
@@ -780,13 +782,13 @@ export default function ActivityMonitoring() {
                     </Badge>
                   </TableCell>
                   {activeTab === "users" && (
-                    <TableCell>
+                    <TableCell className="py-3">
                       <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-muted border">
                         {item.entityType}
                       </span>
                     </TableCell>
                   )}
-                  <TableCell className="text-right">
+                  <TableCell className="py-3 text-right">
                     <LogDetailsDrawer
                       log={item}
                       type={activeTab}

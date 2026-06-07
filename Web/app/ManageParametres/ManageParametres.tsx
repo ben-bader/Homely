@@ -160,7 +160,7 @@ const ManageParameters = () => {
   return (
     <div className="px-6 py-6 max-w-4xl mx-auto space-y-6 animate-fade-up">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+        <div className="w-11 h-11 rounded-lg bg-slate-700 text-white shadow-lg shadow-slate-700/20 flex items-center justify-center">
           <Settings className="w-5 h-5" />
         </div>
         <div>
@@ -200,8 +200,18 @@ const ManageParameters = () => {
 
         {/* ── REPORT REASONS ── */}
         <TabsContent value="reasons" className="mt-6 space-y-4">
-          <div className="bg-card border rounded-xl p-6 space-y-4">
-            <h2 className="text-base font-semibold">{t("reasons.title")}</h2>
+          <div className="overflow-hidden rounded-xl border border-rose-200 bg-rose-50/70 p-6 shadow-sm transition-all hover:shadow-md space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-rose-800">{t("reasons.title")}</h2>
+                <p className="text-xs font-medium text-slate-600 mt-1">
+                  {reasons.length} {t("tabs.reasons")}
+                </p>
+              </div>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-rose-500 text-white shadow-lg shadow-rose-500/20">
+                <Flag className="h-5 w-5" />
+              </div>
+            </div>
 
             {reasonsLoading ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
@@ -239,7 +249,7 @@ const ManageParameters = () => {
                     paginatedReasons.map((reason) => (
                       <div
                         key={reason.id}
-                        className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/30 transition-colors"
+                        className="flex items-center justify-between rounded-lg border border-rose-100 bg-white/80 p-3 shadow-sm transition-colors hover:border-rose-200 hover:bg-white"
                       >
                         <span className="text-sm">{reason.reason}</span>
                         <Button
@@ -281,8 +291,18 @@ const ManageParameters = () => {
 
         {/* ── BOOST PACKAGES ── */}
         <TabsContent value="packages" className="mt-6 space-y-4">
-          <div className="bg-card border rounded-xl p-6 space-y-4">
-            <h2 className="text-base font-semibold">{t("packages.title")}</h2>
+          <div className="overflow-hidden rounded-xl border border-blue-200 bg-blue-50/70 p-6 shadow-sm transition-all hover:shadow-md space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-blue-800">{t("packages.title")}</h2>
+                <p className="text-xs font-medium text-slate-600 mt-1">
+                  {packages.length} {t("tabs.packages")}
+                </p>
+              </div>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white shadow-lg shadow-blue-500/20">
+                <Rocket className="h-5 w-5" />
+              </div>
+            </div>
 
             {packagesLoading ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
@@ -296,7 +316,7 @@ const ManageParameters = () => {
             ) : (
               <>
                 {/* Add form */}
-                <div className="border rounded-lg p-4 bg-muted/20 space-y-3">
+                <div className="border border-blue-100 rounded-lg p-4 bg-white/80 shadow-sm space-y-3">
                   <h3 className="font-medium text-sm">{t("packages.addTitle")}</h3>
                   <Input
                     placeholder={t("packages.namePlaceholder")}
@@ -360,7 +380,7 @@ const ManageParameters = () => {
                     paginatedPackages.map((pkg) => (
                       <div
                         key={pkg.id}
-                        className="border rounded-lg p-4 hover:bg-muted/20 transition-colors"
+                        className="border border-blue-100 rounded-lg bg-white/80 p-4 shadow-sm transition-colors hover:border-blue-200 hover:bg-white"
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -371,10 +391,10 @@ const ManageParameters = () => {
                               </p>
                             )}
                             <div className="flex gap-4 mt-2">
-                              <span className="text-xs font-medium text-foreground">
+                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                                 ${pkg.price.toFixed(2)}
                               </span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
                                 {pkg.durationDays} {t("packages.days")}
                               </span>
                             </div>
@@ -421,10 +441,20 @@ const ManageParameters = () => {
 
         {/* ── FEATURED PROPERTIES ── */}
         <TabsContent value="featured" className="mt-6">
-          <div className="bg-card border rounded-xl p-6">
-            <h2 className="text-base font-semibold mb-4">
-              {t("featured.title")}
-            </h2>
+          <div className="overflow-hidden rounded-xl border border-amber-200 bg-amber-50/70 p-6 shadow-sm transition-all hover:shadow-md">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-amber-800">
+                  {t("featured.title")}
+                </h2>
+                <p className="text-xs font-medium text-slate-600 mt-1">
+                  {featuredPropertiesLimit || 0} {t("tabs.featured")}
+                </p>
+              </div>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white shadow-lg shadow-amber-500/20">
+                <Star className="h-5 w-5" />
+              </div>
+            </div>
             <div className="max-w-md space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">

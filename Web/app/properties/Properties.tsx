@@ -47,6 +47,7 @@ import { api } from "@/lib/api";
 import { FaEye } from "react-icons/fa";
 import { useMedia } from "@/app/properties/useMedia";
 import { AddressMapPopover } from "@/components/ui/AddressMapPopover";
+import { Ban, Building2, CheckCircle2, FileClock } from "lucide-react";
 
 /* ---------------- TRANSLATIONS ---------------- */
 
@@ -76,6 +77,10 @@ const dict = {
       suspended: "Suspended",
       draft: "Draft",
       filtered: "filtered",
+      totalHelper: "All listings in the marketplace",
+      availableHelper: "{percent}% ready for users",
+      suspendedHelper: "{percent}% paused by admin",
+      draftHelper: "{percent}% waiting for review",
     },
     drawer: {
       title: "Property Details",
@@ -157,6 +162,10 @@ const dict = {
       suspended: "Suspendu",
       draft: "Brouillon",
       filtered: "filtrés",
+      totalHelper: "Toutes les annonces du marketplace",
+      availableHelper: "{percent}% pretes pour les utilisateurs",
+      suspendedHelper: "{percent}% suspendues par l'admin",
+      draftHelper: "{percent}% en attente de validation",
     },
     drawer: {
       title: "Détails de la propriété",
@@ -1070,6 +1079,64 @@ export default function Properties() {
     (p) => p.status === "SUSPENDED",
   ).length;
   const draftProperties = properties.filter((p) => p.status === "DRAFT").length;
+  const percentOfTotal = (value: number) =>
+    totalProperties > 0 ? Math.round((value / totalProperties) * 100) : 0;
+
+  const propertySummaryCards = [
+    {
+      label: t.filters.total,
+      value: totalProperties,
+      helper: t.filters.totalHelper,
+      icon: Building2,
+      cardClass: "border-blue-200 bg-blue-50/80",
+      iconClass: "bg-blue-500 text-white shadow-blue-500/20",
+      valueClass: "text-blue-700",
+      barClass: "bg-blue-500",
+      progress: 100,
+    },
+    {
+      label: t.filters.available,
+      value: availableProperties,
+      helper: t.filters.availableHelper.replace(
+        "{percent}",
+        String(percentOfTotal(availableProperties)),
+      ),
+      icon: CheckCircle2,
+      cardClass: "border-emerald-200 bg-emerald-50/80",
+      iconClass: "bg-emerald-500 text-white shadow-emerald-500/20",
+      valueClass: "text-emerald-700",
+      barClass: "bg-emerald-500",
+      progress: percentOfTotal(availableProperties),
+    },
+    {
+      label: t.filters.suspended,
+      value: suspendedProperties,
+      helper: t.filters.suspendedHelper.replace(
+        "{percent}",
+        String(percentOfTotal(suspendedProperties)),
+      ),
+      icon: Ban,
+      cardClass: "border-rose-200 bg-rose-50/80",
+      iconClass: "bg-rose-500 text-white shadow-rose-500/20",
+      valueClass: "text-rose-700",
+      barClass: "bg-rose-500",
+      progress: percentOfTotal(suspendedProperties),
+    },
+    {
+      label: t.filters.draft,
+      value: draftProperties,
+      helper: t.filters.draftHelper.replace(
+        "{percent}",
+        String(percentOfTotal(draftProperties)),
+      ),
+      icon: FileClock,
+      cardClass: "border-amber-200 bg-amber-50/80",
+      iconClass: "bg-amber-500 text-white shadow-amber-500/20",
+      valueClass: "text-amber-700",
+      barClass: "bg-amber-500",
+      progress: percentOfTotal(draftProperties),
+    },
+  ];
 
   if (loading) return <div className="p-8">{t.loadingMain}</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
@@ -1083,31 +1150,39 @@ export default function Properties() {
       {/* Top properties removed per request */}
 
       {/* Summary Cards (kept inline) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-card border rounded-xl p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            {t.filters.total}
-          </p>
-          <p className="text-2xl font-bold mt-2">{totalProperties}</p>
-        </div>
-        <div className="bg-card border rounded-xl p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            {t.filters.available}
-          </p>
-          <p className="text-2xl font-bold mt-2">{availableProperties}</p>
-        </div>
-        <div className="bg-card border rounded-xl p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            {t.filters.suspended}
-          </p>
-          <p className="text-2xl font-bold mt-2">{suspendedProperties}</p>
-        </div>
-        <div className="bg-card border rounded-xl p-5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            {t.filters.draft}
-          </p>
-          <p className="text-2xl font-bold mt-2">{draftProperties}</p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {propertySummaryCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={card.label}
+              className={`relative overflow-hidden rounded-xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${card.cardClass}`}
+            >
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                    {card.label}
+                  </p>
+                  <p className={`mt-2 text-3xl font-bold tracking-tight ${card.valueClass}`}>
+                    {card.value}
+                  </p>
+                </div>
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg shadow-lg ${card.iconClass}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="relative mt-5 space-y-2">
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/80">
+                  <div
+                    className={`h-full rounded-full ${card.barClass}`}
+                    style={{ width: `${Math.max(card.progress, card.value > 0 ? 6 : 0)}%` }}
+                  />
+                </div>
+                <p className="text-xs font-medium text-slate-600">{card.helper}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex gap-2">

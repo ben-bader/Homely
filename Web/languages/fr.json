@@ -77,7 +77,7 @@
     "loading": "Chargement des conversations…",
     "error": "Échec du chargement des conversations",
     "title": "Conversations",
-    "searchPlaceholder": "Rechercher par vendeur, client, propriété…",
+    "searchPlaceholder": "Rechercher par vendeur, acheteur, propriété…",
     "filter": "Filtrer",
     "noMatch": "Aucune conversation trouvée",
     "page": "Page", "of": "sur", "previous": "Précédent", "next": "Suivant",
@@ -85,12 +85,12 @@
     "countPlural": "{count} conversations",
     "filtered": "(filtré)",
     "drawer": {
-      "title": "Conversation", "seller": "Vendeur", "client": "Client", "property": "Propriété",
+      "title": "Conversation", "seller": "Vendeur", "client": "Acheteur", "property": "Propriété",
       "participantOne": "Participant 1", "participantTwo": "Participant 2",
       "loadingMessages": "Chargement des messages…", "noMessages": "Aucun message pour l'instant", "close": "Fermer"
     },
     "table": {
-      "seller": "Vendeur", "client": "Client", "property": "Propriété", "startedAt": "Commencé le",
+      "seller": "Vendeur", "client": "Acheteur", "property": "Propriété", "startedAt": "Commencé le",
       "participantOne": "Participant 1", "participantTwo": "Participant 2"
     },
     "filters": {

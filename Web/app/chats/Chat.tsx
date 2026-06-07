@@ -90,14 +90,16 @@ function ChatDrawer({ conversation, setConversations }: { conversation: Conversa
 
   return (
     <Drawer direction="right" onOpenChange={fetchMessages}>
-      <DrawerTrigger asChild><Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-full h-10 w-10"><FaRocketchat size={20} /></Button></DrawerTrigger>
+      <DrawerTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10"><FaRocketchat size={16} /></Button></DrawerTrigger>
       <DrawerContent className="flex flex-col max-w-lg ml-auto h-full bg-background border-l border-border rounded-l-lg overflow-hidden">
         <DialogTitle className="hidden">Conversation</DialogTitle>
         
         {/* Chat Header */}
         <DrawerHeader className="border-b border-border/50 bg-background/80 backdrop-blur-md py-4 px-6 z-10 shadow-sm flex items-center justify-between">
           <div className="flex-1">
-            <DrawerTitle className="text-md tracking-tight text-foreground">{conversation.participantOneName} & {conversation.participantTwoName}</DrawerTitle>
+            <DrawerTitle className="text-md tracking-tight text-foreground">
+              {t('seller')}: {conversation.participantOneName} & {t('client')}: {conversation.participantTwoName}
+            </DrawerTitle>
             <DrawerDescription className="text-xs text-primary tracking-widest uppercase mt-1">{conversation.propertyTitle ?? "Direct Conversation"}</DrawerDescription>
           </div>
 
@@ -167,9 +169,9 @@ export default function ChatPage() {
   }, [conversations, search, createdAfter, createdBefore, dateSort]);
 
   const columns = useMemo<ColumnDef<Conversation>[]>(() => [
-    { accessorKey: "participantOneName", header: t('table.participantOne'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.participantOneName}</p> },
-    { accessorKey: "participantTwoName", header: t('table.participantTwo'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.participantTwoName}</p> },
-    { accessorKey: "propertyTitle", header: t('table.property'), cell: ({ row }) => <p className="text-sm">{row.original.propertyTitle ?? "—"}</p> },
+    { accessorKey: "participantOneName", header: t('table.seller'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.participantOneName}</p> },
+    { accessorKey: "participantTwoName", header: t('table.client'), cell: ({ row }) => <p className="text-sm font-medium">{row.original.participantTwoName}</p> },
+    { accessorKey: "propertyTitle", header: t('table.property'), cell: ({ row }) => <p className="max-w-[320px] truncate text-sm text-muted-foreground">{row.original.propertyTitle ?? "-"}</p> },
     { accessorKey: "createdAt", header: t('table.startedAt'), cell: ({ row }) => <p className="text-sm">{fmt(row.original.createdAt)}</p> },
     { id: "seeMore", header: "", cell: ({ row }) => <ChatDrawer conversation={row.original} setConversations={setConversations} /> },
   ], [setConversations, t]);
@@ -180,11 +182,11 @@ export default function ChatPage() {
   if (error) return <div className="p-8 text-red-500">{error}</div>;
 
   return (
-    <div className="px-8 space-y-6">
-      <h2 className="text-xl font-semibold">{t('title')}</h2>
-      <div className="flex gap-2">
-        <Input placeholder={t('searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Button variant="outline" onClick={() => setFilterOpen((v) => !v)} className="relative">
+    <div className="px-6 py-6 max-w-7xl mx-auto space-y-6 animate-fade-up">
+      <h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1>
+      <div className="flex items-center gap-2">
+        <Input placeholder={t('searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} className="h-9" />
+        <Button variant="outline" size="sm" onClick={() => setFilterOpen((v) => !v)} className="relative h-9 gap-1.5 text-xs font-medium">
           <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
           </svg>
@@ -194,14 +196,30 @@ export default function ChatPage() {
       </div>
       {filterOpen && <FilterPanel createdAfter={createdAfter} setCreatedAfter={setCreatedAfter} createdBefore={createdBefore} setCreatedBefore={setCreatedBefore} dateSort={dateSort} setDateSort={setDateSort} onClear={clearFilters} />}
       <div><span className="text-xs text-muted-foreground">{filteredData.length !== 1 ? t('countPlural', { count: filteredData.length }) : t('count', { count: filteredData.length })}{(search || activeFilterCount > 0) && ` ${t('filtered')}`}</span></div>
-      <div className="overflow-auto rounded-lg border">
+      <div className="bg-card border rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((hg) => <TableRow key={hg.id}>{hg.headers.map((header) => <TableHead key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>)}</TableRow>)}
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id}>
+                {hg.headers.map((header) => (
+                  <TableHead key={header.id} className="h-10 text-xs font-medium uppercase tracking-wider">
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length === 0 ? <TableRow><TableCell colSpan={columns.length} className="text-center text-muted-foreground py-12 text-sm">{t('noMatch')}</TableCell></TableRow>
-              : table.getRowModel().rows.map((row) => <TableRow key={row.id}>{row.getVisibleCells().map((cell) => <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}</TableRow>)}
+              : table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-muted/20 transition-colors">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="py-3">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>
