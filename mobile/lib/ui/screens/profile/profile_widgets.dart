@@ -35,6 +35,8 @@ class ProfileStatColumn extends StatelessWidget {
         children: [
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.outfit(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -46,6 +48,8 @@ class ProfileStatColumn extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.outfit(
               fontSize: 12,
               color: AppColors.textSecondary,
@@ -233,7 +237,12 @@ class ProfileStickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
 class ProfilePropertyGridTile extends StatelessWidget {
   final PropertyEntity property;
-  const ProfilePropertyGridTile({super.key, required this.property});
+  final VoidCallback? onTap;
+  const ProfilePropertyGridTile({
+    super.key,
+    required this.property,
+    this.onTap,
+  });
 
   Color _statusColor(String s) {
     switch (s.toUpperCase()) {
@@ -256,7 +265,7 @@ class ProfilePropertyGridTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: () {},
+        onTap: onTap,
         child: Stack(
           fit: StackFit.expand,
           children: [

@@ -5,7 +5,6 @@ import 'package:homely/core/theme/app_colors.dart';
 import '../../../domain/entities/chat/conversation_entity.dart';
 import '../../providers/chat_providers.dart';
 import '../../providers/profile_providers.dart';
-import '../../helpers/profile_ownership_helper.dart';
 import '../profile/user_profile_screen.dart';
 import 'chat_screen.dart';
 
@@ -346,42 +345,6 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     );
   }
 
-  ImageProvider<Object>? _conversationAvatar(
-    ConversationEntity conv,
-    String currentUserId,
-  ) {
-    final otherAvatar = currentUserId == conv.participantOneId
-        ? conv.participantTwoAvatar
-        : conv.participantOneAvatar;
-    if (otherAvatar != null && otherAvatar.isNotEmpty) {
-      return NetworkImage(otherAvatar);
-    }
-    return null;
-  }
-
-  Widget convAvatarFallback(
-    ConversationEntity conv,
-    String currentUserId,
-    bool hasUnread,
-  ) {
-    final otherName = conv.otherPersonName(currentUserId);
-    final initials = conv.otherPersonInitials(currentUserId);
-    final otherAvatarVal = (currentUserId == conv.participantOneId
-        ? conv.participantTwoAvatar
-        : conv.participantOneAvatar);
-    if (otherAvatarVal != null && otherAvatarVal.isNotEmpty) {
-      // Network image will be used; no fallback text needed.
-      return const SizedBox.shrink();
-    }
-    return Text(
-      initials,
-      style: GoogleFonts.outfit(
-        color: hasUnread ? Colors.white : AppColors.textSecondary,
-        fontWeight: FontWeight.w700,
-        fontSize: 15,
-      ),
-    );
-  }
 }
 
 // ── Filter Chip ───────────────────────────────────────────────────────────────
@@ -439,31 +402,24 @@ class _ConversationTile extends ConsumerWidget {
         : conv.participantOneId;
 
     // Prefer canonical profile avatar, fallback to conversation avatar
-    final profileAsync = otherUserId != null && otherUserId.isNotEmpty
+    final profileAsync = otherUserId.isNotEmpty
         ? ref.watch(profileByIdProvider(otherUserId))
         : null;
+
+    final String? convAvatar = currentUserId == conv.participantOneId
+        ? conv.participantTwoAvatar
+        : conv.participantOneAvatar;
 
     final ImageProvider<Object>? avatarImage =
         profileAsync?.maybeWhen(
           data: (p) =>
-              (p != null && p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
+              (p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
               ? NetworkImage(p.avatarUrl!)
               : null,
           orElse: () => null,
         ) ??
-        ((currentUserId == conv.participantOneId
-                        ? conv.participantTwoAvatar
-                        : conv.participantOneAvatar) !=
-                    null &&
-                (currentUserId == conv.participantOneId
-                        ? conv.participantTwoAvatar
-                        : conv.participantOneAvatar)!
-                    .isNotEmpty
-            ? NetworkImage(
-                currentUserId == conv.participantOneId
-                    ? conv.participantTwoAvatar!
-                    : conv.participantOneAvatar!,
-              )
+        (convAvatar != null && convAvatar.isNotEmpty
+            ? NetworkImage(convAvatar)
             : null);
 
     return InkWell(
@@ -474,7 +430,7 @@ class _ConversationTile extends ConsumerWidget {
             conversationId: conv.id,
             currentUserId: currentUserId,
             chatTitle: displayName,
-            chatSubtitle: conv.propertyTitle ?? '',
+            chatSubtitle: '',
           ),
         ),
       ),
@@ -499,7 +455,7 @@ class _ConversationTile extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => UserProfileScreen(userId: otherUserId ?? ''),
+                    builder: (_) => UserProfileScreen(userId: otherUserId),
                   ),
                 );
               },

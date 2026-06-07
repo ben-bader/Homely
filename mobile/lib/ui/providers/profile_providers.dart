@@ -8,6 +8,7 @@ import '../../domain/repositories/i_profile_repository.dart';
 import '../../domain/entities/property/property_entity.dart';
 import '../providers/property_providers.dart';
 import '../providers/visit_request_providers.dart';
+import '../providers/auth_providers.dart' as auth_prov;
 
 final profileRemoteDatasourceProvider = Provider<ProfileRemoteDatasource>(
   (ref) => ProfileRemoteDatasourceImpl(),
@@ -85,8 +86,35 @@ final currentProfileProvider = Provider<ProfileEntity?>((ref) {
 
 class ProfileNotifier extends AsyncNotifier<ProfileEntity> {
   @override
-  Future<ProfileEntity> build() =>
-      ref.read(profileRepositoryProvider).getMyProfile();
+  Future<ProfileEntity> build() async {
+    ProfileEntity profile =
+        await ref.read(profileRepositoryProvider).getMyProfile();
+
+    // ── Role fallback ────────────────────────────────────────────────────────
+    // If /profile/me did not include a role field (null or empty), fall back
+    // to the role that was stored in secure storage during login.
+    // This covers backends that return role only in the auth response, not in
+    // the profile endpoint.
+    if (profile.role == null || profile.role!.trim().isEmpty) {
+      try {
+        final storedRole =
+            await ref.read(auth_prov.authRepositoryProvider).getUserRole();
+        debugPrint(
+          '>>> ProfileNotifier: profile.role was null/empty, '
+          'falling back to stored role="$storedRole"',
+        );
+        if (storedRole.isNotEmpty) {
+          profile = profile.copyWith(role: storedRole);
+        }
+      } catch (e) {
+        debugPrint('>>> ProfileNotifier: role fallback failed: $e');
+      }
+    } else {
+      debugPrint('>>> ProfileNotifier: raw profile.role="${profile.role}"');
+    }
+
+    return profile;
+  }
 
   Future<void> saveProfile(ProfileUpdateRequest request) async {
     final previous = state;
@@ -96,13 +124,30 @@ class ProfileNotifier extends AsyncNotifier<ProfileEntity> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repo = ref.read(profileRepositoryProvider);
-      final updatedProfile = await repo.updateProfileFields(
+      final updated = await repo.updateProfileFields(
         request.toProfileJson(),
       );
       try {
         await repo.updateUserFields(current.userId, request.toUserJson());
       } catch (_) {}
-      return updatedProfile.copyWith(name: request.name, phone: request.phone);
+
+      // Merge: the backend PUT response may omit fields the server did not
+      // touch. Fall back to the pre-save value for every field that comes
+      // back null or empty, so nothing is accidentally cleared.
+      final merged = current.copyWith(
+        // Editable fields — use form values, which are always intentional
+        name: request.name.isNotEmpty ? request.name : null,
+        phone: request.phone ?? updated.phone,
+        bio: request.bio ?? updated.bio,
+        address: request.address ?? updated.address,
+        // Non-editable fields — keep whatever the update response returned,
+        // falling back to what we had before if the response omitted them.
+        avatarUrl: updated.avatarUrl ?? current.avatarUrl,
+        role: updated.role ?? current.role,
+        // email and verified are read-only — never overwrite from the form.
+        // (copyWith with no email/verified param keeps existing values.)
+      );
+      return merged;
     });
 
     if (state.hasError) state = previous;
@@ -167,9 +212,12 @@ class ProfileStats {
 enum UserRole { seller, client }
 
 UserRole normalizeRole(String? role) {
-  if (role == null) return UserRole.client;
-  final normalized = role.toUpperCase().replaceAll('ROLE_', '');
-  return normalized == 'SELLER' ? UserRole.seller : UserRole.client;
+  if (role == null || role.trim().isEmpty) return UserRole.client;
+  // Strip optional "ROLE_" prefix and normalise case
+  final s = role.trim().toUpperCase().replaceAll('ROLE_', '');
+  // Match every seller-equivalent value the backend might send
+  const sellerValues = {'SELLER', 'VENDOR', 'AGENT', 'OWNER', 'HOST'};
+  return sellerValues.contains(s) ? UserRole.seller : UserRole.client;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -199,7 +247,7 @@ final profileStatsByUserIdProvider =
 
   if (role == UserRole.seller) {
     final listings =
-        await ref.watch(sellerListingsByUserIdProvider(userId).future);
+        await ref.read(sellerListingsByUserIdProvider(userId).future);
     final visitRepo = ref.read(visitRequestRepositoryProvider);
     int totalRequests = 0;
     for (final p in listings) {

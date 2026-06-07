@@ -29,7 +29,8 @@ class FeedbackList extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Reviews', style: tt.titleSmall),
+                  Text('Reviews', style: tt.titleSmall?.copyWith(fontSize: 17, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
                   if (reviewCount > 0)
                     Row(
                       children: [
@@ -176,9 +177,10 @@ class _FeedbackCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),

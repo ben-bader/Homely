@@ -6,7 +6,6 @@ import '../../../domain/entities/chat/message_entity.dart';
 import '../../providers/chat_providers.dart';
 import 'package:homely/ui/providers/profile_providers.dart';
 import '../property/property_detail_screen.dart';
-import '../../helpers/profile_ownership_helper.dart';
 import '../profile/user_profile_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -205,7 +204,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     otherAvatarUrl =
         otherProfileAsync?.maybeWhen(
           data: (p) =>
-              (p != null && p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
+              (p.avatarUrl != null && p.avatarUrl!.isNotEmpty)
               ? p.avatarUrl
               : null,
           orElse: () => null,
@@ -247,10 +246,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (otherAvatarUrl != null && otherAvatarUrl!.isNotEmpty)
+              if (otherAvatarUrl != null && otherAvatarUrl.isNotEmpty)
                 CircleAvatar(
                   radius: 16,
-                  backgroundImage: NetworkImage(otherAvatarUrl!),
+                  backgroundImage: NetworkImage(otherAvatarUrl),
                   backgroundColor: AppColors.subtleBackground,
                 )
               else
@@ -267,13 +266,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       color: AppColors.accent,
                     ),
                   ),
-                  Text(
-                    widget.chatSubtitle,
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                  if (widget.chatSubtitle.isNotEmpty)
+                    Text(
+                      widget.chatSubtitle,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],

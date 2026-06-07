@@ -224,19 +224,6 @@ class _BodyState extends ConsumerState<_Body> {
                         letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 15,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        p.location,
-                        style: tt.bodySmall?.copyWith(fontSize: 13),
-                      ),
-                    ),
                   ],
                 ),
 
@@ -301,7 +288,10 @@ class _BodyState extends ConsumerState<_Body> {
 
                 // Description
                 if (p.description.isNotEmpty) ...[
-                  Text('Description', style: tt.titleSmall),
+                  // ── Address ──────────────────────────────────────────────
+                  const SizedBox(height: 20),
+                 
+                  Text('Description', style: tt.titleMedium?.copyWith(fontSize: 17, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
                   Text(
                     p.description,
@@ -311,10 +301,9 @@ class _BodyState extends ConsumerState<_Body> {
                 ],
 
                 // Listing agent
-                Text('Listing Agent', style: tt.titleSmall),
-                const SizedBox(height: 12),
+                Text('Listing Agent', style: tt.titleMedium?.copyWith(fontSize: 17, fontWeight: FontWeight.w600)),
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 24),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(16),
@@ -388,7 +377,7 @@ class _BodyState extends ConsumerState<_Body> {
                 const SizedBox(height: 32),
 
                 // ── Location map ─────────────────────────────────────────
-                Text('Location', style: tt.titleSmall),
+                Text('Location', style: tt.titleSmall?.copyWith(fontSize: 17, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 _PropertyMap(
                   latitude: p.latitude,
@@ -614,7 +603,14 @@ class _PropertyMap extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.subtleBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderLight),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: AppColors.borderDark),
         ),
         child: Center(
           child: Column(
@@ -736,9 +732,10 @@ class _PropertyMap extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.cardBackground,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.borderLight),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1188,7 +1185,7 @@ class _ContactBtn extends ConsumerWidget {
                 conversationId: conv.id,
                 currentUserId: currentUserId,
                 chatTitle: property.sellerName,
-                chatSubtitle: property.title,
+                chatSubtitle: '',
               ),
             ),
           );

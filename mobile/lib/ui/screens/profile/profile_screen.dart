@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,8 +49,9 @@ final profileStatsProvider = FutureProvider.autoDispose
             final requests = await visitRepo.getRequestsForProperty(p.id);
             totalRequests += requests.length;
             for (final r in requests) {
-              if (r.userId != null && r.userId!.isNotEmpty)
+              if (r.userId != null && r.userId!.isNotEmpty) {
                 uniqueUsers.add(r.userId!);
+              }
             }
           } catch (_) {}
         }
@@ -239,14 +239,18 @@ class _ProfileContentState extends ConsumerState<_ProfileContent>
       indicatorWeight: 1.5,
       labelColor: AppColors.accent,
       unselectedLabelColor: AppColors.textSecondary,
+      // Seller: Posts | Reels  — Client: Saved
       tabs: role == UserRole.seller
           ? const [
-              Tab(icon: Icon(Icons.grid_on_rounded, size: 22)),
-              Tab(icon: Icon(Icons.play_circle_outline_rounded, size: 22)),
+              Tab(icon: Icon(Icons.grid_on_rounded, size: 22), text: 'Listings'),
+              Tab(
+                  icon: Icon(Icons.play_circle_outline_rounded, size: 22),
+                  text: 'Tours'),
             ]
           : const [
-              Tab(icon: Icon(Icons.favorite_border_rounded, size: 22)),
-              Tab(icon: Icon(Icons.history_rounded, size: 22)),
+              Tab(
+                  icon: Icon(Icons.favorite_border_rounded, size: 22),
+                  text: 'Saved'),
             ],
     );
 
@@ -511,6 +515,7 @@ class _ProfileHeader extends ConsumerWidget {
                       final currentUserId = auth?.userId ?? '';
                       final targetUserId = profile.userId;
                       if (currentUserId.isEmpty || targetUserId.isEmpty) {
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Unable to start conversation'),
@@ -525,6 +530,7 @@ class _ProfileHeader extends ConsumerWidget {
                         targetUserId,
                       );
                       if (convId == null || convId.isEmpty) {
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Failed to open chat')),
                         );
@@ -841,6 +847,8 @@ class _StatColumn extends StatelessWidget {
     children: [
       Text(
         value,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.outfit(
           fontSize: 20,
           fontWeight: FontWeight.w800,
@@ -852,6 +860,8 @@ class _StatColumn extends StatelessWidget {
       const SizedBox(height: 3),
       Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.outfit(
           fontSize: 12,
           color: AppColors.textSecondary,
@@ -1093,47 +1103,6 @@ class _ClientFavoritesTab extends ConsumerWidget {
           ),
           itemCount: listings.length,
           itemBuilder: (_, i) => _PropertyGridTile(property: listings[i]),
-        );
-      },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CLIENT — RECENTLY VIEWED TAB
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ClientRecentlyViewedTab extends ConsumerWidget {
-  const _ClientRecentlyViewedTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final viewedAsync = ref.watch(recentlyViewedProvider);
-    return viewedAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: AppColors.primary,
-        ),
-      ),
-      error: (e, _) => _EmptyState(
-        icon: Icons.wifi_off_rounded,
-        title: 'Could not load history',
-        subtitle: e.toString(),
-      ),
-      data: (listings) {
-        if (listings.isEmpty) {
-          return const _EmptyState(
-            icon: Icons.history_rounded,
-            title: 'No viewed properties yet',
-            subtitle: 'Properties you browse will appear here.',
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          itemCount: listings.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (_, i) => _ListingCard(property: listings[i]),
         );
       },
     );
@@ -1933,11 +1902,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    // Read the current profile so we can carry fields the form does not edit.
+    // This prevents the backend from treating absent fields as explicit nulls.
+    final currentProfile = ref.read(profileNotifierProvider).valueOrNull;
     final request = ProfileUpdateRequest(
       name: _name.text.trim(),
       phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       bio: _bio.text.trim().isEmpty ? null : _bio.text.trim(),
       address: _address.text.trim().isEmpty ? null : _address.text.trim(),
+      // Preserve read-only fields so they survive the round-trip.
+      avatarUrl: currentProfile?.avatarUrl,
+      email: currentProfile?.email,
+      role: currentProfile?.role,
+      verified: currentProfile?.verified,
     );
     await ref.read(profileNotifierProvider.notifier).saveProfile(request);
     if (!mounted) return;

@@ -8,8 +8,8 @@ import 'package:homely/ui/providers/profile_providers.dart';
 import 'package:homely/ui/providers/auth_providers.dart' as auth_providers;
 import 'package:homely/ui/providers/chat_providers.dart';
 import 'package:homely/domain/entities/profile/profile_entity.dart';
-import 'package:homely/domain/entities/property/property_entity.dart';
 import 'package:homely/ui/screens/chat/chat_screen.dart';
+import 'package:homely/ui/screens/property/property_detail_screen.dart';
 import 'package:homely/ui/widgets/reports/report_sheet.dart';
 import 'package:homely/ui/screens/profile/profile_widgets.dart';
 
@@ -155,18 +155,16 @@ class _UserProfileContentState extends ConsumerState<_UserProfileContent>
           delegate: ProfileStickyTabBarDelegate(tabBar),
         ),
       ],
-      body: Padding(
-        padding: EdgeInsets.only(bottom: navBarHeight),
-        child: TabBarView(
+      body: TabBarView(
           controller: _tabController,
           children: _role == UserRole.seller
               ? [
-                  _UserSellerPropertiesTab(userId: widget.userId),
-                  const _UserReelsTab(),
+                  _UserSellerPropertiesTab(
+                      userId: widget.userId, bottomInset: navBarHeight),
+                  _UserReelsTab(bottomInset: navBarHeight),
                 ]
-              : [const _UserClientFavoritesTab()],
+              : [_UserClientFavoritesTab(bottomInset: navBarHeight)],
         ),
-      ),
     );
   }
 }
@@ -263,7 +261,7 @@ class _UserProfileHeader extends ConsumerWidget {
 
           const SizedBox(height: 14),
 
-          // ── Name + Verified ────────────────────────────────────────────────
+          // ── Name + Bio ────────────────────────────────────────────────────
           Row(
             children: [
               Text(
@@ -285,32 +283,22 @@ class _UserProfileHeader extends ConsumerWidget {
               ],
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            profile.email.isNotEmpty ? profile.email : '—',
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ProfileRoleBadge(role: role, verified: profile.verified),
-
           if (profile.bio != null && profile.bio!.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
             Text(
               profile.bio!,
               style: GoogleFonts.outfit(
                 fontSize: 13,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w400,
-                height: 1.45,
+                height: 1.4,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
+          const SizedBox(height: 8),
+          ProfileRoleBadge(role: role, verified: profile.verified),
 
           const SizedBox(height: 14),
 
@@ -524,7 +512,11 @@ class _UserMoreOptionsSheet extends StatelessWidget {
 
 class _UserSellerPropertiesTab extends ConsumerWidget {
   final String userId;
-  const _UserSellerPropertiesTab({required this.userId});
+  final double bottomInset;
+  const _UserSellerPropertiesTab({
+    required this.userId,
+    required this.bottomInset,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -549,7 +541,8 @@ class _UserSellerPropertiesTab extends ConsumerWidget {
           );
         }
         return GridView.builder(
-          padding: const EdgeInsets.all(1),
+          padding: EdgeInsets.only(
+              left: 1, right: 1, top: 1, bottom: bottomInset + 8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 1.5,
@@ -557,8 +550,16 @@ class _UserSellerPropertiesTab extends ConsumerWidget {
             childAspectRatio: 1.0,
           ),
           itemCount: listings.length,
-          itemBuilder: (_, i) =>
-              ProfilePropertyGridTile(property: listings[i]),
+          itemBuilder: (_, i) => ProfilePropertyGridTile(
+            property: listings[i],
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    PropertyDetailScreen(propertyId: listings[i].id),
+              ),
+            ),
+          ),
         );
       },
     );
@@ -570,7 +571,8 @@ class _UserSellerPropertiesTab extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _UserClientFavoritesTab extends StatelessWidget {
-  const _UserClientFavoritesTab();
+  final double bottomInset;
+  const _UserClientFavoritesTab({required this.bottomInset});
 
   @override
   Widget build(BuildContext context) => const ProfileEmptyState(
@@ -585,7 +587,8 @@ class _UserClientFavoritesTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _UserReelsTab extends StatelessWidget {
-  const _UserReelsTab();
+  final double bottomInset;
+  const _UserReelsTab({required this.bottomInset});
 
   @override
   Widget build(BuildContext context) => const ProfileEmptyState(

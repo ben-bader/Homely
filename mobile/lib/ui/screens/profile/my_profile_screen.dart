@@ -6,12 +6,11 @@ import 'package:homely/core/theme/app_colors.dart';
 import 'package:homely/ui/widgets/skeletons.dart';
 import 'package:homely/ui/providers/property_providers.dart';
 import 'package:homely/ui/providers/profile_providers.dart';
-import 'package:homely/ui/providers/favorite_providers.dart';
 import 'package:homely/ui/providers/auth_providers.dart';
 import 'package:homely/domain/entities/profile/profile_entity.dart';
-import 'package:homely/domain/entities/property/property_entity.dart';
 import 'package:homely/ui/screens/visit_requests/my_visit_requests_screen.dart';
 import 'package:homely/ui/screens/boost/my_boosts_screen.dart';
+import 'package:homely/ui/screens/property/property_detail_screen.dart';
 import 'package:homely/ui/screens/profile/profile_screen.dart'
     show
         profileStatsProvider,
@@ -74,6 +73,9 @@ class _MyProfileContentState extends ConsumerState<_MyProfileContent>
   @override
   void initState() {
     super.initState();
+    // Step-1 debug log — shows the exact role string from the backend.
+    // Remove once the correct role is confirmed in production.
+    debugPrint('>>> RAW profile.role = "${widget.profile.role}"');
     _tabController = TabController(
       length: _role == UserRole.seller ? 2 : 1,
       vsync: this,
@@ -190,20 +192,17 @@ class _MyProfileContentState extends ConsumerState<_MyProfileContent>
           delegate: ProfileStickyTabBarDelegate(tabBar),
         ),
       ],
-      body: Padding(
-        padding: EdgeInsets.only(bottom: navBarHeight),
-        child: TabBarView(
+      body: TabBarView(
           controller: _tabController,
           children: _role == UserRole.seller
               ? [
-                  const _MySellerPropertiesTab(),
-                  const _MyReelsTab(),
+                  _MySellerPropertiesTab(bottomInset: navBarHeight),
+                  _MyReelsTab(bottomInset: navBarHeight),
                 ]
               : [
-                  const _MyClientFavoritesTab(),
+                  _MyClientFavoritesTab(bottomInset: navBarHeight),
                 ],
         ),
-      ),
     );
   }
 }
@@ -307,7 +306,7 @@ class _MyProfileHeader extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ── Name + Verified ────────────────────────────────────────────────
+          // ── Name + Bio ────────────────────────────────────────────────────
           Row(
             children: [
               Text(
@@ -329,32 +328,22 @@ class _MyProfileHeader extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            profile.email.isNotEmpty ? profile.email : '—',
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ProfileRoleBadge(role: role, verified: profile.verified),
-
           if (profile.bio != null && profile.bio!.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
             Text(
               profile.bio!,
               style: GoogleFonts.outfit(
                 fontSize: 13,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w400,
-                height: 1.45,
+                height: 1.4,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
+          const SizedBox(height: 8),
+          ProfileRoleBadge(role: role, verified: profile.verified),
 
           const SizedBox(height: 14),
 
@@ -407,12 +396,18 @@ class _MyMoreOptionsSheet extends StatelessWidget {
             label: 'Personal Info',
             onTap: () => onNavigate(_PersonalInfoScreen(profile: profile)),
           ),
-          _tile(
-            icon: Icons.calendar_today_outlined,
-            label: 'My Visits',
-            onTap: () => onNavigate(const MyVisitRequestsScreen()),
-          ),
+          if (role == UserRole.client)
+            _tile(
+              icon: Icons.calendar_today_outlined,
+              label: 'My Visits',
+              onTap: () => onNavigate(const MyVisitRequestsScreen()),
+            ),
           if (role == UserRole.seller) ...[
+            _tile(
+              icon: Icons.door_front_door_outlined,
+              label: 'Visit Requests',
+              onTap: () => onNavigate(const MyVisitRequestsScreen()),
+            ),
             _tile(
               icon: Icons.home_outlined,
               label: 'My Listings',
@@ -479,7 +474,8 @@ class _MyMoreOptionsSheet extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MySellerPropertiesTab extends ConsumerWidget {
-  const _MySellerPropertiesTab();
+  final double bottomInset;
+  const _MySellerPropertiesTab({required this.bottomInset});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -503,7 +499,8 @@ class _MySellerPropertiesTab extends ConsumerWidget {
           );
         }
         return GridView.builder(
-          padding: const EdgeInsets.all(1),
+          padding: EdgeInsets.only(
+              left: 1, right: 1, top: 1, bottom: bottomInset + 8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 1.5,
@@ -511,8 +508,16 @@ class _MySellerPropertiesTab extends ConsumerWidget {
             childAspectRatio: 1.0,
           ),
           itemCount: listings.length,
-          itemBuilder: (_, i) =>
-              ProfilePropertyGridTile(property: listings[i]),
+          itemBuilder: (_, i) => ProfilePropertyGridTile(
+            property: listings[i],
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    PropertyDetailScreen(propertyId: listings[i].id),
+              ),
+            ),
+          ),
         );
       },
     );
@@ -524,7 +529,8 @@ class _MySellerPropertiesTab extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MyReelsTab extends StatelessWidget {
-  const _MyReelsTab();
+  final double bottomInset;
+  const _MyReelsTab({required this.bottomInset});
 
   @override
   Widget build(BuildContext context) => const ProfileEmptyState(
@@ -539,7 +545,8 @@ class _MyReelsTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MyClientFavoritesTab extends ConsumerWidget {
-  const _MyClientFavoritesTab();
+  final double bottomInset;
+  const _MyClientFavoritesTab({required this.bottomInset});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -563,7 +570,8 @@ class _MyClientFavoritesTab extends ConsumerWidget {
           );
         }
         return GridView.builder(
-          padding: const EdgeInsets.all(1),
+          padding: EdgeInsets.only(
+              left: 1, right: 1, top: 1, bottom: bottomInset + 8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 1.5,
@@ -571,8 +579,16 @@ class _MyClientFavoritesTab extends ConsumerWidget {
             childAspectRatio: 1.0,
           ),
           itemCount: listings.length,
-          itemBuilder: (_, i) =>
-              ProfilePropertyGridTile(property: listings[i]),
+          itemBuilder: (_, i) => ProfilePropertyGridTile(
+            property: listings[i],
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    PropertyDetailScreen(propertyId: listings[i].id),
+              ),
+            ),
+          ),
         );
       },
     );
