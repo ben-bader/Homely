@@ -416,7 +416,7 @@ class _BodyState extends ConsumerState<_Body> {
         ],
       ),
 
-      bottomNavigationBar: isClient
+      bottomNavigationBar: isOwner
           ? Container(
               padding: EdgeInsets.fromLTRB(
                 20,
@@ -434,36 +434,75 @@ class _BodyState extends ConsumerState<_Body> {
                   ),
                 ],
               ),
-              child: ElevatedButton.icon(
-                onPressed: () => RequestVisitSheet.show(
-                  context,
-                  propertyId: p.id,
-                  propertyTitle: p.title,
-                ),
-                icon: const Icon(
-                  Icons.calendar_today_outlined,
-                  size: 18,
-                  color: Colors.white,
-                ),
-                label: Text(
-                  'Request a Visit',
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    fontSize: 15,
-                  ),
-                ),
+              child: ElevatedButton(
+                onPressed: null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.subtleBackground,
+                  disabledBackgroundColor: AppColors.subtleBackground,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
+                child: Text(
+                  'Your property',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    fontSize: 15,
+                  ),
+                ),
               ),
             )
-          : null,
+          : isClient
+              ? Container(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    12,
+                    20,
+                    MediaQuery.of(context).padding.bottom + 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () => RequestVisitSheet.show(
+                      context,
+                      propertyId: p.id,
+                      propertyTitle: p.title,
+                    ),
+                    icon: const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      'Request a Visit',
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontSize: 15,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                )
+              : null,
     );
   }
 

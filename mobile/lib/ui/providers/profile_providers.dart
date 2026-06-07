@@ -224,42 +224,96 @@ UserRole normalizeRole(String? role) {
 // sellerListingsByUserIdProvider
 // Fetches listings for any seller by their userId.
 // Used only by UserProfileScreen — never call sellerListingsProvider here.
-// Not autoDispose so the data persists while the profile screen is in the stack.
+// autoDispose keeps memory clean once the screen is popped.
 // ─────────────────────────────────────────────────────────────────────────────
 
 final sellerListingsByUserIdProvider =
-    FutureProvider.family<List<PropertyEntity>, String>((ref, userId) async {
-  return ref.read(propertyRepositoryProvider).getByUserId(userId);
+    FutureProvider.autoDispose.family<List<PropertyEntity>, String>((
+  ref,
+  userId,
+) async {
+  try {
+    debugPrint('>>> sellerListingsByUserId: fetching for userId=$userId');
+    final repo = ref.read(propertyRepositoryProvider);
+    final result = await repo.getByUserId(userId);
+    debugPrint(
+        '>>> sellerListingsByUserId: result count=${result.length}');
+    return result;
+  } catch (e, st) {
+    debugPrint('>>> sellerListingsByUserId ERROR: $e\n$st');
+    rethrow;
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // profileStatsByUserIdProvider
 // Fetches stats for any userId. Used only by UserProfileScreen header.
-// Role is derived from the fetched profile entity, NOT from auth state.
-// Not autoDispose — same reason as above.
+// Accepts a plain String userId — the same param the call site already passes.
+//
+// Role-detection strategy (in order of reliability):
+//   1. Use the role field from /users/{userId} if present.
+//   2. If absent (public endpoint omits role), fetch listings:
+//      – listings.length > 0  → treat as seller
+//      – listings.length == 0 → cannot determine (show empty stats)
+// autoDispose — same reason as above.
 // ─────────────────────────────────────────────────────────────────────────────
 
 final profileStatsByUserIdProvider =
-    FutureProvider.family<ProfileStats, String>((ref, userId) async {
-  final profile =
-      await ref.read(profileRepositoryProvider).getProfileById(userId);
-  final role = normalizeRole(profile.role);
+    FutureProvider.autoDispose.family<ProfileStats, String>((
+  ref,
+  userId,
+) async {
+  debugPrint('>>> profileStatsByUserId: userId=$userId');
+
+  // ── Step 1: fetch the profile to get the role ──────────────────────────────
+  ProfileEntity? profile;
+  try {
+    profile = await ref.read(profileRepositoryProvider).getProfileById(userId);
+    debugPrint(
+        '>>> profileStatsByUserId: raw role="${profile.role}"');
+  } catch (e) {
+    debugPrint('>>> profileStatsByUserId: profile fetch failed: $e');
+  }
+
+  UserRole role = normalizeRole(profile?.role);
+  debugPrint('>>> profileStatsByUserId: normalized role=$role');
+
+  // ── Step 2: always fetch listings (needed for stats + role fallback) ───────
+  List<PropertyEntity> listings = [];
+  try {
+    listings = await ref.read(sellerListingsByUserIdProvider(userId).future);
+  } catch (e) {
+    debugPrint('>>> profileStatsByUserId: listings fetch failed: $e');
+  }
+
+  // ── Step 3: if the profile endpoint omitted role, infer from listings ──────
+  // /users/{userId} is a public endpoint that may not include role.
+  // If we got listings back, the user is definitely a seller.
+  if (role == UserRole.client && listings.isNotEmpty) {
+    debugPrint(
+        '>>> profileStatsByUserId: role was client but listings=${listings.length}, inferring seller');
+    role = UserRole.seller;
+  }
 
   if (role == UserRole.seller) {
-    final listings =
-        await ref.read(sellerListingsByUserIdProvider(userId).future);
     final visitRepo = ref.read(visitRequestRepositoryProvider);
     int totalRequests = 0;
+    final uniqueUsers = <String>{};
     for (final p in listings) {
       try {
         final requests = await visitRepo.getRequestsForProperty(p.id);
         totalRequests += requests.length;
+        for (final r in requests) {
+          if (r.userId != null && r.userId!.isNotEmpty) {
+            uniqueUsers.add(r.userId!);
+          }
+        }
       } catch (_) {}
     }
     return ProfileStats(
       listingCount: listings.length,
-      // Visits column reads totalVisitRequests; Tours defaults to 0 until wired.
       totalVisitRequests: totalRequests,
+      uniqueVisitRequesters: uniqueUsers.length,
       toursCount: 0,
       followersCount: 0,
       rating: 0,

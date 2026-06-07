@@ -728,4 +728,21 @@ public long count(){
         // Enrich with boost info
         return enrichWithBoostInfo(dto);
     }
+
+    /**
+     * Returns all properties belonging to the seller identified by their user UUID.
+     * Used by the public GET /api/properties/seller/{userId} endpoint so that any
+     * authenticated user can browse another seller's listings.
+     *
+     * @Transactional(readOnly = true) keeps the Hibernate session open while
+     * PropertyMapper accesses the lazy-loaded {@code Property.seller} association,
+     * preventing LazyInitializationException.
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<PropertyDto> getByUserId(UUID userId) {
+        return propertyRepository.findBySeller_Id(userId)
+                .stream()
+                .map(this::propertyToDto)
+                .toList();
+    }
 }

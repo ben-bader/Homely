@@ -116,6 +116,9 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request) {
 
+        // Log the real stack trace so it always appears in the server console,
+        // even though the client only receives the generic message.
+        ex.printStackTrace();
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request);
     }
 
