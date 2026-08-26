@@ -1,0 +1,325 @@
+{
+  "sections": {
+    "analytics": "Analytics",
+    "users": "Users",
+    "properties": "Properties",
+    "reports": "Reports",
+    "boosts": "Boosts",
+    "visitRequests": "Visit Requests",
+    "activityMonitoring": "Activity Monitoring",
+    "chats": "Chats",
+    "manageParameters": "Manage Parameters",
+    "manageAdmins": "Manage Admins",
+    "profile": "Profile"
+  },
+  "navUser": {
+    "profile": "Profile",
+    "logout": "Log out"
+  },
+  "header": {
+    "title": "Admin Dashboard & moderation",
+    "github": "GitHub",
+    "toggleToFr": "🇫🇷 FR",
+    "toggleToEn": "🇺🇸 EN"
+  },
+  "dashboard": {
+    "loading": "Loading Dashboard…",
+    "stats": {
+      "users": { "title": "Total Users", "badge": "Platform Users", "footer": "Registered accounts in the system" },
+      "properties": { "title": "Total Properties", "badge": "Listings", "footer": "Properties currently listed" },
+      "reports": { "title": "Total Reports", "badge": "Moderation", "footer": "Reports pending review" },
+      "boosts": { "title": "Active Boosts", "badge": "Promotions", "footer": "Currently boosted properties" }
+    },
+    "table": {
+      "reason": "Reason", "reporter": "Reporter", "reportedUser": "Reported User",
+      "reportedProperty": "Reported Property", "status": "Status", "reviewedBy": "Reviewed By",
+      "noReports": "No reports.", "page": "Page", "of": "of", "previous": "Previous", "next": "Next",
+      "drawer": {
+        "title": "Report Details", "description": "View full report and update status. Changes are logged in Audit Log.",
+        "reporter": "Reporter", "reportedUser": "Reported User", "reportedProperty": "Reported Property",
+        "reviewedBy": "Reviewed By", "reason": "Reason", "reportedAt": "Reported at",
+        "statusLabel": "Status", "statusPlaceholder": "Select status", "saving": "Saving…", "close": "Close",
+        "statusOpen": "Open", "statusReviewed": "Reviewed", "statusResolved": "Resolved", "statusDismissed": "Dismissed"
+      }
+    }
+  },
+  "boosts": {
+    "loading": "Loading boosts…",
+    "error": "Failed to load boosts",
+    "title": "Boosts",
+    "total": "Total",
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "searchPlaceholder": "Search by property, seller…",
+    "filter": "Filter",
+    "noMatch": "No boosts match your filters",
+    "page": "Page", "of": "of", "previous": "Previous", "next": "Next",
+    "statusPlaceholder": "Select status",
+    "drawer": {
+      "title": "Boost Info", "description": "Full details for this boost purchase",
+      "sectionBoost": "Boost", "sectionProperty": "Property", "sectionSeller": "Seller", "sectionTimestamps": "Timestamps",
+      "status": "Status", "packageName": "Package Name", "propertyTitle": "Title",
+      "sellerName": "Name", "sellerEmail": "Email",
+      "createdAt": "Created At", "updatedAt": "Updated At", "close": "Close"
+    },
+    "table": {
+      "property": "Property", "seller": "Seller", "packageName": "Package Name",
+      "createdAt": "Created At", "status": "Status"
+    },
+    "filters": {
+      "label": "Filters", "clearAll": "Clear all",
+      "sortByDate": "Sort by Date", "newestFirst": "Newest first", "oldestFirst": "Oldest first",
+      "startedBetween": "Started Between", "after": "After", "before": "Before"
+    }
+  },
+  "chats": {
+    "loading": "Loading conversations…",
+    "error": "Failed to load conversations",
+    "title": "Conversations",
+    "searchPlaceholder": "Search by seller, buyer, property…",
+    "filter": "Filter",
+    "noMatch": "No conversations found",
+    "page": "Page", "of": "of", "previous": "Previous", "next": "Next",
+    "count": "{count} conversation",
+    "countPlural": "{count} conversations",
+    "filtered": "(filtered)",
+    "drawer": {
+      "title": "Conversation", "seller": "Seller", "client": "Buyer", "property": "Property",
+      "participantOne": "Participant One", "participantTwo": "Participant Two",
+      "loadingMessages": "Loading messages…", "noMessages": "No messages yet", "close": "Close"
+    },
+    "table": {
+      "seller": "Seller", "client": "Buyer", "property": "Property", "startedAt": "Started At",
+      "participantOne": "Participant One", "participantTwo": "Participant Two"
+    },
+    "filters": {
+      "label": "Filters", "clearAll": "Clear all",
+      "sortByDate": "Sort by Date", "newestFirst": "Newest first", "oldestFirst": "Oldest first",
+      "startedBetween": "Started Between", "after": "After", "before": "Before"
+    }
+  },
+  "parameters": {
+    "title": "Manage Parameters",
+    "tabs": {
+      "reasons": "Report Reasons", "packages": "Boost Packages", "featured": "Featured Properties"
+    },
+    "reasons": {
+      "title": "Manage Report Reasons",
+      "loading": "Loading report reasons...",
+      "placeholder": "Add new reason",
+      "addButton": "Add Reason",
+      "deleteButton": "Delete",
+      "errorPrefix": "Error: "
+    },
+    "packages": {
+      "title": "Manage Boost Packages",
+      "loading": "Loading boost packages...",
+      "addTitle": "Add New Package",
+      "namePlaceholder": "Package Name (e.g., Basic Boost)",
+      "descriptionPlaceholder": "Description (optional)",
+      "durationPlaceholder": "Duration (days)",
+      "pricePlaceholder": "Price ($)",
+      "addButton": "Add Package",
+      "adding": "Adding...",
+      "deleteButton": "Delete",
+      "noPackages": "No boost packages yet",
+      "days": "days",
+      "validationError": "Please fill in all required fields",
+      "addError": "Failed to add package",
+      "deleteConfirm": "Are you sure you want to delete this package?",
+      "deleteError": "Failed to delete package"
+    },
+    "featured": {
+      "title": "Featured Properties Count Limit",
+      "label": "Number of Featured Properties",
+      "placeholder": "Enter number",
+      "saveButton": "Save Limit",
+      "saving": "Saving...",
+      "description": "This setting controls the maximum number of properties that can be featured at any time.",
+      "validationError": "Please enter a valid number",
+      "successMessage": "Featured properties limit updated successfully",
+      "errorMessage": "Failed to update featured properties limit"
+    }
+  },
+  "profile": {
+    "accountInfo": {
+      "title": "Account Information",
+      "description": "Update your name and email address.",
+      "nameLabel": "Name",
+      "emailLabel": "Email",
+      "saveButton": "Save Changes",
+      "loadingToast": "Updating profile...",
+      "successToast": "Profile updated successfully!",
+      "errorToast": "Failed to update profile.",
+      "userNotFound": "User not found"
+    },
+    "password": {
+      "title": "Change Password",
+      "description": "Make sure your password is strong and secure.",
+      "currentLabel": "Current Password",
+      "newLabel": "New Password",
+      "confirmLabel": "Confirm New Password",
+      "updateButton": "Update Password",
+      "mismatchError": "Passwords do not match",
+      "mismatchDescription": "Please make sure both passwords are identical.",
+      "loadingToast": "Updating password...",
+      "successToast": "Password updated successfully!",
+      "errorToast": "Failed to update password."
+    },
+    "danger": {
+      "title": "Danger Zone",
+      "description": "Deleting your account will permanently remove all your data. This action cannot be undone.",
+      "deleteButton": "Delete My Account",
+      "confirmTitle": "Are you absolutely sure?",
+      "confirmDescription": "This action cannot be undone.",
+      "confirmLabel": "Delete",
+      "successToast": "Account deleted successfully",
+      "errorToast": "Failed to delete account",
+      "userNotFound": "User not found"
+    }
+  },
+  "properties": {
+    "loading": "Loading properties…",
+    "title": "Properties",
+    "searchPlaceholder": "Search by title, address, seller…",
+    "filter": "Filter",
+    "noMatch": "No properties match your filters",
+    "page": "Page", "of": "of", "previous": "Previous", "next": "Next",
+    "table": {
+      "title": "Title", "address": "Address", "price": "Price",
+      "createdAt": "Created At", "seller": "Seller", "status": "Status", "seeMore": "See More"
+    },
+    "drawer": {
+      "title": "Property Info", "description": "Full details for this listing",
+      "loading": "Loading…", "noDetails": "No details available.",
+      "sectionListing": "Listing", "sectionLocation": "Location",
+      "sectionDescription": "Description", "sectionApartment": "Apartment",
+      "sectionSeller": "Seller", "sectionTimestamps": "Timestamps", "sectionMedia": "Media",
+      "labelTitle": "Title", "labelStatus": "Status", "labelListingType": "Listing Type",
+      "labelPropertyType": "Property Type", "labelPrice": "Price", "labelBoosted": "Boosted",
+      "labelAddress": "Address", "labelLatitude": "Latitude", "labelLongitude": "Longitude",
+      "labelBedrooms": "Bedrooms", "labelBathrooms": "Bathrooms", "labelFloor": "Floor",
+      "labelElevator": "Elevator", "labelSellerName": "Name",
+      "labelCreatedAt": "Created At", "labelUpdatedAt": "Updated At",
+      "boostedYes": "Yes", "boostedNo": "No", "elevatorYes": "Yes", "elevatorNo": "No",
+      "loadingMedia": "Loading media…", "noMedia": "No media available.",
+      "deleteButton": "Delete Property", "deleting": "Deleting…",
+      "close": "Close",
+      "deleteSuccess": "Property deleted successfully.",
+      "deleteNotFound": "Property not found or already deleted.",
+      "deleteError": "Failed to delete property. Please try again.",
+      "propertyNotExist": "Property does not exist."
+    },
+    "filters": {
+      "label": "Filters", "clearAll": "Clear all",
+      "status": "Status", "priceRange": "Price Range", "cityAddress": "City / Address",
+      "cityPlaceholder": "e.g. Casablanca",
+      "sortByDate": "Sort by Date", "newestFirst": "Newest first", "oldestFirst": "Oldest first",
+      "createdBetween": "Created Between", "after": "After", "before": "Before"
+    }
+  },
+  "reports": {
+    "loading": "Loading reports…",
+    "title": "Reports",
+    "searchPlaceholder": "Search by reporter, target, reason…",
+    "filter": "Filter",
+    "noMatch": "No reports match your filters",
+    "page": "Page", "of": "of", "previous": "Previous", "next": "Next",
+    "count": "{count} report",
+    "countPlural": "{count} reports",
+    "filtered": "(filtered)",
+    "summaryCards": {
+      "total": "Total Reports", "open": "Waiting / Open",
+      "resolved": "Resolved", "dismissed": "Dismissed"
+    },
+    "table": {
+      "reporter": "Reporter", "target": "Target", "reason": "Reason",
+      "status": "Status", "createdAt": "Created At",
+      "targetProperty": "Property", "targetUser": "User"
+    },
+    "drawer": {
+      "title": "Report Info", "description": "Full details for this report",
+      "sectionOverview": "Overview", "sectionReporter": "Reporter",
+      "sectionReportedProperty": "Reported Property", "sectionReportedUser": "Reported User",
+      "sectionReviewedBy": "Reviewed By", "sectionTimestamps": "Timestamps",
+      "labelStatus": "Status", "labelReason": "Reason", "labelType": "Type",
+      "labelName": "Name", "labelEmail": "Email", "labelTitle": "Title",
+      "labelAdminName": "Admin Name", "labelAdminEmail": "Admin Email",
+      "labelCreatedAt": "Created At", "labelUpdatedAt": "Updated At",
+      "typeProperty": "Property", "typeUser": "User", "typeUnknown": "Unknown",
+      "notReviewed": "Not yet reviewed", "close": "Close"
+    },
+    "filters": {
+      "label": "Filters", "clearAll": "Clear all",
+      "status": "Status", "reportType": "Report Type",
+      "sortByDate": "Sort by Date", "newestFirst": "Newest first", "oldestFirst": "Oldest first",
+      "createdBetween": "Created Between", "after": "After", "before": "Before"
+    }
+  },
+  "users": {
+    "loading": "Loading users…",
+    "title": "Users",
+    "searchPlaceholder": "Search users...",
+    "filter": "Filter",
+    "noMatch": "No users match your filters",
+    "page": "Page", "of": "of", "previous": "Previous", "next": "Next",
+    "count": "{count} user",
+    "countPlural": "{count} users",
+    "filtered": "(filtered)",
+    "table": {
+      "name": "Name", "email": "Email", "role": "Role", "created": "Created", "action": "Action"
+    },
+    "drawer": {
+      "title": "User Info", "description": "Full details for this user",
+      "labelName": "Name", "labelEmail": "Email", "labelRole": "Role",
+      "labelCreated": "Created", "labelActive": "Active",
+      "activeYes": "Yes", "activeNo": "No", "close": "Close"
+    },
+    "filters": {
+      "label": "Filters", "clearAll": "Clear all", "role": "Role", "status": "Status",
+      "sortByDate": "Sort by Date", "newestFirst": "Newest first", "oldestFirst": "Oldest first",
+      "joinedBetween": "Joined Between", "after": "After", "before": "Before",
+      "all": "ALL", "active": "Active", "inactive": "Inactive"
+    }
+  },
+  "visitRequests": {
+    "loading": "Loading visit requests…",
+    "title": "Visit Requests",
+    "searchPlaceholder": "Search by client, property, status…",
+    "filter": "Filter",
+    "noMatch": "No visit requests match your filters",
+    "page": "Page", "of": "of", "previous": "Previous", "next": "Next",
+    "count": "{count} request",
+    "countPlural": "{count} requests",
+    "filtered": "(filtered)",
+    "summaryCards": {
+      "total": "Total", "pending": "Pending", "approved": "Approved",
+      "completed": "Completed", "rejected": "Rejected"
+    },
+    "table": {
+      "property": "Property", "seller": "Seller", "client": "Client",
+      "requestedDate": "Requested Date", "status": "Status"
+    },
+    "drawer": {
+      "title": "Visit Request", "description": "Full details for this visit request",
+      "sectionOverview": "Overview", "sectionProperty": "Property",
+      "sectionSeller": "Seller", "sectionClient": "Client", "sectionTimestamps": "Timestamps",
+      "labelStatus": "Status", "labelRequestedDate": "Requested Date", "labelTitle": "Title",
+      "labelName": "Name", "labelEmail": "Email",
+      "labelCreatedAt": "Created At", "labelUpdatedAt": "Updated At", "close": "Close"
+    },
+    "filters": {
+      "label": "Filters", "clearAll": "Clear all",
+      "sortByDate": "Sort by Date", "newestFirst": "Newest first", "oldestFirst": "Oldest first",
+      "createdBetween": "Created Between", "after": "After", "before": "Before"
+    }
+  },
+  "common": {
+    "filter": "Filter", "clearAll": "Clear all", "previous": "Previous", "next": "Next",
+    "page": "Page", "of": "of", "after": "After", "before": "Before",
+    "newestFirst": "Newest first", "oldestFirst": "Oldest first",
+    "sortByDate": "Sort by Date", "filters": "Filters",
+    "noAccess": "You don't have permission to access this section"
+  }
+}

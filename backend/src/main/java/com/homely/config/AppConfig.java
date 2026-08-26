@@ -1,0 +1,30 @@
+package com.homely.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Configuration
+public class AppConfig {
+
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
+
+    @Value("${app.backend.url:http://localhost:8082}")
+    private String backendUrl;
+
+    public String getFrontendUrl() {
+        return frontendUrl;
+    }
+
+    public String getBackendUrl() {
+        return backendUrl;
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+}
